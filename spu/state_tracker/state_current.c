@@ -95,7 +95,7 @@ void STATE_APIENTRY crStateEnd( void )
 }
 
 void crStateCurrentSwitch (CRCurrentBits *c, GLbitvalue bitID,
-					 CRCurrentState *from, CRCurrentState *to) 
+					 CRCurrentState *from, CRCurrentState *to)
 {
 	int i;
 	GLbitvalue nbitID = ~bitID;
@@ -191,7 +191,7 @@ void crStateCurrentSwitch (CRCurrentBits *c, GLbitvalue bitID,
 }
 
 void crStateCurrentDiff (CRCurrentBits *c, GLbitvalue bitID,
-					 CRCurrentState *from, CRCurrentState *to) 
+					 CRCurrentState *from, CRCurrentState *to)
 {
 	int i;
 	GLbitvalue nbitID = ~bitID;

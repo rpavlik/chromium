@@ -175,10 +175,12 @@ void renderspuCreateWindow( void )
 
 #ifndef WINDOWS
 	/* WireGL Holdover */
+#if 0
 	if ( render_spu.display_string == NULL )
 	{
 		render_spu.display_string = ":0.0";
 	}
+#endif
 
 	render_spu.dpy = XOpenDisplay( render_spu.display_string );
 	if ( !render_spu.dpy )

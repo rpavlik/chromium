@@ -12,13 +12,13 @@
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
 
-void crStateLightingInitBits (CRLightingBits *l) 
+void crStateLightingInitBits (CRLightingBits *l)
 {
 	l->light = (CRLightBits *) crAlloc (sizeof(*(l->light)) * CR_NUM_LIGHTS );
 	memset (l->light, 0, sizeof(*(l->light)) * CR_NUM_LIGHTS );
 }
 
-void crStateLightingInit (CRLightingState *l) 
+void crStateLightingInit (CRLightingState *l)
 {
 	int i;
 	GLvectorf zero_vector	= {0.0f, 0.0f, 0.0f, 1.0f};
@@ -50,7 +50,7 @@ void crStateLightingInit (CRLightingState *l)
 	l->light = (CRLight *) crAlloc (sizeof (*(l->light)) * CR_MAX_LIGHTS);
 	memset ((void *) l->light, 0, sizeof (*(l->light)) * CR_MAX_LIGHTS);
 
-	for (i=0; i<CR_MAX_LIGHTS; i++) 
+	for (i=0; i<CR_MAX_LIGHTS; i++)
 	{
 		l->light[i].enable = GL_FALSE;
 		l->light[i].ambient = zero_color;
@@ -71,12 +71,12 @@ void crStateLightingInit (CRLightingState *l)
 	l->light[0].specular = one_color;
 }
 
-void crStateLightingDestroy (CRLightingState *l) 
+void crStateLightingDestroy (CRLightingState *l)
 {
 	free (l->light);
 }
 
-void STATE_APIENTRY crStateShadeModel (GLenum mode) 
+void STATE_APIENTRY crStateShadeModel (GLenum mode)
 {
 	CRContext *g = GetCurrentContext();
 	CRLightingState *l = &(g->lighting);
@@ -103,7 +103,7 @@ void STATE_APIENTRY crStateShadeModel (GLenum mode)
 	lb->dirty = g->neg_bitid;
 }
 
-void STATE_APIENTRY crStateColorMaterial (GLenum face, GLenum mode) 
+void STATE_APIENTRY crStateColorMaterial (GLenum face, GLenum mode)
 {
 	CRContext *g = GetCurrentContext();
 	CRLightingState *l = &(g->lighting);
@@ -142,7 +142,7 @@ void STATE_APIENTRY crStateColorMaterial (GLenum face, GLenum mode)
 	lb->dirty = g->neg_bitid;
 }
 
-void STATE_APIENTRY crStateLightModelfv (GLenum pname, const GLfloat *param) 
+void STATE_APIENTRY crStateLightModelfv (GLenum pname, const GLfloat *param)
 {
 	CRContext *g = GetCurrentContext();
 	CRLightingState *l = &(g->lighting);
@@ -157,7 +157,7 @@ void STATE_APIENTRY crStateLightModelfv (GLenum pname, const GLfloat *param)
 
 	FLUSH();
 
-	switch (pname) 
+	switch (pname)
 	{
 		case GL_LIGHT_MODEL_LOCAL_VIEWER:
 			l->lightModelLocalViewer = (GLboolean) (*param==0.0f?GL_FALSE:GL_TRUE);
@@ -182,7 +182,7 @@ void STATE_APIENTRY crStateLightModelfv (GLenum pname, const GLfloat *param)
 				else
 				{
 					crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "LightModel: Invalid param for LIGHT_MODEL_COLOR_CONTROL: 0x%x", param[0] );
-					return;				
+					return;
 				}
 			}
 			else
@@ -200,13 +200,13 @@ void STATE_APIENTRY crStateLightModelfv (GLenum pname, const GLfloat *param)
 	lb->dirty = g->neg_bitid;
 }
 
-void STATE_APIENTRY crStateLightModeliv (GLenum pname, const GLint *param) 
+void STATE_APIENTRY crStateLightModeliv (GLenum pname, const GLint *param)
 {
 	GLfloat f_param;
 	GLcolor f_color;
 	CRContext *g = GetCurrentContext();
 
-	switch (pname) 
+	switch (pname)
 	{
 		case GL_LIGHT_MODEL_LOCAL_VIEWER:
 		case GL_LIGHT_MODEL_TWO_SIDE:
@@ -237,18 +237,18 @@ void STATE_APIENTRY crStateLightModeliv (GLenum pname, const GLint *param)
 	}
 }
 
-void STATE_APIENTRY crStateLightModelf (GLenum pname, GLfloat param) 
+void STATE_APIENTRY crStateLightModelf (GLenum pname, GLfloat param)
 {
 	crStateLightModelfv( pname, &param );
 }
 
-void STATE_APIENTRY crStateLightModeli (GLenum pname, GLint param) 
+void STATE_APIENTRY crStateLightModeli (GLenum pname, GLint param)
 {
 	GLfloat f_param = (GLfloat) param;
 	crStateLightModelfv( pname, &f_param );
 }
 
-void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *param) 
+void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *param)
 {
 	CRContext *g = GetCurrentContext();
 	CRLightingState *l = &(g->lighting);
@@ -280,7 +280,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 	lt = l->light + i;
 	ltb = lb->light + i;
 
-	switch (pname) 
+	switch (pname)
 	{
 		case GL_AMBIENT:
 			lt->ambient.r = param[0];
@@ -315,9 +315,9 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 			lt->objPosition.z = z;
 			lt->objPosition.w = w;
 
-			lt->position.x = mat->m00*x + mat->m10*y + mat->m20*z + mat->m30*w; 
-			lt->position.y = mat->m01*x + mat->m11*y + mat->m21*z + mat->m31*w; 
-			lt->position.z = mat->m02*x + mat->m12*y + mat->m22*z + mat->m32*w; 
+			lt->position.x = mat->m00*x + mat->m10*y + mat->m20*z + mat->m30*w;
+			lt->position.y = mat->m01*x + mat->m11*y + mat->m21*z + mat->m31*w;
+			lt->position.z = mat->m02*x + mat->m12*y + mat->m22*z + mat->m32*w;
 			lt->position.w = mat->m03*x + mat->m13*y + mat->m23*z + mat->m33*w;
 
 			ltb->position = g->neg_bitid;
@@ -329,7 +329,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 			lt->spotDirection.w = 0.0f;
 			mat = t->modelView+t->modelViewDepth;
 
-			if (lt->objPosition.w != 0.0f) 
+			if (lt->objPosition.w != 0.0f)
 			{
 				lt->spotDirection.w = - ( (	lt->objPosition.x * lt->spotDirection.x +
 							lt->objPosition.y * lt->spotDirection.y +
@@ -395,13 +395,13 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 	lb->dirty = g->neg_bitid;
 }
 
-void STATE_APIENTRY crStateLightiv (GLenum light, GLenum pname, const GLint *param) 
+void STATE_APIENTRY crStateLightiv (GLenum light, GLenum pname, const GLint *param)
 {
 	GLfloat f_param;
 	GLcolor f_color;
 	GLvector f_vector;
 
-	switch (pname) 
+	switch (pname)
 	{
 		case GL_AMBIENT:
 		case GL_DIFFUSE:
@@ -433,18 +433,18 @@ void STATE_APIENTRY crStateLightiv (GLenum light, GLenum pname, const GLint *par
 	}
 }
 
-void STATE_APIENTRY crStateLightf (GLenum light, GLenum pname, GLfloat param) 
+void STATE_APIENTRY crStateLightf (GLenum light, GLenum pname, GLfloat param)
 {
 	crStateLightfv( light, pname, &param );
 }
 
-void STATE_APIENTRY crStateLighti (GLenum light, GLenum pname, GLint param) 
+void STATE_APIENTRY crStateLighti (GLenum light, GLenum pname, GLint param)
 {
 	GLfloat f_param = (GLfloat) param;
 	crStateLightfv( light, pname, &f_param );
 }
 
-void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat *param) 
+void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat *param)
 {
 	CRContext *g = GetCurrentContext();
 	CRLightingState *l = &(g->lighting);
@@ -456,10 +456,10 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 		FLUSH();
 	}
 
-	switch (pname) 
+	switch (pname)
 	{
 		case GL_AMBIENT :
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					l->ambient[0].r = param[0];
@@ -484,7 +484,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 			}
 			break;
 		case GL_AMBIENT_AND_DIFFUSE :
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					l->ambient[0].r = param[0];
@@ -508,7 +508,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 					return;
 			}
 		case GL_DIFFUSE :
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					l->diffuse[0].r = param[0];
@@ -533,7 +533,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 			}
 			break;
 		case GL_SPECULAR :
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					l->specular[0].r = param[0];
@@ -558,7 +558,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 			}
 			break;
 		case GL_EMISSION :
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					l->emission[0].r = param[0];
@@ -589,7 +589,7 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 				return;
 			}
 
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					l->shininess[0] = *param;
@@ -615,12 +615,12 @@ void STATE_APIENTRY crStateMaterialfv (GLenum face, GLenum pname, const GLfloat 
 	lb->dirty = g->neg_bitid;
 }
 
-void STATE_APIENTRY crStateMaterialiv (GLenum face, GLenum pname, const GLint *param) 
+void STATE_APIENTRY crStateMaterialiv (GLenum face, GLenum pname, const GLint *param)
 {
 	GLfloat f_param;
 	GLcolor f_color;
 
-	switch (pname) 
+	switch (pname)
 	{
 		case GL_AMBIENT :
 		case GL_AMBIENT_AND_DIFFUSE :
@@ -645,18 +645,18 @@ void STATE_APIENTRY crStateMaterialiv (GLenum face, GLenum pname, const GLint *p
 	}
 }
 
-void STATE_APIENTRY crStateMaterialf (GLenum face, GLenum pname, GLfloat param) 
+void STATE_APIENTRY crStateMaterialf (GLenum face, GLenum pname, GLfloat param)
 {
 	crStateMaterialfv( face, pname, &param );
 }
 
-void STATE_APIENTRY crStateMateriali (GLenum face, GLenum pname, GLint param) 
+void STATE_APIENTRY crStateMateriali (GLenum face, GLenum pname, GLint param)
 {
 	GLfloat f_param = (GLfloat) param;
 	crStateMaterialfv( face, pname, &f_param );
 }
 
-void STATE_APIENTRY crStateGetLightfv (GLenum light, GLenum pname, GLfloat *param) 
+void STATE_APIENTRY crStateGetLightfv (GLenum light, GLenum pname, GLfloat *param)
 {
 	CRContext *g = GetCurrentContext();
 	CRLightingState *l = &(g->lighting);
@@ -680,7 +680,7 @@ void STATE_APIENTRY crStateGetLightfv (GLenum light, GLenum pname, GLfloat *para
 
 	lt = l->light + i;
 
-	switch (pname) 
+	switch (pname)
 	{
 		case GL_AMBIENT:
 			param[0] = lt->ambient.r;
@@ -733,13 +733,13 @@ void STATE_APIENTRY crStateGetLightfv (GLenum light, GLenum pname, GLfloat *para
 			*param = lt->quadraticAttenuation;
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 					"glGetLight: invalid pname: %d", param);
 			return;
 	}
 }
 
-void STATE_APIENTRY crStateGetLightiv (GLenum light, GLenum pname, GLint *param) 
+void STATE_APIENTRY crStateGetLightiv (GLenum light, GLenum pname, GLint *param)
 {
 	CRContext *g = GetCurrentContext();
 	CRLightingState *l = &(g->lighting);
@@ -763,7 +763,7 @@ void STATE_APIENTRY crStateGetLightiv (GLenum light, GLenum pname, GLint *param)
 
 	lt = l->light + i;
 
-	switch (pname) 
+	switch (pname)
 	{
 		case GL_AMBIENT:
 			param[0] = (GLint) (lt->ambient.r * GL_MAXINT);
@@ -816,13 +816,13 @@ void STATE_APIENTRY crStateGetLightiv (GLenum light, GLenum pname, GLint *param)
 			*param = (GLint) (lt->quadraticAttenuation);
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 					"glGetLight: invalid pname: %d", param);
 			return;
 	}
 }
 
-void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *param) 
+void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *param)
 {
 	CRContext *g = GetCurrentContext();
 	CRLightingState *l = &(g->lighting);
@@ -834,10 +834,10 @@ void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *pa
 		return;
 	}
 
-	switch (pname) 
+	switch (pname)
 	{
 		case GL_AMBIENT:
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					param[0] = l->ambient[0].r;
@@ -852,13 +852,13 @@ void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *pa
 					param[3] = l->ambient[1].a;
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 							"glGetMaterialfv: bad face: %d", face);
 					return;
 			}
 			break;
 		case GL_DIFFUSE:
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					param[0] = l->diffuse[0].r;
@@ -873,13 +873,13 @@ void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *pa
 					param[3] = l->diffuse[1].a;
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 							"glGetMaterialfv: bad face: %d", face);
 					return;
 			}
 			break;
 		case GL_SPECULAR :
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					param[0] = l->specular[0].r;
@@ -894,13 +894,13 @@ void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *pa
 					param[3] = l->specular[1].a;
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 							"glGetMaterialfv: bad face: %d", face);
 					return;
 			}
 			break;
 		case GL_EMISSION:
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					param[0] = l->emission[0].r;
@@ -915,13 +915,13 @@ void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *pa
 					param[3] = l->emission[1].a;
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 							"glGetMaterialfv: bad face: %d", face);
 					return;
 			}
 			break;
 		case GL_SHININESS:
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					*param = l->shininess[0];
@@ -930,24 +930,24 @@ void STATE_APIENTRY crStateGetMaterialfv (GLenum face, GLenum pname, GLfloat *pa
 					*param = l->shininess[1];
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 							"glGetMaterialfv: bad face: %d", face);
 					return;
 			}
 			break;
 		case GL_COLOR_INDEXES :
-			crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, 
+			crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
 					"glGetMaterialfv: We don't do color indexes, sorry: %d", pname);
 			return;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 					"glGetMaterialfv: bad pname: %d", pname);
 			return;
 	}
 }
 
 
-void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *param) 
+void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *param)
 {
 	CRContext *g = GetCurrentContext();
 	CRLightingState *l = &(g->lighting);
@@ -959,10 +959,10 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 		return;
 	}
 
-	switch (pname) 
+	switch (pname)
 	{
 		case GL_AMBIENT:
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					param[0] = (GLint) (l->ambient[0].r * GL_MAXINT);
@@ -977,13 +977,13 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					param[3] = (GLint) (l->ambient[1].a * GL_MAXINT);
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 							"glGetMaterialfv: bad face: %d", face);
 					return;
 			}
 			break;
 		case GL_DIFFUSE:
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					param[0] = (GLint) (l->diffuse[0].r * GL_MAXINT);
@@ -998,13 +998,13 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					param[3] = (GLint) (l->diffuse[1].a * GL_MAXINT);
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 							"glGetMaterialfv: bad face: %d", face);
 					return;
 			}
 			break;
 		case GL_SPECULAR:
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					param[0] = (GLint) (l->specular[0].r * GL_MAXINT);
@@ -1019,13 +1019,13 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					param[3] = (GLint) (l->specular[1].a * GL_MAXINT);
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 							"glGetMaterialfv: bad face: %d", face);
 					return;
 			}
 			break;
 		case GL_EMISSION:
-			switch (face) 
+			switch (face)
 			{
 				case GL_FRONT:
 					param[0] = (GLint) (l->emission[0].r * GL_MAXINT);
@@ -1040,7 +1040,7 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					param[3] = (GLint) (l->emission[1].a * GL_MAXINT);
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 							"glGetMaterialfv: bad face: %d", face);
 					return;
 			}
@@ -1054,17 +1054,17 @@ void STATE_APIENTRY crStateGetMaterialiv (GLenum face, GLenum pname, GLint *para
 					*param = (GLint) l->shininess[1];
 					break;
 				default:
-					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+					crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 							"glGetMaterialfv: bad face: %d", face);
 					return;
 			}
 			break;
 		case GL_COLOR_INDEXES :
-			crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, 
+			crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION,
 					"glGetMaterialfv: We don't do color indexes, sorry: %d", pname);
 			return;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, 
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
 					"glGetMaterialfv: bad pname: %d", pname);
 			return;
 	}
@@ -1076,9 +1076,9 @@ void crStateColorMaterialRecover(void)
 	CRLightingState *l = &(g->lighting);
 	CRCurrentState *c = &(g->current);
 
-	/* Assuming that the "current" values are up to date, 
-	 * this function will extract them into the material 
-	 * values if COLOR_MATERIAL has been enabled on the 
+	/* Assuming that the "current" values are up to date,
+	 * this function will extract them into the material
+	 * values if COLOR_MATERIAL has been enabled on the
 	 * client. */
 
 	if (l->colorMaterial)

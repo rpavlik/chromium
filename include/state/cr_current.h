@@ -24,7 +24,7 @@ typedef struct {
 	GLbitvalue  normal;
 	GLbitvalue  raster;
 	GLbitvalue  edgeFlag;
-} CRCurrentBits; 
+} CRCurrentBits;
 
 typedef struct {
 	GLvectorf	pos;
@@ -79,9 +79,9 @@ void crStateCurrentInitBits( CRCurrentBits *currentbits );
 
 void crStateCurrentRecover( void );
 
-void crStateCurrentDiff(CRCurrentBits *bb, GLbitvalue bitID, 
+void crStateCurrentDiff(CRCurrentBits *bb, GLbitvalue bitID,
 		CRCurrentState *from, CRCurrentState *to);
-void crStateCurrentSwitch(CRCurrentBits *bb, GLbitvalue bitID, 
+void crStateCurrentSwitch(CRCurrentBits *bb, GLbitvalue bitID,
 		CRCurrentState *from, CRCurrentState *to);
 
 #ifdef __cplusplus

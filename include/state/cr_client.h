@@ -65,9 +65,9 @@ typedef struct {
 void crStateClientInitBits(CRClientBits *c);
 void crStateClientInit (CRClientState *c);
 
-void crStateClientDiff(CRClientBits *bb, GLbitvalue bitID, 
+void crStateClientDiff(CRClientBits *bb, GLbitvalue bitID,
 		CRClientState *from, CRClientState *to);
-void crStateClientSwitch(CRClientBits *bb, GLbitvalue bitID, 
+void crStateClientSwitch(CRClientBits *bb, GLbitvalue bitID,
 		CRClientState *from, CRClientState *to);
 #ifdef __cplusplus
 }

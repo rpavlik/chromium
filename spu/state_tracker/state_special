@@ -178,9 +178,9 @@ RasterPos4sv
 GenLists
 NewList
 EndList
-DeleteLists 
+DeleteLists
 IsList
-ListBase 
+ListBase
 EnableClientState
 DisableClientState
 VertexPointer

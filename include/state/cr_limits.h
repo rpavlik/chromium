@@ -4,8 +4,8 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#ifndef CR_LIMITS_H 
-#define CR_LIMITS_H 
+#ifndef CR_LIMITS_H
+#define CR_LIMITS_H
 
 #include "cr_glwrapper.h"
 

@@ -12,7 +12,7 @@
 #include "state_internals.h"
 
 static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
-				GLenum cap, GLboolean val) 
+				GLenum cap, GLboolean val)
 {
 	unsigned int i;
 	i = cap - GL_CLIP_PLANE0;
@@ -50,11 +50,11 @@ static void __enableSet (CRContext *g, CRStateBits *sb, GLbitvalue neg_bitid,
 		case GL_COLOR_MATERIAL :
 			if (!val)
 			{
-				/* We're TURNING OFF color material.  In this case, 
-				 * we should make sure that the very very latest 
-				 * color that was specified gets copied into the 
-				 * material parameters, since this might be our 
-				 * last chance (see frame 1 of progs/kirchner 
+				/* We're TURNING OFF color material.  In this case,
+				 * we should make sure that the very very latest
+				 * color that was specified gets copied into the
+				 * material parameters, since this might be our
+				 * last chance (see frame 1 of progs/kirchner
 				 * for an example of why). */
 
 				crStateCurrentRecover( );

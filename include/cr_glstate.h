@@ -109,7 +109,7 @@ struct CRContext {
 #define GLUPDATE_EVAL		0x04000
 #define GLUPDATE_IMAGING	0x08000
 #define GLUPDATE_SELECTION	0x10000
-#define GLUPDATE_ATTRIB		0x20000 
+#define GLUPDATE_ATTRIB		0x20000
 #define GLUPDATE_REGCOMBINER	0x40000
 
 extern CRContext *__currentContext;

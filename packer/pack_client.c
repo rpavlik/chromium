@@ -9,7 +9,7 @@
 #include "cr_version.h"
 #include "cr_glwrapper.h"
 
-void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c) 
+void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 {
 	unsigned char *p;
 
@@ -18,17 +18,17 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 		UNIMPLEMENTED();
 #endif
 
-	if (c->e.enabled) 
+	if (c->e.enabled)
 	{
 		crPackEdgeFlagv(c->e.p + index*c->e.stride);
 	}
-	if (c->t[c->curClientTextureUnit].enabled) 
+	if (c->t[c->curClientTextureUnit].enabled)
 	{
 		p = c->t[c->curClientTextureUnit].p + index*c->t[c->curClientTextureUnit].stride;
-		switch (c->t[c->curClientTextureUnit].type) 
+		switch (c->t[c->curClientTextureUnit].type)
 		{
 			case GL_SHORT:
-				switch (c->t[c->curClientTextureUnit].size) 
+				switch (c->t[c->curClientTextureUnit].size)
 				{
 					case 1: crPackTexCoord1sv((GLshort *)p); break;
 					case 2: crPackTexCoord2sv((GLshort *)p); break;
@@ -37,7 +37,7 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 				}
 				break;
 			case GL_INT:
-				switch (c->t[c->curClientTextureUnit].size) 
+				switch (c->t[c->curClientTextureUnit].size)
 				{
 					case 1: crPackTexCoord1iv((GLint *)p); break;
 					case 2: crPackTexCoord2iv((GLint *)p); break;
@@ -46,7 +46,7 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 				}
 				break;
 			case GL_FLOAT:
-				switch (c->t[c->curClientTextureUnit].size) 
+				switch (c->t[c->curClientTextureUnit].size)
 				{
 					case 1: crPackTexCoord1fv((GLfloat *)p); break;
 					case 2: crPackTexCoord2fv((GLfloat *)p); break;
@@ -55,7 +55,7 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 				}
 				break;
 			case GL_DOUBLE:
-				switch (c->t[c->curClientTextureUnit].size) 
+				switch (c->t[c->curClientTextureUnit].size)
 				{
 					case 1: crPackTexCoord1dv((GLdouble *)p); break;
 					case 2: crPackTexCoord2dv((GLdouble *)p); break;
@@ -65,10 +65,10 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 				break;
 		}
 	}
-	if (c->i.enabled) 
+	if (c->i.enabled)
 	{
 		p = c->i.p + index*c->i.stride;
-		switch (c->i.type) 
+		switch (c->i.type)
 		{
 			case GL_SHORT: crPackIndexsv((GLshort *)p); break;
 			case GL_INT: crPackIndexiv((GLint *)p); break;
@@ -76,62 +76,62 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 			case GL_DOUBLE: crPackIndexdv((GLdouble *)p); break;
 		}
 	}
-	if (c->c.enabled) 
+	if (c->c.enabled)
 	{
 		p = c->c.p + index*c->c.stride;
-		switch (c->c.type) 
+		switch (c->c.type)
 		{
 			case GL_BYTE:
-				switch (c->c.size) 
+				switch (c->c.size)
 				{
 					case 3: crPackColor3bv((GLbyte *)p); break;
 					case 4: crPackColor4bv((GLbyte *)p); break;
 				}
 				break;
 			case GL_UNSIGNED_BYTE:
-				switch (c->c.size) 
+				switch (c->c.size)
 				{
 					case 3: crPackColor3ubv((GLubyte *)p); break;
 					case 4: crPackColor4ubv((GLubyte *)p); break;
 				}
 				break;
 			case GL_SHORT:
-				switch (c->c.size) 
+				switch (c->c.size)
 				{
 					case 3: crPackColor3sv((GLshort *)p); break;
 					case 4: crPackColor4sv((GLshort *)p); break;
 				}
 				break;
 			case GL_UNSIGNED_SHORT:
-				switch (c->c.size) 
+				switch (c->c.size)
 				{
 					case 3: crPackColor3usv((GLushort *)p); break;
 					case 4: crPackColor4usv((GLushort *)p); break;
 				}
 				break;
 			case GL_INT:
-				switch (c->c.size) 
+				switch (c->c.size)
 				{
 					case 3: crPackColor3iv((GLint *)p); break;
 					case 4: crPackColor4iv((GLint *)p); break;
 				}
 				break;
 			case GL_UNSIGNED_INT:
-				switch (c->c.size) 
+				switch (c->c.size)
 				{
 					case 3: crPackColor3uiv((GLuint *)p); break;
 					case 4: crPackColor4uiv((GLuint *)p); break;
 				}
 				break;
 			case GL_FLOAT:
-				switch (c->c.size) 
+				switch (c->c.size)
 				{
 					case 3: crPackColor3fv((GLfloat *)p); break;
 					case 4: crPackColor4fv((GLfloat *)p); break;
 				}
 				break;
 			case GL_DOUBLE:
-				switch (c->c.size) 
+				switch (c->c.size)
 				{
 					case 3: crPackColor3dv((GLdouble *)p); break;
 					case 4: crPackColor4dv((GLdouble *)p); break;
@@ -139,10 +139,10 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 				break;
 		}
 	}
-	if (c->n.enabled) 
+	if (c->n.enabled)
 	{
 		p = c->n.p + index*c->n.stride;
-		switch (c->n.type) 
+		switch (c->n.type)
 		{
 			case GL_BYTE: crPackNormal3bv((GLbyte *)p); break;
 			case GL_SHORT: crPackNormal3sv((GLshort *)p); break;
@@ -152,7 +152,7 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 		}
 	}
 #ifdef CR_EXT_secondary_color
-	if (c->s.enabled) 
+	if (c->s.enabled)
 	{
 		p = c->s.p + index*c->s.stride;
 		switch (c->s.type)
@@ -184,14 +184,14 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 		}
 	}
 #endif
-	if (c->v.enabled) 
+	if (c->v.enabled)
 	{
 		p = c->v.p + (index*c->v.stride);
 
-		switch (c->v.type) 
+		switch (c->v.type)
 		{
 			case GL_SHORT:
-				switch (c->v.size) 
+				switch (c->v.size)
 				{
 					case 2: crPackVertex2svBBOX_COUNT((GLshort *)p); break;
 					case 3: crPackVertex3svBBOX_COUNT((GLshort *)p); break;
@@ -199,7 +199,7 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 				}
 				break;
 			case GL_INT:
-				switch (c->v.size) 
+				switch (c->v.size)
 				{
 					case 2: crPackVertex2ivBBOX_COUNT((GLint *)p); break;
 					case 3: crPackVertex3ivBBOX_COUNT((GLint *)p); break;
@@ -207,7 +207,7 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 				}
 				break;
 			case GL_FLOAT:
-				switch (c->v.size) 
+				switch (c->v.size)
 				{
 					case 2: crPackVertex2fvBBOX_COUNT((GLfloat *)p); break;
 					case 3: crPackVertex3fvBBOX_COUNT((GLfloat *)p); break;
@@ -215,7 +215,7 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 				}
 				break;
 			case GL_DOUBLE:
-				switch (c->v.size) 
+				switch (c->v.size)
 				{
 					case 2: crPackVertex2dvBBOX_COUNT((GLdouble *)p); break;
 					case 3: crPackVertex3dvBBOX_COUNT((GLdouble *)p); break;
@@ -226,7 +226,7 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 	}
 }
 
-void PACK_APIENTRY crPackDrawArrays(GLenum mode, GLint first, GLsizei count, CRClientState *c) 
+void PACK_APIENTRY crPackDrawArrays(GLenum mode, GLint first, GLsizei count, CRClientState *c)
 {
 	int i;
 
@@ -241,15 +241,15 @@ void PACK_APIENTRY crPackDrawArrays(GLenum mode, GLint first, GLsizei count, CRC
 	}
 
 	crPackBegin(mode);
-	for (i=0; i<count; i++) 
+	for (i=0; i<count; i++)
 	{
 		crPackArrayElement(first++, c);
 	}
 	crPackEnd();
 }
 
-void PACK_APIENTRY crPackDrawElements(GLenum mode, GLsizei count, 
-																			GLenum type, const GLvoid *indices, CRClientState *c) 
+void PACK_APIENTRY crPackDrawElements(GLenum mode, GLsizei count,
+																			GLenum type, const GLvoid *indices, CRClientState *c)
 {
 	int i;
 	GLubyte *p = (GLubyte *)indices;
@@ -268,9 +268,9 @@ void PACK_APIENTRY crPackDrawElements(GLenum mode, GLsizei count,
 	{
 		crError("crPackDrawElements called with invalid type: %d", type);
 	}
-	
+
 	crPackBegin(mode);
-	switch (type) 
+	switch (type)
 	{
 	case GL_UNSIGNED_BYTE:
 		for (i=0; i<count; i++)
@@ -279,14 +279,14 @@ void PACK_APIENTRY crPackDrawElements(GLenum mode, GLsizei count,
 		}
 		break;
 	case GL_UNSIGNED_SHORT:
-		for (i=0; i<count; i++) 
+		for (i=0; i<count; i++)
 		{
 			crPackArrayElement((GLint) * (GLushort *) p, c);
 			p+=sizeof (GLushort);
 		}
 		break;
 	case GL_UNSIGNED_INT:
-		for (i=0; i<count; i++) 
+		for (i=0; i<count; i++)
 		{
 			crPackArrayElement((GLint) * (GLuint *) p, c);
 			p+=sizeof (GLuint);

@@ -2,7 +2,7 @@
 	All rights reserved.
 
 	See the file LICENSE.txt for information on redistributing this software. */
-	
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <GL/gl.h>
