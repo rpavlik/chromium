@@ -940,6 +940,37 @@ renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
 }
 
 
+/**
+ * Recreate the GLX context for ContextInfo.  The new context will use the
+ * visual specified by newVisualID.
+ */
+static void
+renderspu_RecreateContext( ContextInfo *context, int newVisualID )
+{
+	XVisualInfo templateVis, *vis;
+	long templateFlags;
+	int screen = 0, count;
+
+	templateFlags = VisualScreenMask | VisualIDMask;
+	templateVis.screen = screen;
+	templateVis.visualid = newVisualID;
+	vis = XGetVisualInfo(context->visual->dpy, templateFlags, &templateVis, &count);
+	CRASSERT(vis);
+	if (!vis)
+		return;
+
+	/* destroy old context */
+	render_spu.ws.glXDestroyContext(context->visual->dpy, context->context);
+
+	/* create new context */
+	context->context = render_spu.ws.glXCreateContext(context->visual->dpy,
+																										vis, NULL,
+																										render_spu.try_direct);
+	CRASSERT(context->context);
+	XFree(vis);
+}
+
+
 void
 renderspu_SystemDestroyContext( ContextInfo *context )
 {
@@ -1079,17 +1110,21 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 			if (WindowExists(window->visual->dpy, nativeWindow))
 			{
 				int vid = GetWindowVisualID(window->visual->dpy, nativeWindow);
+				/* check that the window's visual and context's visual match */
 				if (vid != (int) context->visual->visual->visualid) {
 					crWarning("Render SPU: Can't bind context %d to CRUT/native window "
 										"0x%x because of different X visuals (0x%x != 0x%x)!",
 										context->id, (int) nativeWindow,
 										vid, (int) context->visual->visual->visualid);
-				}
-				else {
+					crWarning("Render SPU: Trying to recreate GLX context to match.");
+					/* Try to recreate the GLX context so that it uses the same
+					 * GLX visual as the window.
+					 */
+					renderspu_RecreateContext(context, vid);
 					/* OK, this should work */
 					window->nativeWindow = (Window) nativeWindow;
 					b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
-																						(Window) nativeWindow,
+																						window->nativeWindow,
 																						context->context );
 					CRASSERT(b);
 				}
