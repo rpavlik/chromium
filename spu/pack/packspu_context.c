@@ -53,9 +53,9 @@ ThreadInfo *packspuNewThread( unsigned long id )
 	/* packer setup */
 	CRASSERT(thread->packer == NULL);
 	thread->packer = crPackNewContext( pack_spu.swap );
-        CRASSERT(thread->packer);
+	CRASSERT(thread->packer);
 	crPackInitBuffer( &(thread->buffer), crNetAlloc(thread->server.conn),
-					  thread->server.buffer_size, 0 );
+										thread->server.buffer_size, 0 );
 	crPackSetBuffer( thread->packer, &thread->buffer );
 	crPackFlushFunc( thread->packer, packspuFlush );
 	crPackFlushArg( thread->packer, (void *) thread );
@@ -80,23 +80,6 @@ GLint PACKSPU_APIENTRY packspu_CreateContext( const char *dpyName, GLint visual 
 	int writeback = pack_spu.thread[0].server.conn->type == CR_DROP_PACKETS ? 0 : 1;
 	GLint serverCtx = (GLint) -1;
 	int slot;
-#if 0
-	/* I don't know what to do with this - Brian */
-
-	GLint return_val = (GLint) 5000; /* HUMUNGOUS HACK TO MATCH SERVER NUMBERING */
-
-	/* The hack exists solely to make file networking work for now.  This is
-	 * totally gross, but since the server expects the numbers to start from 5000,
-	 * we need to write them out this way.  This would be marginally less gross
-	 * if the numbers (500 and 5000) were maybe some sort of #define'd constants
-	 * somewhere so the client and the server could be aware of how each other
-	 * were numbering things in cases like file networking where they actually
-	 * care. 
-	 *
-	 * 	-Humper 
-	 *
-	 * 	*/
-#endif
 
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&_PackMutex);
@@ -112,20 +95,38 @@ GLint PACKSPU_APIENTRY packspu_CreateContext( const char *dpyName, GLint visual 
 
 	/* Flush buffer and get return value */
 	packspuFlush( &(pack_spu.thread[0]) );
-	if (pack_spu.thread[0].server.conn->type != CR_FILE)
+	if (pack_spu.thread[0].server.conn->type == CR_FILE)
 	{
+		/* HUMUNGOUS HACK TO MATCH SERVER NUMBERING
+		 *
+		 * The hack exists solely to make file networking work for now.  This
+		 * is totally gross, but since the server expects the numbers to start
+		 * from 5000, we need to write them out this way.  This would be
+		 * marginally less gross if the numbers (500 and 5000) were maybe
+		 * some sort of #define'd constants somewhere so the client and the
+		 * server could be aware of how each other were numbering things in
+		 * cases like file networking where they actually
+		 * care. 
+		 *
+		 * 	-Humper 
+		 *
+		 */
+		serverCtx = 5000;
+	}
+	else {
 		while (writeback)
 			crNetRecv();
-	}
 
-	if (pack_spu.swap) {
-		serverCtx = (GLint) SWAP32(serverCtx);
-	}
-	if (serverCtx < 0) {
+		if (pack_spu.swap) {
+			serverCtx = (GLint) SWAP32(serverCtx);
+		}
+		if (serverCtx < 0) {
 #ifdef CHROMIUM_THREADSAFE
-		crUnlockMutex(&_PackMutex);
+			crUnlockMutex(&_PackMutex);
 #endif
-		return -1;  /* failed */
+			crWarning("Failure in packspu_CreateContext");
+			return -1;  /* failed */
+		}
 	}
 
 	/* find an empty context slot */
