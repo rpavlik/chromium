@@ -24,6 +24,8 @@ typedef struct {
 	SPUDispatchTable self, child, super;
 
 	int render_mode;
+
+	int default_viewport;
 } feedbackSPU;
 
 extern feedbackSPU feedback_spu;

@@ -176,6 +176,9 @@ void FEEDBACKSPU_APIENTRY feedbackspu_GetBooleanv( GLenum pname, GLboolean *para
 	    pname == GL_SELECTION_BUFFER_SIZE)
 		crStateFeedbackGetBooleanv( pname, params );
 	else
+	if (pname == GL_VIEWPORT && feedback_spu.default_viewport)
+		crStateGetBooleanv( pname, params );
+	else
 		feedback_spu.super.GetBooleanv( pname, params );
 }
 
@@ -186,6 +189,9 @@ void FEEDBACKSPU_APIENTRY feedbackspu_GetDoublev( GLenum pname, GLdouble *params
 	    pname == GL_FEEDBACK_BUFFER_TYPE ||
 	    pname == GL_SELECTION_BUFFER_SIZE)
 		crStateFeedbackGetDoublev( pname, params );
+	else
+	if (pname == GL_VIEWPORT && feedback_spu.default_viewport)
+		crStateGetDoublev( pname, params );
 	else
 		feedback_spu.super.GetDoublev( pname, params );
 }
@@ -198,6 +204,9 @@ void FEEDBACKSPU_APIENTRY feedbackspu_GetFloatv( GLenum pname, GLfloat *params )
 	    pname == GL_SELECTION_BUFFER_SIZE)
 		crStateFeedbackGetFloatv( pname, params );
 	else
+	if (pname == GL_VIEWPORT && feedback_spu.default_viewport)
+		crStateGetFloatv( pname, params );
+	else
 		feedback_spu.super.GetFloatv( pname, params );
 }
 
@@ -208,6 +217,9 @@ void FEEDBACKSPU_APIENTRY feedbackspu_GetIntegerv( GLenum pname, GLint *params )
 	    pname == GL_FEEDBACK_BUFFER_TYPE ||
 	    pname == GL_SELECTION_BUFFER_SIZE)
 		crStateFeedbackGetIntegerv( pname, params );
+	else
+	if (pname == GL_VIEWPORT && feedback_spu.default_viewport)
+		crStateGetIntegerv( pname, params );
 	else
 		feedback_spu.super.GetIntegerv( pname, params );
 }
