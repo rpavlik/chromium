@@ -712,10 +712,18 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 #endif
 		if ( temp == NULL )
 		{
-			temp = (CRGmBuffer*)crAlloc( sizeof(CRGmBuffer) + gm_conn->conn->buffer_size );
-			temp->magic = CR_GM_BUFFER_RECV_MAGIC;
-			temp->kind  = CRGmMemoryUnpinned;
-			temp->pad   = 0;
+#if CR_GM_DEBUG
+		     cr_gm_debug( "crGmRecv: ran out of unpinned memory (%u left out of %u), "
+				  "copying to fresh", cr_gm.unpinned_read_pool.num, 
+				  cr_gm.unpinned_read_pool.max);
+#endif
+		     /* AdB - Need to ensure the buffer's _length_ 
+		      *      is greater than the message _size_ here...
+		      */
+		     temp = (CRGmBuffer *) crAlloc(sizeof(CRGmBuffer) + gm_max_length_for_size(gm_min_size_for_length(gm_conn->conn->buffer_size)));
+		     temp->magic = CR_GM_BUFFER_RECV_MAGIC;
+		     temp->kind  = CRGmMemoryUnpinned;
+		     temp->pad   = 0;
 		}
 		temp->len = len;
 		memcpy( temp+1, msg, len );
