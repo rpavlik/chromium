@@ -194,8 +194,8 @@ crPackSetContext
 crPackFree
 crNetworkPointerWrite
 crPackCanHoldBuffer
-crPackCanHoldOpcode
 crPackCanHoldBoundedBuffer
 crPackNumData
 crPackErrorFunction
+cr_packer_globals
 """
