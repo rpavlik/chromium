@@ -94,6 +94,9 @@ void TILESORTSPU_APIENTRY tilesortspu_Flush(void)
 void TILESORTSPU_APIENTRY tilesortspu_BarrierCreateCR(GLuint name, GLuint count)
 {
 	GET_THREAD(thread);
+
+	/* XXX check if we're compiling a display list, if so, error! */
+
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -110,6 +113,7 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierCreateCR(GLuint name, GLuint count)
 void TILESORTSPU_APIENTRY tilesortspu_BarrierDestroyCR(GLuint name)
 {
 	GET_THREAD(thread);
+	/* XXX check if we're compiling a display list, if so, error! */
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -126,6 +130,7 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierDestroyCR(GLuint name)
 void TILESORTSPU_APIENTRY tilesortspu_BarrierExecCR(GLuint name)
 {
 	GET_THREAD(thread);
+	/* XXX check if we're compiling a display list, if so, error! */
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -142,6 +147,7 @@ void TILESORTSPU_APIENTRY tilesortspu_BarrierExecCR(GLuint name)
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreCreateCR(GLuint name, GLuint count)
 {
 	GET_THREAD(thread);
+	/* XXX check if we're compiling a display list, if so, error! */
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -158,6 +164,7 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreCreateCR(GLuint name, GLuint coun
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreDestroyCR(GLuint name)
 {
 	GET_THREAD(thread);
+	/* XXX check if we're compiling a display list, if so, error! */
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -174,6 +181,7 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreDestroyCR(GLuint name)
 void TILESORTSPU_APIENTRY tilesortspu_SemaphorePCR(GLuint name)
 {
 	GET_THREAD(thread);
+	/* XXX check if we're compiling a display list, if so, error! */
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
@@ -190,6 +198,7 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphorePCR(GLuint name)
 void TILESORTSPU_APIENTRY tilesortspu_SemaphoreVCR(GLuint name)
 {
 	GET_THREAD(thread);
+	/* XXX check if we're compiling a display list, if so, error! */
 	tilesortspuFlush( thread );
 	if (tilesort_spu.swap)
 	{
