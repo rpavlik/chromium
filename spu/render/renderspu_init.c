@@ -129,10 +129,10 @@ renderSPUInit( int id, SPU *child, SPU *self,
 
 	renderspuMakeCurrent( defaultWin, 0, defaultCtx );
 
+	/* Get windowInfo for the default window */
 	windowInfo = (WindowInfo *) crHashtableSearch(render_spu.windowTable, 0);
 	CRASSERT(windowInfo);
 	windowInfo->mapPending = GL_TRUE;
-	windowInfo->visible = GL_TRUE;
 
 	/*
 	 * Get the OpenGL extension functions.
