@@ -268,7 +268,7 @@ void RENDER_APIENTRY renderspuSwapBuffers( void )
 		DrawCursor( render_spu.cursorX, render_spu.cursorY );
 
 #ifdef WINDOWS
-	return_value=render_spu.wglSwapBuffers( render_spu.device_context );
+	return_value=render_spu.ws.wglSwapBuffers( render_spu.device_context );
 	if (!return_value)
 	{
 		/* GOD DAMN IT.  The latest versions of the NVIDIA drivers
