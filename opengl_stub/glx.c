@@ -30,6 +30,11 @@ static Display *currentDisplay = NULL;
 static GLXDrawable currentDrawable = 0;
 static GLXContext currentContext = 0;
 
+
+/*
+ * This function is used to satisfy an application's calls to glXChooseVisual
+ * when the display server many not even support GLX.
+ */
 static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 {
 	int i, n;
@@ -115,6 +120,10 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 	return visual;
 }
 
+/*
+ * Query the GLX attributes for the given visual and return a bitmask of
+ * the CR_*_BIT flags which describes the visual's capbilities.
+ */
 GLuint FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
 {
 	int desiredVisual = 0;
@@ -277,6 +286,17 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 	{
 		crWarning( "glXChooseVisual: didn't request RGB visual?" );
 		return NULL;
+	}
+
+	/* try to satisfy this request with the native glXChooseVisual() */
+	if (stub.haveNativeOpenGL)
+	{
+		int foo, bar;
+		if (stub.wsInterface.glXQueryExtension(dpy, &foo, &bar)) {
+			vis = stub.wsInterface.glXChooseVisual(dpy, screen, attribList);
+			if (vis)
+				return vis;
+		}
 	}
 
 	vis = ReasonableVisual( dpy, screen );
