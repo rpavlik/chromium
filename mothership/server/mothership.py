@@ -35,6 +35,9 @@ import sys, string, types, traceback, re, threading, os, socket, select, signal,
 
 from crconfig import arch, crdir, crbindir, crlibdir
 
+# Version string
+Version = "1.6"
+
 # This controls whether debug messages are printed (1=yes, 0=no)
 DebugMode = 0
 
@@ -100,7 +103,178 @@ def SameHost( host1, host2 ):
 		if string.split(host1,".")[0] == string.split(host2,".")[0]:
 			return 1
 		else:
-			return 0;
+			return 0
+
+def __qualifyHostname__( host ):
+	"""__qualifyHostname__(host)
+	Converts host to a fully qualified domain name """
+	if string.find(host,'.')>=0:
+		return host
+	else:
+		for (prefix, domain) in __hostPrefixPairs__:
+			if string.find(host,prefix)==0:
+				return "%s%s"%(host,domain)
+		return socket.getfqdn(host)
+
+# Return true if the specified hostname fulfills the specified
+# constraint.  The constraint is of the form "test:predicate".
+# Right now we only implement a single test (a name match), but
+# there is room for others.
+reportedConstraintWarnings = { }
+def ConstraintMatches(constraint, hostname):
+	pieces = string.split(constraint, ":", 1)
+	test = pieces[0]
+	try:
+		predicate=pieces[1]
+	except:
+		predicate=None
+
+	if test == "name":
+		# The predicate is a pattern that the hostname should match.
+		return re.search(predicate, hostname)
+	elif not reportedConstraintWarnings.has_key(test):
+		print "***WARNING: Unknown constraint test '%s'" % test
+		reportedConstraintWarnings[test] = 1
+		return 0
+	else:
+		return 0
+
+# This structure will contain a list of all dynamic host indicators
+# found during definition; they will be assigned as servers come in
+# through the MatchNode() routine (following).
+dynamicHosts = { }
+
+def MatchNode(node, hostToMatch):
+
+	hostspec = node.host
+	
+	# If the node is specified dynamically, we'll use its
+	# dynamic replacement for its hostname.  Otherwise,
+	# we'll use its hostname as specified.
+	if hostspec[0:1] == "#":
+		# This node is dynamic; it may or may not have already
+		# been resolved to a hostname.  See whether it has.
+		if dynamicHosts.has_key(hostspec):
+			actualHost = dynamicHosts[hostspec]
+		else:
+			# It hasn't yet been resolved.  See whether
+			# there are any other constraints on the match.
+			# Any failed constraint means the match fails.
+			if node.config.has_key('dynamic_constraints'):
+				constraints = node.config['dynamic_constraints']
+				# A single fix-up: if the node only has a single
+				# string for a constraint, treat it as a one-item
+				# list.  In all other cases, constraints are treated
+				# as a list.
+				if isinstance(constraints, str):
+					constraints = [constraints]
+				for constraint in constraints:
+					if not ConstraintMatches(constraint, hostToMatch):
+						return 0
+
+			# If we get here, we have a full match on
+			# the unresolved dynamic host name, and a
+			# host name for it.  Resolve the host name,
+			# and report the match.
+			dynamicHosts[hostspec] = hostToMatch
+			return 1
+	else:
+		# The node is specified by name.  Use the specified name.
+		actualHost = hostspec
+
+	# This will report whether the two hosts actually match.
+	return SameHost(string.lower(actualHost), string.lower(hostToMatch))
+
+def __qualifyHostname__( host ):
+	"""__qualifyHostname__(host)
+	Converts host to a fully qualified domain name """
+	if string.find(host,'.')>=0:
+		return host
+	else:
+		for (prefix, domain) in __hostPrefixPairs__:
+			if string.find(host,prefix)==0:
+				return "%s%s"%(host,domain)
+		return socket.getfqdn(host)
+
+# Return true if the specified hostname fulfills the specified
+# constraint.  The constraint is of the form "test:predicate".
+# Right now we only implement a single test (a name match), but
+# there is room for others.
+reportedConstraintWarnings = { }
+def ConstraintMatches(constraint, hostname):
+	pieces = string.split(constraint, ":", 1)
+	test = pieces[0]
+	try:
+		predicate=pieces[1]
+	except:
+		predicate=None
+
+	if test == "name":
+		# The predicate is a pattern that the hostname should match.
+		return re.search(predicate, hostname)
+	elif not reportedConstraintWarnings.has_key(test):
+		print "***WARNING: Unknown constraint test '%s'" % test
+		reportedConstraintWarnings[test] = 1
+		return 0
+	else:
+		return 0
+
+# This structure will contain a list of all dynamic host indicators
+# found during definition; they will be assigned as servers come in
+# through the MatchNode() routine (following).
+dynamicHosts = { }
+
+def MatchNode(node, hostToMatch):
+
+	hostspec = node.host
+	
+	# If the node is specified dynamically, we'll use its
+	# dynamic replacement for its hostname.  Otherwise,
+	# we'll use its hostname as specified.
+	if hostspec[0:1] == "#":
+		# This node is dynamic; it may or may not have already
+		# been resolved to a hostname.  See whether it has.
+		if dynamicHosts.has_key(hostspec):
+			actualHost = dynamicHosts[hostspec]
+		else:
+			# It hasn't yet been resolved.  See whether
+			# there are any other constraints on the match.
+			# Any failed constraint means the match fails.
+			if node.config.has_key('dynamic_constraints'):
+				constraints = node.config['dynamic_constraints']
+				# A single fix-up: if the node only has a single
+				# string for a constraint, treat it as a one-item
+				# list.  In all other cases, constraints are treated
+				# as a list.
+				if isinstance(constraints, str):
+					constraints = [constraints]
+				for constraint in constraints:
+					if not ConstraintMatches(constraint, hostToMatch):
+						return 0
+
+			# If we get here, we have a full match on
+			# the unresolved dynamic host name, and a
+			# host name for it.  Resolve the host name,
+			# and report the match.
+			dynamicHosts[hostspec] = hostToMatch
+			return 1
+	else:
+		# The node is specified by name.  Use the specified name.
+		actualHost = hostspec
+
+	# This will report whether the two hosts actually match.
+	return SameHost(string.lower(actualHost), string.lower(hostToMatch))
+
+def __qualifyHostname__( host ):
+	"""__qualifyHostname__(host)
+	Converts host to a fully qualified domain name """
+	if string.find(host,'.')>=0:
+		return host
+	else:
+		for (prefix, domain) in __hostPrefixPairs__:
+			if string.find(host,prefix)==0:
+				return "%s%s"%(host,domain)
+		return socket.getfqdn(host)
 
 # Return true if the specified hostname fulfills the specified
 # constraint.  The constraint is of the form "test:predicate".
@@ -191,7 +365,8 @@ class SPU:
 	    Conf:	Sets a key/value list in this SPU's configuration
 	    AddServer:  Tells a client node where to find its server.
 		AddDisplay: Adds a 'display' to the list of displays (for tilesort)
-
+		TileLayoutFunction:  Registers a function to call when this SPU is
+                             asked for a new tile layout.
 	"""
 	def __init__( self, name ):
 		"""Creates a SPU with the given name."""
@@ -217,8 +392,10 @@ class SPU:
 		self.servers.append( (node, url) )
 
 	def AddServer( self, node, protocol='tcpip', port=7000 ):
-        	"""AddServer(node, protocol='tcpip', port=7000)
-                Tells a client node where to find its server."""
+		"""AddServer(node, protocol='tcpip', port=7000)
+		Associates a server with an SPU and tells it how to connect to it.
+		The SPU will typically be a pack SPU or tilesort SPU.
+		"""
 #		if protocol == 'tcpip':
 #			self.__add_server( node, "%s://%s:%d" % (protocol,node.ipaddr,port) )
 #		elif (protocol.startswith('file') or protocol.startswith('swapfile')):
@@ -227,7 +404,7 @@ class SPU:
 			# Don't tell the server "node" about this.
 		else:
 			# XXX use node.host or node.ipaddr here??? (BP)
-			self.__add_server( node, "%s://%s:%d" % (protocol,node.host,port) )
+			self.__add_server( node, "%s://%s:%d" % (protocol, node.host, port) )
 			# use this for tcp/ip : send hostname rather than ip
 			# (waiting for getaddrinfo, for probing which one is
 			#  available)
@@ -278,7 +455,7 @@ class CRNode:
 	SPUIndex = 0
 
 	def __init__( self, host ):
-	    	"""CRNode(host)
+		"""CRNode(host)
 		Creates a node on the given "host"."""
 		self.host = host
 		if (host == 'localhost'):
@@ -309,8 +486,8 @@ class CRNode:
 		self.tcscomm_accept_wait = []
 		self.tcscomm_connect_wait = []
 		self.alias = host
-		self.autostart = "" ;
-		self.autostart_argv = [] ;
+		self.autostart = ""
+		self.autostart_argv = []
 
 	def Alias( self, name ):
 		self.alias = name
@@ -321,7 +498,7 @@ class CRNode:
 		self.config['rank'] = str( rank )
 
 	def AddSPU( self, spu ):
-	    	"""AddSPU(spu)
+		"""AddSPU(spu)
 		Adds the given SPU to the front of the SPU chain."""
 		self.SPUs.append( spu )
 		spu.ID = CRNode.SPUIndex
@@ -335,7 +512,7 @@ class CRNode:
 		self.config[key] = value
 
 	def SPUDir( self, dir ):
-	    	"""SPUDir(dir)
+		"""SPUDir(dir)
 		Sets the directory that SPUs start in."""
 		self.Conf('spu_dir', dir)
 
@@ -365,7 +542,7 @@ class CRNetworkNode(CRNode):
 
 	"""
 	def __init__( self, host='localhost' ):
-	    	"""CRNetworkNode(host='localhost')
+		"""CRNetworkNode(host='localhost')
 		Creates a network node for the given "host"."""
 		CRNode.__init__(self,host)
 		self.clients = []
@@ -410,7 +587,7 @@ class CRUTServerNode(CRNode):
 	"""
 
 	def __init__( self, host='localhost' ):
-	    	"""CRUTServerNode(host='localhost')
+		"""CRUTServerNode(host='localhost')
 		Creates a network node for the given "host"."""
 		CRNode.__init__(self,host)
 		self.crutclients = []
@@ -421,8 +598,8 @@ class CRUTServerNode(CRNode):
 
 	def AddCRUTClient( self, node, protocol='tcpip', port=9000 ):
 		"""AddCRUTClient(node, protocol='tcpip', port=9000)
-                Tells a crutserver node where to find a client."""
-                self.__add_crut_client( node, "%s://%s:%d" % (protocol,node.host,port) )
+		Tells a crutserver node where to find a client."""
+		self.__add_crut_client( node, "%s://%s:%d" % (protocol,node.host,port) )
 		
 class CRUTProxyNode(CRNode):
 	"""Sub class of CRNode that defines a node in the SPU graph that
@@ -435,7 +612,7 @@ class CRUTProxyNode(CRNode):
 	"""
 
 	def __init__( self, host='localhost' ):
-	    	"""CRUTProxyNode(host='localhost')
+		"""CRUTProxyNode(host='localhost')
 		Creates a network node for the given "host"."""
 		CRNode.__init__(self,host)
 		self.crutclients = []
@@ -446,8 +623,8 @@ class CRUTProxyNode(CRNode):
 
 	def AddCRUTClient( self, node, protocol='tcpip', port=9000 ):
 		"""AddCRUTClient(node, protocol='tcpip', port=9000)
-                Tells a crutproxy node where to find a client."""
-                self.__add_crut_client( node, "%s://%s:%d" % (protocol,node.host,port) )
+		Tells a crutproxy node where to find a client."""
+		self.__add_crut_client( node, "%s://%s:%d" % (protocol,node.host,port) )
 
 	def __add_crut_server( self, node, url ):
 		self.crutservers.append( (node, url) )
@@ -469,13 +646,13 @@ class CRApplicationNode(CRNode):
 	AppID = 0
 
 	def __init__(self, host='localhost'):
-	    	"""CRApplicationNode(host='localhost')
+		"""CRApplicationNode(host='localhost')
 		Creates an application node for the given "host"."""
 		CRNode.__init__(self, host)
 		self.crutservers = []
 		self.crutclients = []
 		self.id = CRApplicationNode.AppID
-		CRApplicationNode.AppID += 1;
+		CRApplicationNode.AppID += 1
 		self.Conf('start_dir', '.')
 		self.crut_spokenfor = 0
 
@@ -498,8 +675,8 @@ class CRApplicationNode(CRNode):
 
 	def AddCRUTClient( self, node, protocol='tcpip', port=9000 ):
 		"""AddCRUTClient(node, protocol='tcpip', port=9000)
-                Tells a crutserver node where to find a client."""
-                self.__add_crut_client( node, "%s://%s:%d" % (protocol,node.host,port) )
+		Tells a crutserver node where to find a client."""
+		self.__add_crut_client( node, "%s://%s:%d" % (protocol,node.host,port) )
 
 	def __add_crut_server( self, node, url ):
 		self.crutservers.append( (node, url) )
@@ -664,9 +841,8 @@ class CR:
 	    tileReply: 		Packages up a tile message for socket communication.
 	    ClientDisconnect: 	Disconnects from a client
 	"""
-
 	startupCallbacks = []
-
+	
 	def __init__( self ):
 		self.nodes = []
 		self.all_sockets = []
@@ -676,13 +852,13 @@ class CR:
 		self.conn_id = 1
 		self.enable_autostart = 1
 		self.config = {"MTU" : 1024 * 1024,
-			       "low_context" : 32,
-			       "high_context" : 35,
-			       "low_node" : "iam0",
-			       "high_node" : "iamvis20",
-			       "comm_key": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-				   "autostart_branches": 0,
-				   "autostart_max_nodes_per_thread": 1}
+				"low_context" : 32,
+				"high_context" : 35,
+				"low_node" : "iam0",
+				"high_node" : "iamvis20",
+				"comm_key": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				"autostart_branches": 0,
+				"autostart_max_nodes_per_thread": 1}
 		# This is set only on daughterships
 		self.mother = None
 
@@ -712,8 +888,8 @@ class CR:
 	def ContextRange( self, low_context, high_context ):
 		"""ContextRange( low_context, high_context )
 		Sets the context range to use with Elan."""
-		self.config["low_context"]  = low_context;
-		self.config["high_context"] = high_context;
+		self.config["low_context"]  = low_context
+		self.config["high_context"] = high_context
 
 	def NodeRange( self, low_node, high_node ):
 		"""NodeRange( low_node, high_node )
@@ -721,11 +897,29 @@ class CR:
 		period = low_node.find( "." )
 		if period != -1:
 			low_node = low_node[:period]
-		self.config["low_node"]  = low_node;
+		self.config["low_node"]  = low_node
 		period = high_node.find( "." )
 		if period != -1:
 			high_node = high_node[:period]
-		self.config["high_node"] = high_node;
+		self.config["high_node"] = high_node
+
+	def CommKey( self, byteList ):
+		"""CommKey( [byte0, byte1, ..., byte15] )
+		Sets the user key to use with Elan."""
+		self.config["comm_key"]= byteList
+		CRDebug("Setting comm key to %s"%str(byteList))
+
+	def CommKey( self, byteList ):
+		"""CommKey( [byte0, byte1, ..., byte15] )
+		Sets the user key to use with Elan."""
+		self.config["comm_key"]= byteList
+		CRDebug("Setting comm key to %s"%str(byteList))
+
+	def CommKey( self, byteList ):
+		"""CommKey( [byte0, byte1, ..., byte15] )
+		Sets the user key to use with Elan."""
+		self.config["comm_key"]= byteList
+		CRDebug("Setting comm key to %s"%str(byteList))
 
 	def CommKey( self, byteList ):
 		"""CommKey( [byte0, byte1, ..., byte15] )
@@ -745,12 +939,6 @@ class CR:
 		between SPUs."""
 		self.Conf("MTU", mtu)
 
-	# XXX obsolete; use Conf() instead
-	def SetParam( self, key, value ):
-		print "NOTICE: cr.SetParam() is obsolete; use cr.Conf() instead."
-		self.Conf(key, value)
-
-	# Added by BrianP
 	def do_setparam( self, sock, args ):
 		"""Set a global mothership parameter value (via C)"""
 		params = args.split( " ", 1 )
@@ -760,7 +948,6 @@ class CR:
 		sock.Success( "OK" )
 		return
 		
-	# Added by BrianP
 	def do_getparam( self, sock, args ):
 		"""Get a global mothership parameter value (via C)"""
 		key = args
@@ -776,9 +963,9 @@ class CR:
 		Starts the ball rolling.
 		This starts the mothership's event loop."""
 		if self.mother:
-			CRInfo("This is Chromium Daughtership, Version 1.5")
+			CRInfo("This is Chromium Daughtership, Version " + Version)
 		else:
-			CRInfo("This is Chromium, Version 1.5")
+			CRInfo("This is Chromium, Version " + Version)
 		try:
 			if PORT == -1:
 				# Port was not specified.  Get it from
@@ -805,7 +992,7 @@ class CR:
 				try:
 					s = socket.socket( af, socktype )
 				except:
-					CRDebug( "Couldn't create socket of family %u, trying another one" % af );
+					CRDebug( "Couldn't create socket of family %u, trying another one" % af )
 					continue
 
 				try:
@@ -817,16 +1004,16 @@ class CR:
 				try:
 					s.bind( sa )
 				except:
-					CRDebug( "Couldn't bind to port %d" % PORT );
+					CRDebug( "Couldn't bind to port %d" % PORT )
 					continue
 
 				try:
 					s.listen(100)
 				except:
-					CRDebug( "Couldn't listen!" );
+					CRDebug( "Couldn't listen!" )
 					continue
 
-				#CRDebug( "Mothership ready" );
+				#CRDebug( "Mothership ready" )
 				self.all_sockets.append(s)
 
 				# Call any callbacks which may have been
@@ -997,9 +1184,9 @@ class CR:
 			my_endianness = int(my_endianness_str)
 			for server_sock in self.wrappers.values():
 				if server_sock.tcscomm_accept_wait != []:
-					(server_hostname, server_rank, server_endianness) = server_sock.tcscomm_accept_wait[0];
+					(server_hostname, server_rank, server_endianness) = server_sock.tcscomm_accept_wait[0]
 					if SameHost(server_hostname, remote_hostname) and server_rank == remote_rank:
-						server_sock.tcscomm_accept_wait.pop(0);
+						server_sock.tcscomm_accept_wait.pop(0)
 						sock.Success( "%d %d" % (self.conn_id, server_endianness) )
 						server_sock.Success( "%d %s %d %d" % (self.conn_id, my_hostname, my_rank, my_endianness) )
 						self.conn_id += 1
@@ -1023,7 +1210,7 @@ class CR:
 					(client_hostname, client_port, client_endianness) = client_sock.tcpip_connect_wait
 					if SameHost(client_hostname, hostname) and client_port == port:
 						sock.Success( "%d" % self.conn_id )
-						client_sock.Success( "%d %d" % (self.conn_id, endianness )  )
+						client_sock.Success( "%d %d" % (self.conn_id, endianness ) )
 						self.conn_id += 1
 						return
 					else:
@@ -1074,7 +1261,7 @@ class CR:
 			endianness = int(endianness_str)
 			for client_sock in self.wrappers.values():
 				if client_sock.teac_connect_wait != []:
-					(client_hostname, client_rank, client_endianness, server_hostname, server_rank) = client_sock.teac_connect_wait[0];
+					(client_hostname, client_rank, client_endianness, server_hostname, server_rank) = client_sock.teac_connect_wait[0]
 					if SameHost(server_hostname, hostname) and server_rank == rank:
 						client_sock.teac_connect_wait.pop(0)
 						sock.Success( "%d %s %d %d" % (self.conn_id, client_hostname, client_rank, client_endianness) )
@@ -1170,8 +1357,8 @@ class CR:
 					spuchain += " %d %s" % (spu.ID, spu.name)
 				sock.Success( spuchain )
 				return
-                # Wasn't able to find the server.  Figure out what ones
-                # were expected.
+		# Wasn't able to find the server.  Figure out what ones
+		# were expected.
 		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of server host %s.  Expected one of: %s" % (args, nodenames))
 
 	def do_opengldll( self, sock, args ):
@@ -1216,19 +1403,17 @@ class CR:
 			return
 		spu = allSPUs[sock.SPUid]
 		if not spu.config.has_key( args ):
-                        # Okay, there's no specific parameter for the SPU.
-                        # Try the global SPU configurations.
+			# Okay, there's no specific parameter for the SPU.
+			# Try the global SPU configurations.
 			for (regex, key, values) in self.allSPUConf:
 				if args == key and re.search( regex, spu.name ) != -1:
 					response = values
 					break
 			else:
 				sock.Failure( SockWrapper.UNKNOWNPARAM,
-                                            "SPU %d (%s) doesn't have param %s"
-                                            % (sock.SPUid,
-                                               allSPUs[sock.SPUid].name,
-                                               args) )
-                                return
+							  "SPU %d (%s) doesn't have param %s"
+							  % (sock.SPUid, allSPUs[sock.SPUid].name, args) )
+				return
 		else:
 			response = spu.config[args]
 		CRDebug("responding with args = " + `response`)
@@ -1272,7 +1457,7 @@ class CR:
 
 	def do_servers( self, sock, args ):
 		"""do_servers(sock, args)
-		Sends the list of servers."""
+		Returns list of servers attached to a (tilesort/pack) SPU."""
 		if sock.SPUid == -1:
 			sock.Failure( SockWrapper.UNKNOWNSPU, "You can't ask for servers without telling me what SPU id you are!" )
 			return
@@ -1295,7 +1480,7 @@ class CR:
 		sock.Success( servers )
 
 	def do_crutservers( self, sock, args ):
-       		if len(sock.node.crutservers) == 0:
+		if len(sock.node.crutservers) == 0:
 			sock.Failure( SockWrapper.UNKNOWNPARAM, "CRUTClient %d doesn't have servers" % (sock.SPUid) )
 			return
 
@@ -1348,7 +1533,10 @@ class CR:
 
 	def do_tiles( self, sock, args ):
 		"""do_tiles(sock, args)
-		Sends the defined tiles for a SPU."""
+		Returns the list of tiles associated with a SPU's Nth server."""
+		# Note, an SPU asks for the tiles, but the tiles are really associated
+		# with the servers that the (tilesort) SPU will talk to.  The arg to
+		# this query indicates which server to return the tiles for.
 		if sock.SPUid == -1:
 			sock.Failure( SockWrapper.UNKNOWNSPU, "You can't ask for tiles without telling me what SPU id you are!" )
 			return
@@ -1370,6 +1558,23 @@ class CR:
 			return
 		self.tileReply( sock, sock.node )
 
+	def do_server_param( self, sock, args ):
+		"""Return a server parameter to the calling SPU."""
+		if sock.SPUid == -1:
+			sock.Failure( SockWrapper.UNKNOWNSPU, "You can't ask for SPU parameters without telling me what SPU id you are!" )
+			return
+		spu = allSPUs[sock.SPUid]
+		args = string.split(args)
+		server_num = int(args[0])
+		param = args[1]
+		if server_num < 0 or server_num >= len(spu.servers):
+			sock.Failure( SockWrapper.UNKNOWNSERVER, "SPU %d doesn't have a server numbered %d" % (sock.SPUid, server_num) )
+		(node, url) = spu.servers[server_num]
+		if node.config.has_key(param):
+			sock.Success( node.config[param] )
+		else:
+			sock.Success( "" )
+
 	def tileReply( self, sock, node ):
 		"""tileReply(sock, node)
 		Packages up a tile message for socket communication.
@@ -1379,7 +1584,7 @@ class CR:
 			return
 		tiles = "%d " % len(node.tiles)
 		for i in range(len(node.tiles)):
-			tile = node.tiles[i]
+			tile = node.tiles[i]  # tile is (x, y, w, h)
 			tiles += "%d %d %d %d" % tile
 			if i != len(node.tiles) - 1:
 				tiles += ","
@@ -1411,7 +1616,7 @@ class CR:
 	def do_displays( self, sock, args ):
 		"""do_displays(sock, args)
 		Send the displays associated with a SPU"""
-		n_displays = 0;
+		n_displays = 0
 		for spu in range(len(allSPUs)):
 			n_displays += len(allSPUs[spu].displays)
 		displays = "%d " % n_displays
@@ -1497,11 +1702,11 @@ class CR:
 			cb(self)
 		spawner = CRSpawner( self.nodes )
 		spawner.start()
-		sock.Success( "Server Reset" );
+		sock.Success( "Server Reset" )
 
 	def do_rank( self, sock, args ):
 		"""do_rank( sock, args )
-		Retrieves the node's rank and sends it on the socket."""
+		Retrieves the node's rank and sends it on the socket (for Quadrics)."""
 		if sock.node == None:
 			sock.Failure( SockWrapper.UNKNOWNSERVER, "Identify yourself!" )
 			return
@@ -1778,7 +1983,7 @@ class CRDaughtership:
 			try:
 				motherSocket = socket.socket( af, socktype, proto )
 			except:
-				CRDebug( "Couldn't create socket of family %u, trying another one" % af );
+				CRDebug( "Couldn't create socket of family %u, trying another one" % af )
 				motherSocket = None
 				continue
 
@@ -1786,7 +1991,7 @@ class CRDaughtership:
 				motherSocket.connect( sa )
 			except:
 				s.close()
-				CRDebug( "Couldn't connect to mothership at %s:%d" % (motherHost, motherPort));
+				CRDebug( "Couldn't connect to mothership at %s:%d" % (motherHost, motherPort))
 				motherSocket = None
 				continue
 

@@ -332,7 +332,7 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 	visual->dpy = XOpenDisplay(dpyName);  
 	if (!visual->dpy)
 	{
-		crWarning( "Couldn't initialize the visual because visual->dpy was NULL" );
+		crWarning( "Couldn't open X display named '%s'", dpyName );
 		return GL_FALSE;
 	}
 
@@ -380,6 +380,62 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 
 	return GL_TRUE;
 }
+
+
+/*
+ * Add a GLX window to a swap group for inter-machine SwapBuffer
+ * synchronization.
+ * Only supported on NVIDIA Quadro 3000G hardware.
+ */
+static void
+JoinSwapGroup(Display *dpy, int screen, Window window,
+							GLuint group, GLuint barrier)
+{
+	GLuint maxGroups, maxBarriers;
+	const char *ext;
+	Bool b;
+
+	/*
+	 * XXX maybe query glXGetClientString() instead???
+	 */
+	ext = render_spu.ws.glXQueryExtensionsString(dpy, screen);
+
+	if (!crStrstr(ext, "GLX_NV_swap_group") ||
+			!render_spu.ws.glXQueryMaxSwapGroupsNV ||
+			!render_spu.ws.glXJoinSwapGroupNV ||
+			!render_spu.ws.glXBindSwapBarrierNV) {
+		crWarning("Render SPU nv_swap_group is set but GLX_NV_swap_group is not supported on this system!");
+		return;
+	}
+
+	b = render_spu.ws.glXQueryMaxSwapGroupsNV(dpy, screen,
+																						&maxGroups, &maxBarriers);
+	if (!b)
+		crWarning("Render SPU call to glXQueryMaxSwapGroupsNV() failed!");
+
+	if (group >= maxGroups) {
+		crWarning("Render SPU nv_swap_group too large (%d > %d)",
+						group, (int) maxGroups);
+		return;
+	}
+
+	/* add this window to the swap group */
+	b = render_spu.ws.glXJoinSwapGroupNV(dpy, window, group);
+	if (!b) {
+		crWarning("Render SPU call to glXJoinSwapGroupNV() failed!");
+		return;
+	}
+
+	/* ... and bind window to barrier of same ID */
+	b = render_spu.ws.glXBindSwapBarrierNV(dpy, group, barrier);
+	if (!b) {
+		crWarning("Render SPU call to glXBindSwapBarrierNV() failed!");
+		return;
+	}
+
+	crDebug("NOTE: Render SPU has joined swap group %d\n", group);
+}
+
 
 
 GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
@@ -612,6 +668,18 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 							(char *) window->window );
 	}
 	window->visible = showIt;
+
+	if ((window->visual->visAttribs & CR_DOUBLE_BIT) && render_spu.nvSwapGroup) {
+		/* NOTE:
+		 * If this SPU creates N windows we don't want to gang the N windows
+		 * together!
+		 * By adding the window ID to the nvSwapGroup ID we can be sure each
+		 * app window is in a separate swap group while all the back-end windows
+		 * which form a mural are in the same swap group.
+		 */
+		GLuint group = render_spu.nvSwapGroup + window->id;
+		JoinSwapGroup(dpy, visual->visual->screen, window->window, group, group);
+	}
 
 	/*
 	 * End GLX code
@@ -942,6 +1010,8 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 {
 	CRASSERT(w);
+
+
 
 	/* render_to_app_window:
 	 * w->nativeWindow will only be non-zero if the

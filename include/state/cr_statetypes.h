@@ -9,6 +9,7 @@
 
 #include "chromium.h"
 #include "cr_bits.h"
+#include "cr_matrix.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,27 +38,6 @@ typedef struct {
 typedef struct {
 	GLint x1, x2, y1, y2;
 } CRrecti;
-
-typedef struct {
-	GLdefault m00, m01, m02, m03;
-	GLdefault m10, m11, m12, m13;
-	GLdefault m20, m21, m22, m23;
-	GLdefault m30, m31, m32, m33;
-} CRmatrix;
-
-typedef struct {
-	GLfloat m00, m01, m02, m03;
-	GLfloat m10, m11, m12, m13;
-	GLfloat m20, m21, m22, m23;
-	GLfloat m30, m31, m32, m33;
-} CRmatrixf;
-
-typedef struct {
-	GLdouble m00, m01, m02, m03;
-	GLdouble m10, m11, m12, m13;
-	GLdouble m20, m21, m22, m23;
-	GLdouble m30, m31, m32, m33;
-} CRmatrixd;
 
 #define VECTOR(type, name) typedef struct { type x,y,z,w; } name
 #define COLOR(type, name) typedef struct { type r,g,b,a; } name

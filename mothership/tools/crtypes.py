@@ -34,8 +34,8 @@ class Option:
 		self.Description = description
 		self.Type = type  # "BOOL", "INT", "FLOAT", "STRING", "ENUM" or "LABEL"
 		self.Count = count
-		self.Default = default  # vector[count]
-		self.Mins = mins        # vector[count] (except for ENUM)
+		self.Default = default  # vector[count] (if ENUM, count=1)
+		self.Mins = mins        # vector[count] (if ENUM, list of all values)
 		self.Maxs = maxs        # vector[count]
 		self.Value = default    # vector[count]
 
@@ -697,7 +697,12 @@ class NetworkNode(Node):
 			Option("debug_barriers", "Debug/Log Barrier/Semaphore Calls", "BOOL", 1, [0], [], []),
 			Option("shared_display_lists", "Share Display Lists among all clients", "BOOL", 1, [1], [], []),
 			Option("shared_texture_objects", "Share Texture Objects among all clients", "BOOL", 1, [1], [], []),
-			Option("shared_programs", "Share Program IDs among all clients", "BOOL", 1, [1], [], [])
+			Option("shared_programs", "Share Program IDs among all clients", "BOOL", 1, [1], [], []),
+			Option("use_dmx", "Use DMX", "BOOL", 1, [0], [], []),
+			Option("vertprog_projection_param", "Vertex Program Projection Matrix Register Start or Name", "STRING", 1, [""], [], []),
+			Option("stereo_view", "Stereo View (Eyes)", "ENUM", 1, ['Both'], ['Both', 'Left', 'Right'], []),
+			Option("view_matrix", "Viewing Matrix", "FLOAT", 16, [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1], [], []),
+			Option("projection_matrix", "Projection Matrix", "FLOAT", 16, [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1], [], [])
 			] )
 
 	def Clone(self):

@@ -125,7 +125,7 @@ for func_name in keys:
 		print 'void SERVER_DISPATCH_APIENTRY crServerDispatch%s( %s )' % ( func_name, apiutil.MakeDeclarationString(params) )
 		print '{'
 		print '\tcr_server.head_spu->dispatch_table.%s( %s );' % (func_name, apiutil.MakeCallString(params) )
-		print "\tcr_server.current.%s.%s%s = cr_unpackData;" % (name,type,array)
+		print "\tcr_server.current.c.%s.%s%s = cr_unpackData;" % (name,type,array)
 		print '}\n'	
 
 print """

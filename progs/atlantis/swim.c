@@ -163,7 +163,7 @@ SharkMiss(int i)
     float avoid, thetal;
     float X, Y, Z, R;
 
-    for (j = 0; j < NUM_SHARKS; j++) {
+    for (j = 0; j < NumSharks; j++) {
         if (j != i) {
             X = sharks[j].x - sharks[i].x;
             Y = sharks[j].y - sharks[i].y;

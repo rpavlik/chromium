@@ -27,25 +27,46 @@ static int TILESORTSPU_APIENTRY tilesortspu_nop(void)
 }
 
 
-#define CHANGE( name, func ) crSPUChangeInterface( t, (void *)tilesort_spu.self.name, (void *)((SPUGenericFunction) func) )
-#define CHANGESWAP( name, swapfunc, regfunc ) crSPUChangeInterface( t, (void *)tilesort_spu.self.name, (void *)((SPUGenericFunction) (tilesort_spu.swap ? swapfunc: regfunc )) )
+#define CHANGE( name, func ) crSPUChangeInterface( (void *)&(tilesort_spu.self), (void *)tilesort_spu.self.name, (void *)((SPUGenericFunction) func) )
+#define CHANGESWAP( name, swapfunc, regfunc ) crSPUChangeInterface( (void *)&(tilesort_spu.self), (void *)tilesort_spu.self.name, (void *)((SPUGenericFunction) (tilesort_spu.swap ? swapfunc: regfunc )) )
+
 """
 
 
-print "void tilesortspuLoadSortTable(SPUDispatchTable *t)"
+print "void tilesortspuLoadListTable(void)"
 print "{"
 # XXX NOTE: this should basically be identical to the tilesort.py code.
 for func_name in keys:
-	if apiutil.FindSpecial( "tilesort_replay", func_name ):
-		print '\tt->%s = tilesortspu_%s;' % (func_name, func_name)
-	elif apiutil.FindSpecial( "tilesort_unimplemented", func_name ):
-		print '\tt->%s = (%sFunc_t) tilesortspu_nop;' % (func_name, func_name)
-	elif apiutil.FindSpecial( "tilesort_state", func_name ):
-		print '\tt->%s = (%sFunc_t) crState%s;' % (func_name, func_name, func_name)
+	if apiutil.FindSpecial( "tilesort_unimplemented", func_name ):
+		continue
+	elif apiutil.FindSpecial( "tilesort_list", func_name ):
+		continue
 	elif apiutil.FindSpecial( "tilesort_bbox", func_name ):
-		print '\tt->%s = (%sFunc_t)(tilesort_spu.swap ? crPack%sBBOX_COUNTSWAP : crPack%sBBOX_COUNT);' % (func_name, func_name, func_name, func_name)
+                print '\tCHANGESWAP( %s, crPack%sBBOX_COUNTSWAP, crPack%sBBOX_COUNT );' % (func_name, func_name, func_name)
 	else:
-		print '\tt->%s = (%sFunc_t)(tilesort_spu.swap ? crPack%sSWAP : crPack%s);' % (func_name, func_name, func_name, func_name)
+		 print '\tCHANGESWAP( %s, crPack%sSWAP, crPack%s );' % (func_name, func_name, func_name )
+
+print "}"
+
+
+print ""
+print ""
+print "void tilesortspuLoadSortTable(void)"
+print "{"
+# XXX NOTE: this should basically be identical to the tilesort.py code.
+for func_name in keys:
+	if apiutil.FindSpecial( "tilesort_list", func_name ):
+		continue
+	if apiutil.FindSpecial( "tilesort", func_name ):
+		print '\tCHANGE( %s, tilesortspu_%s );' % (func_name, func_name )
+	elif apiutil.FindSpecial( "tilesort_unimplemented", func_name ):
+		print '\tCHANGE( %s, tilesortspu_%s );' % (func_name, func_name )
+	elif apiutil.FindSpecial( "tilesort_state", func_name ):
+		print '\tCHANGE( %s, crState%s );' % (func_name, func_name )
+	elif apiutil.FindSpecial( "tilesort_bbox", func_name ):
+                print '\tCHANGESWAP( %s, crPack%sBBOX_COUNTSWAP, crPack%sBBOX_COUNT );' % (func_name, func_name, func_name)
+	else:
+		 print '\tCHANGESWAP( %s, crPack%sSWAP, crPack%s );' % (func_name, func_name, func_name )
 
 print "}"
 

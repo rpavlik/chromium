@@ -11,10 +11,10 @@
 
 
 static const CRmatrix identity_matrix = { 
-	(GLdefault) 1.0, (GLdefault) 0.0, (GLdefault) 0.0, (GLdefault) 0.0,
-	(GLdefault) 0.0, (GLdefault) 1.0, (GLdefault) 0.0, (GLdefault) 0.0,
-	(GLdefault) 0.0, (GLdefault) 0.0, (GLdefault) 1.0, (GLdefault) 0.0,
-	(GLdefault) 0.0, (GLdefault) 0.0, (GLdefault) 0.0, (GLdefault) 1.0
+	1.0, 0.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0
 };
 
 
@@ -229,13 +229,30 @@ crServerSetOutputBounds( const CRMuralInfo *mural, int extNum )
 void
 crServerApplyBaseProjection(const CRmatrix *baseProj)
 {
-	const CRmatrix *projMatrix = cr_server.curClient->currentCtx->transform.projectionStack.top;
+	const CRmatrix *projMatrix;
+	if (cr_server.projectionOverride)
+		projMatrix = &cr_server.projectionMatrix;
+	else
+		projMatrix = cr_server.curClient->currentCtx->transform.projectionStack.top;
 
 	cr_server.head_spu->dispatch_table.PushAttrib( GL_TRANSFORM_BIT );
 	cr_server.head_spu->dispatch_table.MatrixMode( GL_PROJECTION );
 	cr_server.head_spu->dispatch_table.LoadMatrixf( (const GLfloat *) baseProj );
 	cr_server.head_spu->dispatch_table.MultMatrixf( cr_server.alignment_matrix );
 	cr_server.head_spu->dispatch_table.MultMatrixf( (const GLfloat *) projMatrix );
+	cr_server.head_spu->dispatch_table.PopAttrib();
+}
+
+
+void
+crServerApplyViewMatrix(const CRmatrix *view)
+{
+	const CRmatrix *modelview = cr_server.curClient->currentCtx->transform.modelViewStack.top;
+
+	cr_server.head_spu->dispatch_table.PushAttrib( GL_TRANSFORM_BIT );
+	cr_server.head_spu->dispatch_table.MatrixMode( GL_MODELVIEW );
+	cr_server.head_spu->dispatch_table.LoadMatrixf( (const GLfloat *) view );
+	cr_server.head_spu->dispatch_table.MultMatrixf( (const GLfloat *) modelview );
 	cr_server.head_spu->dispatch_table.PopAttrib();
 }
 

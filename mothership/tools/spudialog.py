@@ -14,7 +14,6 @@ the caller.  Options can be boolean, integer, float or string.
 import string
 from wxPython.wx import *
 
-
 def _BackslashChars(s):
 	"""Return the string with tab characters replaced by \t, etc."""
 	# XXX do same thing for newlines, etc?
@@ -27,6 +26,13 @@ def _UnBackslashChars(s):
 
 
 class SPUDialog(wxDialog):
+	# This limit/threshold value determines when we'll use a single string
+	# entry widget instead of N individual widgets.  This was added for the
+	# sake of 16-element float options (such as matrices).  Without this,
+	# we'd have 16 text entry boxes for the option - yuck.  Now, those 16
+	# values would be displayed/edited as a single string (enclosed in []'s)
+	WidgetLimit = 4
+
 	def __init__(self, parent, id, title, optionList=None):
 		"""parent, id, and title are the standard wxDialog parameters.
 		optionList is an OptionList object that describes the controls to put
@@ -92,13 +98,22 @@ class SPUDialog(wxDialog):
 					labString = opt.Description + ": "
 					label = wxStaticText(parent=self, id=-1, label=labString)
 					rowSizer.Add(label, flag=wxALIGN_CENTRE_VERTICAL)
-					for j in range(0, opt.Count):
+					if opt.Count > self.WidgetLimit:
+						# use one TextCtrl to enter list of values
 						ctrl = wxTextCtrl(parent=self, id=100+i,
-										  size=wxSize(70,25),
-										  value=str(opt.Value[j]))
+										  size=wxSize(300,25),
+										  value=str(opt.Value))
 						rowSizer.Add(ctrl)
 						controls.append(ctrl)
 						i += 1
+					else:
+						for j in range(0, opt.Count):
+							ctrl = wxTextCtrl(parent=self, id=100+i,
+											  size=wxSize(70,25),
+											  value=str(opt.Value[j]))
+							rowSizer.Add(ctrl)
+							controls.append(ctrl)
+							i += 1
 					innerSizer.Add(rowSizer, flag=wxALL, border=4)
 				elif opt.Type == "STRING":
 					rowSizer = wxBoxSizer(wxHORIZONTAL)
@@ -186,7 +201,9 @@ class SPUDialog(wxDialog):
 		assert name in self.__Controls.keys()
 		ctrls = self.__Controls[name]
 		if ctrls:
-			count = len(ctrls)
+			#count = len(ctrls)
+			count = self.__OptionList.GetCount(name)
+			type = self.__OptionList.GetType(name)
 			#print "name = %s  newValue = %s" % (name, str(newValue))
 			if len(newValue) != count:
 				print "bad newValue %s = --%s--" % (name, newValue)
@@ -194,18 +211,29 @@ class SPUDialog(wxDialog):
 			assert len(newValue) == count
 			if (isinstance(ctrls[0], wxSpinCtrl) or
 				isinstance(ctrls[0], wxCheckBox)):
+				assert len(ctrls) == count
 				for i in range(count):
 					ival = int(newValue[i])
 					ctrls[i].SetValue(ival)
 			elif isinstance(ctrls[0], wxChoice):
 				assert len(ctrls) == 1  # ENUM limitation, for now
+				assert type == "ENUM"
 				ctrls[0].SetStringSelection( newValue[0] )
 			else:
 				# must be (a) text or float box(es)
 				assert isinstance(ctrls[0], wxTextCtrl)
-				for i in range(count):
-					s = _BackslashChars(str(newValue[i]))
-					ctrls[i].SetValue(s)
+				assert type == "STRING" or type == "FLOAT"
+				count = self.__OptionList.GetCount(name)
+				if count > self.WidgetLimit:
+					# Single string box for N values
+					assert len(ctrls) == 1
+					ctrls[0].SetValue(str(newValue))
+					pass
+				else:
+					assert len(ctrls) == count
+					for i in range(count):
+						s = _BackslashChars(str(newValue[i]))
+						ctrls[i].SetValue(s)
 
 	# name is an SPU option like bbox_line_width
 	def GetValue(self, name):
@@ -214,20 +242,38 @@ class SPUDialog(wxDialog):
 		ctrls = self.__Controls[name]
 		type = self.__OptionList.GetType(name)
 		if ctrls:
-			result = []
-			count = len(ctrls)
-			for i in range(count):
-				if type == "ENUM":
+			if type == "ENUM":
+				result = []
+				count = len(ctrls)
+				assert count == self.__OptionList.GetCount(name)
+				for i in range(count):
 					result.append(ctrls[i].GetStringSelection())
-				elif type == "STRING":
+			elif type == "STRING":
+				result = []
+				count = len(ctrls)
+				assert count == self.__OptionList.GetCount(name)
+				for i in range(count):
 					s = ctrls[i].GetValue()
 					s = _UnBackslashChars(s)
 					result.append(s)
-				elif type == "FLOAT":
-					result.append(float(ctrls[i].GetValue()))
+			elif type == "FLOAT":
+				if self.__OptionList.GetCount(name) > self.WidgetLimit:
+					assert len(ctrls) == 1
+					str = ctrls[0].GetValue()
+					result = eval(str)
 				else:
-					assert type == "INT" or type == "BOOL"
+					assert self.__OptionList.GetCount(name) == len(ctrls)
+					result = []
+					count = len(ctrls)
+					for i in range(count):
+						result.append(float(ctrls[i].GetValue()))
+			else:
+				assert type == "INT" or type == "BOOL"
+				result = []
+				count = len(ctrls)
+				for i in range(count):
 					result.append(int(ctrls[i].GetValue()))
+
 			return result
 		else:
 			return [] # empty list

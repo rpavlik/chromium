@@ -13,7 +13,7 @@
 #include "cr_spu.h"
 
 static void
-__setDefaults(void)
+setDefaults(void)
 {
 	tilesort_spu.numThreads = 1;
 	tilesort_spu.num_servers = 0;
@@ -78,6 +78,12 @@ set_lazy_send_dlists(TileSortSPU *tilesort_spu, const char *response)
 }
 
 static void
+list_track(TileSortSPU *tilesort_spu, const char *response)
+{
+	sscanf(response, "%d", &(tilesort_spu->listTrack));
+}
+
+static void
 set_fake_window_dims(TileSortSPU *tilesort_spu, const char *response)
 {
 	float w = 0.0, h = 0.0;
@@ -120,6 +126,8 @@ set_bucket_mode(TileSortSPU *tilesort_spu, const char *response)
 		tilesort_spu->defaultBucketMode = RANDOM;
 	else if (crStrcmp(response, "Warped Grid") == 0)
 		tilesort_spu->defaultBucketMode = WARPED_GRID;
+	else if (crStrcmp(response, "Frustum") == 0)
+		tilesort_spu->defaultBucketMode = FRUSTUM;
 	else
 	{
 		crWarning("Bad value (%s) for tilesort bucket_mode", response);
@@ -146,18 +154,181 @@ scale_images(TileSortSPU *tilesort_spu, const char *response)
 	sscanf(response, "%d", &(tilesort_spu->scaleImages));
 }
 
+static void
+set_stereomode(TileSortSPU *server, const char *response)
+{
+	char buffer[32], mode[16], *bptr;
+	const char *rptr;
+
+	if (response) {
+		for (rptr = response, bptr = buffer; *rptr; rptr++) {
+			if (*rptr != ' ') {
+				*bptr = *rptr;
+				bptr++;
+			}
+		}
+		*bptr = '\0';
+		sscanf(buffer, "%s", mode);
+		if (!crStrcmp(mode, "None"))
+			server->stereoMode = NONE;
+		else if (!crStrcmp(mode, "Passive"))
+			server->stereoMode = PASSIVE;
+		else if (!crStrcmp(mode, "CrystalEyes"))
+			server->stereoMode = CRYSTAL;
+		else if (!crStrcmp(mode, "Anaglyph"))
+			server->stereoMode = ANAGLYPH;
+		else if (!crStrcmp(mode, "SideBySide"))
+			server->stereoMode = SIDE_BY_SIDE;
+		else {
+			crWarning
+				("stereo_mode '%s' is not supported.  Currently supported modes are 'None', 'Passive', 'CrystalEyes', 'Anaglyph' and 'SideBySide'.\n", 
+				 mode);
+			server->stereoMode = NONE;
+		}
+	}
+}
+
+static void
+set_force_quad_buffering(TileSortSPU *tilesort_spu, const char *response)
+{
+	sscanf(response, "%d", &(tilesort_spu->forceQuadBuffering));
+}
+
+void
+tilesortspuSetAnaglyphMask(TileSortSPU *tilesort_spu)
+{
+	/* init left mask */
+	tilesort_spu->anaglyphMask[0][0] = GL_FALSE;
+	tilesort_spu->anaglyphMask[0][1] = GL_FALSE;
+	tilesort_spu->anaglyphMask[0][2] = GL_FALSE;
+	tilesort_spu->anaglyphMask[0][3] = GL_TRUE;
+	/* init right mask */
+	tilesort_spu->anaglyphMask[1][0] = GL_FALSE;
+	tilesort_spu->anaglyphMask[1][1] = GL_FALSE;
+	tilesort_spu->anaglyphMask[1][2] = GL_FALSE;
+	tilesort_spu->anaglyphMask[1][3] = GL_TRUE;
+	
+	switch (tilesort_spu->glassesType) {
+	case RED_BLUE:
+		/* left */
+		tilesort_spu->anaglyphMask[0][0] = GL_TRUE;
+		/* right */
+		tilesort_spu->anaglyphMask[1][2] = GL_TRUE;
+		break;
+	case RED_GREEN:
+		/* left */
+		tilesort_spu->anaglyphMask[0][0] = GL_TRUE;
+		/* right */
+		tilesort_spu->anaglyphMask[1][1] = GL_TRUE;
+		break;
+	case RED_CYAN:
+		/* left */
+		tilesort_spu->anaglyphMask[0][0] = GL_TRUE;
+		/* right */
+		tilesort_spu->anaglyphMask[1][1] = GL_TRUE;
+		tilesort_spu->anaglyphMask[1][2] = GL_TRUE;
+		break;
+	case BLUE_RED:
+		/* left */
+		tilesort_spu->anaglyphMask[0][2] = GL_TRUE;
+		/* right */
+		tilesort_spu->anaglyphMask[1][0] = GL_TRUE;
+		break;
+	case GREEN_RED:
+		/* left */
+		tilesort_spu->anaglyphMask[0][1] = GL_TRUE;
+		/* right */
+		tilesort_spu->anaglyphMask[1][0] = GL_TRUE;
+		break;
+	case CYAN_RED:
+		/* left */
+		tilesort_spu->anaglyphMask[0][1] = GL_TRUE;
+		tilesort_spu->anaglyphMask[0][2] = GL_TRUE;
+		/* right */
+		tilesort_spu->anaglyphMask[1][0] = GL_TRUE;
+		break;
+	}
+}
+
+static void
+set_glasses_type(TileSortSPU *tilesort_spu, const char *response)
+{
+	if (crStrcmp(response, "RedBlue") == 0)
+		tilesort_spu->glassesType = RED_BLUE;
+	else if (crStrcmp(response, "RedGreen") == 0)
+		tilesort_spu->glassesType = RED_GREEN;
+	else if (crStrcmp(response, "RedCyan") == 0)
+		tilesort_spu->glassesType = RED_CYAN;
+	else if (crStrcmp(response, "BlueRed") == 0)
+		tilesort_spu->glassesType = BLUE_RED;
+	else if (crStrcmp(response, "GreenRed") == 0)
+		tilesort_spu->glassesType = GREEN_RED;
+	else if (crStrcmp(response, "CyanRed") == 0)
+		tilesort_spu->glassesType = CYAN_RED;
+	else
+	{
+		crWarning("Bad value (%s) for tilesort glasses_type", response);
+		tilesort_spu->glassesType = RED_BLUE;
+	}
+	tilesortspuSetAnaglyphMask(tilesort_spu);
+}
+
+
+static void
+set_left_view_matrix(TileSortSPU *tilesort_spu, const char *response)
+{
+	crMatrixInitFromString(&tilesort_spu->stereoViewMatrices[0], response);
+}
+
+static void
+set_right_view_matrix(TileSortSPU *tilesort_spu, const char *response)
+{
+	crMatrixInitFromString(&tilesort_spu->stereoViewMatrices[1], response);
+}
+
+static void
+set_left_projection_matrix(TileSortSPU *tilesort_spu, const char *response)
+{
+	crMatrixInitFromString(&tilesort_spu->stereoProjMatrices[0], response);
+}
+
+static void
+set_right_projection_matrix(TileSortSPU *tilesort_spu, const char *response)
+{
+	crMatrixInitFromString(&tilesort_spu->stereoProjMatrices[1], response);
+}
+
 
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions tilesortSPUOptions[] = {
-	{"split_begin_end", CR_BOOL, 1, "1", NULL, NULL,
-	 "Split glBegin/glEnd", (SPUOptionCB) set_split_begin_end},
+	{"bucket_mode", CR_ENUM, 1, "Test All Tiles",
+	 "'Broadcast', 'Test All Tiles', 'Uniform Grid', 'Non-Uniform Grid', 'Random', 'Warped Grid', 'Frustum'", NULL,
+	 "Geometry Bucketing Method", (SPUOptionCB) set_bucket_mode},
+
+	{"scale_to_mural_size", CR_BOOL, 1, "1", NULL, NULL,
+	 "Scale to Mural Size", (SPUOptionCB) set_scale_to_mural_size},
+
+	{"fake_window_dims", CR_INT, 2, "[0, 0]", "[0, 0]", NULL,
+	 "Fake Window Dimensions (w, h)", (SPUOptionCB) set_fake_window_dims},
+
+	{"retile_on_resize", CR_BOOL, 1, "1", NULL, NULL,
+	 "Retile When Window Size Changes", (SPUOptionCB) retile_on_resize},
+
+	{"scale_images", CR_BOOL, 1, "0", NULL, NULL,
+	 "Scale glDraw/CopyPixels and glBitmap images", (SPUOptionCB) scale_images},
 
 	{"sync_on_swap", CR_BOOL, 1, "1", NULL, NULL,
 	 "Sync on SwapBuffers", (SPUOptionCB) set_sync_on_swap},
 
 	{"sync_on_finish", CR_BOOL, 1, "1", NULL, NULL,
 	 "Sync on glFinish", (SPUOptionCB) set_sync_on_finish},
+
+	{"split_begin_end", CR_BOOL, 1, "1", NULL, NULL,
+	 "Split glBegin/glEnd", (SPUOptionCB) set_split_begin_end},
+
+	{"use_dmx", CR_BOOL, 1, "0", NULL, NULL,
+	 "Use DMX display", (SPUOptionCB) set_use_dmx},
 
 	{"draw_bbox", CR_BOOL, 1, "0", NULL, NULL,
 	 "Draw Bounding Boxes", (SPUOptionCB) set_draw_bbox},
@@ -168,38 +339,52 @@ SPUOptions tilesortSPUOptions[] = {
 	{"bbox_scale", CR_FLOAT, 1, "1.0", "0.1", "10.0",
 	 "Bounding Box Scale Factor", (SPUOptionCB) set_bounding_box_scale},
 
-        {"auto_dlist_bbox", CR_BOOL, 1, "1", NULL, NULL,
-         "Automatically compute/use bounding boxes for display lists",
-         (SPUOptionCB) set_auto_dlist_bbox},
+	{"auto_dlist_bbox", CR_BOOL, 1, "1", NULL, NULL,
+	 "Automatically compute/use bounding boxes for display lists",
+	 (SPUOptionCB) set_auto_dlist_bbox},
 
-        {"lazy_send_dlists", CR_BOOL, 1, "0", NULL, NULL,
-         "Send display lists to servers only when needed (lazy)",
-         (SPUOptionCB) set_lazy_send_dlists},
+	{"lazy_send_dlists", CR_BOOL, 1, "0", NULL, NULL,
+	 "Send display lists to servers only when needed (lazy)",
+	 (SPUOptionCB) set_lazy_send_dlists},
 
-	{"fake_window_dims", CR_INT, 2, "[0, 0]", "[0, 0]", NULL,
-	 "Fake Window Dimensions (w, h)", (SPUOptionCB) set_fake_window_dims},
-
-	{"scale_to_mural_size", CR_BOOL, 1, "1", NULL, NULL,
-	 "Scale to Mural Size", (SPUOptionCB) set_scale_to_mural_size},
+	{"dlist_state_tracking", CR_BOOL, 1, "0", NULL, NULL,
+	 "Track state in display lists", (SPUOptionCB) list_track},
 
 	{"emit_GATHER_POST_SWAPBUFFERS", CR_BOOL, 1, "0", NULL, NULL,
-	 "Emit a glParameteri After SwapBuffers", (SPUOptionCB) set_emit},
+	 "Emit a glChromiumParameteri After SwapBuffers", (SPUOptionCB) set_emit},
 
 	{"local_tile_spec", CR_BOOL, 1, "0", NULL, NULL,
 	 "Specify Tiles Relative to Displays", (SPUOptionCB) set_local_tile_spec},
 
-	{"bucket_mode", CR_ENUM, 1, "Test All Tiles",
-	 "'Broadcast', 'Test All Tiles', 'Uniform Grid', 'Non-Uniform Grid', 'Random', 'Warped Grid'", NULL,
-	 "Geometry Bucketing Method", (SPUOptionCB) set_bucket_mode},
+	{"stereo_mode", CR_ENUM, 1, "None",
+	 "'None', 'Passive', 'CrystalEyes', 'SideBySide', 'Anaglyph'", NULL,
+	 "Stereo Mode", (SPUOptionCB) set_stereomode },
 
-	{"use_dmx", CR_BOOL, 1, "0", NULL, NULL,
-	 "Use DMX display", (SPUOptionCB) set_use_dmx},
+	{"glasses_type", CR_ENUM, 1, "RedBlue",
+	 "'RedBlue', 'RedGreen', 'RedCyan', 'BlueRed', 'GreenRed', 'CyanRed'", NULL, 
+	 "Anaglyph Glasses Colors (Left/Right)", (SPUOptionCB) set_glasses_type },
 
-	{"retile_on_resize", CR_BOOL, 1, "1", NULL, NULL,
-	 "Retile when Window Resizes", (SPUOptionCB) retile_on_resize},
+	/* XXX perhaps this should be a string option which names window titles
+	 * for the windows to force into stereo mode???
+	 */
+	{"force_quad_buffering", CR_BOOL, 1, "0", NULL, NULL,
+	 "Force Quad-buffered Stereo", (SPUOptionCB) set_force_quad_buffering},
 
-	{"scale_images", CR_BOOL, 1, "0", NULL, NULL,
-	 "Scale glDraw/CopyPixels and glBitmap images", (SPUOptionCB) scale_images},
+	{"left_view_matrix", CR_FLOAT, 16,
+	 "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL,
+	 "Left Eye Viewing Matrix", (SPUOptionCB) set_left_view_matrix},
+
+	{"right_view_matrix", CR_FLOAT, 16,
+	 "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL,
+	 "Right Eye Viewing Matrix", (SPUOptionCB) set_right_view_matrix},
+
+	{"left_projection_matrix", CR_FLOAT, 16,
+	 "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL,
+	 "Left Eye Projection Matrix", (SPUOptionCB) set_left_projection_matrix},
+
+	{"right_projection_matrix", CR_FLOAT, 16,
+	 "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL,
+	 "Right Eye Projection Matrix", (SPUOptionCB) set_right_projection_matrix},
 
 	{NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL},
 };
@@ -231,7 +416,7 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 	CRConnection *conn;
 	WindowInfo *winInfo;
 
-	__setDefaults();
+	setDefaults();
 
 	/* Connect to the mothership and identify ourselves. */
 
@@ -252,6 +437,7 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 
 	/* Need to get this, before we create initial window! */
 	tilesort_spu.num_servers = tilesortspuGetNumServers(conn);
+
 	crDebug("Got %d servers!", tilesort_spu.num_servers);
 
 	/* Create initial/default window (id=0) */

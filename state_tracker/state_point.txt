@@ -22,7 +22,7 @@
 :enableSprite:pointSprite:GL_POINT_SPRITE_ARB
 %flush
 >{
->int activeUnit = -1;
+>unsigned int activeUnit = (unsigned int) -1;
 >for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++) {
 :coordReplacement[i]:*GLint replacement = to->coordReplacement[i];
 :coordReplacement[i]:*if (activeUnit != i) {

@@ -116,6 +116,7 @@ static float _fabs(float a)
 	return a;
 }
 
+
 /*==================================================
  * convex quad-box overlap test, based on the separating
  * axis therom. see Moller, JGT 6(1), 2001 for
@@ -529,10 +530,121 @@ initGridBucketing(WindowInfo *winInfo)
 }
 
 
+/*
+ * Transform a bounding box from object space to NDC space.
+ * This routine is used by most of the bucketing algorithms.
+ * Input: winInfo - which window/mural
+ *        server - which server (usually not needed)
+ *        objMin, objMax - bounds in object space
+ * Output: xmin, ymin, zmin, xmax, ymax, zmax - bounds in NDC
+ *         ibounds - bounds in screen coords
+ * Return: GL_TRUE if the resulting screen-space NDC bbox is visible,
+ *         GL_FALSE if the resulting screen-space NDC bbox is not visible.
+ */
+static GLboolean
+TransformBBox(const WindowInfo *winInfo, int server,
+							const GLvectorf *objMin, const GLvectorf *objMax,
+							float *xmin, float *ymin, float *zmin,
+							float *xmax, float *ymax, float *zmax,
+							CRrecti *ibounds)
+{
+	GET_THREAD(thread);
+	CRContext *g = thread->currentContext->State;
+	CRTransformState *t = &(g->transform);
+
+	if (thread->currentContext->providedBBOX == GL_SCREEN_BBOX_CR) {
+		/* objMin, objMax are in NDC screen coords already */
+		*xmin = objMin->x;
+		*ymin = objMin->y;
+		*zmin = objMin->z;
+		*xmax = objMax->x;
+		*ymax = objMax->y;
+		*zmax = objMax->z;
+	}
+	else if (winInfo->matrixSource == MATRIX_SOURCE_SERVERS) {
+		/* Use matrices obtained from the servers */
+		const ServerWindowInfo *servWinInfo = winInfo->server + server;
+		CRmatrix pv, pvm;
+
+		/* XXX we could multiply this earlier! */
+		/* pv = proj matrix * view matrix */
+		crMatrixMultiply(&pv, &servWinInfo->projectionMatrix,
+														&servWinInfo->viewMatrix);
+		/* pvm = pv * model matrix */
+		crMatrixMultiply(&pvm, &pv, t->modelViewStack.top);
+
+		/* Transform bbox by modelview * projection, and project to screen */
+		crTransformBBox( objMin->x, objMin->y, objMin->z,
+										 objMax->x, objMax->y, objMax->z, &pvm,
+										 xmin, ymin, zmin, xmax, ymax, zmax );
+	}
+	else if (winInfo->matrixSource == MATRIX_SOURCE_CONFIG &&
+					 thread->currentContext->stereoDestFlags != (EYE_LEFT | EYE_RIGHT)) {
+		/* use special left or right eye matrices (set via config options) */
+		const int curEye = thread->currentContext->stereoDestFlags - 1;
+		CRmatrix pv, pvm;
+
+		CRASSERT(curEye == 0 || curEye == 1);
+
+		/* XXX we could multiply this earlier! */
+		/* pv = proj matrix * view matrix */
+		crMatrixMultiply(&pv, &tilesort_spu.stereoProjMatrices[curEye],
+														&tilesort_spu.stereoViewMatrices[curEye]);
+		/* pvm = pv * model matrix */
+		crMatrixMultiply(&pvm, &pv, t->modelViewStack.top);
+
+		/* Transform bbox by modelview * projection, and project to screen */
+		crTransformBBox( objMin->x, objMin->y, objMin->z,
+										 objMax->x, objMax->y, objMax->z, &pvm,
+										 xmin, ymin, zmin, xmax, ymax, zmax );
+	}
+	else {
+		const CRmatrix *mvp = &(t->modelViewProjection);
+
+		CRASSERT(winInfo->matrixSource == MATRIX_SOURCE_APP ||
+				 thread->currentContext->stereoDestFlags == (EYE_LEFT | EYE_RIGHT));
+
+		/* Check to make sure the transform is valid */
+		if (!t->modelViewProjectionValid)
+		{
+			/* I'm pretty sure this is always the case, but I'll leave it. */
+			crStateTransformUpdateTransform(t);
+		}
+
+		/* Transform bbox by modelview * projection, and project to screen */
+		crTransformBBox( objMin->x, objMin->y, objMin->z,
+										 objMax->x, objMax->y, objMax->z, mvp,
+										 xmin, ymin, zmin, xmax, ymax, zmax );
+	}
+
+	/* trivial rejection test */
+	if (*xmin > 1.0f || *ymin > 1.0f || *xmax < -1.0f || *ymax < -1.0f) {
+		/* bbox doesn't intersect screen */
+		return GL_FALSE;
+	}
+
+	/* clamp */
+	if (*xmin < -1.0f) *xmin = -1.0f;
+	if (*ymin < -1.0f) *ymin = -1.0f;
+	if (*xmax > 1.0f) *xmax = 1.0f;
+	if (*ymax > 1.0f) *ymax = 1.0f;
+
+	if (ibounds) {
+		/* return screen pixel coords too */
+		ibounds->x1 = (int) (winInfo->halfViewportWidth * *xmin + winInfo->viewportCenterX);
+		ibounds->x2 = (int) (winInfo->halfViewportWidth * *xmax + winInfo->viewportCenterX);
+		ibounds->y1 = (int) (winInfo->halfViewportHeight * *ymin + winInfo->viewportCenterY);
+		ibounds->y2 = (int) (winInfo->halfViewportHeight * *ymax + winInfo->viewportCenterY);
+	}
+	return GL_TRUE;
+}
+
 
 /*
  * Compute bounding box/tile intersections.
  * Output:  bucketInfo - results of intersection tests
+ * XXX someday break this function into a bunch of subroutines, one for
+ * each bucketing mode.
  */
 static void
 doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
@@ -540,36 +652,43 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 	static const CRrecti fullscreen = {-CR_MAXINT, CR_MAXINT, -CR_MAXINT, CR_MAXINT};
 	static const CRrecti nullscreen = {0, 0, 0, 0};
 	GET_CONTEXT(g);
-	CRTransformState *t = &(g->transform);
-	const CRmatrix *mvp = &(t->modelViewProjection);
-	float xmin, ymin, xmax, ymax, zmin, zmax;
-	CRrecti ibounds;
-	int i, j;
 
-	/* Init bucketInfo */
+	/* Init bucketInfo results */
 	bucketInfo->objectMin = thread->packer->bounds_min;
 	bucketInfo->objectMax = thread->packer->bounds_max;
 	bucketInfo->pixelBounds = nullscreen;
-	for (j=0;j<CR_MAX_BITARRAY;j++)
-		bucketInfo->hits[j] = 0;
-
-	/* Check to make sure the transform is valid */
-	if (!t->modelViewProjectionValid)
+	/* Initialize the results/hits bitvector.  Each bit represents a server.
+	 * If the bit is set, send the geometry to that server.  There are 32
+	 * bits per word in the vector.
+	 */
 	{
-		/* I'm pretty sure this is always the case, but I'll leave it. */
-		crStateTransformUpdateTransform(t);
+		int j;
+		for (j = 0; j < CR_MAX_BITARRAY; j++)
+			bucketInfo->hits[j] = 0;
 	}
 
-	/* we might be broadcasting, *or* we might be defining a display list,
+	/* We might be broadcasting, *or* we might be defining a display list,
 	 * which goes to everyone (currently).
 	 */
-	if (winInfo->bucketMode == BROADCAST || g->lists.currentIndex)
-	{
+	if (winInfo->bucketMode == BROADCAST || g->lists.currentIndex) {
 		bucketInfo->pixelBounds = fullscreen;
 		FILLDIRTY(bucketInfo->hits);
 		return;
 	}
 
+	/* Check for infinite bounding box values.  If so, broadcast.
+	 * This can happen when glVertex4f() is called with w=0.  This
+	 * is done in the NVIDIA infinite_shadow_volume demo.
+	 */
+	if (!FINITE(bucketInfo->objectMin.x) || !FINITE(bucketInfo->objectMax.x)) {
+		bucketInfo->pixelBounds = fullscreen;
+		FILLDIRTY(bucketInfo->hits);
+		return;
+	}
+
+	/* When using vertex programs, vertices may get warped/displaced.
+	 * This is a way to grow the bounding box a little if needed.
+	 */
 	if (tilesort_spu.bboxScale != 1.0) {
 		GLfloat scale = tilesort_spu.bboxScale;
 		/* compute center point of box */
@@ -585,105 +704,55 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		bucketInfo->objectMax.z = cz + (bucketInfo->objectMax.z - cz) * scale;
 	}
 
-	xmin = bucketInfo->objectMin.x;
-	ymin = bucketInfo->objectMin.y;
-	zmin = bucketInfo->objectMin.z;
-	xmax = bucketInfo->objectMax.x;
-	ymax = bucketInfo->objectMax.y;
-	zmax = bucketInfo->objectMax.z;
-
-	if (thread->currentContext->providedBBOX != GL_SCREEN_BBOX_CR)
-	{
-		/* The current bounds were either provided by the user with
-		 * GL_OBJECT_BBOX_CR or computed automatically by Chromium (in
-		 * object coords.  Transform the box to window coords.
-		 */
-
-		/* Check for infinite bounding box values.  If so, broadcast.
-		 * This can happen when glVertex4f() is called with w=0.  This
-		 * is done in the NVIDIA infinite_shadow_volume demo.
-		 */
-		if (!FINITE(xmin) || !FINITE(xmax)) {
-			bucketInfo->pixelBounds = fullscreen;
-			FILLDIRTY(bucketInfo->hits);
-			return;
-		}
-
-		crTransformBBox( xmin, ymin, zmin, xmax, ymax, zmax, mvp,
-		                 &xmin, &ymin, &zmin, &xmax, &ymax, &zmax );
-	}
-
-	if (winInfo->bucketMode == WARPED_GRID)
-	{
-		if (xmin == FLT_MAX || ymin == FLT_MAX || zmin == FLT_MAX ||
-			xmax == -FLT_MAX || ymax == -FLT_MAX || zmax == -FLT_MAX)
-		{
-			/* trivial reject */
-			for (j=0;j<CR_MAX_BITARRAY;j++)
-				bucketInfo->hits[j] = 0;
-			return;
-		}
-	}
-	else
-	{
-		/* triv reject */
-		if (xmin > 1.0f || ymin > 1.0f || xmax < -1.0f || ymax < -1.0f) 
-		{
-			for (j=0;j<CR_MAX_BITARRAY;j++)
-				bucketInfo->hits[j] = 0;
-			return;
-		}
-
-		/* clamp */
-		if (xmin < -1.0f) xmin = -1.0f;
-		if (ymin < -1.0f) ymin = -1.0f;
-		if (xmax > 1.0f) xmax = 1.0f;
-		if (ymax > 1.0f) ymax = 1.0f;
-	}
-
-	/* compute window coords by applying the viewport transformation */
-	ibounds.x1 = (int) (winInfo->halfViewportWidth * xmin + winInfo->viewportCenterX);
-	ibounds.x2 = (int) (winInfo->halfViewportWidth * xmax + winInfo->viewportCenterX);
-	ibounds.y1 = (int) (winInfo->halfViewportHeight * ymin + winInfo->viewportCenterY);
-	ibounds.y2 = (int) (winInfo->halfViewportHeight * ymax + winInfo->viewportCenterY);
-
-	bucketInfo->pixelBounds = ibounds;
-
-
-	/* Initialize the results/hits bitvector.  Each bit represents a server.
-	 * If the bit is set, send the geometry to that server.  There are 32
-	 * bits per word in the vector.
-	 */
-	for (j = 0; j < CR_MAX_BITARRAY; j++)
-		bucketInfo->hits[j] = 0;
-
-
-	/* Compute the bucketInfo->hits[] flags.
-	 * Bit [i] is set if the bounding box intersects any tile on server [i].
+	/*
+	 * OK, now do bucketing
 	 */
 	if (winInfo->bucketMode == TEST_ALL_TILES)
 	{
+		float xmin, ymin, xmax, ymax, zmin, zmax;
+		CRrecti ibounds;
+		int i, j;
+
+		if (!TransformBBox(winInfo, 0,
+								 /* in */ &bucketInfo->objectMin, &bucketInfo->objectMax,
+								 /* out */ &xmin, &ymin, &zmin, &xmax, &ymax, &zmax, &ibounds))
+			return; /* not visible, all done */
+
 		/* Explicitly test the bounding box (ibounds) against all tiles on
 		 * all servers.
 		 */
 		for (i=0; i < tilesort_spu.num_servers; i++) 
 		{
-			ServerWindowInfo *servWinInfo = winInfo->server + i;
-			/* 32 bits (flags) per element in hits[] */
-			const int node32 = i >> 5;
-			const int node = i & 0x1f;
-			for (j = 0; j < servWinInfo->num_extents; j++) 
-			{
-				if (ibounds.x1 < servWinInfo->extents[j].x2 && 
-				    ibounds.x2 >= servWinInfo->extents[j].x1 &&
-				    ibounds.y1 < servWinInfo->extents[j].y2 &&
-				    ibounds.y2 >= servWinInfo->extents[j].y1) 
+			const ServerWindowInfo *servWinInfo = winInfo->server + i;
+			/* only bother if the stereo left/right flags agree */
+			if (servWinInfo->eyeFlags & thread->currentContext->stereoDestFlags) {
+				/* 32 bits (flags) per element in hits[] */
+				const int node32 = i >> 5;
+				const int node = i & 0x1f;
+
+				if (winInfo->matrixSource == MATRIX_SOURCE_SERVERS) {
+					/* recompute bounds */
+					TransformBBox(winInfo, i,
+												&bucketInfo->objectMin,	&bucketInfo->objectMax, /*in*/
+												&xmin, &ymin, &zmin, &xmax, &ymax, &ymin, &ibounds);
+				}
+
+				bucketInfo->pixelBounds = ibounds;
+
+				for (j = 0; j < servWinInfo->num_extents; j++) 
 				{
-					bucketInfo->hits[node32] |= (1 << node);
-					break;
+					if (ibounds.x1 < servWinInfo->extents[j].x2 && 
+							ibounds.x2 >= servWinInfo->extents[j].x1 &&
+							ibounds.y1 < servWinInfo->extents[j].y2 &&
+							ibounds.y2 >= servWinInfo->extents[j].y1) 
+					{
+						bucketInfo->hits[node32] |= (1 << node);
+						break;
+					}
 				}
 			}
 		}
+		/* all done */
 	} 
 	else if (winInfo->bucketMode == UNIFORM_GRID)
 	{
@@ -691,8 +760,21 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		 * bounding box / server intersections.
 		 */
 		const HashInfo *hash = (const HashInfo *) winInfo->bucketInfo;
-		BucketRegion *r;
-		BucketRegion *q;
+		const BucketRegion *r;
+		const BucketRegion *q;
+		float xmin, ymin, xmax, ymax, zmin, zmax;
+		CRrecti ibounds;
+
+		CRASSERT(winInfo->matrixSource != MATRIX_SOURCE_SERVERS);
+
+	
+		/* only need to compute bbox once for all servers */
+		if (!TransformBBox(winInfo, 0,
+											 /* in */ &bucketInfo->objectMin, &bucketInfo->objectMax,
+											 /* out */ &xmin, &ymin, &zmin, &xmax, &ymax, &zmax, &ibounds))
+			return; /* not visible, all done */
+		
+		bucketInfo->pixelBounds = ibounds;
 
 		for (r = hash->rhash[BKT_DOWNHASH(0, winInfo->muralHeight)][BKT_DOWNHASH(0, winInfo->muralWidth)];
 				 r && ibounds.y2 >= r->extents.y1;
@@ -704,14 +786,17 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 				{
 					continue;
 				}
+				/* XXX what about stereo eye selection? */
 				if (ibounds.x1 < q->extents.x2 && ibounds.x2 >= q->extents.x1 &&
 		 		    ibounds.y1 < q->extents.y2 && ibounds.y2 >= q->extents.y1) 
 				{
+					int j;
 					for (j=0;j<CR_MAX_BITARRAY;j++)
 						bucketInfo->hits[j] |= q->id[j];
 				}
 			}
 		}
+		/* all done */
 	}
 	else if (winInfo->bucketMode == NON_UNIFORM_GRID)
 	{
@@ -723,8 +808,18 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		 */
 		const GridInfo *grid = (const GridInfo *) winInfo->bucketInfo;
 		int bottom, top, left, right;
+		float xmin, ymin, xmax, ymax, zmin, zmax;
+		CRrecti ibounds;
+		int i, j;
 
 		CRASSERT(grid);
+
+		if (!TransformBBox(winInfo, 0,
+											 /* in */ &bucketInfo->objectMin, &bucketInfo->objectMax,
+											 /* out */ &xmin, &ymin, &zmin, &xmax, &ymax, &zmax, &ibounds))
+			return; /* not visible, all done */
+
+		bucketInfo->pixelBounds = ibounds;
 
 		/* march from bottom to top */
 		bottom = grid->rows - 1;
@@ -780,56 +875,215 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 				bucketInfo->hits[node32] |= (1 << node);
 			}
 		}
-		/*
-		printf("bucket result: %d %d\n",
-		       bucketInfo->hits[0] & 1, (bucketInfo->hits[0] >> 1) & 1);
-		*/
+		/* all done */
 	}
 	else if (winInfo->bucketMode == WARPED_GRID)
 	{
+		float xmin, ymin, xmax, ymax, zmin, zmax;
+		int i, j;
+
+		TransformBBox(winInfo, 0,
+									/* in */ &bucketInfo->objectMin, &bucketInfo->objectMax,
+									/* out */ &xmin, &ymin, &zmin, &xmax, &ymax, &zmax, NULL);
+
+		if (xmin == FLT_MAX || ymin == FLT_MAX || zmin == FLT_MAX ||
+			xmax == -FLT_MAX || ymax == -FLT_MAX || zmax == -FLT_MAX)
+		{
+			/* trivial reject */
+			for (j=0;j<CR_MAX_BITARRAY;j++)
+				bucketInfo->hits[j] = 0;
+			return;
+		}
+
 		bucketInfo->pixelBounds = fullscreen;
 
 		/* uber-slow overlap testing mode */
 		for (i=0; i < tilesort_spu.num_servers; i++) 
 		{
 			ServerWindowInfo *servWinInfo = winInfo->server + i;
-			/* 32 bits (flags) per element in bucketInfo->hits */
-			const int node32 = i >> 5;
-			const int node = i & 0x1f;
-
-#if 1
-			for (j=0; j < servWinInfo->num_extents; j++) 
-			{
-				if (quad_overlap(servWinInfo->world_extents[j],
-												 xmin, ymin, xmax, ymax))
+			/* only bother if the stereo left/right flags agree */
+			if (servWinInfo->eyeFlags & thread->currentContext->stereoDestFlags) {
+				/* 32 bits (flags) per element in bucketInfo->hits */
+				for (j=0; j < servWinInfo->num_extents; j++) 
 				{
-					bucketInfo->hits[node32] |= (1 << node);
-					break;
+					if (quad_overlap(servWinInfo->world_extents[j],
+													 xmin, ymin, xmax, ymax))
+					{
+						const int node32 = i >> 5;
+						const int node = i & 0x1f;
+						bucketInfo->hits[node32] |= (1 << node);
+						break;
+					}
 				}
 			}
-
-#else
-			/* XXX: just broadcast now, for debugging */
-			bucketInfo->hits[node32] |= (1 << node);
-#endif			
 		}
+		/* all done */
+
+	}
+	else if (winInfo->bucketMode == FRUSTUM) {
+		CRTransformState *t = &(g->transform);
+		int i, j;
+
+		/* test 3D bounding box vertices against the view frustum */
+		for (i = 0; i < tilesort_spu.num_servers; i++) {
+			const ServerWindowInfo *servWinInfo = winInfo->server + i;
+			/* only bother if the stereo left/right flags agree */
+			if (servWinInfo->eyeFlags & thread->currentContext->stereoDestFlags) {
+				const float xmin = bucketInfo->objectMin.x;
+				const float ymin = bucketInfo->objectMin.y;
+				const float zmin = bucketInfo->objectMin.z;
+				const float xmax = bucketInfo->objectMax.x;
+				const float ymax = bucketInfo->objectMax.y;
+				const float zmax = bucketInfo->objectMax.z;
+				CRrecti ibounds;
+				int clipAndMask;
+				CRmatrix m;
+				GLvectorf corner[8];
+
+				/* Compute matrix m = projection * view * modelview. */
+				if (winInfo->matrixSource == MATRIX_SOURCE_SERVERS) {
+					/* Use projection and view matrices obtained from servers */
+					/* XXX use pre-multiplied matrix here */
+					crMatrixMultiply(&m, &servWinInfo->projectionMatrix,
+																	&servWinInfo->viewMatrix);
+				}
+				else if (winInfo->matrixSource == MATRIX_SOURCE_CONFIG &&
+					 thread->currentContext->stereoDestFlags != (EYE_LEFT | EYE_RIGHT)) {
+					/* Use the left or right eye stereo projection/view matrices */
+					const int curEye = thread->currentContext->stereoDestFlags - 1;
+					CRASSERT(curEye == 0 || curEye == 1);
+					/* XXX use pre-multiplied matrix here */
+					crMatrixMultiply(&m, &tilesort_spu.stereoProjMatrices[curEye],
+																	&tilesort_spu.stereoViewMatrices[curEye]);
+				}
+				else {
+					/* Use the application's projection and server's view matrice */
+					crMatrixMultiply(&m, t->projectionStack.top,
+																	&servWinInfo->viewMatrix);
+				}
+				crMatrixMultiply(&m, &m, t->modelViewStack.top);
+
+				/*
+				 * Compute clipping flags to determine if the bbox intersects
+				 * the viewing frustum.  Actually, check if all 8 vertices are
+				 * either above, below, left, right, in front or behind the frustum.
+				 * If that's true, the bbox is not visible, else it is.
+				 */
+				clipAndMask = ~0;
+				for (j = 0; j < 8; j++) {
+					int clipmask = 0;
+					/* generate corner vertex.  xmin, xmax etc are object coords */
+					corner[j].x = (j & 1) ? xmin : xmax;
+					corner[j].y = (j & 2) ? ymin : ymax;
+					corner[j].z = (j & 4) ? zmin : zmax;
+					corner[j].w = 1.0;
+					/* transform */
+					crStateTransformXformPointMatrixf(&m, &corner[j]);
+					/* corner is now in clip coordinates */
+					/* cliptest */
+					if (-corner[j].w > corner[j].x)
+						clipmask |= 1; /* left of frustum */
+					if (corner[j].x > corner[j].w)
+						clipmask |= 2; /* right of frustum */
+					if (-corner[j].w > corner[j].y)
+						clipmask |= 4; /* below frustum */
+					if (corner[j].y > corner[j].w)
+						clipmask |= 8; /* above frustum */
+					if (-corner[j].w > corner[j].z)
+						clipmask |= 16; /* in front of frustum */
+					if (corner[j].z > corner[j].w)
+						clipmask |= 32; /* beyond frustum */
+					clipAndMask &= clipmask;
+				}
+				if (clipAndMask) {
+					/* all corners are beyond one of the frustum's bounding planes,
+					 * therefore, the bbox can't intersect the frustum.
+					 */
+				}
+				else {
+					/* bounding box intersects the frustum in some manner */
+					const int node32 = i >> 5;
+					const int node = i & 0x1f;
+					bucketInfo->hits[node32] |= (1 << node);
+					/* XXX The following fancy bounding box code doesn't work.
+					 * The problem is we need to have separate bucketInfo->pixelBounds
+					 * data for each server so that when we send the BoundsInfo
+					 * function/payload to the servers we actually send the correct
+					 * bounds info.
+					 * For now, just send bounds which match the mural size.
+					 * This is OK since only the appropriate servers will get the
+					 * geometry anyway.  It's only for tiled servers that this really
+					 * makes any difference.  -Brian
+					 */
+#if 0
+					/* Compute window coords of the corners, and find the bounding
+					 * box of those vertices. store in ibounds.
+					 */
+					for (j = 0; j < 8; j++) {
+						float invW = 1.0 / corner[j].w;
+						corner[j].x *= invW;
+						corner[j].y *= invW;
+						corner[j].z *= invW;
+						corner[j].x = winInfo->halfViewportWidth * corner[j].x + winInfo->viewportCenterX;
+						corner[j].y = winInfo->halfViewportHeight * corner[j].y + winInfo->viewportCenterY;
+						if (j == 0) {
+							/* init bounding box */
+							ibounds.x1 = ibounds.x2 = (int) corner[0].x;
+							ibounds.y1 = ibounds.y2 = (int) corner[0].y;
+						}
+						else {
+							/* update bounding box */
+							if (corner[j].x < ibounds.x1)
+								ibounds.x1 = corner[j].x;
+							if (corner[j].x > ibounds.x2)
+								ibounds.x2 = corner[j].x;
+							if (corner[j].y < ibounds.y1)
+								ibounds.y1 = corner[j].y;
+							if (corner[j].y > ibounds.y2)
+								ibounds.y2 = corner[j].y;
+						}
+					} /* loop over 8 corners */
+#else
+					/* set bounds to full window dims */
+					ibounds.x1 = 0;
+					ibounds.y1 = 0;
+					ibounds.x2 = winInfo->muralWidth;
+					ibounds.y2 = winInfo->muralHeight;
+#endif
+					bucketInfo->pixelBounds = ibounds;
+				}
+			} /* if eye flags match */
+		} /* loop over servers */
+		/* all done */
+
 	}
 	else if (winInfo->bucketMode == RANDOM)
 	{
 		/* Randomly select a server */
+		/* XXX what about stereo eye selection? */
+		float xmin, ymin, xmax, ymax, zmin, zmax;
+		CRrecti ibounds;
 		const int server = crRandInt(0, tilesort_spu.num_servers - 1);
 		const int node32 = server >> 5;
 		const int node = server & 0x1f;
 
+		/* only need to compute bbox once for all servers */
+		if (!TransformBBox(winInfo, 0,
+											 /* in */ &bucketInfo->objectMin, &bucketInfo->objectMax,
+											 /* out */ &xmin, &ymin, &zmin, &xmax, &ymax, &zmax, &ibounds))
+			/*return*/; /* not visible, all done */
+		
+		bucketInfo->pixelBounds = ibounds;
+
 		bucketInfo->hits[node32] |= (1 << node);
+		/* all done */
 	}
 	else
 	{
 		crError("Invalid value for winInfo->bucketMode");
 	}
-
-	return;
 }
+
 
 void tilesortspuBucketGeometry(WindowInfo *winInfo, TileSortBucketInfo *info)
 {

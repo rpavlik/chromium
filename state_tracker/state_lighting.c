@@ -391,7 +391,7 @@ void STATE_APIENTRY crStateLightfv (GLenum light, GLenum pname, const GLfloat *p
 						lt->objPosition.w );
 			}
 
-			crStateTransformInvertTransposeMatrix (&inv, mat);
+			crMatrixInvertTranspose(&inv, mat);
 			crStateTransformXformPointMatrixf (&inv, &(lt->spotDirection));
 
 			DIRTY(ltb->spot, g->neg_bitid);

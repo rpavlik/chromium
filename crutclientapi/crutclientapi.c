@@ -70,7 +70,7 @@ __addToEventBuffer(CRMessage* msg)
 
     int msg_size = __getCRUTMessageSize(crut_msg->msg_type);
 
-    long int dist = crut_client.last_buffer->buffer_end - crut_client.last_buffer->empty;
+    unsigned long int dist = crut_client.last_buffer->buffer_end - crut_client.last_buffer->empty;
 
     if (0 <= dist && dist < MAX_MSG_SIZE)
 	__newEventBuffer();
@@ -401,7 +401,7 @@ crutPeekNextEvent(void)
 
     /* see if there is only one event in the current buffer */
     if ((crut_client.event_buffer->empty - 
-	 (crut_client.next_event + msgsize)) < MAX_MSG_SIZE)
+	 (crut_client.next_event + msgsize)) < (int) MAX_MSG_SIZE)
     {
 	if (crut_client.event_buffer != crut_client.last_buffer)
 	{
@@ -423,7 +423,7 @@ void
 CRUT_CLIENT_APIENTRY 
 crutReceiveEvent(CRUTMessage **msg)
 {
-    long int dist;
+    unsigned long int dist;
 
     while (crut_client.next_event == crut_client.event_buffer->empty)
 	crNetRecv();

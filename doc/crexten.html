@@ -38,7 +38,27 @@ or <code>glXGetProcAddress()</code> to obtain a pointer to any
 extension functions that are needed.
 </p>
 
+<p>
+The following extensions are available.
+</p>
 
+<ul>
+<li><a href="#GL_CR_state_parameter">GL_CR_state_parameter</a>
+<li><a href="#GL_CR_cursor_position">GL_CR_cursor_position</a>
+<li><a href="#GL_CR_bounding_box">GL_CR_bounding_box</a>
+<li><a href="#GL_CR_print_string">GL_CR_print_string</a>
+<li><a href="#GL_CR_tilesort_info">GL_CR_tilesort_info</a>
+<li><a href="#GL_CR_window_size">GL_CR_window_size</a>
+<li><a href="#GL_CR_readback_barrier_size">GL_CR_readback_barrier_size</a>
+<li><a href="#GL_CR_tile_info">GL_CR_tile_info</a>
+<li><a href="#GL_CR_synchronization">GL_CR_synchronization</a>
+<li><a href="#GL_CR_server_id_sharing">GL_CR_server_id_sharing</a>
+<li><a href="#GL_CR_server_matrix">GL_CR_server_matrix</a>
+</ul>
+
+
+
+<a name="GL_CR_state_parameter">
 <h2 class="PageSubHeading">GL_CR_state_parameter</h2>
 <p>This extension adds three new functions to OpenGL.  By itself, this
 extension provides no new features.  Instead, other Chromium extensions
@@ -100,6 +120,7 @@ is less than one.
 </dl>
 
 
+<a name="GL_CR_cursor_position">
 <h2 class="PageSubHeading">GL_CR_cursor_position</h2>
 <p>This extension is used internally to Chromium to specify the position
 of the virtual cursor.</p>
@@ -114,6 +135,7 @@ to an array of two integers with represents the cursor's (x,y) position.
 </p>
 
 
+<a name="GL_CR_bounding_box">
 <h2 class="PageSubHeading">GL_CR_bounding_box</h2>
 <p>This extension is used to inform Chromium that subsequent geometry
 is bounded by a specific bounding box.  This information can be used
@@ -151,6 +173,7 @@ to improve the performance of the tile-sort, readback and binaryswap SPUs.
 </dl>
 
 
+<a name="GL_CR_print_string">
 <h2 class="PageSubHeading">GL_CR_print_string</h2>
 <p>This extension is allows the application to insert its own text
 into the output produced by the printSPU.
@@ -169,6 +192,7 @@ is the text.
 that it's a null-terminated string?</p>
 
 
+<a name="GL_CR_tilesort_info">
 <h2 class="PageSubHeading">GL_CR_tilesort_info</h2>
 <p>This extension is allows the application to query and set parameters
 of the tilesort SPU, if present.
@@ -239,6 +263,7 @@ may be reset to zero with either of the following commands:</p>
 </ul>
 
 
+<a name="GL_CR_window_size">
 <h2 class="PageSubHeading">GL_CR_window_size</h2>
 <p>This extension allows you to query the size of the currently bound
 rendering window.
@@ -258,6 +283,7 @@ This extension requires the GL_CR_state_parameter extension.</p>
 
 
 
+<a name="GL_CR_readback_barrier_size">
 <h2 class="PageSubHeading">GL_CR_readback_barrier_size</h2>
 <p>This extension allows you to specify the number of clients which should
 synchronize on barriers within the readback SPU.  This <em>does not</em>
@@ -276,6 +302,7 @@ This extension requires the GL_CR_state_parameter extension.</p>
 
 
 
+<a name="GL_CR_tile_info">
 <h2 class="PageSubHeading">GL_CR_tile_info</h2>
 <p>This extension allows you to specify the tilesort parameters (number
 of tiles and their sizes) to the tilesort SPU and servers.
@@ -310,6 +337,7 @@ This extension requires the GL_CR_state_parameter extension.</p>
 </dl>
 
 
+<a name="GL_CR_synchronization">
 <h2 class="PageSubHeading">GL_CR_synchronization</h2>
 <p>This extension defines semaphore and barrier functions for synchronization.
 
@@ -347,6 +375,7 @@ application section</a> for more information.
 </p>
 
 
+<a name="GL_CR_server_id_sharing">
 <h2 class="PageSubHeading">GL_CR_server_id_sharing</h2>
 <p>This extension allows control over display list, texture object and
 vertex program ID management in network/server nodes.
@@ -397,6 +426,76 @@ display list named K and each application puts different OpenGL commands
 into the N instances of K, then GL_SHARED_DISPLAY_LISTS_CR should be set to
 GL_FALSE.
 The server will then distinguish between the N different lists named K.
+</p>
+
+
+
+<a name="GL_CR_server_matrix">
+<h2 class="PageSubHeading">GL_CR_server_matrix</h2>
+
+<p>
+This extension allows an application to specify unique projection and
+viewing matrices for each server in a tilesort configuration.
+This is typically used to support a non-planar rendering environment,
+such as a CAVE.
+See the <a href="nonplanar.html">Non-planer tilesort</a> section for
+details.
+</p>
+
+<p>
+Three new tokens for glChromiumParametervCR are introduced:
+</p>
+<ul>
+<li>GL_SERVER_VIEW_MATRIX_CR
+<li>GL_SERVER_PROJECTION_MATRIX_CR
+<li>GL_SERVER_FRUSTUM_CR
+</ul>
+
+
+<p>
+To set the per-server view matrix, call:
+</p>
+<pre>
+   glChromiumParameterv(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT, 17, m)
+</pre>
+<p>
+where m[0] is the server index, starting at zero and m[1] through m[16]
+specify the sixteen elements of the view matrix.
+</p>
+
+<p>
+To set the per-server projection matrix, call:
+</p>
+<pre>
+   glChromiumParametervCR(GL_SERVER_PROJECTION_MATRIX_CR, GL_FLOAT, 17, m)
+</pre>
+<p>
+where m[0] is the server index, starting at zero and m[1] through m[16]
+specify the sixteen elements of the projection matrix.
+</p>
+
+<p>
+Alternately, the per-server projection matrix may be set by calling:
+</p>
+<pre>
+   glChromiumParametervCR(GL_SERVER_FRUSTUM_CR, GL_FLOAT, 7, m)
+</pre>
+<p>
+where m[0] is the server index, starting at zero and m[1] through m[7]
+are the left, right, bottom, top, near and far frustum parameters.
+</p>
+
+<p>
+Note that these functions are meant to be used by applications which
+are running with a tilesort SPU.
+</p>
+
+<p>
+Also note that if the application sets the view or projection matrices
+then the Python configuration file <em>should not</em> set the matrices
+via configuration options.
+I.e. either set the matrices in the configuration file or the application,
+but not both places.
 </p>
 
 </body>

@@ -6,7 +6,7 @@
 TOP = ../..
 
 PROGRAM = city
-FILES = city
+FILES = city multiview
 GLUT = 1
 MATH = 1
 

@@ -32,6 +32,7 @@ FILES = tilesortspu \
 	tilesortspu_pixels \
 	tilesortspu_rasterpos \
 	tilesortspu_rect \
+	tilesortspu_stereo \
 	tilesortspu_swap \
 	tilesortspu_tiles \
 	tilesortspu_unimplemented \

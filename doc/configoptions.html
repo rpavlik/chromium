@@ -368,16 +368,6 @@ one or more downstream servers.
     <td width="115%" height="19">Description</td>
   </tr>
   <tr>
-    <td width="19%" class="ConfigOption" height="74">split_begin_end</td>
-    <td width="12%" class="ConfigType" height="74">Boolean</td>
-    <td width="115%" class="ConfigDesc" height="74">If this flag is set, the
-      Tilesort SPU will break blocks of geometry into pieces if they happen to
-      fall on a buffer boundary.&nbsp; This can happen if a lot of geometry is
-      specified with no state changes, or if the MTU is small.&nbsp; If the flag
-      is <i>not</i> set, then the Tilesort SPU will simply grow the geometry
-      buffer beyond the MTU.&nbsp; The default is 1.</td>
-  </tr>
-  <tr>
     <td width="19%" class="ConfigOption" height="38">bucket_mode</td>
     <td width="12%" class="ConfigType" height="38">Enum</td>
     <td width="115%" class="ConfigDesc" height="38">
@@ -401,27 +391,62 @@ one or more downstream servers.
          trivial rejection (slow).
       </ul>
   </tr>
+
   <tr>
-    <td width="19%" class="ConfigOption" height="38">broadcast</td>
+    <td width="19%" class="ConfigOption" height="38">scale_to_mural_size</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
-    <td width="115%" class="ConfigDesc" height="38">
-      <B>(This option is obsolete, use bucket_mode instead)</B>
-      If this flag is set, the
-      bucketing algorithm will be disabled, and all geometry will be broadcast
-      to all servers.&nbsp; The default is 0.</td>
+    <td width="115%" class="ConfigDesc" height="38">If set to 1, the OpenGL
+      viewport will be rescaled to match the mural size (usually the desired
+      behaviour).  If set to 0, the viewport will not be rescaled.  This is
+      useful for conformance testing.  The default is 1.</td>
   </tr>
   <tr>
-    <td width="19%" class="ConfigOption" height="38">optimize_bucket</td>
+    <td width="19%" class="ConfigOption" height="38">retile_on_resize</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">If non-zero, when the
+      tilesort SPU's WindowSize() function is called, the SPU will try to
+      find a new mural size and tile layout to match the new window size.
+      Typically, the WindowSize() function is called only if the application
+      node's track_window_size option is set.  The default is 1.<br>
+      With some applications, setting track_window_size to 1 and
+      retile_on_resize to 0 is needed to get reasonable results.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">fake_window_dims</td>
+    <td width="12%" class="ConfigType" height="38">2 Integers</td>
+    <td width="115%" class="ConfigDesc" height="38">Specifies the default
+      window/mural size when the application doesn't create an X or Win32
+      application window (i.e. parallel applications, like psubmit).
+      This is needed in order for <code>glViewport</code> and
+      <code>glScissor</code> to work correctly.
+      The Tilesort SPU's <code>glViewport</code> implementation will
+      determine the size of the client window (if it exists)
+      to determine what part of the output space the client is trying to
+      restrict drawing to.&nbsp; However, if the Chromium context has been
+      created out of thin air (i.e., with the <a href="parallelapplication.html">crCreateContext
+      call</a>), the fake window dimensions will be returned.&nbsp; If these
+      parameters are <i>not</i> set, and there is no client window, using <code>glViewport</code>
+      or <code>glScissor</code> will cause a fatal run-time error.</td>
+  </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">scale_images</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="115%" class="ConfigDesc" height="38">
-      <B>(This option is obsolete, use bucket_mode instead)</B>
-      If this flag is set, a more
-      sophisticated algorithm will be used to compute the intersection between
-      the screen-space bounding box and the set of tiles.&nbsp; However, this
-      algorithm <i>only</i> works if the tiling is completely regular; i.e.,
-      each tile is the same size, and they form a perfectly rectangular output
-      space.&nbsp; If the flag is <i>not </i>set, the bounding box will just be
-      tested against each tile in turn.&nbsp; The default is 1.</td>
+    If set, the images passed to glDrawPixels and glBitmap are scaled to
+    match the mural's size.  glCopyPixels images are also scaled.
+    The default is 0 (don't scale).</td>
+  </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption" height="74">split_begin_end</td>
+    <td width="12%" class="ConfigType" height="74">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="74">If this flag is set, the
+      Tilesort SPU will break blocks of geometry into pieces if they happen to
+      fall on a buffer boundary.&nbsp; This can happen if a lot of geometry is
+      specified with no state changes, or if the MTU is small.&nbsp; If the flag
+      is <i>not</i> set, then the Tilesort SPU will simply grow the geometry
+      buffer beyond the MTU.&nbsp; The default is 1.</td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">sync_on_swap</td>
@@ -468,42 +493,6 @@ one or more downstream servers.
 	The default is 1.</td>
   </tr>
   <tr>
-    <td width="19%" class="ConfigOption" height="38">fake_window_dims</td>
-    <td width="12%" class="ConfigType" height="38">2 Integers</td>
-    <td width="115%" class="ConfigDesc" height="38">Specifies the default
-      window/mural size when the application doesn't create an X or Win32
-      application window (i.e. parallel applications, like psubmit).
-      This is needed in order for <code>glViewport</code> and
-      <code>glScissor</code> to work correctly.
-      The Tilesort SPU's <code>glViewport</code> implementation will
-      determine the size of the client window (if it exists)
-      to determine what part of the output space the client is trying to
-      restrict drawing to.&nbsp; However, if the Chromium context has been
-      created out of thin air (i.e., with the <a href="parallelapplication.html">crCreateContext
-      call</a>), the fake window dimensions will be returned.&nbsp; If these
-      parameters are <i>not</i> set, and there is no client window, using <code>glViewport</code>
-      or <code>glScissor</code> will cause a fatal run-time error.</td>
-  </tr>
-  <tr>
-    <td width="19%" class="ConfigOption" height="38">scale_to_mural_size</td>
-    <td width="12%" class="ConfigType" height="38">Boolean</td>
-    <td width="115%" class="ConfigDesc" height="38">If set to 1, the OpenGL
-      viewport will be rescaled to match the mural size (usually the desired
-      behaviour).  If set to 0, the viewport will not be rescaled.  This is
-      useful for conformance testing.  The default is 1.</td>
-  </tr>
-  <tr>
-    <td width="19%" class="ConfigOption" height="38">retile_on_resize</td>
-    <td width="12%" class="ConfigType" height="38">Boolean</td>
-    <td width="115%" class="ConfigDesc" height="38">If non-zero, when the
-      tilesort SPU's WindowSize() function is called, the SPU will try to
-      find a new mural size and tile layout to match the new window size.
-      Typically, the WindowSize() function is called only if the application
-      node's track_window_size option is set.  The default is 1.<br>
-      With some applications, setting track_window_size to 1 and
-      retile_on_resize to 0 is needed to get reasonable results.</td>
-  </tr>
-  <tr>
     <td width="19%" class="ConfigOption" height="38">use_dmx</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="115%" class="ConfigDesc" height="38">
@@ -512,14 +501,6 @@ one or more downstream servers.
     information whenever the application window size/position changes.
     The DMX server information will be used to compute a new tile arrangment.
     The default is 0.</td>
-  </tr>
-  <tr>
-    <td width="19%" class="ConfigOption" height="38">scale_images</td>
-    <td width="12%" class="ConfigType" height="38">Boolean</td>
-    <td width="115%" class="ConfigDesc" height="38">
-    If set, the images passed to glDrawPixels and glBitmap are scaled to
-    match the mural's size.  glCopyPixels images are also scaled.
-    The default is 0 (don't scale).</td>
   </tr>
   <tr>
     <td width="19%" class="ConfigOption" height="38">auto_dlist_bbox</td>
@@ -564,6 +545,73 @@ one or more downstream servers.
     boxes) instead of broadcasting the lists to all servers.
     The default is 0 (broadcast to all servers).</td>
   </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">dlist_state_tracking</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">
+    If set, record state changes in display lists to keep GL state consistant.
+    There is a performance penalty for enabling state tracking.
+    Off by default.
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">force_quad_buffering</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">
+    If set, force a non-stereo application into stereo mode.
+    Each frame will be rendered twice, once with glDrawBuffer(GL_LEFT) and
+    once with glDrawBuffer(GL_RIGHT).
+    Off by default.
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">stereo_mode</td>
+    <td width="12%" class="ConfigType" height="38">Enum</td>
+    <td width="115%" class="ConfigDesc" height="38">
+    Specifies the stereo rendering mode to use.
+    May be one of <b>None, Passive, CrystalEyes, SideBySide, Anaglyph</b>.
+    The default is None.
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">glasses_type</td>
+    <td width="12%" class="ConfigType" height="38">Enum</td>
+    <td width="115%" class="ConfigDesc" height="38">
+    Specifies the type of colored glasses used for anaglyph stereo mode.
+    May be one of <b>RedBlue, RedGreen, RedCyan, BlueRed, GreenRed,
+    CyanRed</b>.
+    The default is RedBlue.
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">left_view_matrix</td>
+    <td width="12%" class="ConfigType" height="38">16 Floats</td>
+    <td width="115%" class="ConfigDesc" height="38">
+    Specifies the left eye's viewing matrix for stereo rendering.
+    This matrix will premultiply the application's modelview matrix.
+    The default is the identity matrix.
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">right_view_matrix</td>
+    <td width="12%" class="ConfigType" height="38">16 Floats</td>
+    <td width="115%" class="ConfigDesc" height="38">
+    Specifies the right eye's viewing matrix for stereo rendering.
+    This matrix will premultiply the application's modelview matrix.
+    The default is the identity matrix.
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">left_projection_matrix</td>
+    <td width="12%" class="ConfigType" height="38">16 Floats</td>
+    <td width="115%" class="ConfigDesc" height="38">
+    Specifies the left eye's projection matrix for stereo rendering.
+    This matrix will replace the application's projection matrix.
+    The default is the identity matrix.
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">right_projection_matrix</td>
+    <td width="12%" class="ConfigType" height="38">16 Floats</td>
+    <td width="115%" class="ConfigDesc" height="38">
+    Specifies the right eye's projection matrix for stereo rendering.
+    This matrix will replace the application's projection matrix.
+    The default is the identity matrix.
+  </tr>
+
 </table>
 
 

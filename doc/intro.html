@@ -431,11 +431,15 @@ Graphics, Inc. contributed much of the development.</p>
 </ul>
 
 
-<p>1.6 Release:  XXX XXX, 2004</p>
+<p>1.6 Release:  February 18, 2004</p>
 
 <ul>
 <li>New Features
   <ul>
+  <li><a href="nonplanar.html" target="_self">Non-planar tilesort</a>
+  <li><a href="stereo.html" target="_self">Stereo</a> rendering
+  <li>More robust auto-start support in mothership
+  <li>statusms program to query mothership status (John McPherson)
   </ul>
 <li>Bug Fixes
   <ul>
@@ -443,16 +447,18 @@ Graphics, Inc. contributed much of the development.</p>
   <li>Fixed a few compilation issues on Windows
   <li>Fixed intermittent tilesort bug when using multiple app nodes
   <li>Tilesort SPU had some thread safety bugs
+  <li>Using non-default port for mothership didn't work
   <li>Calls to glTexGeni() could blow up in the tilesort SPU
   <li>The render SPU's fake/virtual cursor was polluting the current
       raster position
   </ul>
 <li>Changes
   <ul>
+  <li>resetms now respawns auto-start nodes (Wes Bethel bug)
+  <li>state tracking for display lists is now disabled by default in the
+      tilesort SPU (see 'dlist_state_tracking' option).
   </ul>
 </ul>
-
-
 
 
 </body>

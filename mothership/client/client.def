@@ -10,6 +10,7 @@ crMothershipReadResponse
 crMothershipIdentifySPU
 crMothershipGetSPUParam
 crMothershipGetServerParam
+crMothershipGetServerParamFromSPU
 crMothershipIdentifyFaker
 crMothershipIdentifyOpenGL
 crMothershipIdentifyServer

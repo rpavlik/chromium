@@ -189,7 +189,7 @@ void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei width,
             zpix_spu.rYold != zpix_spu.rYnew ||
             zpix_spu.b.fbWidth[FBtype] != width ||
             zpix_spu.b.fbHeight[FBtype] != height ||
-            zpix_spu.b.fbLen[FBtype] < plen )
+            zpix_spu.b.fbLen[FBtype] < (int) plen )
         {
         /* new or changed frame buffer attributes */
 
@@ -541,7 +541,7 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
         GLuint    alen, plen;
         GLuint    *p_fb;
         GLuint    *p_dif;
-        int     bufi = 0;
+        unsigned int     bufi = 0;
         int     dlen;
         int     pixsize;
         FBTYPE  FBtype;           /* frame buffer type */
@@ -622,7 +622,7 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
             zpix_spu.rYold != zpix_spu.rYnew ||
             zpix_spu.b.fbWidth[FBtype] != width ||
             zpix_spu.b.fbHeight[FBtype] != height ||
-            zpix_spu.b.fbLen[FBtype] <  plen )
+            zpix_spu.b.fbLen[FBtype] < (int) plen )
         {
         /* new or changed frame buffer attributes */
 
@@ -709,7 +709,7 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
            nrun = 0;
            n    = p_plebuf->n;  
            dlen =  n * sizeof(GLuint);
-           CRASSERT(zpix_spu.b.fbLen[FBtype] >= n*sizeof(GLuint)) ;
+           CRASSERT(zpix_spu.b.fbLen[FBtype] >= (int) (n*sizeof(GLuint))) ;
 
            prefv = p_plebuf->prefval;
 

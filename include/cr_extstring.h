@@ -242,6 +242,12 @@ static const char *crChromiumExtensions =
 #ifdef GL_CR_readback_barrier_size
 	"GL_CR_readback_barrier_size "
 #endif
+#ifdef GL_CR_server_id_sharing
+	"GL_CR_server_id_sharing "
+#endif
+#ifdef GL_CR_server_matrix
+	"GL_CR_server_matrix "
+#endif
 #ifdef USE_DMX
 	"GL_CR_dmx "
 #endif

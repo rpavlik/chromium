@@ -9,7 +9,7 @@
 #include "cr_environment.h"
 #include "cr_string.h"
 #include "cr_error.h"
-
+#include "cr_glstate.h"
 #include "server.h"
 
 #ifdef WINDOWS
@@ -18,7 +18,7 @@
 
 
 static void
-__setDefaults(void)
+setDefaults(void)
 {
 	unsigned int i;
 
@@ -43,6 +43,9 @@ __setDefaults(void)
 	cr_server.num_overlap_intens = 0;
 	cr_server.overlap_intens = 0;
 	cr_server.SpuContext = 0;
+
+	crMatrixInit(&cr_server.viewMatrix);
+	crMatrixInit(&cr_server.projectionMatrix);
 
 	for (i = 0; i < CR_MAX_CONTEXTS; i++)
 		cr_server.context[i] = NULL;
@@ -76,7 +79,7 @@ crServerGatherConfiguration(char *mothership)
 	defaultMural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, 0);
 	CRASSERT(defaultMural);
 
-	__setDefaults();
+	setDefaults();
 
 	if (mothership)
 	{
@@ -121,12 +124,17 @@ crServerGatherConfiguration(char *mothership)
 
 	/*
 	 * Gather configuration options.
+	 * NOTE:  when you add new options, be sure to update the
+	 * mothership/tools/crtypes.py file's NetworkNode class's notion of
+	 * config options.
+	 * XXX Use the SPU option parser code here someday.
 	 */
 	if (crMothershipGetServerParam( conn, response, "spu_dir" ) && crStrlen(response) > 0)
 	{
 		spu_dir = crStrdup(response);
 	}
 
+	/* Quadrics networking stuff */
 	if (crMothershipGetRank(conn, response))
 	{
 		my_rank = crStrToInt(response);
@@ -158,13 +166,13 @@ crServerGatherConfiguration(char *mothership)
 		crFree(high_node);
 	if (crMothershipGetParam(conn, "comm_key", response))
 	{
-	  int a;
+	  unsigned int a;
 	  char **words, *found;
 	  
 	  /* remove the silly []'s */
-	  while ((found = crStrchr(response, '[')))
+	  while ((found = crStrchr(response, '[')) != NULL)
 	    *found = ' ';
-	  while ((found = crStrchr(response, ']')))
+	  while ((found = crStrchr(response, ']')) != NULL)
 	    *found = ' ';
 	  
 	  words = crStrSplit(response, ",");
@@ -212,7 +220,7 @@ crServerGatherConfiguration(char *mothership)
 		int a;
 		char **levels, *found;
 
-		/* remove the silly []'s */
+		/* remove the []'s */
 		while ((found = crStrchr(response, '[')))
 			*found = ' ';
 		while ((found = crStrchr(response, ']')))
@@ -267,7 +275,27 @@ crServerGatherConfiguration(char *mothership)
 			cr_server.vpProjectionMatrixVariable = crStrdup(response);
 		}
 	}
-
+	if (crMothershipGetServerParam(conn, response, "stereo_view"))
+	{
+		if (crStrcmp(response, "left") == 0)
+			cr_server.stereoView = 0x1;
+		else if (crStrcmp(response, "right") == 0)
+			cr_server.stereoView = 0x2;
+		else if (crStrcmp(response, "both") == 0)
+			cr_server.stereoView = 0x3;
+		else
+			cr_server.stereoView = 0x3;
+	}
+	if (crMothershipGetServerParam(conn, response, "view_matrix"))
+	{
+		crMatrixInitFromString(&cr_server.viewMatrix, response);
+		cr_server.viewOverride = GL_TRUE;
+	}
+	if (crMothershipGetServerParam(conn, response, "projection_matrix"))
+	{
+		crMatrixInitFromString(&cr_server.projectionMatrix, response);
+		cr_server.projectionOverride = GL_TRUE;
+	}
 
 	/*
 	 * Load the SPUs

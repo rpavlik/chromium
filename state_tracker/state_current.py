@@ -95,14 +95,14 @@ void crStateCurrentRecover( void )
 	static const GLboolean edgeFlag_default		= GL_TRUE;
 	static const GLfloat vertexAttrib_default[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 	static const GLfloat fogCoord_default = 0.0f;
-	GLnormal_p		*normal		= &(c->current->normal);
-	GLcolor_p		*color		= &(c->current->color);
-	GLsecondarycolor_p *secondaryColor = &(c->current->secondaryColor);
-	GLtexcoord_p	*texCoord	= &(c->current->texCoord);
-	GLindex_p		*index		= &(c->current->index);
-	GLedgeflag_p	*edgeFlag	= &(c->current->edgeFlag);
-	GLvertexattrib_p *vertexAttrib = &(c->current->vertexAttrib);
-	GLfogcoord_p *fogCoord = &(c->current->fogCoord);
+	GLnormal_p		*normal		= &(c->current->c.normal);
+	GLcolor_p		*color		= &(c->current->c.color);
+	GLsecondarycolor_p *secondaryColor = &(c->current->c.secondaryColor);
+	GLtexcoord_p	*texCoord	= &(c->current->c.texCoord);
+	GLindex_p		*index		= &(c->current->c.index);
+	GLedgeflag_p	*edgeFlag	= &(c->current->c.edgeFlag);
+	GLvertexattrib_p *vertexAttrib = &(c->current->c.vertexAttrib);
+	GLfogcoord_p *fogCoord = &(c->current->c.fogCoord);
 	unsigned int i;
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
 

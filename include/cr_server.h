@@ -133,7 +133,15 @@ typedef struct {
 	int overlapBlending;
 	int vpProjectionMatrixParameter;
 	const char *vpProjectionMatrixVariable;
+	int stereoView;
+	/* view_matrix config */
+	GLboolean viewOverride;
+	CRmatrix viewMatrix;
+	/* projection_matrix config */
+	GLboolean projectionOverride;
+	CRmatrix projectionMatrix;
 
+	/* for warped tiles */
 	GLfloat alignment_matrix[16], unnormalized_alignment_matrix[16];
 	
 	/* tile overlap/blending info - this should probably be per-mural */

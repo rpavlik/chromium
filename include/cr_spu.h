@@ -98,6 +98,9 @@ struct _SPUSTRUCT {
  * These are the OpenGL / window system interface functions
  */
 #if defined(WINDOWS)
+/*
+ * Windows/WGL
+ */
 typedef HGLRC (WGL_APIENTRY *wglCreateContextFunc_t)(HDC);
 typedef void (WGL_APIENTRY *wglDeleteContextFunc_t)(HGLRC);
 typedef BOOL (WGL_APIENTRY *wglMakeCurrentFunc_t)(HDC,HGLRC);
@@ -113,6 +116,9 @@ typedef BOOL (WGL_APIENTRY *wglGetPixelFormatAttribfvEXTFunc_t)(HDC, int, int, U
 typedef const GLubyte *(WGL_APIENTRY *glGetStringFunc_t)( GLenum );
 typedef const GLubyte *(WGL_APIENTRY *wglGetExtensionsStringEXTFunc_t)( HDC );
 #elif defined(DARWIN)
+/*
+ * Apple/AGL
+ */
 typedef AGLPixelFormat (*aglChoosePixelFormatFunc_t) (const AGLDevice *, GLint, const GLint *);
 // typedef const char *(*glXQueryExtensionsStringFunc_t) (Display *, int );
 typedef AGLContext (*aglCreateContextFunc_t)( AGLPixelFormat, AGLContext );
@@ -124,6 +130,9 @@ typedef void (*aglSwapBuffersFunc_t)( AGLContext );
 // typedef Display *(*glXGetCurrentDisplayFunc_t)( void );
 typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
 #else
+/*
+ * X11/GLX
+ */
 typedef int (*glXGetConfigFunc_t)( Display *, XVisualInfo *, int, int * );
 typedef Bool (*glXQueryExtensionFunc_t) (Display *, int *, int * );
 typedef const char *(*glXQueryExtensionsStringFunc_t) (Display *, int );
@@ -137,7 +146,14 @@ typedef void (*glXSwapBuffersFunc_t)( Display *, GLXDrawable );
 typedef CR_GLXFuncPtr (*glXGetProcAddressARBFunc_t)( const GLubyte *name );
 typedef Display *(*glXGetCurrentDisplayFunc_t)( void );
 typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
+typedef Bool (*glXJoinSwapGroupNVFunc_t)(Display *dpy, GLXDrawable drawable, GLuint group);
+typedef Bool (*glXBindSwapBarrierNVFunc_t)(Display *dpy, GLuint group, GLuint barrier);
+typedef Bool (*glXQuerySwapGroupNVFunc_t)(Display *dpy, GLXDrawable drawable, GLuint *group, GLuint *barrier);
+typedef Bool (*glXQueryMaxSwapGroupsNVFunc_t)(Display *dpy, int screen, GLuint *maxGroups, GLuint *maxBarriers);
+typedef Bool (*glXQueryFrameCountNVFunc_t)(Display *dpy, int screen, GLuint *count);
+typedef Bool (*glXResetFrameCountNVFunc_t)(Display *dpy, int screen);
 #endif
+
 
 /*
  * Package up the WGL/GLX function pointers into a struct.  We use
@@ -178,6 +194,12 @@ typedef struct {
 	glXSwapBuffersFunc_t glXSwapBuffers;
 	glXGetProcAddressARBFunc_t glXGetProcAddressARB;
 	glXGetCurrentDisplayFunc_t glXGetCurrentDisplay;
+	glXJoinSwapGroupNVFunc_t glXJoinSwapGroupNV;
+	glXBindSwapBarrierNVFunc_t glXBindSwapBarrierNV;
+	glXQuerySwapGroupNVFunc_t glXQuerySwapGroupNV;
+	glXQueryMaxSwapGroupsNVFunc_t glXQueryMaxSwapGroupsNV;
+	glXQueryFrameCountNVFunc_t glXQueryFrameCountNV;
+	glXResetFrameCountNVFunc_t glXResetFrameCountNV;
 #endif
 	glGetStringFunc_t glGetString;
 } crOpenGLInterface;

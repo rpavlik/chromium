@@ -251,7 +251,7 @@ crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 		{
 			for (p=r; p && bounds->x2 >= p->extents.x1; p = p->right)
 			{
-				if ( p->id != -1 &&
+				if ( p->id != (unsigned int) -1 &&
 					bounds->x1 < p->extents.x2  &&
 					bounds->y1 < p->extents.y2 &&
 					bounds->y2 >= p->extents.y1 )

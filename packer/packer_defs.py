@@ -162,6 +162,8 @@ functions = [
 	'crPackExpandDrawRangeElements',
 	'crPackExpandArrayElement',
 	'crPackExpandMultiDrawArraysEXT',
+	'crPackMultiDrawArraysEXT',
+	'crPackMultiDrawElementsEXT',
 	'crPackExpandMultiDrawElementsEXT',
 	'crPackMapBufferARB',
 	'crPackUnmapBufferARB' ]

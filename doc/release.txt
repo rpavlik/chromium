@@ -1,6 +1,6 @@
 
                    How to make a Chromium release
-                 (on Linux, using 1.5 as an example)
+                 (on Linux, using 1.6 as an example)
 
 
 
@@ -9,27 +9,26 @@ Coding
 
 Update include/cr_version.h with new version numbers.
 
-Update mothership/server/mothership.py and update the version number near
-line 638.
+Update mothership/server/mothership.py and update "Version".
 
 
 
 Make the tarballs
 =================
 
-mkdir Chromium-1.5
-cd Chromium-1.5
+mkdir Chromium-1.6
+cd Chromium-1.6
 cvs -z3 -d:ext:YOURNAME@cvs.chromium.sf.net:/cvsroot/chromium co .
-cp -r cr cr-1.5
-find cr-1.5 -name CVS -exec rm -rf '{}' \;
-rm -f cr-1.5/mothership/server/crconfig.py
-Edit cr-1.5/options.mk and uncomment the RELEASE=1 line.
-tar cf cr-1.5.tar cr-1.5
-gzip cr-1.5.tar
+cp -r cr cr-1.6
+find cr-1.6 -name CVS -exec rm -rf '{}' \;
+rm -f cr-1.6/mothership/server/crconfig.py
+Edit cr-1.6/options.mk and uncomment the RELEASE=1 line.
+tar cf cr-1.6.tar cr-1.6
+gzip cr-1.6.tar
 
-zip -r cr-1.5.zip cr-1.5
+zip -r cr-1.6.zip cr-1.6
 
-Now, copy cr-1.5.tar.gz to a temporary directory, unpack, build and test.
+Now, copy cr-1.6.tar.gz to a temporary directory, unpack, build and test.
 
 
 
@@ -42,11 +41,11 @@ Upload tarballs to sourceforge:
    passwd: email address
    cd incoming
    bin
-   put cr-1.5.tar.gz
-   put cr-1.5.zip
+   put cr-1.6.tar.gz
+   put cr-1.6.zip
    bye
 
-Via "Admin" interface on SF, create a new source release named "Chromium 1.5".
+Via "Admin" interface on SF, create a new source release named "Chromium 1.6".
 Add the .tar.gz and .zip files to the release.
 
 Send an email to chromium-dev, chromium-users, and chromium-announce.

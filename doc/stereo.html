@@ -1,0 +1,514 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Stereo Rendering</h1>
+
+
+<h2 class="PageSubHeading">Introduction</h2>
+
+<p>
+Chromium supports four types of stereo rendering:
+</p>
+<ul>
+<li><b>Active</b> (LCD shutter glasses) - Alternate left and right
+images are displayed on the screen and the user wears LCD shutter
+glasses which alternately show and hide the left right views.
+<br>
+<br>
+<li><b>Passive</b> (polarized light) - Separate left and right images
+are displayed by separate projectors pointing at a single screen.  The
+user wears glasses with polarized lenses which match the polarization
+of the projected images.
+<br>
+<br>
+<li><b>Side-by-side</b> - the left and right eye views are displayed
+side-by-side in one window.  The user may either defocus or cross
+his eyes to see the stereo effect.
+<br>
+<br>
+<li><b>Anaglyph</b> - anaglyph stereo renders left and right images with
+different colors which match glasses with color filters over the lenses.
+Red/blue is a common color combination.
+</ul>
+
+<p>
+Stereo rendering is supported for two classes of OpenGL applications:
+</p>
+<ul>
+<li><b>Stereo-aware applications</b> - the OpenGL application requests
+a stereo visual and renders separate left and right images to the
+left/right color buffers specified by calls to glDrawBuffer().  This
+method is typically used with active stereo hardware but Chromium
+allows this method to be used with passive stereo hardware as well.
+<br>
+<br>
+<li><b>Non-stereo applications</b> - Chromium can trick an OpenGL
+application into rendering stereo images.  Both active and passive
+stereo modes are possible.  The user must specify special stereo
+configuration information.
+</ul>
+
+
+<h2 class="PageSubHeading">Running Stereo-Aware Applications</h2>
+
+<h3>Active Stereo</h3>
+
+<p>
+Stereo applications using active stereo should work without modification
+with Chromium.
+That is, if the application requests a stereo-capable visual and the
+graphics hardware can support it, stereo rendering should work as expected.
+</p>
+<p>
+One potential problem however, is with tiled displays.
+The SwapBuffers operation and vertical refresh of all the display screens
+should be synchronized.
+This is an area still open to research.
+</p>
+
+<h3>Passive Stereo</h3>
+
+<p>
+A stereo OpenGL application can be made to run on a passive stereo display
+system by setting special configuration options.
+</p>
+
+<p>
+In its simplest configuration, a tilesort SPU drives two crservers, one
+designated for the left eye and the other for the right eye.
+Calls to glDrawBuffer() control which crserver is rendered to.
+In a more sophisticated configuration, a tilesort SPU may have a larger
+number of crservers (half designated for the left eye and the other
+half for the right eye), each half forming a tiled mural.
+</p>
+
+<p>
+The <code>stereo1.conf</code> configuration file demonstrates how to run
+a stereo-aware OpenGL application on passive stereo hardware.
+The important points follow (though this doesn't match stereo1.conf):
+</p>
+
+<ul>
+<li>Create a tilesort SPU and set its configuration parameters:
+<pre>
+    tilesortspu = SPU('tilesort')
+    tilesortspu.Conf('bucket_mode', 'Frustum')
+    tilesortspu.Conf('stereo_mode', 'Passive')
+</pre>
+Note that using 'Frustum' bucket mode isn't required but may work more
+reliably than other bucketing methods.<br><br>
+
+<li>Create two crserver/network nodes with identical tile information:
+<pre>
+    leftServer = CRNetworkNode()
+    rightServer = CRNetworkNode()
+    leftServer.AddTile(0, 0, TileWidth, TileHeight)
+    rightServer.AddTile(0, 0, TileWidth, TileHeight)
+</pre>
+
+<li>Specify each whether the servers render the left or right-eye view
+and add the servers to the tilesort SPU:
+<pre>
+    leftServer.Conf('stereo_view', 'left')
+    rightServer.Conf('stereo_view', 'right')
+    tilesortspu.AddServer(leftServer, port=7000)
+    tilesortspu.AddServer(rightServer, port=7001)
+</pre>
+
+</ul>
+
+
+<h3>Side-by-side or Anaglyph</h3>
+
+<p>
+Side-by-side stereo shows the left and right eye views in one window.
+Viewers may either defocus their eyes or cross their eyes to view the
+stereo pair.
+Anaglyph stereo draws two images with different colors and requires the
+user to wear glasses with colored lenses (such as red and blue) to view
+the stereo image.
+</p>
+<p>
+Both methods are supported in Chromium's tilesort SPU because they are
+relatively easy to implement, though not especially valuable in practice.
+</p>
+<p>
+The key steps in setting up side-by-side mode are:
+</p>
+
+<ul>
+<li>Set the stereo mode:
+<pre>
+    tilesortspu.Conf('stereo_mode', 'SideBySide')
+</pre>
+<li>Configure the crserver(s) for a window/mural that's typically twice
+as wide as the application's window:
+<pre>
+    server = CRNetworkNode()
+    server.AddTile(0, 0, 2 * AppWinWidth, AppWinHeight)
+</pre>
+</ul>
+
+<p>
+The key steps for setting up anaglyph mode are:
+</p>
+<ul>
+<li>Set the stereo mode:
+<pre>
+    tilesortspu.Conf('stereo_mode', 'Anaglyph')
+    tilesortspu.Conf('glasses_type', 'RedBlue')
+</pre>
+</ul>
+
+<p>
+The <code>stereo2.conf</code> configuration file supports both of
+these modes.
+</p>
+
+
+
+
+<h2 class="PageSubHeading">Running Non-Stereo Programs in Stereo Mode</h2>
+
+<p>
+With Chromium one can coerce a non-stereo OpenGL application into rendering
+stereo imagery.
+</p>
+
+<p>
+Similar to <a href="nonplanar.html">non-planar tilesorting</a>, the
+Python configuration file can specify special view and projection
+matrices to override those specified in the application.
+Separate viewing and projection matrices are specified for each eye/view.
+</p>
+
+<p>
+The <code>crmatrix.py</code> module has a number of matrix functions
+which are useful for specifying the view and projection transformations.
+</p>
+
+<p>
+The geometric transformations for rendering left and right stereo views
+may be computed in several ways.
+For example, left and right views may be <em>rotation</em> or
+<em>translation</em>-based.
+Chromium imposes no specific transformations; they're completely specified
+by the user's configuration file.
+In the examples here, we use a simple interocular translation to produce
+the left and right view transformations and skewed perspective frustums
+for the projection transformations.
+</p>
+
+
+<h3>Passive Stereo</h3>
+
+<p>
+As described earlier, a passive stereo configuration will use a tilesort
+SPU and a set of crserver nodes which are designated as left or right views.
+</p>
+<p>
+The specific configuration steps include:
+</p>
+
+<ul>
+<li>Create and configure a tilesort SPU:
+<pre>
+    tilesortspu = SPU("tilesort")
+    tilesortspu.Conf('bucket_mode', 'Frustum')
+    tilesortspu.Conf('stereo_mode', 'Passive')
+</pre>
+
+<li>Create and configure left and right crserver nodes:
+<pre>
+    leftServer = CRNetworkNode( )
+    leftServer.AddTile( 0, 0, TileWidth, TileHeight )
+    rightServer = CRNetworkNode( )
+    rightServer.AddTile( 0, 0, TileWidth, TileHeight )
+
+    # Left node view matrix
+    v = crmatrix.CRMatrix()
+    v.Translate(+EyeSep, 0, 0)
+    leftServerConf('view_matrix', v.ToList())
+
+    # Right node view matrix
+    v = crmatrix.CRMatrix()
+    v.Translate(-EyeSep, 0, 0)
+    rightServerConf('view_matrix', v.ToList())
+
+    # Left node projection matrix
+    p = crmatrix.CRMatrix()
+    left = s * ((Width * -Aspect) - EyeSep);
+    right = s * ((Width * Aspect) - EyeSep);
+    p.Frustum(left, right, bottom, top, Hither, Yon)
+    leftServerConf('projection_matrix', p.ToList())
+
+    # Right node projection matrix
+    p = crmatrix.CRMatrix()
+    left = s * (Width * -Aspect + EyeSep);
+    right = s * (Width * Aspect + EyeSep);
+    p.Frustum(left, right, bottom, top, Hither, Yon)
+    rightServerConf('projection_matrix', p.ToList())
+</pre>
+
+<p>
+Note that the <em>EyeSep</em>, <em>Width</em>, <em>Aspect</em>,
+<em>Hither</em>, and <em>Yon</em> variables are set earlier in the
+configuration file and will have to be adjusted to suit the
+application.
+</p>
+
+
+<li>Specify each whether the servers render the left or right-eye view
+and add the servers to the tilesort SPU:
+<pre>
+    leftServer.Conf('stereo_view', 'left')
+    rightServer.Conf('stereo_view', 'right')
+    tilesortspu.AddServer(leftServer, port=7000)
+    tilesortspu.AddServer(rightServer, port=7001)
+</pre>
+
+</ul>
+
+<p>
+The <code>stereo1.conf</code> configuration, run with the <code>-force</code>
+option can be used to demonstrate forcing a non-stereo application to
+render in passive stereo mode.
+Examine the file to learn how the view/projection parameters have been
+fine-tuned for several programs.
+For other programs one will have to examine the viewing/projection
+parameters normally used, and adapt them for stereo.
+If the application's soure code is not available, this will have to be
+done by trial and error.
+</p>
+
+
+
+<h3>Active Stereo</h3>
+
+<p>
+To make a non-stereo application produce images for active stereo it
+has to be tricked into rendering the everything twice, once for the
+left color buffer (GL_LEFT) and once for the right (GL_RIGHT).  Also,
+the render SPU's window must use a stereo-capable visual.
+</p>
+
+<p>
+The functionality for making a non-stereo application run in active
+stereo mode is encoded in the tilesort SPU (though this functionality
+may be moved into a separate stereo SPU in the future).
+</p>
+
+<p>
+The procedure for setting up active stereo is similar to passive
+stereo but the left/right view/projection matrices are specified to the
+tilesort SPU instead of the crservers.
+This is because there may, in fact, be only one crserver which is
+alternately display the left and right color buffers.
+</p>
+
+<p>
+Here are the primary steps for active stereo.  For a complete
+demonstration, see the <code>stereo2.conf</code> configuration file.
+</p>
+
+<ul>
+<li>Create and configure a tilesort SPU:
+<pre>
+    tilesortspu = SPU("tilesort")
+    tilesortspu.Conf('bucket_mode', 'Test All Tiles')
+    tilesortspu.Conf('force_quad_buffering', 1)
+    tilesortspu.Conf('stereo_mode', 'CrystalEyes')
+</pre>
+
+<p>
+The <em>force_quad_buffering</em> option is explained below.
+</p>
+
+
+<li>Specify the left/right view/projection matrices for the tilesort SPU:
+<pre>
+
+    # Left view matrix
+    v = crmatrix.CRMatrix()
+    v.Translate(+EyeSep, 0, 0)
+    tilesortspu.Conf('left_view_matrix', v.ToList())
+
+    # Right view matrix
+    v = crmatrix.CRMatrix()
+    v.Translate(-EyeSep, 0, 0)
+    tilesortspu.Conf('left_view_matrix', v.ToList())
+
+    # Left projection matrix
+    p = crmatrix.CRMatrix()
+    left = s * ((Width * -Aspect) - EyeSep);
+    right = s * ((Width * Aspect) - EyeSep);
+    p.Frustum(left, right, bottom, top, Hither, Yon)
+    tilesortspu.Conf('left_projection_matrix', p.ToList())
+
+    # Right projection matrix
+    p = crmatrix.CRMatrix()
+    left = s * ((Width * -Aspect) + EyeSep);
+    right = s * ((Width * Aspect) + EyeSep);
+    p.Frustum(left, right, bottom, top, Hither, Yon)
+    tilesortspu.Conf('rightt_projection_matrix', p.ToList())
+</pre>
+
+<li>Create the crserver node with render SPU:
+<pre>
+    renderspu = SPU('render')
+    renderspu.Conf('window_geometry', [0, 0, TileWidth, TileHeight])
+    renderspu.Conf('default_visual', 'rgb, z, double, stereo')
+
+    server = CRNetworkNode()
+    server.AddTile(0, 0, TileWidth, TileHeight)
+    server.Conf('optimize_bucket', 0)  # just to be safe
+    server.AddSPU(renderspu)
+    cr.AddNode(server)
+
+    tilesortspu.AddServer(server, protocol='tcpip', port=7000)
+</pre>
+
+</ul>
+
+<p>
+The <em>force_quad_buffering</em> option tricks the application into
+rendering every frame twice.  The magic takes place in the
+SwapBuffers() function.  After rendering the first (left) view the
+tilesort SPU calls glDrawBuffer(GL_RIGHT) and sends an X Expose event
+to the application.  The event causes the application to redraw the
+window.  When the the second drawing is done and SwapBuffers() is
+called again, glDrawBuffer(GL_LEFT) is called to get ready for drawing
+the next left view.
+</p>
+<p>
+The call to glDrawBuffer(GL_LEFT or GL_RIGHT) also causes the tilesort
+SPU to install either the left or right view/projection matrices needed
+for that view.
+</p>
+
+<p>
+Unfortunately, there don't appear to be any easy solutions to those problems.
+</p>
+
+
+<h3>Side-by-side or Anaglyph</h3>
+
+<p>
+Side-by-side and anaglyph stereo modes (desribed above) may also be used
+to run apps that aren't normally stereo aware.
+Again, the <code>stereo2.conf</code> file supports both modes.
+</p>
+
+
+
+<h2 class="PageSubHeading">Known Problems</h2>
+
+<p>
+OpenGL applications written to use quad-buffered stereo should
+(in general) work fine with Chromium.
+However, forcing non-stereo applications into stereo rendering mode
+will not always work.
+This section explains the known issues.
+</p>
+
+<H3>Simulating Quad-buffering</H3>
+
+<p>
+When the tilesort SPU's <code>force_quad_buffering</code> option is set,
+an X Expose event is sent to the application to trick it into redrawing
+the scene from the other eye's point of view.
+</p>
+
+<p>
+This solution is only implemented on X-based systems at this time.
+A similar mechanism is needed for Windows and Darwin.
+</p>
+
+<p>
+Using an Expose event to trigger the redraw isn't infallible - it
+may simply not work with some applications because of how their event
+loops are written.
+Also, if the application updates any animation parameters between
+drawing the left and right views the stereo pair not be matched in
+time, causing some problems.
+</p>
+
+
+<H3>Changing Projections</H3>
+
+<p>
+Only one projection and view matrix transformation can be specified in
+the Chromium configuration file.
+If the application uses a variety of projections, it may be hard or even
+impossible to find a suitable projection matrix in the configuration file
+that always works.
+</p>
+
+<p>
+Another problem occurs when the application switches between a perspective
+projection (to render 3D elements) and an orthographic projection (to
+render 2D elements).
+The 2D elements probably won't appear correctly since the orthographic
+projection will be overriden in the configuration file.
+</p>
+
+
+<h3>Finding Suitable Stereo Parameters</H3>
+
+<p>
+As seen in the stereo1.conf and stereo2.conf sample configurations,
+the stereo projection parameters usually need to be customized for
+each application.
+Determining suitable projection parameters can be difficult, especially
+when source code for the application is not available.
+</p>
+
+<p>
+If the application source is available, look for glFrustum() and
+gluPerspective() commands.
+These commands will show the parameters used for the near and far
+clipping planes and the width/height of the viewing frustum.
+</p>
+
+<p>
+These values can be plugged into the sample configuration files.
+The focal distance is a value between the near and far values, typically
+closer to the near plane.
+The interocular eye separation is typically a small value, but will have
+to be tuned by trial and error.
+</p>
+
+<p>
+If the application source is not available you'll have to do some
+detective work to discover suitable projection parameters.
+One technique is to examine the OpenGL commands emitted by the application
+using the print SPU.
+Use the print SPU to log the OpenGL commands to a file.
+Then inspect the file for glFrustum() commands or changes to the
+GL_PROJECTION matrix.
+If you find the GL_PROJECTION matrix values, you can compute the original
+glFrustum parameters by using the DecomposeProjection() function found
+in the crmatrix.py Python module.
+Once you have the frustum parameters, you can try similar values for
+the stereo projection.
+</p>
+
+
+
+</body>
+
+</html>

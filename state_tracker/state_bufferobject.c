@@ -17,6 +17,8 @@ static CRBufferObject *AllocBufferObject(GLuint name)
 	if (b) {
 		b->refCount = 1;
 		b->name = name;
+		b->usage = GL_STATIC_DRAW_ARB;
+		b->access = GL_READ_WRITE_ARB;
 	}
 	return b;
 }
@@ -628,7 +630,7 @@ void crStateBufferObjectDiff(CRBufferObjectBits *bb, CRbitvalue *bitID,
 		/* update array buffer data */
 		CRBufferObject *bufObj = to->arrayBuffer;
 		CRASSERT(bufObj);
-		if (bufObj->dirtyStart == 0 && bufObj->dirtyLength == bufObj->size) {
+		if (bufObj->dirtyStart == 0 && bufObj->dirtyLength == (int) bufObj->size) {
 			/* update whole buffer */
 			diff_api.BufferDataARB(GL_ARRAY_BUFFER_ARB, bufObj->size,
 														 bufObj->data, bufObj->usage);
@@ -662,7 +664,7 @@ void crStateBufferObjectDiff(CRBufferObjectBits *bb, CRbitvalue *bitID,
 		/* update element buffer data */
 		CRBufferObject *bufObj = to->elementsBuffer;
 		CRASSERT(bufObj);
-		if (bufObj->dirtyStart == 0 && bufObj->dirtyLength == bufObj->size) {
+		if (bufObj->dirtyStart == 0 && bufObj->dirtyLength == (int) bufObj->size) {
 			/* update whole buffer */
 			diff_api.BufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, bufObj->size,
 														 bufObj->data, bufObj->usage);
@@ -707,7 +709,7 @@ void crStateBufferObjectSwitch(CRBufferObjectBits *bb, CRbitvalue *bitID,
 		/* update array buffer data */
 		CRBufferObject *bufObj = to->arrayBuffer;
 		CRASSERT(bufObj);
-		if (bufObj->dirtyStart == 0 && bufObj->dirtyLength == bufObj->size) {
+		if (bufObj->dirtyStart == 0 && bufObj->dirtyLength == (int) bufObj->size) {
 			/* update whole buffer */
 			diff_api.BufferDataARB(GL_ARRAY_BUFFER_ARB, bufObj->size,
 														 bufObj->data, bufObj->usage);
@@ -742,7 +744,7 @@ void crStateBufferObjectSwitch(CRBufferObjectBits *bb, CRbitvalue *bitID,
 		/* update element buffer data */
 		CRBufferObject *bufObj = to->elementsBuffer;
 		CRASSERT(bufObj);
-		if (bufObj->dirtyStart == 0 && bufObj->dirtyLength == bufObj->size) {
+		if (bufObj->dirtyStart == 0 && bufObj->dirtyLength == (int) bufObj->size) {
 			/* update whole buffer */
 			diff_api.BufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, bufObj->size,
 														 bufObj->data, bufObj->usage);

@@ -33,6 +33,7 @@ FILES = bbox \
 	hash \
 	hull \
 	list \
+	matrix \
 	mem \
 	net \
 	pixel \

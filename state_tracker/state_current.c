@@ -182,9 +182,19 @@ void crStateCurrentSwitch( CRCurrentBits *c, CRbitvalue *bitID,
 		  const GLfloat toX = to->rasterAttrib[VERT_ATTRIB_POS][0] + to->rasterOrigin.x;
 		  const GLfloat toY = to->rasterAttrib[VERT_ATTRIB_POS][1] + to->rasterOrigin.y;
 		  if (toX != fromX || toY != fromY) {
-			  const GLfloat dx = toX - fromX;
-			  const GLfloat dy = toY - fromY;
-			  diff_api.Bitmap(0, 0, 0.0f, 0.0f, dx, dy, NULL);
+#if 1
+				/* Use glWindowPos (which updates raster color) */
+				GLfloat pos[3];
+				pos[0] = to->rasterAttrib[VERT_ATTRIB_POS][0] - from->rasterOrigin.x;
+				pos[1] = to->rasterAttrib[VERT_ATTRIB_POS][1] - from->rasterOrigin.y;
+				pos[2] = to->rasterAttrib[VERT_ATTRIB_POS][2];
+				diff_api.WindowPos3fvARB(pos);
+#else
+				/* Use glBitmap (which doesn't update raster color) */
+				const GLfloat dx = toX - fromX;
+				const GLfloat dy = toY - fromY;
+				diff_api.Bitmap(0, 0, 0.0f, 0.0f, dx, dy, NULL);
+#endif
 			  FILLDIRTY(c->rasterPos);
 			  FILLDIRTY(c->dirty);
 		  }
@@ -316,11 +326,6 @@ crStateCurrentDiff( CRCurrentBits *c, CRbitvalue *bitID,
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		nbitID[j] = ~bitID[j];
 
-	/*
-	 * Use glBitmap to move the current raster position.
-	 * Problems: we never get the current color (always get white) Z value
-	 * is always zero, no texgen, etc.
-	 */
 	if (CHECKDIRTY(c->rasterPos, bitID)) {
 		from->rasterValid = to->rasterValid;
 		if (to->rasterValid) {
@@ -331,7 +336,21 @@ crStateCurrentDiff( CRCurrentBits *c, CRbitvalue *bitID,
 			if (toX != fromX || toY != fromY) {
 				const GLfloat dx = toX - fromX;
 				const GLfloat dy = toY - fromY;
+#if 1
+				/* Use glWindowPos (which updates raster color) */
+				GLfloat pos[3];
+				pos[0] = to->rasterAttrib[VERT_ATTRIB_POS][0] - from->rasterOrigin.x;
+				pos[1] = to->rasterAttrib[VERT_ATTRIB_POS][1] - from->rasterOrigin.y;
+				pos[2] = to->rasterAttrib[VERT_ATTRIB_POS][2];
+				diff_api.WindowPos3fvARB(pos);
+#else
+				/*
+				 * Use glBitmap to move the current raster position.
+				 * Problems: we never get the current color (always get white) Z value
+				 * is always zero, no texgen, etc.
+				 */
 				diff_api.Bitmap(0, 0, 0.0f, 0.0f, dx, dy, NULL);
+#endif
 				from->rasterAttrib[VERT_ATTRIB_POS][0] += dx;
 				from->rasterAttrib[VERT_ATTRIB_POS][1] += dy;
 			}

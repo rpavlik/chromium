@@ -51,7 +51,7 @@ static void threadDestructor(void *tsd)
  * is passed in to allow the utilities to muck with the table
  * to gain functional control when GL calls are made.
  */
-CRDLM *crDLMNewDLM(int userConfigSize, const CRDLMConfig *userConfig)
+CRDLM *crDLMNewDLM(unsigned int userConfigSize, const CRDLMConfig *userConfig)
 {
     CRDLM *dlm;
 

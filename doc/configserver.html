@@ -175,6 +175,60 @@ for the Chromium server.</p>
        projection matrix is usually named "ModelViewProj".
        <p>
     </td>
+
+  <tr>
+    <td width="19%" class="ConfigOption">local_tile_spec</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+       For warped tile sort.  XXX more info needed.
+    </td>
+  </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption">ignore_papi</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+       If set, make all barrier and semaphore operations into no-ops.
+    </td>
+  </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption">overlap_blending</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+    XXX description
+    </td>
+  </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption">overlap_levels</td>
+    <td width="12%" class="ConfigType">Integer</td>
+    <td width="115%" class="ConfigDesc">
+    XXX description
+    </td>
+  </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption">view_matrix</td>
+    <td width="12%" class="ConfigType">List of 16 Floats</td>
+    <td width="115%" class="ConfigDesc">
+    Specifies a viewing matrix to premultiply onto the normal OpenGL
+    modelview matrix.
+    Used for <a href="nonplanar.html">non-planar tilesort</a>.
+    </td>
+  </tr>
+
+  <tr>
+    <td width="19%" class="ConfigOption">projection_matrix</td>
+    <td width="12%" class="ConfigType">List of 16 Floats</td>
+    <td width="115%" class="ConfigDesc">
+    Specifies a projection matrix to use instead of the normal OpenGL
+    projection matrix.
+    Used for <a href="nonplanar.html">non-planar tilesort</a>.
+    </td>
+  </tr>
+
+
   </tr>
 
 </table>

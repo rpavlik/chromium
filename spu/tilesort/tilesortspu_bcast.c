@@ -22,23 +22,58 @@ void TILESORTSPU_APIENTRY tilesortspu_Accum( GLenum op, GLfloat value )
 	{
 		crPackAccum( op, value );
 	}
-	tilesortspuBroadcastGeom(1);
+	tilesortspuBroadcastGeom(GL_TRUE);
 }
+
 
 void TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
 {
 	GET_THREAD(thread);
-	tilesortspuFlush( thread );
-	if (tilesort_spu.swap)
-	{
-		crPackClearSWAP( mask );
+	const WindowInfo *winInfo = thread->currentContext->currentWindow;
+
+	if (winInfo->passiveStereo) {
+		/* only send Clear to left/right servers */
+		int i;
+
+		tilesortspuFlush( thread );
+
+		crPackReleaseBuffer( thread->packer );
+
+		/* Send glClear command to those servers designated as left/right
+		 * which match the current glDrawBuffer setting (stereo).
+		 */
+		for (i = 0; i < tilesort_spu.num_servers; i++)
+		{
+			const ServerWindowInfo *servWinInfo = winInfo->server + i;
+
+			if (servWinInfo->eyeFlags & thread->currentContext->stereoDestFlags) {
+				crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
+
+				if (tilesort_spu.swap)
+					crPackClearSWAP(mask);
+				else
+					crPackClear(mask);
+
+				crPackReleaseBuffer( thread->packer );
+
+				tilesortspuSendServerBuffer( i );
+			}
+		}
+
+		/* Restore the default pack buffer */
+		crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 	}
-	else
-	{
-		crPackClear( mask );
+	else {
+		/* not doing stereo, truly broadcast glClear */
+		tilesortspuFlush( thread );
+		if (tilesort_spu.swap)
+			crPackClearSWAP( mask );
+		else
+			crPackClear( mask );
+		tilesortspuBroadcastGeom(GL_TRUE);
 	}
-	tilesortspuBroadcastGeom(1);
 }
+
 
 void TILESORTSPU_APIENTRY tilesortspu_Finish(void)
 {

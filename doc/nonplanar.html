@@ -1,0 +1,387 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Non-planar Tilesort Rendering</h1>
+
+<p>
+Typically, a tilesort configuration renders a physically (and logically)
+flat mural.  That is, all the image tiles lie in the same plane.
+Chromium 1.6 and later supports non-planar tilesorting for applications
+such as virtual reality displays (such as the CAVE).
+</p>
+
+<p>
+This discussion will focus on CAVE-like configurations in which there
+are two or more walls arranged around the user at right angles.
+Chromium is not limited to this arrangement, however;
+image tiles may be arbitrarily oriented.
+</p>
+
+<h2 class="PageSubHeading">Running a CAVE with Chromium</h2>
+
+<p>
+A CAVE system typically has two or three walls and a floor upon which
+video projectors display views of the virtual world.
+Usually, applications need to be modified to use the CAVE library before
+they can be run in a CAVE.
+Furthermore, a separate instance of the application may need to be running
+on each of the rendering hosts (they must be synchronized as well).
+With Chromium's non-planar tilesort feature, unmodified applications can
+be run in a CAVE (with some limitations).
+</p>
+
+<p>
+Our approach is to use a Chromium server/render node to drive each video
+wall and run one instance of the application with a tilesort SPU.
+
+The Chromium configuration file specifies the size and orientation of each
+wall, the view frustums, etc.
+</p>
+
+<p>
+Two levels of functionality (and complexity) are available:
+</p>
+<ol>
+<li>Run unmodified applications, but with no CAVE head tracking.
+<li>Modify the application to support CAVE head tracking.
+</ol>
+
+<p>
+To summarize how things work:
+</p>
+<ul>
+<li>The tilesort SPU can record a sequence of OpenGL rendering commands and
+replay them for an aribitrary number of servers.
+<li>For each server we can manipulate the OpenGL modelview and projection
+matrices to render different views of the scene.
+<li>If the application performs view-specific culling then Chromium may
+not display all the appropriate geometry.
+</ul>
+
+
+
+
+<h2 class="PageSubHeading">First Example (cavetest1.conf)</h2>
+
+<p>
+The mothership/configs/cavetest1.conf file is a simple example of driving
+a CAVE-like system with Chromium.
+As is, all of the CAVE walls/views are displayed in windows on the local
+host.
+But this configuration file can be easily modified to support a real CAVE.
+</p>
+
+<p>
+Here are the interesting bits of the cavetest1.conf file.
+</p>
+
+<ul>
+<li>
+Specify some configuration parameters, including number of walls and their
+size (in pixels).
+    <pre>
+    WALLS = 4
+    WALL_WIDTH = 300
+    WALL_HEIGHT = 300
+    </pre>
+<p>
+A real CAVE configuration would, of course, use larger wall sizes such
+as 1024 x 1024.
+</p>
+</li>
+
+<li>
+This code creates a tilesort SPU and configures the bucketing mode to use
+<em>Frustum</em> testing.
+Frustum bucketing tests the 3D bounding box of OpenGL primitives against
+the viewing frustum to determine which tiles (walls) will receive the
+geometry.
+<pre>
+    tilesortspu = SPU( 'tilesort' )
+    tilesortspu.Conf('bucket_mode', 'Frustum')
+</pre>
+</li>
+
+<li>
+Next, for each the CAVE walls (counted with the <code>wall</code> variable)
+we do the following:
+</li>
+<br>
+    <ul>
+    <li>Create a render SPU for the wall and set its window geometry.
+        For a real CAVE configuration one would instead set the fullscreen
+        option.
+    <pre>
+    renderspu = SPU( 'render' )
+    renderspu.Conf( 'window_geometry', [wall*(WALL_WIDTH+10), 0, WALL_WIDTH, WALL_HEIGHT] )
+    </pre>
+    </li>
+
+    <li>Create a network/server node for the wall, disable optimized bucketing,
+        and add the tile.
+    <pre>
+    node = CRNetworkNode( )
+    node.Conf('optimize_bucket', 0)
+    node.AddTile( 0, 0, WALL_WIDTH, WALL_HEIGHT )
+    </pre>
+        <p>
+        A real CAVE configuration would specify a unique host for each
+        network node.
+        </p>
+    </li>
+
+    <li>Specify a viewing matrix for the node corresponding to the wall.
+        In our example, we can
+        simply rotate the view direction about the Y axis for each wall.
+        In a more sophisticated configuration we might also specify a
+        floor view with another rotation.
+    <pre>
+    v = CRMatrix()
+    v.YRotate(90 * wall)
+    v.Translate(0, 0, zTranslate)  # undo application view translation
+    node.Conf('view_matrix', v.ToList())
+    </pre>
+        <p>
+        The crmatrix.py module offers a set of matrix functions which mimics
+        OpenGL's matrix functions.
+        These can be used to compose an arbitrary viewing transformation.
+        </p>
+        <p>
+        The viewing matrix we specify here will premultiply the application's
+        normal modelview matrix.
+        The net effect is the whole scene is rotated by the view matrix
+        specified here.
+        </p>
+        <p>
+	Since most applications first put a Z-axis translation on the
+        modelview matrix to position the camera, one will typically undo
+        that translation by multiplying the viewing matrix by an opposite
+        translation.  This is seen above.
+        </p>
+        <p>
+        In the case of the city demo,
+        this positions us right in the middle of the city, instead of
+        outside of it.
+        </p>
+    </li>
+
+    <li>Next, we override the application's projection matrix with our own.
+        In the case of a cubical CAVE with the observer assumed to be at
+        the center, we want to use a 90-degree symmetric viewing frustum
+        for all walls.
+    <pre>
+    p = CRMatrix()
+    p.Frustum( -fScale, fScale, -fScale, fScale, fScale, farPlane )
+    node.Conf('projection_matrix', p.ToList())
+    </pre>
+        <p>
+        Again, we use the crmatrix.py module to produce a
+        perspective projection with the OpenGL-like Frustum() function.
+        </p>
+        <p>
+        The <code>fScale</code> and <code>farPlane</code> variables
+        will vary from one application to another, depending on how
+        large the virtual world should appear in the CAVE.
+        </p>
+    </li>
+
+    <li>Finally, for this wall, we add a render SPU to the network node,
+        add the node to the cr object and attach the network node to the
+        tilesort SPU.
+    <pre>
+    node.AddSPU( renderspu )
+    cr.AddNode( node )
+
+    tilesortspu.AddServer( node, protocol='tcpip', port=7000 + wall )
+    </pre>
+    </li>
+    </ul>
+
+</ul>
+
+<p>
+To run the cavetest1.conf demo, do the following:
+</p>
+<ul>
+<li>Start the mothership with <code>python cavetest1.conf</code>
+<li>Start four crservers (corresponding to WALL=4)
+<li>Start one crappfaker
+</ul>
+<p>
+By default, the city program is run.
+Other programs, such as atlantis may be run, but the configuration file
+may need some tweaking (fScale, farPlane, zTranslate, etc).
+</p>
+
+
+
+<h2 class="PageSubHeading">Second Example (cavetest2.conf)</h2>
+
+<p>
+The <code>cavetest2.conf</code> file illustrates how to render tiled
+walls.
+Suppose you wanted your CAVE walls to be 2048 x 2048 pixels
+driven by four projectors (four Chromium network/server nodes) each
+emitting a 1024 x 1024 image.
+This configuration file illustrates how one would accomplish that.
+</p>
+
+<p>
+Notes:
+</p>
+<ul>
+<li>The viewing matrix is identical for all tiles of each view.
+<li>The frustum parameters are identical for all tiles of each view,
+    whether specified in the Python configuration file or specified
+    from within the application with glChromiumParameterv (see below).
+</ul>
+
+<p>
+To run the cavetest2.conf demo, do the following:
+</p>
+<ul>
+<li>Start the mothership with <code>python cavetest2.conf</code>
+<li>Start eight crservers (corresponding to WALL=4 and two tiles per wall)
+<li>Start one crappfaker
+</ul>
+<p>
+By default, the city program is run.
+</p>
+
+
+
+<h2 class="PageSubHeading">Third Example - Head Tracking</h2>
+
+<p>
+A CAVE equipped with head tracking hardware can adjust the projected
+images depending on the user's position inside the CAVE.
+Unfortunately, there's no way to achieve this effect without modifying
+the application code.
+</p>
+
+<p>
+With Chromium, a call to the glChromiumParametervCR() function can be
+used to specify the per-server projection matrix from inside of the
+application, instead of in the Python configuration file.
+</p>
+
+<p>
+The following code from the Chromium city demo illustrates how to
+set a unique projection matrix for each view (each network/server node).
+</p>
+
+<pre>
+static void MultiFrustum(void)
+{
+   int i;
+   for (i = 0; i < NumViews; i++) {
+      const float fSize = 1.1;
+      GLfloat f[7];
+      float eyex, eyez;
+      float angle = (90.0 * i) * M_PI / 180.0; /* angle in radians */
+
+      /* Each view is another 90 degree rotation about the Y axis */
+      /* Compute the eye position in the rotated view */
+      eyex = cos(angle) * EyeX - sin(angle) * EyeZ;
+      eyez = sin(angle) * EyeX + cos(angle) * EyeZ;
+
+      f[0] = i; /* the server */
+      /* Skew the view frustum according to eye position (i.e. the
+       * person's position in the cave.
+       * XX This is also where we'd specify an interocular distance for stereo.
+       */
+      f[1] = -fSize - eyex;  /* left */
+      f[2] =  fSize - eyex;  /* right */
+      f[3] = -fSize - EyeY;  /* bottom */
+      f[4] =  fSize - EyeY;  /* top */
+      f[5] =  fSize - eyez;  /* near */
+      f[6] = 100.0;          /* far */
+      glChromiumParametervCR_ptr(GL_SERVER_FRUSTUM_CR, GL_FLOAT, 7, f);
+   }
+}
+</pre>
+
+<p>
+When the application detects a change in head position, the MultiFrustum()
+function would be called in place of the normal OpenGL code to specify the
+projection matrix.
+</p>
+
+<p>
+The sample code above is meant to be used with the cavetest1.conf or
+cavetest2.conf example configurations.
+Specifically, each wall (server) is rotated 90 degrees from its neighbor.
+Each frustum is skewed according to the eye position within the CAVE.
+</p>
+
+<p>
+The MultiFrustum() function is only example code and may need quite a
+few modifications to work in other applications.
+</p>
+
+<p>
+The global variables EyeX, EyeY, EyeZ are the user's eye position within
+the CAVE.
+</p>
+
+<p>
+The per-server projection matrix is set by calling
+<code>glChromiumParametervCR(GL_SERVER_FRUSTUM_CR, GL_FLOAT, 7, m)</code>
+where m[0] is the server index and m[1] through m[6] are the desired
+frustum left, right, bottom, top, near, far parameters.
+</p>
+
+<p>
+Alternately, an arbitrary per-server projection matrix may be set by calling
+<code>glChromiumParametervCR(GL_SERVER_PROJECTION_MATRIX_CR, GL_FLOAT, 17, m)
+</code>
+where m[0] is the server index and m[1] through m[16] are the sixteen
+elements of the projection matrix.
+</p>
+
+<p>
+The per-server viewing matrix may also be set from within the application
+(instead of in the Python configuration file) by calling
+<code>glChromiumParametervCR(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT, 17, m)
+</code>
+where m[0] is the server index and m[1] through m[16] are the sixteen
+elements of the viewing matrix.
+</p>
+
+<p>
+<b>NOTE:</b> if you specify the projection or viewing matrices in the
+application with <code>glChromiumParametervCR</code> the Python
+configuration file <em>should not</em> set those matrices
+with the 'view_matrix' or 'projection_matrix' options.
+</p>
+
+<p>
+The city demo, (run with either cavetest1.conf or cavetest2.conf) illustrates
+this technique.
+Press the x/X, y/Y and z/Z keys to translate the user/eye position within
+the CAVE.
+</p>
+
+
+<p>
+<b>To do: Stereo...</b>
+</p>
+
+
+</body>
+
+</html>

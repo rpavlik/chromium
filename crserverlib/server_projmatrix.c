@@ -11,56 +11,107 @@
 #include "cr_mem.h"
 #include "cr_string.h"
 
+/*
+ * This file provides implementations of the basic OpenGL matrix functions.
+ * We often need to twiddle with their operation in order to make tilesorting
+ * and non-planar projections work.
+ */
+
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchLoadMatrixf( const GLfloat *m )
 {
+	const GLenum matMode = cr_server.curClient->currentCtx->transform.matrixMode;
 	const CRMuralInfo *mural = cr_server.curClient->currentMural;
+
 	crStateLoadMatrixf( m );
-	if (mural->numExtents > 0 &&
-			cr_server.curClient->currentCtx->transform.matrixMode == GL_PROJECTION)
-	{
+
+	if (matMode == GL_PROJECTION && mural->numExtents > 0) {
 		/* we're loading a matrix onto the projection stack -- better put the base 
 		 * projection there first! */
-		crServerApplyBaseProjection(&(mural->extents[mural->curExtent].baseProjection));
+		crServerApplyBaseProjection(&(mural->extents[mural->curExtent].
+																	baseProjection));
 	}
-	else
-	{
+	else if (matMode == GL_MODELVIEW && cr_server.viewOverride) {
+		crServerApplyViewMatrix(&cr_server.viewMatrix);
+	}
+	else {
 		cr_server.head_spu->dispatch_table.LoadMatrixf( m );
 	}
 }
 
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchLoadMatrixd( const GLdouble *m )
 {
+	const GLenum matMode = cr_server.curClient->currentCtx->transform.matrixMode;
 	const CRMuralInfo *mural = cr_server.curClient->currentMural;
 
 	crStateLoadMatrixd( m );
-	if (mural->numExtents > 0 &&
-			cr_server.curClient->currentCtx->transform.matrixMode == GL_PROJECTION)
-	{
+
+	if (matMode == GL_PROJECTION && mural->numExtents > 0) {
 		/* we're loading a matrix onto the projection stack -- better put the base 
 		 * projection there first! */
-		crServerApplyBaseProjection(&(mural->extents[mural->curExtent].baseProjection));
+		crServerApplyBaseProjection(&(mural->extents[mural->curExtent].
+																	baseProjection));
 	}
-	else
-	{
+	else if (matMode == GL_MODELVIEW && cr_server.viewOverride) {
+		crServerApplyViewMatrix(&cr_server.viewMatrix);
+	}
+	else {
 		cr_server.head_spu->dispatch_table.LoadMatrixd( m );
 	}
 }
 
+
+void SERVER_DISPATCH_APIENTRY crServerDispatchMultMatrixf( const GLfloat *m )
+{
+	const GLenum matMode = cr_server.curClient->currentCtx->transform.matrixMode;
+
+	if (matMode == GL_PROJECTION && cr_server.projectionOverride) {
+		/* load the overriding projection matrix */
+		crStateLoadMatrix( &cr_server.projectionMatrix );
+	}
+	else {
+		/* the usual case */
+		crStateMultMatrixf( m );
+		cr_server.head_spu->dispatch_table.MultMatrixf( m );
+	}
+}
+
+
+void SERVER_DISPATCH_APIENTRY crServerDispatchMultMatrixd( const GLdouble *m )
+{
+	const GLenum matMode = cr_server.curClient->currentCtx->transform.matrixMode;
+
+	if (matMode == GL_PROJECTION && cr_server.projectionOverride) {
+		/* load the overriding projection matrix */
+		crStateLoadMatrix( &cr_server.projectionMatrix );
+	}
+	else {
+		/* the usual case */
+		crStateMultMatrixd( m );
+		cr_server.head_spu->dispatch_table.MultMatrixd( m );
+	}
+}
+
+
+
 void SERVER_DISPATCH_APIENTRY crServerDispatchLoadIdentity( void )
 {
+	const GLenum matMode = cr_server.curClient->currentCtx->transform.matrixMode;
 	const CRMuralInfo *mural = cr_server.curClient->currentMural;
 
 	crStateLoadIdentity();
-	if (mural->numExtents > 0 &&
-			cr_server.curClient->currentCtx->transform.matrixMode == GL_PROJECTION)
-	{
+
+	if (matMode == GL_PROJECTION && mural->numExtents > 0) {
 		/* we're loading a matrix onto the projection stack -- better put the base 
 		 * projection there first! */
-		crServerApplyBaseProjection(&(mural->extents[mural->curExtent].baseProjection));
+		crServerApplyBaseProjection(&(mural->extents[mural->curExtent].
+																	baseProjection));
 	}
-	else
-	{
+	else if (matMode == GL_MODELVIEW && cr_server.viewOverride) {
+		crServerApplyViewMatrix(&cr_server.viewMatrix);
+	}
+	else {
 		cr_server.head_spu->dispatch_table.LoadIdentity( );
 	}
 }

@@ -105,11 +105,14 @@ void tilesortspuConnectToServers( void )
 	for (i = 0 ; i < tilesort_spu.num_servers; i++)
 	{
 		CRNetServer *net = &(thread0->net[i]);
+
 		crNetServerConnect( net );
+
 
 		/* the connection may have already detected a smaller MTU */
 		if (tilesort_spu.MTU > net->conn->mtu)
 			tilesort_spu.MTU = net->conn->mtu;
+
 		
 		/* Tear the URL apart into relevant portions. 
 		 * 

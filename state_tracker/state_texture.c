@@ -2070,7 +2070,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.y = (GLfloat) param[1];
 					v.z = (GLfloat) param[2];
 					v.w = (GLfloat) param[3];
-					crStateTransformInvertTransposeMatrix(&inv, trans->modelViewStack.top);
+					crMatrixInvertTranspose(&inv, trans->modelViewStack.top);
 					crStateTransformXformPointMatrixf(&inv, &v);
 					t->unit[t->curTextureUnit].eyeSCoeff = v;
 					DIRTY(tb->eyeGen[t->curTextureUnit], g->neg_bitid);
@@ -2118,7 +2118,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.y = (GLfloat) param[1];
 					v.z = (GLfloat) param[2];
 					v.w = (GLfloat) param[3];
-					crStateTransformInvertTransposeMatrix(&inv, trans->modelViewStack.top);
+					crMatrixInvertTranspose(&inv, trans->modelViewStack.top);
 					crStateTransformXformPointMatrixf(&inv, &v);
 					t->unit[t->curTextureUnit].eyeTCoeff = v;
 					DIRTY(tb->eyeGen[t->curTextureUnit], g->neg_bitid);
@@ -2166,7 +2166,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.y = (GLfloat) param[1];
 					v.z = (GLfloat) param[2];
 					v.w = (GLfloat) param[3];
-					crStateTransformInvertTransposeMatrix(&inv, trans->modelViewStack.top);
+					crMatrixInvertTranspose(&inv, trans->modelViewStack.top);
 					crStateTransformXformPointMatrixf(&inv, &v);
 					t->unit[t->curTextureUnit].eyeRCoeff = v;
 					DIRTY(tb->eyeGen[t->curTextureUnit], g->neg_bitid);
@@ -2210,7 +2210,7 @@ void STATE_APIENTRY crStateTexGendv (GLenum coord, GLenum pname, const GLdouble 
 					v.y = (GLfloat) param[1];
 					v.z = (GLfloat) param[2];
 					v.w = (GLfloat) param[3];
-					crStateTransformInvertTransposeMatrix(&inv, trans->modelViewStack.top);
+					crMatrixInvertTranspose(&inv, trans->modelViewStack.top);
 					crStateTransformXformPointMatrixf(&inv, &v);
 					t->unit[t->curTextureUnit].eyeQCoeff = v;
 					DIRTY(tb->eyeGen[t->curTextureUnit], g->neg_bitid);
@@ -3387,7 +3387,7 @@ void crStateTextureSwitch( CRTextureBits *tb, CRbitvalue *bitID,
 	unsigned int i,j;
 	glAble able[2];
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
-	int activeUnit = -1;
+	unsigned int activeUnit = (unsigned int) -1;
 
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		nbitID[j] = ~bitID[j];

@@ -242,6 +242,8 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 		winInfo->muralWidth = tilesort_spu.displays[0].width;
 		winInfo->muralHeight = tilesort_spu.displays[0].height;
 
+		winInfo->passiveStereo = GL_FALSE;  /* may be set true below */
+
 		for (i = 0; i < num_servers; i++)
 		{
 			char server_url[1024];
@@ -266,6 +268,19 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 			tilechain = crStrSplitn(response, " ", 1);
 			servWinInfo->num_extents = crStrToInt(tilechain[0]);
 			tilelist = crStrSplit(tilechain[1], ",");
+
+			servWinInfo->eyeFlags = EYE_LEFT | EYE_RIGHT;
+			if (crMothershipGetServerParamFromSPU( conn, i,
+																						 "stereo_view", response)) {
+				if (crStrcmp(response, "left") == 0) {
+					servWinInfo->eyeFlags = EYE_LEFT;
+					winInfo->passiveStereo = GL_TRUE;
+				}
+				else if (crStrcmp(response, "right") == 0) {
+					servWinInfo->eyeFlags = EYE_RIGHT;
+					winInfo->passiveStereo = GL_TRUE;
+				}
+			}
 
 			Sx = 2.0 / (world_bbox[2] - world_bbox[0]);
 			Sy = 2.0 / (world_bbox[3] - world_bbox[1]);
@@ -332,7 +347,6 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 
 
 				/* XXX: check that the tile fits w/i the display it is on */
-
 			}
 			crFreeStrings(tilechain);
 			crFreeStrings(tilelist);
@@ -397,6 +411,40 @@ tilesortspuGetTilingFromServers(CRConnection *conn, WindowInfo *winInfo)
 
 			crFreeStrings(tilechain);
 			crFreeStrings(tilelist);
+
+			/* Determine if the server should receieve left, right or both eye
+			 * views when running in passive stere mode.
+			 */
+			servWinInfo->eyeFlags = EYE_LEFT | EYE_RIGHT;
+			if (crMothershipGetServerParamFromSPU( conn, i,
+																						 "stereo_view", response)) {
+				if (crStrcmp(response, "left") == 0) {
+					servWinInfo->eyeFlags = EYE_LEFT;
+					winInfo->passiveStereo = GL_TRUE;
+				}
+				else if (crStrcmp(response, "right") == 0) {
+					servWinInfo->eyeFlags = EYE_RIGHT;
+					winInfo->passiveStereo = GL_TRUE;
+				}
+			}
+
+			/* get view matrix from the server */
+			if (crMothershipGetServerParamFromSPU( conn, i,
+																						 "view_matrix", response)) {
+				crMatrixInitFromString(&servWinInfo->viewMatrix, response);
+				if (!crMatrixIsIdentity(&servWinInfo->viewMatrix))
+					winInfo->matrixSource = MATRIX_SOURCE_SERVERS;
+			}
+
+			/* Also get overriding projection matrix.
+			 * Note that this matrix is only relevant to FRUSTUM bucketing.
+			 */
+			if (crMothershipGetServerParamFromSPU( conn, i,
+																						 "projection_matrix", response)) {
+				crMatrixInitFromString(&servWinInfo->projectionMatrix, response);
+				if (!crMatrixIsIdentity(&servWinInfo->viewMatrix))
+					winInfo->matrixSource = MATRIX_SOURCE_SERVERS;
+			}
 		}
 	}
 

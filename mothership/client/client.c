@@ -217,6 +217,14 @@ int crMothershipGetSPUParam( CRConnection *conn, char *response, const char *par
 	return crMothershipSendString( conn, response, "spuparam %s", param );
 }
 
+/* Called by SPUs to get server config parameters */
+int crMothershipGetServerParamFromSPU( CRConnection *conn, int server_num,
+																			 const char *param, char *response )
+{
+	return crMothershipSendString( conn, response, "server_param %d %s", server_num, param );
+}
+
+
 /* Called by SPUs to get the list of tiles from a specific server */
 int crMothershipGetTiles( CRConnection *conn, char *response, int server_num )
 {
@@ -236,7 +244,6 @@ int crMothershipGetDisplayTiles( CRConnection *conn, char *response, int server_
 {
 	return crMothershipSendString( conn, response, "display_tiles %d", server_num );
 }
-
 
 
 /**********************************************************************

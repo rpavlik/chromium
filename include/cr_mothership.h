@@ -37,6 +37,7 @@ int crMothershipGetMTU( CRConnection *conn );
 /* SPU functions */
 void crMothershipGetServers( CRConnection *conn, char *response );
 int crMothershipGetSPUParam( CRConnection *conn, char *response, const char *param);
+int crMothershipGetServerParamFromSPU( CRConnection *conn, int server_num, const char *param, char *response );
 int crMothershipGetTiles( CRConnection *conn, char *response, int server_num );
 int crMothershipGetDisplays( CRConnection *conn, char *response );
 int crMothershipGetDisplayTiles( CRConnection *conn, char *response, int server_num );

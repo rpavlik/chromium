@@ -22,6 +22,8 @@ Writeback
 Viewport
 LoadMatrixf
 LoadMatrixd
+MultMatrixf
+MultMatrixd
 LoadIdentity
 Color3ub
 Color3b
@@ -92,6 +94,7 @@ ReadPixels
 GetChromiumParametervCR
 ChromiumParametervCR
 ChromiumParameteriCR
+ChromiumParameterfCR
 SwapBuffers
 GenProgramsNV
 GetProgramStringNV

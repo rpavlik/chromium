@@ -46,20 +46,21 @@
 #include <GL/glu.h>
 #include "atlantis.h"
 
-fishRec sharks[NUM_SHARKS];
+fishRec sharks[MAX_SHARKS];
 fishRec momWhale;
 fishRec babyWhale;
 fishRec dolph;
 
-GLboolean moving;
-int screenshot = 0;
+static GLboolean moving;
+static int screenshot = 0;
+int NumSharks = 1;
 
 static void
 InitFishs(void)
 {
     int i;
 
-    for (i = 0; i < NUM_SHARKS; i++) {
+    for (i = 0; i < NumSharks; i++) {
         memset(sharks + i, 0, sizeof(fishRec));
         sharks[i].x = 70000.0 + rand() % 6000;
         sharks[i].y = rand() % 6000;
@@ -156,7 +157,7 @@ Animate(void)
 {
     int i;
 
-    for (i = 0; i < NUM_SHARKS; i++) {
+    for (i = 0; i < NumSharks; i++) {
         SharkPilot(&sharks[i]);
         SharkMiss(i);
     }
@@ -173,18 +174,18 @@ Animate(void)
 static void
 Key(unsigned char key, int x, int y)
 {
-	(void) x;
-	(void) y;
+    (void) x;
+    (void) y;
     switch (key) 
-	{
-	  case 27:           /* Esc will quit */
+    {
+    case 27:           /* Esc will quit */
         exit(1);
         break;
-	  case 's':
-		screenshot++;
-		glutPostRedisplay( );
-		break;
-	  case ' ':          /* space will advance frame */
+    case 's':
+	screenshot++;
+	glutPostRedisplay( );
+	break;
+    case ' ':          /* space will advance frame */
         if (!moving) {
             Animate();
         }
@@ -269,8 +270,8 @@ Display( void )
     int i;
 
 #if 0
-	/* stupid WireGL */
-	glViewport (0, 0, 450*3, 170*3);
+    /* stupid WireGL */
+    glViewport (0, 0, 450*3, 170*3);
 #endif
 
     glFrontFace(GL_CCW);
@@ -294,7 +295,7 @@ Display( void )
 
     glEnable(GL_LIGHT0);
 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
 
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
 
@@ -312,11 +313,11 @@ Display( void )
 
     glMatrixMode(GL_MODELVIEW);
 
-	glLoadIdentity();
+    glLoadIdentity();
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  	for (i = 0; i < NUM_SHARKS; i++) {
+    for (i = 0; i < NumSharks; i++) {
         glPushMatrix();
         FishTransform(&sharks[i]);
         DrawShark(&sharks[i]);
@@ -339,13 +340,13 @@ Display( void )
     DrawWhale(&babyWhale);
     glPopMatrix();
 
-	if ( screenshot )
-		save_frame( );
-	screenshot = 0;
+    if ( screenshot )
+	save_frame( );
+    screenshot = 0;
 
     glutSwapBuffers( );
 
-	print_performance( );
+    print_performance( );
 }
 
 static void
@@ -382,10 +383,30 @@ int
 main(int argc, char **argv)
 {
     int mode = GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH;
+    int i;
+
     glutInitWindowSize(512, 192);
     glutInit(&argc, argv);
-    if (argc > 1 && strcmp(argv[1], "-ms") == 0)
-       mode |= GLUT_MULTISAMPLE;
+    /* parse options */
+    for (i = 1; i < argc; i++) {
+       if (strcmp(argv[i], "-ms") == 0) {
+	  mode |= GLUT_MULTISAMPLE;
+       }
+       else if (strcmp(argv[i], "-s") == 0 && i + 1< argc) {
+	  i++;
+	  NumSharks = atoi(argv[i]);
+       }
+       else {
+	  printf("Unknown option: %s\n", argv[i]);
+	  exit(1);
+       }
+    }
+    /* error check */
+    if (NumSharks < 1)
+       NumSharks = 1;
+    else if (NumSharks > MAX_SHARKS)
+       NumSharks = MAX_SHARKS;
+
     glutInitDisplayMode(mode);
     glutCreateWindow("GLUT Atlantis Demo");
     Init();

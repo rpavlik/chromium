@@ -372,10 +372,10 @@ void stubInit(void)
 			/* Build the argument vector and try spawning the mothership! */
 			int mothershipPort = 10000;
 			char *argv[1000];
-            int arg = 0;
+			int arg = 0;
 
 			argv[arg++] = PYTHON_EXE;
-            argv[arg++] = "-E"; // Ignores any program-set PYTHONPATH or PYTHONHOME
+			argv[arg++] = "-E"; /* Ignores any program-set PYTHONPATH or PYTHONHOME */
 
 			for (i = 0; args[i]; i++)
 			{
@@ -601,7 +601,7 @@ void stubInit(void)
 
 	if (conn && crMothershipGetParam(conn, "comm_key", response))
 	{
-	  int a;
+	  unsigned int a;
 	  char **words, *found;
 	  
 	  /* remove the silly []'s */

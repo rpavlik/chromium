@@ -261,7 +261,7 @@ void crUnpackTexGendv( void )
 	GLenum coord = READ_DATA( sizeof( int ) + 0, GLenum );
 	GLenum pname = READ_DATA( sizeof( int ) + 4, GLenum );
 	GLdouble params[4];
-	int n_param = READ_DATA( 0, int ) - ( sizeof(int) + 8 );
+	unsigned int n_param = READ_DATA( 0, int ) - ( sizeof(int) + 8 );
 
 	if ( n_param > sizeof(params) )
 		crError( "crUnpackTexGendv: n_param=%d, expected <= %d\n", n_param, (unsigned int)sizeof(params) );

@@ -109,8 +109,66 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 		gather_connect_count = 0;
 		break;
 
+	case GL_SERVER_VIEW_MATRIX_CR:
+		/* Set this server's view matrix which will get premultiplied onto the
+		 * modelview matrix.  For non-planar tilesort and stereo.
+		 */
+		CRASSERT(count == 17);
+		CRASSERT(type == GL_FLOAT);
+		/* values[0] is the server index. Ignored here but used in tilesort SPU */
+		{
+			const GLfloat *v = (const GLfloat *) values;
+			cr_server.viewMatrix.m00 = v[1];
+			cr_server.viewMatrix.m01 = v[2];
+			cr_server.viewMatrix.m02 = v[3];
+			cr_server.viewMatrix.m03 = v[4];
+			cr_server.viewMatrix.m10 = v[5];
+			cr_server.viewMatrix.m11 = v[6];
+			cr_server.viewMatrix.m12 = v[7];
+			cr_server.viewMatrix.m13 = v[8];
+			cr_server.viewMatrix.m20 = v[9];
+			cr_server.viewMatrix.m21 = v[10];
+			cr_server.viewMatrix.m22 = v[11];
+			cr_server.viewMatrix.m23 = v[12];
+			cr_server.viewMatrix.m30 = v[13];
+			cr_server.viewMatrix.m31 = v[14];
+			cr_server.viewMatrix.m32 = v[15];
+			cr_server.viewMatrix.m33 = v[16];
+		}
+		cr_server.viewOverride = GL_TRUE;
+		break;
+
+	case GL_SERVER_PROJECTION_MATRIX_CR:
+		/* Set this server's projection matrix which will get replace the user's
+		 * projection matrix.  For non-planar tilesort and stereo.
+		 */
+		CRASSERT(count == 17);
+		CRASSERT(type == GL_FLOAT);
+		/* values[0] is the server index. Ignored here but used in tilesort SPU */
+		{
+			const GLfloat *v = (const GLfloat *) values;
+			cr_server.projectionMatrix.m00 = v[1];
+			cr_server.projectionMatrix.m01 = v[2];
+			cr_server.projectionMatrix.m02 = v[3];
+			cr_server.projectionMatrix.m03 = v[4];
+			cr_server.projectionMatrix.m10 = v[5];
+			cr_server.projectionMatrix.m11 = v[6];
+			cr_server.projectionMatrix.m12 = v[7];
+			cr_server.projectionMatrix.m13 = v[8];
+			cr_server.projectionMatrix.m20 = v[9];
+			cr_server.projectionMatrix.m21 = v[10];
+			cr_server.projectionMatrix.m22 = v[11];
+			cr_server.projectionMatrix.m23 = v[12];
+			cr_server.projectionMatrix.m30 = v[13];
+			cr_server.projectionMatrix.m31 = v[14];
+			cr_server.projectionMatrix.m32 = v[15];
+			cr_server.projectionMatrix.m33 = v[16];
+		}
+		cr_server.projectionOverride = GL_TRUE;
+		break;
 
 	default:
+		/* Pass the parameter info to the head SPU */
 		cr_server.head_spu->dispatch_table.ChromiumParametervCR( target, type, count, values );
 		break;
 	}
@@ -130,7 +188,27 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParameteriCR(GLenum target
 		cr_server.sharedPrograms = value;
 		break;
 	default:
+		/* Pass the parameter info to the head SPU */
 		cr_server.head_spu->dispatch_table.ChromiumParameteriCR( target, value );
+	}
+}
+
+
+void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParameterfCR(GLenum target, GLfloat value)
+{
+  switch (target) {
+	case GL_SHARED_DISPLAY_LISTS_CR:
+		cr_server.sharedDisplayLists = (int) value;
+		break;
+	case GL_SHARED_TEXTURE_OBJECTS_CR:
+		cr_server.sharedTextureObjects = (int) value;
+		break;
+	case GL_SHARED_PROGRAMS_CR:
+		cr_server.sharedPrograms = (int) value;
+		break;
+	default:
+		/* Pass the parameter info to the head SPU */
+		cr_server.head_spu->dispatch_table.ChromiumParameterfCR( target, value );
 	}
 }
 

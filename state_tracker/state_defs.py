@@ -55,5 +55,8 @@ crStateSetExtensionString
 crStateNativePixelPacking
 crStateUseServerArrays
 crStateComputeVersion
+crStateTransformXformPointMatrixf
+crStateTransformXformPointMatrixd
+crStateLoadMatrix
 __currentBits
 """

@@ -66,12 +66,13 @@ typedef struct {
 void crStateTransformInit(CRContext *ctx);
 void crStateTransformDestroy(CRContext *ctx);
 
+void crStateLoadMatrix(const CRmatrix *m);
+
 void crStateTransformUpdateTransform(CRTransformState *t);
 void crStateTransformXformPoint(CRTransformState *t, GLvectorf *p);
 
 void crStateTransformXformPointMatrixf(const CRmatrix *m, GLvectorf *p);
 void crStateTransformXformPointMatrixd(const CRmatrix *m, GLvectord *p);
-void crStateTransformInvertTransposeMatrix(CRmatrix *inv, const CRmatrix *mat);
 
 void crStateTransformDiff(CRTransformBits *t, CRbitvalue *bitID,
                           CRContext *fromCtx, CRContext *toCtx);

@@ -55,6 +55,8 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 	crMemZero( &tilesort_spu, sizeof(TileSortSPU) );
 
 #ifdef CHROMIUM_THREADSAFE
+	
+fprintf(stderr,"tilesortSPUInit call crSetTSD\n");
 	crSetTSD(&_ThreadTSD, thread0);
 	crInitMutex(&_TileSortMutex);
 #endif
@@ -69,6 +71,9 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 	tilesort_spu.listTable = crAllocHashtable();
 
 	tilesort_spu.id = id;
+	tilesort_spu.glassesType = RED_BLUE;
+	tilesortspuSetAnaglyphMask(&tilesort_spu);
+
 	tilesortspuGatherConfiguration( child );
 	tilesortspuConnectToServers(); /* set up thread0's server connection */
 
@@ -100,12 +105,14 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 	tilesortspuCreateDiffAPI();
 
         /* special dispatch tables for display lists */
-	crMemZero((void *)&tilesort_spu.packerDispatch, sizeof tilesort_spu.packerDispatch);
-        crSPUInitDispatchTable(&tilesort_spu.packerDispatch);
-        tilesortspuLoadPackTable(&tilesort_spu.packerDispatch);
+	if (tilesort_spu.listTrack) {
+		crMemZero((void *)&tilesort_spu.packerDispatch, sizeof tilesort_spu.packerDispatch);
+        	crSPUInitDispatchTable(&tilesort_spu.packerDispatch);
+        	tilesortspuLoadPackTable(&tilesort_spu.packerDispatch);
 
-        crSPUInitDispatchTable(&tilesort_spu.stateDispatch);
-        tilesortspuLoadStateTable(&tilesort_spu.stateDispatch);
+        	crSPUInitDispatchTable(&tilesort_spu.stateDispatch);
+        	tilesortspuLoadStateTable(&tilesort_spu.stateDispatch);
+	}
 
 	if (tilesort_spu.useDMX) {
 		/* load OpenGL */

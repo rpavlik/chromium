@@ -185,11 +185,39 @@ static void set_use_osmesa ( RenderSPU *render_spu, char *response )
 #endif
 }
 
+static void set_nv_swap_group( RenderSPU *render_spu, char *response )
+{
+	render_spu->nvSwapGroup = crStrToInt( response );
+	if (render_spu->nvSwapGroup < 0)
+		render_spu->nvSwapGroup = 0;
+}
+
 
 
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions renderSPUOptions[] = {
+   { "title", CR_STRING, 1, "Chromium Render SPU", NULL, NULL, 
+     "Window Title", (SPUOptionCB)set_title },
+
+   { "window_geometry", CR_INT, 4, "[0, 0, 256, 256]", "[0, 0, 1, 1]", NULL, 
+     "Default Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
+
+   { "fullscreen", CR_BOOL, 1, "0", NULL, NULL, 
+     "Full-screen Window", (SPUOptionCB)set_fullscreen },
+
+   { "resizable", CR_BOOL, 1, "0", NULL, NULL,
+     "Resizable Window", (SPUOptionCB)resizable },
+
+   { "on_top", CR_BOOL, 1, "0", NULL, NULL, 
+     "Display on Top", (SPUOptionCB)set_on_top },
+
+   { "borderless", CR_BOOL, 1, "0", NULL, NULL,
+     "Borderless Window", (SPUOptionCB) set_borderless },
+
+   { "default_visual", CR_STRING, 1, "rgb", NULL, NULL,
+     "Default GL Visual", (SPUOptionCB) set_default_visual },
+
 #ifndef WINDOWS
    { "try_direct", CR_BOOL, 1, "1", NULL, NULL, 
      "Try Direct Rendering", (SPUOptionCB)set_try_direct  },
@@ -198,32 +226,11 @@ SPUOptions renderSPUOptions[] = {
      "Force Direct Rendering", (SPUOptionCB)set_force_direct },
 #endif
 
-   { "fullscreen", CR_BOOL, 1, "0", NULL, NULL, 
-     "Full-screen Window", (SPUOptionCB)set_fullscreen },
-
-   { "on_top", CR_BOOL, 1, "0", NULL, NULL, 
-     "Display on Top", (SPUOptionCB)set_on_top },
-
    { "render_to_app_window", CR_BOOL, 1, "0", NULL, NULL,
      "Render to Application window", (SPUOptionCB)render_to_app_window },
 
    { "render_to_crut_window", CR_BOOL, 1, "0", NULL, NULL,
      "Render to CRUT window", (SPUOptionCB)render_to_crut_window },
-
-   { "resizable", CR_BOOL, 1, "0", NULL, NULL,
-     "Resizable Window", (SPUOptionCB)resizable },
-
-   { "title", CR_STRING, 1, "Chromium Render SPU", NULL, NULL, 
-     "Window Title", (SPUOptionCB)set_title },
-
-   { "window_geometry", CR_INT, 4, "[0, 0, 256, 256]", "[0, 0, 1, 1]", NULL, 
-     "Default Window Geometry (x,y,w,h)", (SPUOptionCB)set_window_geometry },
-
-   { "default_visual", CR_STRING, 1, "rgb", NULL, NULL,
-     "Default GL Visual", (SPUOptionCB) set_default_visual },
-
-   { "borderless", CR_BOOL, 1, "0", NULL, NULL,
-     "Borderless Window", (SPUOptionCB) set_borderless },
 
    { "show_cursor", CR_BOOL, 1, "0", NULL, NULL,
      "Show Software Cursor", (SPUOptionCB) set_cursor },
@@ -256,6 +263,9 @@ SPUOptions renderSPUOptions[] = {
    { "use_osmesa", CR_BOOL, 1, "0", NULL, NULL,
      "Use offscreen rendering with Mesa", (SPUOptionCB)set_use_osmesa },
      
+   { "nv_swap_group", CR_INT, 1, "0", NULL, NULL,
+     "NVIDIA Swap Group Number", (SPUOptionCB) set_nv_swap_group },
+
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 

@@ -57,6 +57,7 @@ void crServerSerializeRemoteStreams(void);
 void crServerAddToRunQueue( CRClient *client );
 
 void crServerApplyBaseProjection( const CRmatrix *baseProj );
+void crServerApplyViewMatrix( const CRmatrix *view );
 void crServerSetOutputBounds( const CRMuralInfo *mural, int extNum );
 void crServerComputeViewportBounds( CRViewportState *v, CRMuralInfo *mural );
 

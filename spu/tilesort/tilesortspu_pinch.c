@@ -49,10 +49,10 @@ void tilesortspuPinch (void)
 	unsigned char * vtx_op;
 	unsigned char * vtx_data;
 
-	unsigned char *color_ptr = ctx->current.current->color.ptr;
-	unsigned char *normal_ptr = ctx->current.current->normal.ptr;
+	unsigned char *color_ptr = ctx->current.current->c.color.ptr;
+	unsigned char *normal_ptr = ctx->current.current->c.normal.ptr;
 	unsigned char *texCoord_ptr[CR_MAX_TEXTURE_UNITS];
-	unsigned char *edgeFlag_ptr = ctx->current.current->edgeFlag.ptr;
+	unsigned char *edgeFlag_ptr = ctx->current.current->c.edgeFlag.ptr;
 	/* unsigned char *index_ptr = ctx->current.current->index.ptr; */
 	CRVertex v_current;
 
@@ -147,7 +147,7 @@ void tilesortspuPinch (void)
 	}
 	for (i = 0 ; i < ctx->limits.maxTextureUnits ; i++)
 	{
-		texCoord_ptr[i] = ctx->current.current->texCoord.ptr[i];
+		texCoord_ptr[i] = ctx->current.current->c.texCoord.ptr[i];
 	}
 	v_current.edgeFlag = c->edgeFlag;
 	v_current.colorIndex = c->colorIndex;

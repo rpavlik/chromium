@@ -243,8 +243,138 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 		}
 		break;
 
+	case GL_SERVER_FRUSTUM_CR:
+		/* Set per-server projection matrix / frustum (for CAVE-like stuff) */
+		CRASSERT(count == 7);
+		CRASSERT(type == GL_FLOAT);
+		{
+			const GLfloat *v = (const GLfloat *) values;
+			const GLfloat left   = v[1];
+			const GLfloat right  = v[2];
+			const GLfloat bottom = v[3];
+			const GLfloat top    = v[4];
+			const GLfloat hither = v[5];
+			const GLfloat yon    = v[6];
+			GLfloat m[17];
+
+			/* server number */
+			m[0] = v[0];
+
+			/* build projection matrix */
+			m[1] = (2.0f * hither) / (right - left);
+			m[2] = 0.0;
+			m[3] = 0.0;
+			m[4] = 0.0;
+
+			m[5] = 0.0;
+			m[6] = (2.0f * hither) / (top - bottom);
+			m[7] = 0.0;
+			m[8] = 0.0;
+
+			m[9] = (right + left) / (right - left);
+			m[10] = (top + bottom) / (top - bottom);
+			m[11] = (-hither - yon) / (yon - hither);
+			m[12] = -1.0;
+
+			m[13] = 0.0;
+			m[14] = 0.0;
+			m[15] = (2.0f * yon * hither) / (hither - yon);
+			m[16] = 0.0;
+
+			/* Recurse, using the code in the next switch case */
+			tilesortspu_ChromiumParametervCR(GL_SERVER_PROJECTION_MATRIX_CR,
+																			 type, 17, m);
+		}
+		break;
+
+	case GL_SERVER_PROJECTION_MATRIX_CR:
+		/* Set per-server projection matrix / frustum (for CAVE-like stuff) */
+		CRASSERT(count == 17);
+		CRASSERT(type == GL_FLOAT);
+		{
+			const GLfloat *v = (const GLfloat *) values;
+			const int server = (int) v[0];
+
+			if (server < tilesort_spu.num_servers) {
+				ServerWindowInfo *servWinInfo = winInfo->server + server;
+
+				/* save new matrix */
+				crMatrixInitFromFloats(&servWinInfo->projectionMatrix, v + 1);
+				winInfo->matrixSource = MATRIX_SOURCE_SERVERS;
+
+				/* release geom buffer */
+				crPackReleaseBuffer( thread->packer );
+				/* send new frustum to <server> */
+				crPackSetBuffer( thread->packer, &(thread->buffer[server]) );
+
+				/* XXX Perhaps it should be the application's responsibility to
+				 * set the matrix mode, load the identity matrix, etc?
+				 */
+				if (tilesort_spu.swap) {
+					crPackPushAttribSWAP(GL_TRANSFORM_BIT);
+					crPackMatrixModeSWAP(GL_PROJECTION);
+					crPackLoadMatrixfSWAP(v + 1);
+					crPackPopAttribSWAP();
+				}
+				else {
+					crPackPushAttrib(GL_TRANSFORM_BIT);
+					crPackMatrixMode(GL_PROJECTION);
+					crPackLoadMatrixf(v + 1);
+					crPackPopAttrib();
+				}
+				/* release server buffer */
+				crPackReleaseBuffer( thread->packer );
+				/* Restore default geom buffer */
+				crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
+			}
+			else {
+				crWarning("Bad server index [%d] passed to "
+									"glChromiumParametervCR(GL_SERVER_FRUSTUM_CR\n", server);
+			}
+		}
+		break;
+
+	case GL_SERVER_VIEW_MATRIX_CR:
+		/* Set per-server view matrix (for CAVE-like stuff) */
+		CRASSERT(count == 17);
+		CRASSERT(type == GL_FLOAT);
+		{
+			const GLfloat *v = (const GLfloat *) values;
+			const int server = (int) v[0];
+			if (server >= 0 && server < tilesort_spu.num_servers){
+				ServerWindowInfo *servWinInfo = winInfo->server + server;
+
+				/* save new matrix */
+				crMatrixInitFromFloats(&servWinInfo->viewMatrix, v + 1);
+				winInfo->matrixSource = MATRIX_SOURCE_SERVERS;
+
+				/* release geom buffer */
+				crPackReleaseBuffer( thread->packer );
+				/* send new frustum to <server> */
+				crPackSetBuffer( thread->packer, &(thread->buffer[server]) );
+
+				/* send new view matrix to the server */
+				if (tilesort_spu.swap) {
+					crPackChromiumParametervCRSWAP(target, type, count, values);
+				}
+				else {
+					crPackChromiumParametervCR(target, type, count, values);
+				}
+
+				/* release server buffer */
+				crPackReleaseBuffer( thread->packer );
+				/* Restore default geom buffer */
+				crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
+			}
+			else {
+				crWarning("Bad server index [%d] passed to "
+									"glChromiumParametervCR(GL_SERVER_VIEW_MATRIX_CR\n", server);
+			}
+		}
+		break;
+
 	default:
-		/* Propogate the data to the servers */
+		/* Propogate the call to the servers */
 
 		/* release geom buffer */
 		crPackReleaseBuffer( thread->packer );

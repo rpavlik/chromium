@@ -37,6 +37,7 @@ typedef struct {
 typedef struct {
 	int x, y;
 	int width, height;
+	int id; /* integer window ID */
 	VisualInfo *visual;
 	GLboolean mapPending;
 	GLboolean visible;
@@ -47,6 +48,7 @@ typedef struct {
 #else
 	HDC nativeWindow; /* for render_to_app_window */
 #endif
+	int nvSwapGroup;
 
 #ifdef USE_OSMESA
 	GLubyte *buffer;   	/* for rendering to off screen buffer.  */
@@ -98,6 +100,7 @@ typedef struct {
 	int resizable;
 	int use_lut8, lut8[3][256];
 	int borderless;
+	int nvSwapGroup;
 
 	CRServer *server;
 	int gather_port;

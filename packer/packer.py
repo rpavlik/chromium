@@ -46,7 +46,7 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = '%s%s' % (k[:1].lower(),k[1:])
 		type = m.group(3) + m.group(2)
-		print "\tpc->current.%s.%s = data_ptr;" % (name,type)
+		print "\tpc->current.c.%s.%s = data_ptr;" % (name,type)
 		return
 
 	m = re.search( r"^(SecondaryColor)(3)(ub|b|us|s|ui|i|f|d)EXT$", func_name )
@@ -54,7 +54,7 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = 'secondaryColor'
 		type = m.group(3) + m.group(2)
-		print "\tpc->current.%s.%s = data_ptr;" % (name,type)
+		print "\tpc->current.c.%s.%s = data_ptr;" % (name,type)
 		return
 
 	m = re.search( r"^(TexCoord)([1234])(ub|b|us|s|ui|i|f|d)$", func_name )
@@ -62,7 +62,7 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = 'texCoord'
 		type = m.group(3) + m.group(2)
-		print "\tpc->current.%s.%s[0] = data_ptr;" % (name,type)
+		print "\tpc->current.c.%s.%s[0] = data_ptr;" % (name,type)
 		return
 
 	m = re.search( r"^(MultiTexCoord)([1234])(ub|b|us|s|ui|i|f|d)ARB$", func_name )
@@ -70,7 +70,7 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = 'texCoord'
 		type = m.group(3) + m.group(2)
-		print "\tpc->current.%s.%s[texture-GL_TEXTURE0_ARB] = data_ptr + 4;" % (name,type)
+		print "\tpc->current.c.%s.%s[texture-GL_TEXTURE0_ARB] = data_ptr + 4;" % (name,type)
 		return
 
 	m = re.match( r"^(Index)(ub|b|us|s|ui|i|f|d)$", func_name )
@@ -78,7 +78,7 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = 'index'
 		type = m.group(2) + "1"
-		print "\tpc->current.%s.%s = data_ptr;" % (name,type)
+		print "\tpc->current.c.%s.%s = data_ptr;" % (name,type)
 		return
 
 	m = re.match( r"^(EdgeFlag)$", func_name )
@@ -86,7 +86,7 @@ def UpdateCurrentPointer( func_name ):
 		k = m.group(1)
 		name = 'edgeFlag'
 		type = "l1"
-		print "\tpc->current.%s.%s = data_ptr;" % (name,type)
+		print "\tpc->current.c.%s.%s = data_ptr;" % (name,type)
 		return
 
 	# XXX FogCoord and SecondaryColor!!!
@@ -97,7 +97,7 @@ def UpdateCurrentPointer( func_name ):
 		name = 'vertexAttrib'
 		type = m.group(3) + m.group(2)
 		# Add 12 to skip the packet length, opcode and index fields
-		print "\tpc->current.%s.%s[index] = data_ptr + 12;" % (name,type)
+		print "\tpc->current.c.%s.%s[index] = data_ptr + 12;" % (name,type)
 		if m.group(4) == "ARB" or m.group(4) == "NV":
 			print "\tpc->current.attribsUsedMask |= (1 << index);"
 		return

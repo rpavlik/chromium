@@ -36,7 +36,10 @@
 #include <string.h>
 #include <math.h>
 #include <memory.h>
+#include "chromium.h"
 #include <GL/glut.h>
+
+#include "multiview.h"
 
 #ifdef WINDOWS
 #pragma warning(disable : 4125)
@@ -62,18 +65,33 @@ struct building {
 static struct building Buildings[MAX_BUILDINGS];
 static int NumBuildings = 150;
 
-static GLfloat Xrot = 30, Yrot = 0, Zrot = 0;
-static GLfloat EyeDist = 30;
+static GLint WinWidth = 400, WinHeight = 250;
+static GLfloat Xrot = 0, Yrot = 0, Zrot = 0;
+static GLfloat EyeDist = 0, EyeHeight = 0;
 static GLboolean Anim = GL_TRUE;
 static int StartTime = 0;
 static GLfloat StartRot = 0;
+static GLboolean ShowOverlay = GL_FALSE;
 
 static GLint CheckerRows = 20, CheckerCols = 20;
 static GLboolean UseDisplayLists = GL_FALSE;
 static GLboolean Texture = GL_TRUE;
 static GLuint GroundList = 1;
-static GLuint wallTex ;
-static GLuint roofTex ;
+static GLuint wallTex;
+static GLuint roofTex;
+
+static GLboolean CaveMode = GL_FALSE;
+static GLuint NumViews = 2, NumTilesPerView = 1;
+static GLfloat EyeX = 0, EyeY = 0, EyeZ = 0;
+glChromiumParametervCRProc glChromiumParametervCR_ptr;
+
+static const GLfloat Identity[16] = {
+   1, 0, 0, 0,
+   0, 1, 0, 0,
+   0, 0, 1, 0,
+   0, 0, 0, 1
+};
+
 
 
 static GLfloat
@@ -230,10 +248,79 @@ static void DrawGround(void)
 }
 
 
+static void DrawCompass(void)
+{
+   glColor3f(1, 1, 1);
+
+   glPushMatrix();
+   glTranslatef(0, 3, 0);
+
+   glPushMatrix();
+   glScalef(2, 2, 1);
+
+   /* N */
+   glBegin(GL_LINE_STRIP);
+   glVertex3f(-1, -1, -21);
+   glVertex3f(-1,  1, -21);
+   glVertex3f( 1, -1, -21);
+   glVertex3f( 1,  1, -21);
+   glEnd();
+
+   /* S */
+   glBegin(GL_LINE_STRIP);
+   glVertex3f(  1, -1, 21);
+   glVertex3f( -1, -1, 21);
+   glVertex3f( -1,  0, 21);
+   glVertex3f(  1,  0, 21);
+   glVertex3f(  1,  1, 21);
+   glVertex3f( -1,  1, 21);
+   glEnd();
+
+   glPopMatrix();
+
+   glPushMatrix();
+   glScalef(1, 2, 2);
+
+   /* E */
+   glBegin(GL_LINE_STRIP);
+   glVertex3f(21,  1,  1);
+   glVertex3f(21,  1, -1);
+   glVertex3f(21,  0, -1);
+   glVertex3f(21,  0,  1);
+   glVertex3f(21,  0, -1);
+   glVertex3f(21, -1, -1);
+   glVertex3f(21, -1, 1);
+   glEnd();
+
+   /* W */
+   glBegin(GL_LINE_STRIP);
+   glVertex3f(-21,  1, -1);
+   glVertex3f(-21, -1, -1);
+   glVertex3f(-21,  0,  0);
+   glVertex3f(-21, -1,  1);
+   glVertex3f(-21,  1,  1);
+   glEnd();
+
+   glPopMatrix();
+   glPopMatrix();
+}
+
+
+/* Setup modelview and draw the 3D scene. */
 static void DrawScene( void )
 {
    GLfloat lightPos[4] = { 20, 90, 90, 0 };
    GLfloat lightPos1[4] = { -40, 90, -90, 0 };
+
+   glMatrixMode( GL_MODELVIEW );
+   glLoadIdentity();
+   glTranslatef(EyeX, EyeY - EyeHeight, EyeZ - EyeDist);
+
+   glPushMatrix();
+
+   glRotatef(Xrot, 1, 0, 0);
+   glRotatef(Yrot, 0, 1, 0);
+   glRotatef(Zrot, 0, 0, 1);
 
    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
    glLightfv(GL_LIGHT1, GL_POSITION, lightPos1);
@@ -245,29 +332,146 @@ static void DrawScene( void )
    else
       DrawGround();
 
+   DrawCompass();
+
    glEnable(GL_LIGHTING);
    glEnable(GL_CULL_FACE);
    DrawBuildings();
    glDisable(GL_CULL_FACE);
+
+   glPopMatrix();
 }
 
 
-static void Display( void )
+static void StrokeString(const char *s)
+{
+   for (; *s; s++)
+      glutStrokeCharacter(GLUT_STROKE_ROMAN, *s);
+}
+
+
+static void BitmapString(const char *s)
+{
+   for (; *s; s++)
+      glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *s);
+}
+
+
+static void DrawOverlay( void )
+{
+   char s[100];
+
+   /* setup matrices */
+   glMatrixMode(GL_PROJECTION);
+   glPushMatrix();
+   glLoadIdentity();
+   glOrtho(-1, 1, -1, 1, -1, 1);
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+
+   glDisable(GL_LIGHTING);
+   glDisable(GL_DEPTH_TEST);
+   glColor3f(1, 1, 0);
+   /* rectangle */
+   glBegin(GL_LINE_LOOP);
+   glVertex2f(-0.9f, -0.9f);
+   glVertex2f( 0.9f, -0.9f);
+   glVertex2f( 0.9f,  0.9f);
+   glVertex2f(-0.9f,  0.9f);
+   glEnd();
+   glBegin(GL_LINE_LOOP);
+   glVertex2f(-0.95f, -0.95f);
+   glVertex2f( 0.95f, -0.95f);
+   glVertex2f( 0.95f,  0.95f);
+   glVertex2f(-0.95f,  0.95f);
+   glEnd();
+
+   /* text info */
+   /*
+   glRasterPos2f(-0.85, 0.8);
+   BitmapString("City demo");
+   */
+   (void) BitmapString;
+   glPushMatrix();
+   glTranslatef(-0.8f, 0.8f, 0);
+   glScalef(0.0005f, 0.0005f, 1);
+   StrokeString("City demo");
+   glPopMatrix();
+
+   glPushMatrix();
+   glTranslatef(-0.8f, -0.8f, 0);
+   glScalef(0.0005f, 0.0005f, 1);
+   sprintf(s, "%d buildings", NumBuildings);
+   StrokeString(s);
+   glPopMatrix();
+
+   /* restore matrices */
+   glMatrixMode(GL_PROJECTION);
+   glPopMatrix();
+
+   glEnable(GL_DEPTH_TEST);
+}
+
+
+/*
+ * This is called when operating in "CAVE mode".  Basically we specify
+ * a new viewing frustum and view matrix for each server/view.
+ */
+static void MultiFrustum(void)
+{
+   unsigned int i, j;
+   for (i = 0; i < NumViews; i++) {
+      for (j = 0; j < NumTilesPerView; j++) {
+         const float upX = 0, upY = 1, upZ = 0;
+         float dirX = 0, dirY = 0, dirZ = 0;
+         if (i == 0)
+           dirZ = -1;
+         else if (i == 1)
+           dirX = 1;
+         else if (i == 2)
+           dirZ = 1;
+         else
+           dirX = -1;
+         MultiviewFrustum(i * NumTilesPerView + j,
+                          1.1f, 100.0f,
+                          EyeX, EyeY, EyeZ,
+                          dirX, dirY, dirZ,
+                          upX, upY, upZ);
+      }
+   }
+}
+
+
+/*
+ * This is called when operating in "CAVE mode" prior to rendering the
+ * overlay graphics.  Just reset the per-server projection and viewing
+ * matrices to the identity.
+ */
+static void ResetMultiFrustum(void)
+{
+   MultiviewLoadIdentity(GL_SERVER_PROJECTION_MATRIX_CR, NumViews*NumTilesPerView);
+   MultiviewLoadIdentity(GL_SERVER_VIEW_MATRIX_CR, NumViews*NumTilesPerView);
+}
+
+
+static void Draw( void )
 {
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-   glPushMatrix();
-   glRotatef(Xrot, 1, 0, 0);
-   glRotatef(Yrot, 0, 1, 0);
-   glRotatef(Zrot, 0, 0, 1);
-
+   if (CaveMode) {
+      MultiFrustum();
+   }
    DrawScene();
 
-   glPopMatrix();
+   if (ShowOverlay) {
+      if (CaveMode)
+         ResetMultiFrustum();
+      DrawOverlay();
+   }
 
    glutSwapBuffers();
 
-  {
+   if (Anim) {
      static GLint T0 = 0;
      static GLint Frames = 0;
      GLint t = glutGet(GLUT_ELAPSED_TIME);
@@ -286,13 +490,35 @@ static void Display( void )
 static void Reshape( int width, int height )
 {
    GLfloat ar = 0.5 * (float) width / (float) height;
+   WinWidth = width;
+   WinHeight = height;
    glViewport( 0, 0, width, height );
-   glMatrixMode( GL_PROJECTION );
-   glLoadIdentity();
-   glFrustum( -ar, ar, -0.5, 0.5, 1.5, 150.0 );
-   glMatrixMode( GL_MODELVIEW );
-   glLoadIdentity();
-   glTranslatef( 0.0, 0.0, -EyeDist );
+
+   if (CaveMode) {
+      MultiFrustum();
+   }
+   else {
+      glMatrixMode( GL_PROJECTION );
+      glLoadIdentity();
+      glFrustum( -ar, ar, -0.5, 0.5, 1.5, 150.0 );
+   }
+}
+
+
+static void ResetView(void)
+{
+   EyeX = EyeY = EyeZ = 0.0;
+   Xrot = Yrot = Zrot = 0.0;
+   if (CaveMode) {
+      EyeDist = 0.0;
+      EyeHeight = 5.0;
+      MultiFrustum();
+   }
+   else {
+		Xrot = 20.0;
+		EyeDist = 50.0;
+		EyeHeight = 0.0;
+   }
 }
 
 
@@ -327,21 +553,63 @@ static void Key( unsigned char key, int x, int y )
       case 't':
          Texture = !Texture;
          break;
-      case 'z':
+      case 'v':
          EyeDist -= 1;
          glMatrixMode( GL_MODELVIEW );
          glLoadIdentity();
-         glTranslatef( 0.0, 0.0, -EyeDist );
          break;
-      case 'Z':
+      case 'V':
          EyeDist += 1;
          glMatrixMode( GL_MODELVIEW );
          glLoadIdentity();
-         glTranslatef( 0.0, 0.0, -EyeDist );
          break;
       case ' ':
          GenerateBuildings();
          break;
+      case '0':
+			ResetView();
+         break;
+      case 'x':
+         if (EyeX > -1)
+            EyeX -= 0.1f;
+			if (CaveMode)
+				MultiFrustum();
+         break;
+      case 'X':
+         if (EyeX < 1)
+            EyeX += 0.1f;
+			if (CaveMode)
+				MultiFrustum();
+         break;
+      case 'y':
+         if (EyeY > -1)
+            EyeY -= 0.1f;
+			if (CaveMode)
+				MultiFrustum();
+         break;
+      case 'Y':
+         if (EyeY < 1)
+            EyeY += 0.1f;
+			if (CaveMode)
+				MultiFrustum();
+         break;
+      case 'z':
+         if (EyeZ > -1)
+            EyeZ -= 0.1f;
+			if (CaveMode)
+				MultiFrustum();
+         break;
+      case 'Z':
+         if (EyeZ < 1)
+            EyeZ += 0.1f;
+			if (CaveMode)
+				MultiFrustum();
+         break;
+
+      case 'o':
+         ShowOverlay = !ShowOverlay;
+         break;
+
       case 'q':
       case 27:
          exit(0);
@@ -362,7 +630,7 @@ static void SpecialKey( int key, int x, int y )
             Xrot += step;
          break;
       case GLUT_KEY_DOWN:
-         if (Xrot > step*2)
+         if (Xrot > -step*2)
             Xrot -= step;
          break;
       case GLUT_KEY_LEFT:
@@ -415,12 +683,48 @@ static void Init( void )
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR ) ;
    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR ) ;
    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, roof.width, roof.height, 0, GL_RGB, GL_UNSIGNED_BYTE, roof.pixel_data ) ;
+
+	if (CaveMode) {
+		glChromiumParametervCR_ptr = (glChromiumParametervCRProc) GET_PROC("glChromiumParametervCR");
+		if (!glChromiumParametervCR_ptr
+				|| !glutExtensionSupported("GL_CR_server_matrix")) {
+			printf("Warning: glChromiumParametervCR function not found ");
+			printf("or GL_CR_server_matrix not supported.\n");
+			printf("Turning off cave mode\n");
+			CaveMode = 0;
+		}
+
+#if 00
+		/* XXX sample code */
+		{
+			int i, j;
+			/* set the per-server view matrix */
+			for (i = 0; i < NumViews; i++) {
+				for (j = 0; j < NumTilesPerView; j++) {
+					GLfloat m[17];
+					glPushMatrix();
+					glLoadIdentity();
+					glRotatef(i * 90, 0, 1, 0);
+					glGetFloatv(GL_MODELVIEW_MATRIX, m + 1);
+					glPopMatrix();
+					m[0] = (GLfloat) i * 2 + j;  /* the server */
+					glChromiumParametervCR_ptr(GL_SERVER_VIEW_MATRIX_CR, GL_FLOAT, 17, m);
+				}
+			}
+		}
+#endif
+	}
+
+	ResetView();
+   if (CaveMode)
+	   Draw(); /* not sure why this is needed */
 }
 
 
 int main( int argc, char *argv[] )
 {
-   int mode;
+   int mode, i;
+	int help = 0;
 
    /* Work around compiler issues that have 64k limits */
    wall = malloc(sizeof(walldata1) + sizeof(walldata2) + sizeof(walldata3));
@@ -430,16 +734,64 @@ int main( int argc, char *argv[] )
 
    glutInit( &argc, argv );
    mode = GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH;
-   if (argc > 1 && strcmp(argv[1], "-ms") == 0)
-      mode |= GLUT_MULTISAMPLE;
 
-   glutInitWindowSize( 400, 250 );
+   for (i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-ms") == 0) {
+		   mode |= GLUT_MULTISAMPLE;
+	   }
+		else if (strcmp(argv[i], "-b") == 0 && i + 1 < argc) {
+		   NumBuildings = atoi(argv[i+1]);
+		   i++;
+	   }
+		else if (strcmp(argv[i], "-c") == 0) {
+		   CaveMode = GL_TRUE;
+		}
+		else if (strcmp(argv[i], "-h") == 0) {
+			help = 1;
+		}
+		else if (strcmp(argv[i], "-v") == 0 && i + 1 < argc) {
+		   NumViews = atoi(argv[i+1]);
+		   i++;
+		}
+		else if (strcmp(argv[i], "-t") == 0 && i + 1 < argc) {
+		   NumTilesPerView = atoi(argv[i+1]);
+		   i++;
+		}
+		else {
+			printf("Bad option: %s\n", argv[i]);
+			help = 1;
+			break;
+		}
+   }
+
+	if (help) {
+		printf("Valid options:\n");
+		printf("  -b N  specify initial number of buildings\n");
+		printf("  -ms   enable multisample antialiasing\n");
+		printf("  -c    enable CAVE mode (for cavetest1.conf)\n");
+		printf("  -v N  specify number of views for CAVE mode\n");
+		printf("  -t N  specify number of tiles per view for CAVE mode\n");
+		exit(0);
+	}
+
+	printf("City keyboard controls:\n");
+	printf("  Up/Down/Left/Right Arrows - rotate scene\n");
+	printf("  v/V                       - translate eye forward/backward\n");
+	printf("  x/X/y/Y/z/Z               - translate eye position\n");
+	printf("  0                         - reset view parameters\n");
+	printf("  a                         - toggle animation\n");
+	printf("  b/B                       - decrease/increase number of buildings\n");
+	printf("  t                         - toggle textures on/off\n");
+	printf("  SPACE                     - generate new, random buildings\n");
+	printf("  q/ESC                     - exit\n");
+
+   glutInitWindowSize( WinWidth, WinHeight );
    glutInitDisplayMode( mode );
    glutCreateWindow(argv[0]);
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutSpecialFunc( SpecialKey );
-   glutDisplayFunc( Display );
+   glutDisplayFunc( Draw );
    if (Anim) {
       glutIdleFunc(Idle);
       StartRot = Yrot;

@@ -28,6 +28,36 @@
 
 #define END_FLUFF 4 /* space for phantom GLEND opcode for splitting */
 
+/* bitflags for stereo purposes */
+#define EYE_LEFT   0x1
+#define EYE_RIGHT  0x2
+
+typedef enum {
+	NONE,
+	PASSIVE,
+	CRYSTAL,
+	SIDE_BY_SIDE,
+	ANAGLYPH
+} StereoMode;
+
+/* Glasses filter types */
+typedef enum {
+	RED_BLUE,
+	RED_GREEN,
+	RED_CYAN,
+	BLUE_RED,
+	GREEN_RED,
+	CYAN_RED
+} GlassesType;
+
+/* Which view/projection matrices do we use? */
+typedef enum {
+	MATRIX_SOURCE_APP = 0,   /* application's matrices */
+	MATRIX_SOURCE_SERVERS,   /* matrices from servers */
+	MATRIX_SOURCE_CONFIG     /* matrices from tilesort config options */
+} MatrixSource;
+
+
 /*
  * Bucketing / tilesort modes
  */
@@ -37,7 +67,8 @@ typedef enum {
 	UNIFORM_GRID,    /* all columns are equal width, all rows are equal height */
 	NON_UNIFORM_GRID,/* columns and rows are of varying width, height */
 	RANDOM,          /* randomly bucket geometry */
-	WARPED_GRID      /* warped tiles (Karl Rasche) */
+	WARPED_GRID,     /* warped tiles (Karl Rasche) */
+	FRUSTUM          /* test 3D bounding box against the frustum */
 } TileSortBucketMode;
 
 typedef struct server_window_info_t ServerWindowInfo;
@@ -76,6 +107,8 @@ struct context_info_t {
 	GLboolean everCurrent; /* has this context ever been bound? */
 	GLboolean validRasterOrigin;
 	char glVersion[50];
+	int stereoDestFlags;   /* mask of EYE_LEFT/EYE_RIGHT set by glDrawBuffer */
+	GLboolean perspectiveProjection; /* is current proj matrix perspective?*/
 };
 
 /* For DMX */
@@ -92,6 +125,10 @@ struct server_window_info_t {
 	int window;           /* window number on server */
 	int num_extents;
 	CRrecti extents[CR_MAX_EXTENTS];
+	int eyeFlags;   /* bitmask of EYE_LEFT, EYE_RIGHT, for passive stereo */
+	/* per-server viewing and projection matrices (for non-planar tilesort) */
+	CRmatrix viewMatrix;
+	CRmatrix projectionMatrix;
 	/* warped grid */
 	int display_ndx[CR_MAX_EXTENTS];
 	GLfloat world_extents[CR_MAX_EXTENTS][8]; /* x1, y1, x2, y2, x3, y3, ... */
@@ -113,6 +150,12 @@ struct window_info_t {
 	float viewportCenterX, viewportCenterY;
 	float halfViewportWidth, halfViewportHeight;
 	void *bucketInfo;          /* private to tilesortspu_bucket.c */
+
+	/* stereo stuff */
+	GLboolean passiveStereo;  /* true if working in passive stereo mode */
+	GLboolean forceQuadBuffering;
+	GLboolean parity;  /* for forcing quad-buffer stereo behaviour */
+	MatrixSource matrixSource; /* for stereo, per-server transformations */
 
 	ServerWindowInfo *server;  /* array [num_servers] of ServerWindowInfo */
 
@@ -191,17 +234,26 @@ typedef struct {
 	int retileOnResize;
 	int autoDListBBoxes;
 	int lazySendDLists;
+	int listTrack;
+	/* stereo config */
+	StereoMode stereoMode;
+	GlassesType glassesType;
+	CRmatrix stereoProjMatrices[2]; /* 0 = left, 1 = right */
+	CRmatrix stereoViewMatrices[2]; /* 0 = left, 1 = right */
 	TileSortBucketMode defaultBucketMode;
 	unsigned int fakeWindowWidth, fakeWindowHeight;
 	int scaleImages;
+	GLboolean anaglyphMask[2][4]; 	/* [eye][channel] */
 
 	int swap;  /* byte swapping */
+	/*RenderSide renderSide;*/  /* left/right side rendering */
 	unsigned int MTU;
 	unsigned int buffer_size;
 	unsigned int geom_buffer_size;
 	unsigned int geom_buffer_mtu;
 	int num_servers;
 	int replay;
+	int forceQuadBuffering;
 	CRHashTable *listTable; /* map display list ID to sentFlags for each server */
 
 	/* WGL/GLX interface for DMX */
@@ -229,7 +281,11 @@ extern TileSortSPU tilesort_spu;
 #ifdef CHROMIUM_THREADSAFE
 extern CRmutex _TileSortMutex;
 extern CRtsd _ThreadTSD;
+#if 1
 #define GET_THREAD(T) ThreadInfo *T = crGetTSD(&_ThreadTSD)
+#else
+#define GET_THREAD(T) ThreadInfo *T = crGetTSD(&_ThreadTSD); fprintf(stderr,"%s %d T = %p\n",__FILE__,__LINE__,T);
+#endif
 #else
 #define GET_THREAD(T) ThreadInfo *T = &(tilesort_spu.thread[0])
 #endif
@@ -244,6 +300,7 @@ void tilesortspuCreateFunctions( void );
 
 /* tilesortspu_config.c */
 void tilesortspuGatherConfiguration( const SPU *child_spu );
+void tilesortspuSetAnaglyphMask(TileSortSPU *tilesort_spu);
 
 /* tilesortspu_net.c */
 void tilesortspuConnectToServers( void );
@@ -254,7 +311,7 @@ void tilesortspuSendServerBufferThread( int server_index, ThreadInfo *thread );
 void tilesortspuHuge( CROpcode opcode, void *buf );
 void tilesortspuFlush( ThreadInfo *thread );
 void tilesortspuFlush_callback( void *arg );
-void tilesortspuBroadcastGeom( int send_state_anyway );
+void tilesortspuBroadcastGeom( GLboolean send_state_anyway );
 void tilesortspuShipBuffers( void );
 void tilesortspuDebugOpcodes( CRPackBuffer *buffer );
 
@@ -300,7 +357,8 @@ const GLubyte *tilesortspuGetExtensionsString(void);
 GLfloat tilesortspuGetVersionNumber(void);
 
 /* tilesortspu_list_gen.c */
-void tilesortspuLoadSortTable(SPUDispatchTable *t);
+void tilesortspuLoadListTable(void);
+void tilesortspuLoadSortTable(void);
 void tilesortspuLoadStateTable(SPUDispatchTable *t);
 void tilesortspuLoadPackTable(SPUDispatchTable *t);
 
@@ -310,7 +368,6 @@ void TILESORTSPU_APIENTRY tilesortspuStateCallLists(GLsizei n, GLenum type, cons
 void TILESORTSPU_APIENTRY tilesortspuStateNewList(GLuint list, GLuint mode);
 void TILESORTSPU_APIENTRY tilesortspuStateEndList(void);
 
-extern int validate_option( SPUOptions *opt, const char *response );
 
 /* tilesortspu_pixels.c */
 void TILESORTSPU_APIENTRY
@@ -357,8 +414,14 @@ tilesortspu_PackTexSubImage3D(GLenum target, GLint level, GLint xoffset,
 															GLsizei height, GLsizei depth, GLenum format,
 															GLenum type, const GLvoid *pixels);
 
-
 void TILESORTSPU_APIENTRY
 tilesortspu_PackZPix(GLsizei width, GLsizei height, GLenum format,
-		 GLenum type, GLenum ztype, GLint zparm, GLint length, const GLvoid *pixels);
+										 GLenum type, GLenum ztype, GLint zparm, GLint length,
+										 const GLvoid *pixels);
+
+/* tilesortspu_stereo.c */
+void tilesortspuStereoContextInit(ContextInfo *ctx);
+void tilesortspuSetupStereo(GLenum buffer);
+
+
 #endif /* TILESORT_SPU_H */

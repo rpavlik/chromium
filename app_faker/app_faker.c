@@ -487,7 +487,7 @@ static void do_it( char *argv[] )
 	pid_t pid;
 	int status;
 	char tmpdir[1024];
-	int i;
+	unsigned int i;
 	char response[8096];
 	struct stat stat_buf;
 

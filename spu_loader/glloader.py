@@ -246,7 +246,13 @@ useful_glx_functions = [
 	"glXGetCurrentDisplay"
 ]
 possibly_useful_glx_functions = [
-	"glXGetProcAddressARB"
+	"glXGetProcAddressARB",
+	"glXJoinSwapGroupNV",
+	"glXBindSwapBarrierNV",
+	"glXQuerySwapGroupNV",
+	"glXQueryMaxSwapGroupsNV",
+	"glXQueryFrameCountNV",
+	"glXResetFrameCountNV"
 ]
 
 print '#ifdef WINDOWS'
@@ -261,6 +267,7 @@ for fun in useful_agl_functions:
 print '#else'
 print '\t/* GLX */'
 
+# XXX merge these loops?
 for fun in useful_glx_functions:
 	print '\tinterface->%s = (%sFunc_t) crDLLGetNoError( glDll, "%s" );' % (fun, fun, fun)
 for fun in possibly_useful_glx_functions:

@@ -254,16 +254,19 @@ GLuint FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
 XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 {
 	XVisualInfo *vis;
-	int *attrib, wants_rgb;
+	int *attrib, wants_rgb = 0, attribCopy[1000], copy = 0;
 	int foo, bar;
 
 	stubInit();
 
-	wants_rgb = 0;
-
-	for ( attrib = attribList; *attrib != None; attrib++ )
+	for (attrib = attribList; *attrib != None; attrib++)
 	{
-		switch ( *attrib )
+		/* Note: we build a copy of the attribute list as we go so that
+		 * we're able to modify it later if necessary.
+		 */
+		attribCopy[copy++] = *attrib;
+
+		switch (*attrib)
 		{
 			case GLX_USE_GL:
 				/* ignored, this is mandatory */
@@ -278,6 +281,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				if (attrib[1] > 0)
 					stub.desiredVisual |= CR_OVERLAY_BIT;
 				attrib++;
+				attribCopy[copy++] = *attrib;
 				break;
 
 			case GLX_RGBA:
@@ -287,25 +291,28 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 
 			case GLX_DOUBLEBUFFER:
 				stub.desiredVisual |= CR_DOUBLE_BIT;
-				/* wants_doublebuffer = 1; */
 				break;
 
 			case GLX_STEREO:
 				stub.desiredVisual |= CR_STEREO_BIT;
+				/*
 				crWarning( "glXChooseVisual: stereo unsupported" );
 				return NULL;
+				*/
+				break;
 
 			case GLX_AUX_BUFFERS:
 				{
 					int aux_buffers = attrib[1];
-					if ( aux_buffers != 0 )
+					if (aux_buffers != 0)
 					{
-						crWarning( "glXChooseVisual: aux_buffers=%d unsupported",
-											 aux_buffers );
+						crWarning("glXChooseVisual: aux_buffers=%d unsupported",
+											aux_buffers);
 						return NULL;
 					}
 				}
 				attrib++;
+				attribCopy[copy++] = *attrib;
 				break;
 
 			case GLX_RED_SIZE:
@@ -314,24 +321,28 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				if (attrib[1] > 0)
 					stub.desiredVisual |= CR_RGB_BIT;
 				attrib++;
+				attribCopy[copy++] = *attrib;
 				break;
 
 			case GLX_ALPHA_SIZE:
 				if (attrib[1] > 0)
 					stub.desiredVisual |= CR_ALPHA_BIT;
 				attrib++;
+				attribCopy[copy++] = *attrib;
 				break;
 
 			case GLX_DEPTH_SIZE:
 				if (attrib[1] > 0)
 					stub.desiredVisual |= CR_DEPTH_BIT;
 				attrib++;
+				attribCopy[copy++] = *attrib;
 				break;
 
 			case GLX_STENCIL_SIZE:
 				if (attrib[1] > 0)
 					stub.desiredVisual |= CR_STENCIL_BIT;
 				attrib++;
+				attribCopy[copy++] = *attrib;
 				break;
 
 			case GLX_ACCUM_RED_SIZE:
@@ -341,6 +352,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				if (attrib[1] > 0)
 					stub.desiredVisual |= CR_ACCUM_BIT;
 				attrib++;
+				attribCopy[copy++] = *attrib;
 				break;
 
 			case GLX_SAMPLE_BUFFERS_SGIS: /* aka GLX_SAMPLES_ARB */
@@ -348,12 +360,14 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				if (attrib[1] > 0)
 					stub.desiredVisual |= CR_MULTISAMPLE_BIT;
 				attrib++;
+				attribCopy[copy++] = *attrib;
 				break;
 #endif
 			case GLX_SAMPLES_SGIS: /* aka GLX_SAMPLES_ARB */
 #if MULTISAMPLE
 				/* just ignore value for now, we'll try to get 4 samples/pixel */
 				attrib++;
+				attribCopy[copy++] = *attrib;
 				break;
 #endif
 
@@ -362,6 +376,8 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				return NULL;
 		}
 	}
+
+	attribCopy[copy++] = None;
 
 	if ( !wants_rgb && !(stub.desiredVisual & CR_OVERLAY_BIT) )
 	{
@@ -381,6 +397,23 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 							(int) vis->visualid);
 			/* successful glXChooseVisual, so clear ours */
 			stub.desiredVisual = FindVisualInfo(dpy, vis);
+		}
+		else if (stub.desiredVisual & CR_STEREO_BIT) {
+			/* Try getting a monoscopic visual instead of stereo */
+			int i;
+			/* Replace GLX_STEREO with GLX_USE_GL to turn off stereo.
+			 * XXX this algorithm isn't ideal since GLX_STEREO=6 and 6 could appear
+			 * at various places in the attrib list (but that's unlikely).
+			 */
+			for (i = 0; i < copy; i++) {
+				if (attribCopy[i] == GLX_STEREO) {
+					attribCopy[i] = GLX_USE_GL;
+				}
+			}
+			vis = stub.wsInterface.glXChooseVisual(dpy, screen, attribCopy);
+			if (vis) {
+				crDebug("Replacing request for stereo visual with non-stereo visual.");
+			}
 		}
 	}
 	else {
@@ -528,7 +561,7 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 			break;
 
 		case GLX_STEREO:
-			*value = 0;
+			*value = 1;
 			break;
 
 		case GLX_AUX_BUFFERS:

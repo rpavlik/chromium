@@ -7,6 +7,7 @@
 #include <math.h>
 #include <float.h>
 #include "tilesortspu.h"
+#include "tilesortspu_proto.h"
 #include "cr_pack.h"
 #include "cr_net.h"
 #include "cr_mem.h"
@@ -89,8 +90,9 @@ void tilesortspuSendServerBufferThread( int server_index, ThreadInfo *thread )
 	if ( pack->holds_BeginEnd && pack->canBarf ) {
 		crNetBarf( net->conn, &pack->pack, hdr, len );
 	}
-	else
+	else {
 		crNetSend( net->conn, &pack->pack, hdr, len );
+	}
 
 	crPackInitBuffer( pack, crNetAlloc( net->conn ),
 										net->conn->buffer_size, net->conn->mtu );
@@ -409,7 +411,8 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 	}
 }
 
-static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
+static void
+doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway )
 {
 	GET_THREAD(thread);
 	WindowInfo *winInfo = thread->currentContext->currentWindow;
@@ -418,7 +421,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	TileSortBucketInfo bucket_info;
 	int i;
 
-	/*crDebug( "in __doFlush (broadcast = %d)", broadcast ); */
+	/*crDebug( "in doFlush (broadcast = %d)", broadcast ); */
 
 	if (thread->state_server_index != -1)
 	{
@@ -429,7 +432,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		 * keep doing what it's doing. */
 
 		/*crDebug( "Overflowed while doing a context difference!" ); */
-		CRASSERT( broadcast == 0 );
+		CRASSERT( !broadcast );
 		
 		/* Unbind the current buffer to sync it up */
 		crPackReleaseBuffer( thread->packer );
@@ -468,7 +471,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		if (thread->packer->bounds_min.x == FLT_MAX &&
 		    thread->packer->bounds_max.x == -FLT_MAX) {
 			/*crDebug("No vertices or bounding box set during this flush - Broadcasting geometry\n");*/
-			broadcast = 1;
+			broadcast = GL_TRUE;
 		} else {
 			/*crDebug( "About to bucket the geometry" ); */
 			tilesortspuBucketGeometry(winInfo, &bucket_info);
@@ -543,7 +546,7 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 		/* Check to see if this server needs geometry from us. */
 		if (!broadcast && !(bucket_info.hits[node32] & (1 << node)))
 		{
-		     /*crDebug( "NOT sending to server %d", i );*/
+			/*crDebug( "NOT sending to server %d", i );*/
 			continue;
 		}
 		/*crDebug( "Sending to server %d", i ); */
@@ -608,15 +611,23 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 
 			if ( !broadcast )
 			{
-				/*crDebug( "Appending a bounded buffer" ); */
+				/*
+				crDebug( "Appending a bounded buffer: %d, %d .. %d, %d",
+								 bucket_info.pixelBounds.x1, 
+								 bucket_info.pixelBounds.y1, 
+								 bucket_info.pixelBounds.x2, 
+								 bucket_info.pixelBounds.y2 );
+				*/
 				__appendBoundedBuffer( &(thread->geometry_buffer),
 									   &bucket_info.pixelBounds );
 			}
 			else
 			{
-				/*crDebug( "Appending a NON-bounded buffer" ); 
-				 *tilesortspuDebugOpcodes( &(thread->geometry_buffer) ); 
-				 *tilesortspuDebugOpcodes( &(thread->packer->buffer) ); */
+				/*
+				crDebug( "Appending a NON-bounded buffer" ); 
+				tilesortspuDebugOpcodes( &(thread->geometry_buffer) ); 
+				tilesortspuDebugOpcodes( &(thread->packer->buffer) );
+				*/
 				__appendBuffer( &(thread->geometry_buffer) );
 				/*tilesortspuDebugOpcodes( &(thread->packer->buffer) ); */
 			}
@@ -688,13 +699,17 @@ static void __doFlush( CRContext *ctx, int broadcast, int send_state_anyway )
 	tilesortspuPinchRestoreTriangle();
 }
 
-void tilesortspuBroadcastGeom( int send_state_anyway )
+void tilesortspuBroadcastGeom( GLboolean send_state_anyway )
 {
 	GET_THREAD(thread);
-	__doFlush( thread->currentContext->State, 1, send_state_anyway );
+	doFlush( thread->currentContext->State, GL_TRUE, send_state_anyway );
 }
 
 
+/*
+ * This callback function gets called by the state tracker (when a state
+ * change happens) and the packer (when a buffer is filled).
+ */
 void tilesortspuFlush_callback( void *arg )
 {
 	tilesortspuFlush( (ThreadInfo *) arg );
@@ -724,7 +739,7 @@ void tilesortspuFlush( ThreadInfo *thread )
 	if ( tilesort_spu.splitBeginEnd ||
 			 !(ctx->current.inBeginEnd || ctx->lists.currentIndex) )
 	{
-		__doFlush( ctx, 0, 0 );
+		doFlush( ctx, GL_FALSE, GL_FALSE );
 		return;
 	}
 

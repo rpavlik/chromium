@@ -525,6 +525,16 @@ extern void APIENTRY glGetChromiumParametervCR(GLenum target, GLuint index, GLen
 #endif /* GL_CR_server_id_sharing */
 
 
+#ifndef GL_CR_server_matrix
+#define GL_CR_server_matrix 1
+
+#define GL_SERVER_VIEW_MATRIX_CR        0x8B15
+#define GL_SERVER_PROJECTION_MATRIX_CR  0x8B16
+#define GL_SERVER_FRUSTUM_CR            0x8B17
+
+#endif /* GL_CR_server_matrix */
+
+
 
 /**********************************************************************/
 /*****                Chromium-specific API                       *****/

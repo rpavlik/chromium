@@ -54,7 +54,7 @@ def gendiffcode(fname, state_name, docopy, doinvalid):
 
 	FILE = open(fname, "r")
 
-	print """	int j, i;
+	print """	unsigned int j, i;
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 		nbitID[j] = ~bitID[j];

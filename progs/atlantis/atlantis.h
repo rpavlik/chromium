@@ -37,7 +37,7 @@
 #define RAD 57.295
 #define RRAD 0.01745
 
-#define NUM_SHARKS 1
+#define MAX_SHARKS 100
 #define SHARKSIZE 6000
 #define SHARKSPEED 100.0
 
@@ -51,10 +51,12 @@ typedef struct _fishRec {
     int spurt, attack;
 } fishRec;
 
-extern fishRec sharks[NUM_SHARKS];
+extern fishRec sharks[MAX_SHARKS];
 extern fishRec momWhale;
 extern fishRec babyWhale;
 extern fishRec dolph;
+
+extern int NumSharks;
 
 extern void FishTransform(fishRec *);
 extern void WhalePilot(fishRec *);

@@ -37,13 +37,17 @@ for k in current_fns.keys():
 				print "\tunsigned char *%s%d;" % (type, size)
 	print "} GL%s_p;\n" % name
 
-print "typedef struct {"
+print "typedef	struct attrs {"
 for k in current_fns.keys():
 	name = k.lower()
 	field = '%s%s' % (k[:1].lower(),k[1:])
 	print "\tGL%s_p %s;" % (name,field)
+print	"	} CRCurrentStateAttr;"
+	
 
+print "typedef struct {"
 print """
+	CRCurrentStateAttr c;
 	unsigned char *vtx_op;
 	unsigned char *vtx_data;
 	unsigned char *begin_op;

@@ -955,7 +955,7 @@ crTCPIPRecv( void )
 		 * buffer.  */
 		leftover = 0;
 		total = len;
-		if ((conn->userbuf != NULL) && (conn->userbuf_len >= sizeof(CRMessageHeader)))
+		if ((conn->userbuf != NULL) && (conn->userbuf_len >= (int) sizeof(CRMessageHeader)))
 		{
 			leftover = len - sizeof(CRMessageHeader);
 			total = sizeof(CRMessageHeader);

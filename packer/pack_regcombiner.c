@@ -10,8 +10,8 @@
 static GLboolean __handleCombinerParameterData( GLenum pname, const GLfloat *params, GLenum extended_opcode )
 {
 	GET_PACKER_CONTEXT(pc);
-	int params_length = 0;
-	int packet_length = sizeof( int ) + sizeof( extended_opcode ) + sizeof( pname );
+	unsigned int params_length = 0;
+	unsigned int packet_length = sizeof( int ) + sizeof( extended_opcode ) + sizeof( pname );
 	unsigned char *data_ptr;
 
 	switch( pname )

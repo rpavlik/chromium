@@ -16,6 +16,11 @@
 #endif
 
 
+
+#ifdef CHROMIUM_THREADSAFE
+static ThreadInfo *tilesortspuNewThread(void);
+#endif
+
 /* This function is registered with the DLM and will get called when
  * the DLM detects any OpeNGL errors.
  */
@@ -62,9 +67,10 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
 		crPackInitBuffer( &(thread->buffer[i]),
-											crNetAlloc( thread->net[i].conn ),
-											thread->net[i].conn->buffer_size,
-											thread->net[i].conn->mtu );
+					crNetAlloc( thread->net[i].conn ),
+					thread->net[i].conn->buffer_size,
+					thread->net[i].conn->mtu );
+
 		if (thread->net[i].conn->Barf)
 		{
 			thread->buffer[i].canBarf = GL_TRUE;
@@ -105,6 +111,7 @@ static ThreadInfo *tilesortspuNewThread(void)
 		thread->net[i].buffer_size = tilesort_spu.thread[0].net[i].buffer_size;
 		/* Establish new connection to server[i] */
 		crNetNewClient( tilesort_spu.thread[0].net[i].conn, &(thread->net[i]));
+
 	}
 
 	tilesortspuInitThreadPacking( thread );
@@ -125,6 +132,9 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	ContextInfo *contextInfo;
 	int i;
 
+#if 0
+fprintf(stderr,"CreateContext thread = %p\n",thread);
+#endif
 	crDebug( "Tilesort SPU: CreateContext(visBits=0x%x)", visBits );
 
 	/* release geometry buffer */
@@ -177,6 +187,7 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	contextInfo->State->viewport.scissorH = -1;
 
 	contextInfo->providedBBOX = GL_DEFAULT_BBOX_CR;
+	contextInfo->stereoDestFlags = EYE_LEFT | EYE_RIGHT;
 
 	/* Set the Current pointers now...., then reset vtx_count below... */
 	crStateSetCurrentPointers( contextInfo->State, &(thread0->packer->current) );
@@ -287,19 +298,21 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		 * for sharing DLMs.  We don't currently get that information, so for now
 		 * give each context its own DLM.
 		 */
-		if (!tilesort_spu.dlm) {
-			tilesort_spu.dlm = crDLMNewDLM(sizeof(dlmConfig), &dlmConfig);
+		if (tilesort_spu.listTrack) {
 			if (!tilesort_spu.dlm) {
-				crDebug("expando: couldn't get DLM!");
+				tilesort_spu.dlm = crDLMNewDLM(sizeof(dlmConfig), &dlmConfig);
+				if (!tilesort_spu.dlm) {
+					crDebug("tilesort: couldn't get DLM!");
+				}
+				crDLMErrorFunction(ErrorCallback);
 			}
-			crDLMErrorFunction(ErrorCallback);
-		}
 
-		contextInfo->dlmContext = crDLMNewContext(tilesort_spu.dlm,
+			contextInfo->dlmContext = crDLMNewContext(tilesort_spu.dlm,
 																							&contextInfo->State->client);
-		if (!contextInfo->dlmContext) {
-			crDebug("expando: couldn't get dlmContext");
-			/* XXX need graceful error handling here */
+			if (!contextInfo->dlmContext) {
+				crDebug("tilesort: couldn't get dlmContext");
+				/* XXX need graceful error handling here */
+			}
 		}
 
 		/* We're not going to hold onto the dlm ourselves, so we can
@@ -325,6 +338,9 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 	WindowInfo *winInfo;
 
 #ifdef CHROMIUM_THREADSAFE
+#if 0
+fprintf(stderr,"MakeCurrent thread = %p\n",thread);
+#endif
 	if (!thread)
 		thread = tilesortspuNewThread();
 #endif
@@ -365,7 +381,7 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 
 #ifndef WINDOWS
 		if (nativeWindow) {
-			CRASSERT(winInfo->xwin == nativeWindow);
+			CRASSERT((int) winInfo->xwin == nativeWindow);
 		}
 #endif
 
@@ -467,7 +483,8 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 	/* Restore the default buffer */
 	crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 
-	crDLMSetCurrentState(newCtx->dlmContext);
+	if (tilesort_spu.listTrack)
+		crDLMSetCurrentState(newCtx->dlmContext);
 
 	if (newCtx && !newCtx->everCurrent) {
 		/* This is the first time the context has been made current.  Query
@@ -484,6 +501,11 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 			crFree((void *) ext);
 		}
 		newCtx->everCurrent = GL_TRUE;
+
+		/* one-time stereo init */
+		if (tilesort_spu.stereoMode != NONE || tilesort_spu.forceQuadBuffering) {
+			tilesortspuStereoContextInit(newCtx);
+		}
 	}
 }
 
@@ -550,7 +572,8 @@ void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( GLint ctx )
 	/* The default buffer */
 	crPackSetBuffer( thread0->packer, &(thread->geometry_buffer) );
 
-	crDLMFreeContext(contextInfo->dlmContext);
+	if (tilesort_spu.listTrack)
+		crDLMFreeContext(contextInfo->dlmContext);
 }
 
 

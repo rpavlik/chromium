@@ -413,6 +413,19 @@ WindowInfo *tilesortspuCreateWindowInfo(GLint window, GLint visBits)
 	winInfo->lastX = winInfo->lastY = -1;
 	winInfo->lastWidth = 0;
 	winInfo->lastHeight = 0;
+	/* XXX maybe examine window title and match strings to set this flag */
+	winInfo->forceQuadBuffering = tilesort_spu.forceQuadBuffering;
+	/* Check if we have local stereo matrix info */
+	if (!crMatrixIsIdentity(&tilesort_spu.stereoViewMatrices[0]) ||
+			!crMatrixIsIdentity(&tilesort_spu.stereoViewMatrices[1]) ||
+			!crMatrixIsIdentity(&tilesort_spu.stereoProjMatrices[0]) ||
+			!crMatrixIsIdentity(&tilesort_spu.stereoProjMatrices[1])) {
+		winInfo->matrixSource = MATRIX_SOURCE_CONFIG;
+	}
+	else {
+		/* this may get set to MATRIX_SOURCE_SERVERS when we get the tiling info */
+		winInfo->matrixSource = MATRIX_SOURCE_APP;
+	}
 
 	if (window > 0) {
 		/* copy the default window's tiling info */
@@ -421,7 +434,10 @@ WindowInfo *tilesortspuCreateWindowInfo(GLint window, GLint visBits)
 		CRASSERT(winInfo0);
 		winInfo->muralWidth = winInfo0->muralWidth;
 		winInfo->muralHeight = winInfo0->muralHeight;
+		winInfo->passiveStereo = winInfo0->passiveStereo;
+		winInfo->matrixSource = winInfo0->matrixSource;
 		for (i = 0; i < tilesort_spu.num_servers; i++) {
+			winInfo->server[i].eyeFlags = winInfo0->server[i].eyeFlags;
 			winInfo->server[i].num_extents = winInfo0->server[i].num_extents;
 			for (j = 0; j < winInfo0->server[i].num_extents; j++) {
 				winInfo->server[i].extents[j] = winInfo0->server[i].extents[j];
@@ -429,6 +445,9 @@ WindowInfo *tilesortspuCreateWindowInfo(GLint window, GLint visBits)
 					winInfo->server[i].world_extents[j][k] = winInfo0->server[i].world_extents[j][k];
 				}
 			}
+			/* copy view /projection matrices too */
+			winInfo->server[i].viewMatrix = winInfo0->server[i].viewMatrix;
+			winInfo->server[i].projectionMatrix = winInfo0->server[i].projectionMatrix;
 		}
 	}
 
@@ -595,6 +614,8 @@ tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 	WindowInfo *winInfo;
 	int i;
 
+	if (tilesort_spu.forceQuadBuffering)
+		visBits |=  CR_STEREO_BIT;
 	/* release geometry buffer */
 	crPackReleaseBuffer(thread->packer );
 

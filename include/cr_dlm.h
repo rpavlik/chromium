@@ -164,7 +164,7 @@ extern "C" {
 #endif
 
 /* Declarations for DLM-level functions */
-CRDLM *crDLMNewDLM(int configSize, const CRDLMConfig *config);
+CRDLM *crDLMNewDLM(unsigned int configSize, const CRDLMConfig *config);
 CRDLMContextState *crDLMNewContext(CRDLM *dlm, CRClientState *clientState);
 void crDLMFreeContext(CRDLMContextState *state);
 void crDLMUseDLM(CRDLM *dlm);

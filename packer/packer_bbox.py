@@ -186,7 +186,7 @@ def PrintFunction( func_name, extSuffix, num_coords, argtype,
 	if isVertexAttrib:
 		print "\tif (index > 0) {"
 		t = argtype
-		print "\t\tpc->current.vertexAttrib.%s%d[index] = data_ptr + 4;" % (t, num_coords)
+		print "\t\tpc->current.c.vertexAttrib.%s%d[index] = data_ptr + 4;" % (t, num_coords)
 		print "\t\tpc->current.attribsUsedMask |= (1 << index);"
 		if do_count:
 			print "\t\tpc->current.vtx_count--;"

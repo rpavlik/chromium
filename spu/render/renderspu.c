@@ -231,7 +231,6 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 	WindowInfo *window;
 	VisualInfo *visual;
 	GLboolean showIt;
-	int i;
 
 	if (!dpyName || crStrlen(render_spu.display_string) > 0)
 		dpyName = render_spu.display_string;
@@ -252,23 +251,23 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 	}
 
 	crHashtableAdd(render_spu.windowTable, render_spu.window_id, window);
-	i = render_spu.window_id;
+	window->id = render_spu.window_id;
 	render_spu.window_id++;
 
 	/* Have GLX/WGL create the window */
 	if (render_spu.render_to_app_window && !crGetenv("CRNEWSERVER"))
 		showIt = 0;
 	else
-		showIt = i > 0;
+		showIt = window->id > 0;
 
-	crDebug("Render SPU: Creating window (visBits=0x%x, id=%d)", visBits, i);
+	crDebug("Render SPU: Creating window (visBits=0x%x, id=%d)", visBits, window->id);
 	if (!renderspu_SystemCreateWindow( visual, showIt, window ))
 	{
 		crWarning( "Couldn't create a window, renderspu_SystemCreateWindow failed" );
 		return -1;
 	}
 
-	return i;
+	return window->id;
 }
 
 static void RENDER_APIENTRY renderspuWindowDestroy( GLint win )

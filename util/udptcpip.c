@@ -126,7 +126,7 @@ crUDPIPWriteExact( CRConnection *conn, void *buf, unsigned int len )
 				return;
 			}
 			opt -= sizeof(conn->seq) + sizeof(struct udphdr) + sizeof(struct ip6_hdr);
-			if (opt >= conn->mtu)
+			if (opt >= (int) conn->mtu)
 			{
 				crWarning( "But MTU discovery is still bigger ! Narrowing it by hand to %d", conn->mtu = (conn->mtu * 2 / 3) & ~0x3 );
 			}
@@ -341,7 +341,7 @@ static void crUDPTCPIPBarf( CRConnection *conn, void **bufp,
 			barfdone=barflen;
 			crDebug( "send traffic: %d%sMo barfed %dKo safe", barflen/(1024*1024), barflen?"":".0", safelen/1024 );
 			if (nb) {
-				for (i=0;i<sizeof(sizes)/sizeof(int)-1;i++)
+				for (i=0; i < (int) (sizeof(sizes)/sizeof(int)-1); i++)
 					fprintf(stderr,"%u:%u%s%% ",sizes[i],(nbs[i]*100)/nb,nbs[i]==0?".0":"");
 				fprintf(stderr,"\n");
 			}
@@ -521,7 +521,7 @@ crUDPTCPIPRecv( void )
 
 			CRASSERT( len > 0 );
 			CRASSERT( (unsigned int)len <= buf->allocated + sizeof(*seq) );
-			if ( len < sizeof(*seq) )
+			if ( len < (int) sizeof(*seq) )
 			{
 				crWarning( "too short a UDP packet : %d", len);
 				crTCPIPFree( conn, buf + 1 );
