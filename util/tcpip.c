@@ -31,6 +31,7 @@ typedef unsigned int socklen_t;
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <signal.h>
 #include <string.h>
 #ifdef AIX
 #include <strings.h>
@@ -509,6 +510,10 @@ static void __dead_connection( CRConnection *conn )
 {
 	crWarning( "Dead connection (sock=%d, host=%s)",
 				   conn->tcp_socket, conn->hostname );
+
+	/* Give a chance for things to close down nicely */
+	raise( SIGTERM );
+
 	exit( 0 );
 }
 
@@ -729,6 +734,8 @@ int crTCPIPRecv( void )
 #endif
 
 		conn->recv_credits -= len;
+
+		conn->total_bytes_recv +=  len;
 
 		msg = (CRMessage *) (tcpip_buffer + 1);
 		cached_type = msg->header.type;

@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <signal.h>
 
 static char my_hostname[256];
 static int my_pid = 0;
@@ -114,6 +115,9 @@ void crError( char *format, ... )
 		DebugBreak();
 	}
 #endif
+	/* Give chance for things to close down */
+	raise( SIGTERM );
+ 
 	exit(1);
 }
 
