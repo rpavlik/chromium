@@ -457,6 +457,17 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 			a->transformStack[a->transformStackDepth].clipPlane[i] = g->transform.clipPlane[i];
 		}
 		a->transformStack[a->transformStackDepth].normalize = g->transform.normalize;
+		a->transformStack[a->transformStackDepth].projectionDepth = g->transform.projectionDepth;
+		a->transformStack[a->transformStackDepth].projection = g->transform.projection[g->transform.projectionDepth];
+		a->transformStack[a->transformStackDepth].modelView = g->transform.modelView[g->transform.modelViewDepth];
+		a->transformStack[a->transformStackDepth].modelViewDepth = g->transform.modelViewDepth;
+		a->transformStack[a->transformStackDepth].colorDepth = g->transform.colorDepth;
+		a->transformStack[a->transformStackDepth].color = g->transform.color[g->transform.colorDepth];
+		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
+		{
+			a->transformStack[a->transformStackDepth].textureDepth[i] = g->transform.textureDepth[i];
+			a->transformStack[a->transformStackDepth].texture[i] = g->transform.texture[i][g->transform.textureDepth[i]];
+		}
 #ifdef CR_OPENGL_VERSION_1_2
 		a->transformStack[a->transformStackDepth].rescaleNormals = g->transform.rescaleNormals;
 #endif
@@ -1072,6 +1083,19 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			g->transform.clipPlane[i] = a->transformStack[a->transformStackDepth].clipPlane[i];
 		}
 		g->transform.normalize = a->transformStack[a->transformStackDepth].normalize;
+		g->transform.projectionDepth = a->transformStack[a->transformStackDepth].projectionDepth;
+		g->transform.modelViewDepth = a->transformStack[a->transformStackDepth].modelViewDepth;
+		g->transform.colorDepth = a->transformStack[a->transformStackDepth].colorDepth;
+		g->transform.projection[g->transform.projectionDepth] = a->transformStack[a->transformStackDepth].projection;
+		g->transform.modelView[g->transform.modelViewDepth] = a->transformStack[a->transformStackDepth].modelView;
+		g->transform.color[g->transform.colorDepth] = a->transformStack[a->transformStackDepth].color;
+		for (i = 0 ; i < g->limits.maxTextureUnits ; i++)
+		{
+			g->transform.textureDepth[i] = a->transformStack[a->transformStackDepth].textureDepth[i];
+			g->transform.texture[i][g->transform.textureDepth[i]] = a->transformStack[a->transformStackDepth].texture[i];
+		}
+		/* make sure matrix state is setup, by calling our MatrixMode */
+		crStateMatrixMode(g->transform.mode);
 #ifdef CR_OPENGL_VERSION_1_2
 		g->transform.rescaleNormals = a->transformStack[a->transformStackDepth].rescaleNormals;
 #endif
