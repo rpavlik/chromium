@@ -52,7 +52,7 @@ swapBuffers(GLint window, GLint flags)
 			ResizeBuffer();
 		}
 
-		if (saveThisFrame)
+		if (saveThisFrame && !(flags & CR_SUPPRESS_SWAP_BIT))
 		{
 			char filename[MAX_FILENAME_LENGTH + 1];
 			int numchars;
@@ -73,41 +73,51 @@ swapBuffers(GLint window, GLint flags)
 				{
 					saveframe_spu.child.ReadBuffer(GL_BACK);
 					saveframe_spu.child.ReadPixels(0, 0, saveframe_spu.width,
-																				 saveframe_spu.height, GL_RGBA,
-																				 GL_UNSIGNED_BYTE,
-																				 saveframe_spu.buffer);
-
+								       saveframe_spu.height, GL_RGBA,
+								       GL_UNSIGNED_BYTE,
+								       saveframe_spu.buffer);
+					
 					RGBA_to_PPM(filename, saveframe_spu.width, saveframe_spu.height,
-											saveframe_spu.buffer, saveframe_spu.binary);
+						    saveframe_spu.buffer, saveframe_spu.binary);
 				}
 #ifdef JPEG
 				else if (!crStrcmp(saveframe_spu.format, "jpeg"))
-				{
-					saveframe_spu.child.ReadBuffer(GL_BACK);
-					saveframe_spu.child.ReadPixels(0, 0, saveframe_spu.width,
-																				 saveframe_spu.height, GL_RGB,
-																				 GL_UNSIGNED_BYTE,
-																				 saveframe_spu.buffer);
-
-					RGB_to_JPG(filename, saveframe_spu.width, saveframe_spu.height,
-										 saveframe_spu.buffer);
-				}
+				  {
+				    GLubyte* in;
+				    GLubyte* out;
+				    saveframe_spu.child.ReadBuffer(GL_BACK);
+				    saveframe_spu.child.ReadPixels(0, 0, saveframe_spu.width,
+								   saveframe_spu.height, GL_RGBA,
+								   GL_UNSIGNED_BYTE,
+								   saveframe_spu.buffer);
+				    /* Work around an apparent but in the NVIDIA OpenGL driver */
+				    in= out= saveframe_spu.buffer;
+				    while (in<saveframe_spu.buffer+4*saveframe_spu.height*saveframe_spu.width) {
+				      *out++= *in++; /* R */
+				      *out++= *in++; /* G */
+				      *out++= *in++; /* B */
+				      in++; /* skip A */
+				    }
+				    
+				    RGB_to_JPG(filename, saveframe_spu.width, saveframe_spu.height,
+					       saveframe_spu.buffer);
+				  }
 #endif
 				else {
-						crWarning("Invalid value for saveframe_spu.format: %s",
-											saveframe_spu.format);
+				  crWarning("Invalid value for saveframe_spu.format: %s",
+					    saveframe_spu.format);
 				}
 			}
 			else
-			{
-				crWarning
-					("saveframespu: Filename longer than %d characters isn't allowed. Skipping frame %d.",
-					 MAX_FILENAME_LENGTH, saveframe_spu.framenum);
-			}
+			  {
+			    crWarning
+			      ("saveframespu: Filename longer than %d characters isn't allowed. Skipping frame %d.",
+			       MAX_FILENAME_LENGTH, saveframe_spu.framenum);
+			  }
 		}
 	}
 
-	saveframe_spu.framenum++;
+	if (!(flags & CR_SUPPRESS_SWAP_BIT)) saveframe_spu.framenum++;
 
 	saveframe_spu.child.SwapBuffers(window, flags);
 }
@@ -233,7 +243,7 @@ RGBA_to_PPM(char *filename, int width, int height, GLubyte * buffer,
 
 	if (file == NULL)
 	{
-		fprintf(stderr, "Unable to create file %s.\n", filename);
+		crError("Unable to create file %s.\n", filename);
 		return 1;
 	}
 
@@ -286,7 +296,7 @@ RGB_to_JPG(char *filename, int width, int height, GLubyte * buffer)
 
 	if (file == NULL)
 	{
-		fprintf(stderr, "Unable to create file %s.\n", filename);
+		crError("Unable to create file %s.\n", filename);
 		return 1;
 	}
 
@@ -306,9 +316,7 @@ RGB_to_JPG(char *filename, int width, int height, GLubyte * buffer)
 	while (saveframe_spu.cinfo.next_scanline < saveframe_spu.cinfo.image_height)
 	{
 		row_pointer[0] = (JSAMPROW) ((buffer + (height - 1) * row_stride)
-																 -
-																 saveframe_spu.cinfo.next_scanline *
-																 row_stride);
+					     - saveframe_spu.cinfo.next_scanline * row_stride);
 		jpeg_write_scanlines(&saveframe_spu.cinfo, row_pointer, 1);
 	}
 	jpeg_finish_compress(&saveframe_spu.cinfo);
