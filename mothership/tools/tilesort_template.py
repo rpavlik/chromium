@@ -135,7 +135,8 @@ def Usage():
 # Init globals
 PROGRAM = ""
 ZEROTH_ARG = ""
-AUTO_START = 0
+AUTO_START_SERVERS = 0
+AUTO_START_APPS = 0
 
 # Look for some special app and mothership params
 for (name, value) in APP_OPTIONS:
@@ -145,7 +146,9 @@ for (name, value) in APP_OPTIONS:
 		ZEROTH_ARG = value
 for (name, value) in MOTHERSHIP_OPTIONS:
 	if name == "auto_start":
-		AUTO_START = value
+		AUTO_START_SERVERS = value
+	elif name == "auto_start_apps":
+		AUTO_START_APPS = value
 
 # Check for program name/args on command line
 try:
@@ -218,7 +221,7 @@ for i in range(NUM_APP_NODES):
 		app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
 		appnode.Conf('application', app_string )
 
-		if AUTO_START:
+		if AUTO_START_APPS:
 			appnode.AutoStart( ["/bin/sh", "-c",
 				"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
 
@@ -268,7 +271,7 @@ for row in range(TILE_ROWS):
 		for i in range(NUM_APP_NODES):
 			tilesortSPUs[i].AddServer(servernode, protocol='tcpip', port = 7000 + index)
 
-		if AUTO_START:
+		if AUTO_START_SERVERS:
 			servernode.AutoStart( ["/usr/bin/rsh", host,
 									"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (localHostname, crlibdir) ] )
 

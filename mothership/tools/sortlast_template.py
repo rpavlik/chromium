@@ -65,7 +65,8 @@ def Usage():
 # Init globals
 PROGRAM = ""
 ZEROTH_ARG = ""
-AUTO_START = 0
+AUTO_START_SERVERS = 0
+AUTO_START_APPS = 0
 WIDTH = 0
 HEIGHT = 0
 
@@ -77,7 +78,9 @@ for (name, value) in APP_OPTIONS:
 		ZEROTH_ARG = value
 for (name, value) in MOTHERSHIP_OPTIONS:
 	if name == "auto_start":
-		AUTO_START = value
+		AUTO_START_SERVERS = value
+	elif name == "auto_start_apps":
+		AUTO_START_APPS = value
 for (name, value) in READBACK_OPTIONS:
 	if name == "window_geometry":
 		WIDTH = value[2]
@@ -142,7 +145,7 @@ for (name, value) in RENDER_OPTIONS:
 	renderSPU.Conf(name, value)
 serverNode.AddSPU( renderSPU )
 
-if AUTO_START:
+if AUTO_START_SERVERS:
 	serverNode.AutoStart( ["/usr/bin/rsh", COMPOSITE_HOST,
 							"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (COMPOSITE_HOST, crlibdir) ] )
 
@@ -167,7 +170,7 @@ for i in range(NUM_APP_NODES):
 	app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
 	node.Conf( 'application', app_string )
 
-	if AUTO_START:
+	if AUTO_START_APPS:
 		# XXX this probably doesn't work yet!
 		node.AutoStart( ["/usr/bin/rsh", APP_HOSTS[i],
 				"/bin/sh -c 'CRMOTHERSHIP=%s LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker'" % (COMPOSITE_HOST, crlibdir)] )

@@ -799,6 +799,7 @@ class Mothership:
 		self.__Options = OptionList( [
 			Option("MTU", "Max Transmission Unit (bytes)", "INT", 1, [1024*1024], [0], []),
 			Option("auto_start", "Automatically Start Servers", "BOOL", 1, [0], [], []),
+			Option("auto_start_apps", "Automatically Start Applications", "BOOL", 1, [0], [], []),
 			] )
 
 	def GetOptions(self):

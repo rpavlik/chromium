@@ -253,7 +253,8 @@ def Usage():
 
 PROGRAM = ""
 ZEROTH_ARG = ""
-AUTO_START = 0
+AUTO_START_SERVERS = 0
+AUTO_START_APPS = 0
 
 
 # Look for some special options
@@ -264,7 +265,9 @@ for (name, value) in APP_OPTIONS:
 		ZEROTH_ARG = value
 for (name, value) in MOTHERSHIP_OPTIONS:
 	if name == "auto_start":
-		AUTO_START = value
+		AUTO_START_SERVERS = value
+	elif name == "auto_start_apps":
+		AUTO_START_APPS = value
 
 # Process command line args
 try:
@@ -368,7 +371,7 @@ for i in range(NUM_APP_NODES):
 		app_string = string.replace( app_string, '%N', str(NUM_APP_NODES) )
 		clientnode.Conf( 'application', app_string )
 
-		if AUTO_START:
+		if AUTO_START_APPS:
 			clientnode.AutoStart( ["/bin/sh", "-c",
 					"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
 
@@ -382,7 +385,7 @@ if REASSEMBLY:
 	reassembleNode.AddSPU(reassembleSPU)
 	for (name, value) in REASSEMBLE_OPTIONS:
 		reassembleSPU.Conf( name, value )
-	if AUTO_START:
+	if AUTO_START_SERVERS:
 		reassembleNode.AutoStart( ["/usr/bin/rsh", REASSEMBLE_HOST,
 								"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (REASSEMBLE_HOST, crlibdir) ] )
 
@@ -428,7 +431,7 @@ for serverIndex in range(NUM_SERVERS):
 		tilesortSPUs[i].AddServer(servernode, protocol='tcpip', port=7001+serverIndex)
 
 	# auto-start
-	if AUTO_START:
+	if AUTO_START_SERVERS:
 		servernode.AutoStart( ["/usr/bin/rsh", host,
 								"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (localHostname, crlibdir) ] )
 

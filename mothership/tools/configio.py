@@ -29,10 +29,15 @@ from mothership import *
 
 __ConfigFileHeader = """
 
+AUTO_START_SERVERS = 0
+AUTO_START_APPS = 0
+
 # Look for autostart option
 for (name, value) in MOTHERSHIP_OPTIONS:
 	if name == "auto_start":
-		AUTO_START = value
+		AUTO_START_SERVERS = value
+	elif name == "auto_start_apps":
+		AUTO_START_APPS = value
 
 # Get program name
 if len(sys.argv) == 1:
@@ -120,7 +125,10 @@ def WriteAutoStart(nodeName, isServer, hostName, file):
 		argList += ' ]'
 
 	# Now, write the code to the file
-	file.write("if AUTO_START:\n")
+	if isServer:
+		file.write("if AUTO_START_SERVERS:\n")
+	else:
+		file.write("if AUTO_START_APPS:\n")
 	file.write("\t%s.AutoStart( %s )\n" % (nodeName, argList))
 
 
