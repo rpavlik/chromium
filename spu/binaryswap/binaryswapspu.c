@@ -4,7 +4,7 @@
 * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <float.h>  /* for DBL_MAX */
+#include <float.h>  /* for FLT_MAX */
 
 #include "cr_spu.h"
 #include "cr_mem.h"
@@ -43,8 +43,8 @@ clipCoords (GLfloat modl[16], GLfloat proj[16],
 	GLfloat vx1, vy1, vz1;
 	GLfloat vx2, vy2, vz2;
 	
-	GLfloat xmin=DBL_MAX, ymin=DBL_MAX, zmin=DBL_MAX;
-	GLfloat xmax=-DBL_MAX, ymax=-DBL_MAX, zmax=-DBL_MAX;
+	GLfloat xmin=FLT_MAX, ymin=FLT_MAX, zmin=FLT_MAX;
+	GLfloat xmax=-FLT_MAX, ymax=-FLT_MAX, zmax=-FLT_MAX;
 	
 	m[0] =  proj[0] * modl[0] + proj[4]  * modl[1]  + 
 		proj[8] * modl[2] + proj[12] * modl[3];	
