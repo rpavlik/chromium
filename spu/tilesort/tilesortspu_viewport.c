@@ -46,7 +46,7 @@ void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width,
 	CRASSERT(winInfo);
 
 	/* get latest window dimensions */
-	tilesortspuUpdateWindowInfo(winInfo);
+	(void) tilesortspuUpdateWindowInfo(winInfo);
 
 	if (winInfo->lastWidth == 0 || winInfo->lastHeight == 0) 
 	{

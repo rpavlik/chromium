@@ -164,8 +164,18 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	else
 		contextInfo->context = (AGLContext) crStrToInt(dpyName);
 #else
-	
-	contextInfo->dpy = XOpenDisplay(dpyName);
+	/* GLX */
+	if (!dpyName || dpyName[0] == 0)
+		contextInfo->dpy = XOpenDisplay(tilesort_spu.displayString);
+	else
+		contextInfo->dpy = XOpenDisplay(dpyName);
+	if (contextInfo->dpy) {
+		crDebug("Tilesort SPU: Opened display %s", DisplayString(contextInfo->dpy));
+	}
+	else {
+		crWarning("Tilesort SPU: CreateContext: Failed to open display %s",
+							dpyName);
+	}
 #endif
 
 	crPackSetContext( thread0->packer );
@@ -356,35 +366,40 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 
 		winInfo = tilesortspuGetWindowInfo(window, nativeWindow);
 		CRASSERT(winInfo);
-#ifdef WINDOWS
+
+		/* Now's our chance to grab the native window handle and do special
+		 * stuff related to it.  For example, with GLX nativeWindow will be
+		 * the X window ID of the application-created Xwindow.  Later, we'll
+		 * use XGetGeometry() to query that window's size and update our mural,
+		 * etc.
+		 */
+#if defined(WINDOWS)
 		winInfo->client_hwnd = WindowFromDC( newCtx->client_hdc );
 #elif defined(Darwin)
 		/** XXX \todo Fill in Darwin */
+		/* If Darwin needs to be aware of some native application window
+		 * information. Grab 'nativeWindow' now.
+		 */
 #else
-		winInfo->dpy = newCtx->dpy;
-		winInfo->isDMXWindow = GL_FALSE;
-		if (!nativeWindow && tilesort_spu.renderToCrutWindow && !winInfo->xwin) {
-			CRConnection *conn = crMothershipConnect();
-			if (conn) {
-				char response[100];
-				crMothershipGetParam( conn, "crut_drawable", response );
-				winInfo->xwin = crStrToInt(response);
-				crDebug("Tilesort SPU: Got CRUT window 0x%x", (int) winInfo->xwin);
-				crMothershipDisconnect(conn);
-			}
-		}
-
-		if (tilesort_spu.useDMX) {
+		/* GLX / DMX */
+		{
+			const GLboolean newDisplay = winInfo->dpy ? GL_FALSE : GL_TRUE;
+			winInfo->dpy = newCtx->dpy;
+			if (tilesort_spu.useDMX && newDisplay) {
+				/* This is the first time we're using this window.
+				 * Check if it's a DMX window.
+				 */
 #if USE_DMX
-			int event_base, error_base;
-			if (DMXQueryExtension(winInfo->dpy, &event_base, &error_base))
-				winInfo->isDMXWindow = GL_TRUE;
-			else
-				crWarning("tilesort SPU: use_dmx is set, but %s doesn't support DMX",
-									DisplayString(winInfo->dpy));
+				int event_base, error_base;
+				if (DMXQueryExtension(winInfo->dpy, &event_base, &error_base))
+					winInfo->isDMXWindow = GL_TRUE;
+				else
+					crWarning("tilesort SPU: use_dmx is set, but %s doesn't support DMX",
+										DisplayString(winInfo->dpy));
 #else /* USE_DMX */
-			crWarning("tilesort SPU: use_dmx is set, but Chromium wasn't compiled with DMX support");
+				crWarning("tilesort SPU: use_dmx is set, but Chromium wasn't compiled with DMX support");
 #endif /* USE_DMX */
+			}
 		}
 #endif /* WINDOWS */
 
@@ -393,15 +408,9 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 
 		crStateSetCurrentPointers( newCtx->State, &(thread->packer->current) );
 
-#ifdef GLX
-		if (nativeWindow) {
-			CRASSERT((int) winInfo->xwin == nativeWindow);
-		}
-#endif
-
 		/** XXX \todo this might be excessive to do here */
 		/* have to do it at least once for new windows to get back-end info */
-		tilesortspuUpdateWindowInfo(winInfo);
+		(void) tilesortspuUpdateWindowInfo(winInfo);
 	}
 	else {
 		winInfo = NULL;

@@ -8,6 +8,7 @@
 
 #include "cr_mothership.h"
 #include "cr_string.h"
+#include "cr_environment.h"
 #include "cr_error.h"
 #include "cr_mem.h"
 #include "cr_spu.h"
@@ -174,11 +175,35 @@ set_force_quad_buffering(TileSortSPU *tilesort_spu, const char *response)
 	sscanf(response, "%d", &(tilesort_spu->forceQuadBuffering));
 }
 
-
 static void
 set_render_to_crut_window(TileSortSPU *tilesort_spu, const char *response)
 {
 	sscanf(response, "%d", &(tilesort_spu->renderToCrutWindow));
+}
+
+static void
+set_track_window_position(TileSortSPU *tilesort_spu, const char *response)
+{
+	sscanf(response, "%d", &(tilesort_spu->trackWindowPosition));
+}
+
+static void
+set_display_string(TileSortSPU *tilesort_spu, const char *response)
+{
+	if (!crStrcmp(response, "DEFAULT")) {
+		const char *display = crGetenv("DISPLAY");
+		if (display)
+			crStrncpy(tilesort_spu->displayString,
+								display,
+								sizeof(tilesort_spu->displayString));
+		else
+			crStrcpy(tilesort_spu->displayString, ""); /* empty string */
+	}
+	else {
+		crStrncpy(tilesort_spu->displayString,
+							response,
+							sizeof(tilesort_spu->displayString));
+	}
 }
 
 void
@@ -351,6 +376,12 @@ SPUOptions tilesortSPUOptions[] = {
 
 	{"render_to_crut_window", CR_BOOL, 1, "0", NULL, NULL,
 	 "Render Into CRUT Window", (SPUOptionCB) set_render_to_crut_window},
+
+	{"track_window_position", CR_BOOL, 1, "0", NULL, NULL,
+	 "Track Window Positions", (SPUOptionCB) set_track_window_position},
+
+	{ "display_string", CR_STRING, 1, "DEFAULT", NULL, NULL, 
+		"X Display String (for DMX)", (SPUOptionCB) set_display_string },
 
 	{NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL},
 };

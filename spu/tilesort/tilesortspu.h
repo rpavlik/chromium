@@ -210,9 +210,9 @@ struct window_info_t {
 	WindowRef window;
 #else
 	Display *dpy;            /**< DMX server display (front-end) */
-	GLXDrawable xwin;        /**< DMX server window ID (front-end) */
+	GLXDrawable xwin;        /**< Corresponding application window */
 #endif
-	GLboolean isDMXWindow;   /**< true if this window is on a DMX display */
+	GLboolean isDMXWindow;   /**< true if xwin is on a DMX display */
 };
 
 /**
@@ -300,6 +300,8 @@ typedef struct {
 	int forceQuadBuffering;
 	int scaleImages;
 	int renderToCrutWindow;
+	int trackWindowPosition;
+	char displayString[1000];
 	/*@}*/
 
 	/**
@@ -417,7 +419,7 @@ void tilesortspuBucketGeometry(WindowInfo *winInfo, TileSortBucketInfo *info);
 WindowInfo *tilesortspuCreateWindowInfo(GLint window, GLint visBits);
 WindowInfo *tilesortspuGetWindowInfo(GLint window, GLint nativeWindow);
 void tilesortspuFreeWindowInfo(WindowInfo *winInfo);
-void tilesortspuUpdateWindowInfo(WindowInfo *winInfo);
+GLboolean tilesortspuUpdateWindowInfo(WindowInfo *winInfo);
 
 /* tilesortspu_context.c */
 void tilesortspuInitThreadPacking( ThreadInfo *thread );

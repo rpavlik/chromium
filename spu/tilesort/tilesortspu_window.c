@@ -13,6 +13,7 @@
 #include "tilesortspu_gen.h"
 #include "cr_error.h"
 #include "cr_mem.h"
+#include "cr_mothership.h"
 #include "cr_packfunctions.h"
 #include "cr_string.h"
 
@@ -312,8 +313,12 @@ tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
  * or X11 window.
  * Use the fake_window_dims if there is no native window.
  * Set lastWidth/Height to zero if all else fails.
+ * If the window is on a DMX display, use the DMX API to query the
+ * geometry of the back-end windows.
+ * \return GL_TRUE if anything changes, GL_FALSE otherwise.
  */
-void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
+GLboolean
+tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 {
 #ifdef WINDOWS
 	/** XXX \todo this used to be in __getWindowSize() - hope it still works */
@@ -329,7 +334,7 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 			winInfo->lastWidth = 0;
 			winInfo->lastHeight = 0;
 		}
-		return;
+		return GL_TRUE;
 	}
 
 	GetClientRect( winInfo->client_hwnd, &r );
@@ -345,7 +350,10 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 			winInfo->lastHeight = tilesort_spu.fakeWindowHeight;
 		}
 	}
+	return GL_TRUE;
+
 #elif defined(Darwin)
+
 	GrafPtr save;
 	Rect rect;
 
@@ -357,7 +365,7 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 			winInfo->lastWidth = 0;
 			winInfo->lastHeight = 0;
 		}
-		return;
+		return GL_TRUE;
 	}
 
 #if 0
@@ -380,10 +388,14 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 			winInfo->lastHeight = tilesort_spu.fakeWindowHeight;
 		}
 	}
+	return GL_TRUE;
+
 #else /* GLX */
+
 	int x, y;
 	unsigned int width, height, borderWidth, depth;
 	Window root, child;
+	GLboolean change;
 
 	CRASSERT(winInfo);
 
@@ -392,39 +404,54 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 			!XGetGeometry(winInfo->dpy, winInfo->xwin,
 										&root, &x, &y, &width, &height,
 										&borderWidth, &depth)) {
+		/* we were unable to get the window geometry */
 		if (tilesort_spu.fakeWindowWidth != 0) {
-			winInfo->lastWidth = tilesort_spu.fakeWindowWidth;
-			winInfo->lastHeight = tilesort_spu.fakeWindowHeight;
+			width = tilesort_spu.fakeWindowWidth;
+			height = tilesort_spu.fakeWindowHeight;
 		}
 		else {
 			/* This will trigger an error message later */
-			winInfo->lastWidth = 0;
-			winInfo->lastHeight = 0;
+			width = 0;
+			height = 0;
 		}
-		return;
+		x = winInfo->lastX;
+		y = winInfo->lastY;
 	}
-
-	if (!XTranslateCoordinates(winInfo->dpy, winInfo->xwin,
-														 root, x, y, &x, &y, &child)) {
-		crDebug("XTranslateCoordinates(%d) failed in tilesortspuUpdateWindowInfo",
-						(int) winInfo->xwin);
-		return;
-	}
+	else {
+		/* we got the window geometry, now translate x/y to screen coordinates */
+		CRASSERT(root);
+		if (!XTranslateCoordinates(winInfo->dpy, winInfo->xwin,
+															 root, x, y, &x, &y, &child)) {
+			crDebug("XTranslateCoordinates(%d) failed in tilesortspuUpdateWindowInfo",
+							(int) winInfo->xwin);
+			return GL_FALSE;
+		}
 
 #ifdef USE_DMX
-	if (winInfo->isDMXWindow &&
-			(winInfo->lastX != x || winInfo->lastY != y ||
-			 winInfo->lastWidth != (int)width || winInfo->lastHeight != (int)height))
-	{
-		tilesortspuGetBackendWindowInfo(winInfo);
-	}
+		if (winInfo->isDMXWindow &&
+				(winInfo->lastX != x ||
+				 winInfo->lastY != y ||
+				 winInfo->lastWidth != (int)width ||
+				 winInfo->lastHeight != (int)height))
+		{
+			tilesortspuGetBackendWindowInfo(winInfo);
+		}
 #endif
+	}
+
+	change = (winInfo->lastX != x ||
+						winInfo->lastY != y ||
+						winInfo->lastWidth != (int) width ||
+						winInfo->lastHeight != (int) height);
 
 	winInfo->lastX = x;
 	winInfo->lastY = y;
 	winInfo->lastWidth = width;
 	winInfo->lastHeight = height;
-#endif
+
+	return change;
+
+#endif /*GLX*/
 }
 
 
@@ -530,8 +557,21 @@ WindowInfo *tilesortspuGetWindowInfo(GLint window, GLint xwindowID)
 	if( !winInfo->window )
 		winInfo->window = (WindowRef) xwindowID;
 #else
-	if (!winInfo->xwin)
+	/* GLX / DMX */
+	if (!xwindowID && tilesort_spu.renderToCrutWindow && !winInfo->xwin) {
+		/* now's a good time to try to get the CRUT window ID */
+		CRConnection *conn = crMothershipConnect();
+		if (conn) {
+			char response[100];
+			crMothershipGetParam( conn, "crut_drawable", response );
+			winInfo->xwin = crStrToInt(response);
+			crDebug("Tilesort SPU: Got CRUT window 0x%x", (int) winInfo->xwin);
+			crMothershipDisconnect(conn);
+		}
+	}
+	else if (!winInfo->xwin) {
 		winInfo->xwin = xwindowID;
+	}
 #endif
 
 	return winInfo;

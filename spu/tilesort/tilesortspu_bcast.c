@@ -45,14 +45,27 @@ void TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
 {
 	GET_THREAD(thread);
 	GLenum dlMode = thread->currentContext->displayListMode;
-	const WindowInfo *winInfo = thread->currentContext->currentWindow;
+	WindowInfo *winInfo = thread->currentContext->currentWindow;
+
+	if (tilesort_spu.trackWindowPosition && !dlMode) {
+#ifdef USE_DMX
+		if (winInfo->isDMXWindow && winInfo->xwin) {
+			if (tilesortspuUpdateWindowInfo(winInfo)) {
+				tilesortspuGetNewTiling(winInfo);
+			}
+		}
+#endif
+	}
 
 	if (dlMode != GL_FALSE) {
-	    /* just creating and/or compiling display lists */
-	    if (tilesort_spu.lazySendDLists) crDLMCompileClear(mask);
-	    else if (tilesort_spu.swap) crPackClearSWAP(mask);
-	    else crPackClear(mask);
-	    return;
+		/* just creating and/or compiling display lists */
+		if (tilesort_spu.lazySendDLists)
+			crDLMCompileClear(mask);
+		else if (tilesort_spu.swap)
+			crPackClearSWAP(mask);
+		else
+			crPackClear(mask);
+		return;
 	}
 
 	if (winInfo->passiveStereo) {

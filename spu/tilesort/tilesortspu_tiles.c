@@ -650,11 +650,15 @@ getTilingFromDMX( WindowInfo *winInfo )
 
 	crDebug("Getting tile information from DMX.");
 
-	tilesortspuUpdateWindowInfo(winInfo);
+	/* XXX check return value to see if anything really changed */
+	(void) tilesortspuUpdateWindowInfo(winInfo);
 
-	if (!winInfo->xwin)
+	if (!winInfo->xwin) {
+		crDebug("Can't get DMX info!  winInfo->xwin is NULL!");
 		return GL_FALSE;
+	}
 
+	/* Compute the new tile bounds from the DMX backend visrect information */
 	for (i = 0; i < tilesort_spu.num_servers; i++) {
 		const BackendWindowInfo *backend = winInfo->backendWindows + i;
 		/* set tile pos/size in mural coords (front-end window coords) */
@@ -713,7 +717,12 @@ tilesortspuGetNewTiling(WindowInfo *winInfo)
 			}
 
 			tilesortspuBucketingInit(winInfo);
-			tilesortspuSendTileInfoToServers(winInfo);
+			if (tilesort_spu.rank == 0) {
+				/* It would be redundant for parallel tilesort SPUs to all send
+				 * the same info to all servers.
+				 */
+				tilesortspuSendTileInfoToServers(winInfo);
+			}
 			break;
 		case WARPED_GRID:
 			/*
@@ -755,7 +764,7 @@ tilesortspuGetNewTiling(WindowInfo *winInfo)
 	{
 		int server, i;
 
-		crDebug("tilesort SPU: Reconfigured tiling:");
+		crDebug("Tilesort SPU: Reconfigured tiling:");
 		crDebug("  Mural size: %d x %d", winInfo->muralWidth, winInfo->muralHeight);
 		for (server = 0; server < tilesort_spu.num_servers; server++)
 		{
