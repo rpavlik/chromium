@@ -210,8 +210,6 @@ typedef struct {
 
 typedef struct {
 	CRbitvalue hits[CR_MAX_BITARRAY];
-	GLvectorf  screenMin;
-	GLvectorf  screenMax;
 	GLvectorf  objectMin;
 	GLvectorf  objectMax;
 	CRrecti    pixelBounds;

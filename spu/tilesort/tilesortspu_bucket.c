@@ -537,9 +537,6 @@ initGridBucketing(WindowInfo *winInfo)
 static void
 doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 {
-	static const GLvectorf zero_vect = {0.0f, 0.0f, 0.0f, 1.0f};
-	static const GLvectorf one_vect = {1.0f, 1.0f, 1.0f, 1.0f};
-	static const GLvectorf neg_vect = {-1.0f, -1.0f, -1.0f, 1.0f};
 	static const CRrecti fullscreen = {-CR_MAXINT, CR_MAXINT, -CR_MAXINT, CR_MAXINT};
 	static const CRrecti nullscreen = {0, 0, 0, 0};
 	GET_CONTEXT(g);
@@ -554,8 +551,6 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 	/* Init bucketInfo */
 	bucketInfo->objectMin = thread->packer->bounds_min;
 	bucketInfo->objectMax = thread->packer->bounds_max;
-	bucketInfo->screenMin = zero_vect;
-	bucketInfo->screenMax = zero_vect;
 	bucketInfo->pixelBounds = nullscreen;
 	for (j=0;j<CR_MAX_BITARRAY;j++)
 	     bucketInfo->hits[j] = 0;
@@ -572,8 +567,6 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 	 */
 	if (winInfo->bucketMode == BROADCAST || g->lists.currentIndex)
 	{
-		bucketInfo->screenMin = neg_vect;
-		bucketInfo->screenMax = one_vect;
 		bucketInfo->pixelBounds = fullscreen;
 		FILLDIRTY(bucketInfo->hits);
 		return;
@@ -613,8 +606,6 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		 * is done in the NVIDIA infinite_shadow_volume demo.
 		 */
 		if (!FINITE(xmin) || !FINITE(xmax)) {
-			bucketInfo->screenMin = neg_vect;
-			bucketInfo->screenMax = one_vect;
 			bucketInfo->pixelBounds = fullscreen;
 			FILLDIRTY(bucketInfo->hits);
 			return;
@@ -623,16 +614,6 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		crTransformBBox( xmin, ymin, zmin, xmax, ymax, zmax, mvp,
 		                 &xmin, &ymin, &zmin, &xmax, &ymax, &zmax );
 	}
-
-	/* Copy for export
-	 * These are NDC coords in [0,1]x[0,1]
-	 */
-	bucketInfo->screenMin.x = xmin;
-	bucketInfo->screenMin.y = ymin;
-	bucketInfo->screenMin.z = zmin;
-	bucketInfo->screenMax.x = xmax;
-	bucketInfo->screenMax.y = ymax;
-	bucketInfo->screenMax.z = zmax;
 
 	if (winInfo->bucketMode == WARPED_GRID)
 	{
@@ -805,8 +786,6 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 	}
 	else if (winInfo->bucketMode == WARPED_GRID)
 	{
-		bucketInfo->screenMin = neg_vect;
-		bucketInfo->screenMax = one_vect;
 		bucketInfo->pixelBounds = fullscreen;
 
 		/* uber-slow overlap testing mode */
