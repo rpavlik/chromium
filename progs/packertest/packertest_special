@@ -32,6 +32,7 @@ AreTexturesResident
 Finish
 CallLists
 EndList
+NewList
 DeleteTextures
 #
 PointParameterfvARB
@@ -91,6 +92,7 @@ GetBufferSubDataARB
 BufferDataARB
 GenBuffersARB
 DeleteBuffersARB
+IsBufferARB
 #
 # fences requires manual intervention
 #

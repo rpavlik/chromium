@@ -411,10 +411,19 @@ void enableTex(void)
 def makeStripeImage(f):
 	f.write( """
 
+int mid1,mid2,mid3;
+
 void makeStripeImage( GLubyte *stripeImage)
 {  
    int j;
  
+   glGenTextures(1, &mid1);
+   glGenTextures(1, &mid2);
+   glGenTextures(1, &mid3);
+   glBindTexture(GL_TEXTURE_1D, mid1);
+   glBindTexture(GL_TEXTURE_2D, mid2);
+   glBindTexture(GL_TEXTURE_3D, mid3);
+
    for (j = 0; j < 32; j++) {
       stripeImage[4*j] = (GLubyte) ((j<=4) ? 255 : 0);
       stripeImage[4*j+1] = (GLubyte) ((j>4) ? 255 : 0);
@@ -424,18 +433,33 @@ void makeStripeImage( GLubyte *stripeImage)
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    glPixelStorei(GL_PACK_ALIGNMENT, 1);
    glEnable(GL_TEXTURE_1D);
+   glEnable(GL_TEXTURE_2D);
+   glEnable(GL_TEXTURE_3D);
+
    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
-   glDisable(GL_TEXTURE_1D);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
+   glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB, 8, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
+
 }  
 	""")
 
+
 def makeGenTexture(f):
 	f.write( """
+
+int sid1,sid2,sid3;
 
 void genTexture( GLubyte *stripeImage)
 {  
    int j;
  
+   glGenTextures(1, &sid1);
+   glGenTextures(1, &sid2);
+   glGenTextures(1, &sid3);
+   glBindTexture(GL_TEXTURE_1D, sid1);
+   glBindTexture(GL_TEXTURE_2D, sid2);
+   glBindTexture(GL_TEXTURE_3D, sid3);
+
    for (j = 0; j < 32; j++) {
       stripeImage[4*j] = (GLubyte) ((j<=4) ? 255 : 0);
       stripeImage[4*j+1] = (GLubyte) ((j>4) ? 255 : 0);
@@ -444,9 +468,12 @@ void genTexture( GLubyte *stripeImage)
    }
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+   glEnable(GL_TEXTURE_1D);
    glEnable(GL_TEXTURE_2D);
+   glEnable(GL_TEXTURE_3D);
+   glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
-   glDisable(GL_TEXTURE_2D);
+   glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB, 8, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
 }  
 	""")
 
@@ -474,6 +501,41 @@ def genIdentd(f):
 
 	""")
 
+def initMap1(f):
+	f.write( """
+
+
+void initMap1(double *parray)
+{
+    int i;
+
+    static double points[10 * 4] = {
+	-0.5, 0.0, 0.0, 1.0,
+	-0.4, 0.5, 0.0, 1.0,
+	-0.3, -0.5, 0.0, 1.0,
+	-0.2, 0.5, 0.0, 1.0,
+	-0.1, -0.5, 0.0, 1.0,
+	0.0, 0.5, 0.0, 1.0,
+	0.1, -0.5, 0.0, 1.0,
+	0.2, 0.5, 0.0, 1.0,
+	0.3, -0.5, 0.0, 1.0,
+	0.4, 0.0, 0.0, 1.0,
+    };
+
+    glFrontFace(GL_CCW);
+    glEnable(GL_DEPTH_TEST);
+
+    for (i = 0; i < 40; i++)
+	parray[i] = points[i];
+}
+	""")
+
+def initBuffer(f):
+	f.write("void initBuffer(void)\n{\n")
+	f.write("\tconst void *data = malloc(320);\n\n")
+	f.write("\tglBindBufferARB( GL_ARRAY_BUFFER_ARB, 3);\n")
+	f.write("\tglBufferDataARB( GL_ARRAY_BUFFER_ARB, 320, data, GL_STATIC_DRAW_ARB);\n")
+	f.write("}\n")
 #
 # Generate the permuted parameter lists for a GL function
 # Return a list of lists containing the arguments
@@ -756,6 +818,8 @@ def PerformAction(func_name,f):
 			f.write("\tmakeStripeImage((GLubyte *)%s);\n" % name)
 		elif doit == ['enableTex']:
 			f.write("\tenableTex();\n")
+		elif doit == ['initMap1']:
+			f.write("\tinitMap1((double *)%s);\n" % name)
 		elif doit == ['maxTex']:
 			print "Limit textures"
 		elif doit == ['genTex']:
@@ -766,6 +830,9 @@ def PerformAction(func_name,f):
 			f.write("glPixelStorei( GL_UNPACK_LSB_FIRST, 0);\n")
 			f.write("glPixelStorei( GL_PACK_SWAP_BYTES, 0);\n")
 			f.write("glPixelStorei( GL_UNPACK_SWAP_BYTES, 0);\n")
+			f.write("\tgenTexture((GLubyte *)%s);\n" % name)
+		elif doit == ['initBuffer']:
+			f.write("\tinitBuffer();\n")
 		elif doit == ['identf']:
 			genIdentf(f)
 		elif doit == ['identd']:
@@ -900,7 +967,8 @@ def PrintTableFunc( func_name, params,  can_have_pointers,f):
 					printfstr = ""
 
 				if verbose:
-					f.write( '\n\t\"%s_tab.%s\"' % (func_name,allargstr))
+					f.write( '\n\t\"%s\"' % (allargstr))
+					#f.write( '\n\t\"%s_tab.%s\"' % (func_name,allargstr))
 				allargstr = ""
 				f.write( '},\n')
 		
@@ -931,7 +999,7 @@ def PrintTableFunc( func_name, params,  can_have_pointers,f):
 	f.write('\tfor ( i = 0; i < %d; i++) {\n' % ncount)
 
 	if verbose:
-		f.write('\tif (verbose)\n\t\tcrDebug(\"gl%s( %%s )\",%s_tab[i].prgstr);\n'  % (func_name,func_name))
+		f.write('\tif (verbose)\n\tcrDebug(\"gl%s( %%s )\",%s_tab[i].prgstr);\n'  % (func_name,func_name))
 	if return_type != 'void':
 		f.write( '\t\treturn_val = gl%s(' % func_name)
 	else:
@@ -959,9 +1027,17 @@ def PrintTableFunc( func_name, params,  can_have_pointers,f):
 #
 	f.write(');\n')
 	if return_type != 'void':
-		f.write( '\n\t\tif(errChk)\n\t\tprintError(\"gl(%s)\");\n' % func_name)
+		f.write('\n\t\tif(errChk) {\n')
+		f.write('\t\t\tchar buf[1024];\n')
+		f.write('\t\t\tsprintf(buf,\"gl%s( %%s )\",%s_tab[i].prgstr);\n'  % (func_name,func_name))
+		f.write('\t\t\tprintError(buf);\n')
+		f.write( '\t}\n')
 	else:
-		f.write( '\t\tif(errChk)\n\t\t\tprintError(\"gl(%s)\");\n' % func_name)
+		f.write('\n\t\tif(errChk) {\n')
+		f.write('\t\t\tchar buf[1024];\n')
+		f.write('\t\t\tsprintf(buf,\"gl%s( %%s )\",%s_tab[i].prgstr);\n'  % (func_name,func_name))
+		f.write('\t\t\tprintError(buf);\n')
+		f.write( '\t}\n')
 	f.write( '\t}\n' )
 	f.write( '}\n' )
 
@@ -1124,7 +1200,7 @@ def PrintFunc( func_name, params,  can_have_pointers,f):
 
 				f.write( ');\n\tif(errChk)\n\t\tprintError(\"gl%s(%s)\");\n' % (func_name,allargstr))
 				if verbose:
-					f.write('\t\tif (verbose)\n\t\t\tcrDebug(\"gl%s( %s )\");\n'  % (func_name,allargstr))
+					f.write('\tif (verbose)\n\t\tcrDebug(\"gl%s( %s )\");\n'  % (func_name,allargstr))
 				allargstr = ""
 				#f.write( ');\n')
 		else:
@@ -1133,7 +1209,7 @@ def PrintFunc( func_name, params,  can_have_pointers,f):
 			else:
 				f.write( '\tgl%s();\n\tif(errChk)\n\t\tprintError(\"gl(%s)\");\n' % (func_name,func_name))
 				if verbose:
-					f.write('\t\tif (verbose)\n\t\t\tcrDebug(\"gl%s( )\");\n'  % (func_name))
+					f.write('\tif (verbose)\n\t\tcrDebug(\"gl%s( )\");\n'  % (func_name))
 		
 	# finish up
 	f.write( '}\n' )
@@ -1487,6 +1563,8 @@ def PrintPart3(file):
 	enableTex(file)
 	makeStripeImage(file)
 	makeGenTexture(file)
+	initMap1(file)
+	initBuffer(file)
 	PrintMiddle(file)
 
 	#
@@ -1609,6 +1687,8 @@ if __name__ == "__main__":
 	file.write("void makeStripeImage( GLubyte *stripeImage);\n")
 	file.write("void enableTex( void );\n")
 	file.write("void genTexture( GLubyte *stripeImage);\n")
+	file.write("void initMap1( double *points);\n")
+	file.write("void initBuffer( void );\n")
 
 	file.close()
 
