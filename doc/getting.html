@@ -143,6 +143,20 @@ thread safety, debug vs release, DMX support, etc.
 </p>
 
 
+
+
+<h2 class="PageSubHeading">Special Notes</h2>
+
+<p>
+If you're using RedHat Linux 9.0 (or later?) with NVIDIA hardware/drivers
+you'll probably have to set the CR_SYSTEM_GL_PATH environment variable
+to <code>/usr/lib/tls</code>
+</p>
+<p>
+This causes Chromium to use the libGL.so library found in /usr/lib/tls/
+instead of /usr/lib/, thus avoiding some thread-related problems.
+</p>
+
 </body>
 
 </html>
