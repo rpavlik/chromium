@@ -35,12 +35,6 @@ Fogi
 Fogf
 Fogiv
 Fogfv
-ShadeModel
-ColorMaterial
-LightModelf
-LightModeli
-LightModelfv
-LightModeliv
 Lightf
 Lighti
 Lightfv
@@ -55,14 +49,6 @@ LightModelf
 LightModeli
 LightModelfv
 LightModeliv
-Lightf
-Lighti
-Lightfv
-Lightiv
-Materialf
-Materiali
-Materialfv
-Materialiv
 ClipPlane
 MatrixMode
 LoadIdentity
