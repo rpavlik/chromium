@@ -414,7 +414,7 @@ void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 	}
 
 	if (flags & CR_SUPPRESS_SWAP_BIT)
-	  return;
+		return;
 
 	if (render_spu.drawCursor)
 		DrawCursor( render_spu.cursorX, render_spu.cursorY );
@@ -427,7 +427,9 @@ void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
  * Barrier functions
  * Normally, we'll have a crserver somewhere that handles the barrier calls.
  * However, if we're running the render SPU on the client node, then we
- * should handle barriers here.
+ * should handle barriers here.  The threadtest demo illustrates this.
+ * If we have N threads calling using this SPU we need these barrier
+ * functions to synchronize them.
  */
 
 typedef struct {
