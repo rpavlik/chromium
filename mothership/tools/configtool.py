@@ -103,7 +103,7 @@ def main():
 	"""
 	# Redirect python exceptions to a log file.
 	# XXX if we crash upon startup, try commenting-out this next line:
-#	sys.stderr = ExceptionHandler()
+	# sys.stderr = ExceptionHandler()
 
 	# Set the default site file
 	#crutils.SetDefaultSiteFile("tungsten.crsite")

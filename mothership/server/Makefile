@@ -17,8 +17,10 @@ crconfig.py: Makefile
 	@echo "arch = \"${ARCH}\"" >> crconfig.py
 ifdef WINDOWS
 	@echo "crdir = \"$(shell cygpath -w $(shell dirname $(shell dirname $(shell pwd))))\"" >> crconfig.py
+	@echo "crbindir = os.path.join(crdir,'bin',arch)" >> crconfig.py
+	@echo "crlibdir = os.path.join(crdir,'bin',arch)" >> crconfig.py
 else
 	@echo "crdir = \"$(shell dirname $(shell dirname $(shell pwd)))\"" >> crconfig.py
-endif
 	@echo "crbindir = os.path.join(crdir,'bin',arch)" >> crconfig.py
 	@echo "crlibdir = os.path.join(crdir,'lib',arch)" >> crconfig.py
+endif
