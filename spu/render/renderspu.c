@@ -414,7 +414,10 @@ void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 	}
 
 	if (flags & CR_SUPPRESS_SWAP_BIT)
+	{
+		render_spu.self.Finish();
 		return;
+	}
 
 	if (render_spu.drawCursor)
 		DrawCursor( render_spu.cursorX, render_spu.cursorY );
