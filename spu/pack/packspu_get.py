@@ -73,7 +73,7 @@ for func_name in keys:
 			print '\tunsigned int i;'
 		print '\tif (!(pack_spu.thread[0].server.conn->actual_network))'
 		print '\t{'
-		print '\t\tcrError( "packspu_%s doesn\'t work when there\'s no actual network involved!\\nTry using the simplequery SPU in your chain!" );'
+		print '\t\tcrError( "packspu_%s doesn\'t work when there\'s no actual network involved!\\nTry using the simplequery SPU in your chain!" );' % func_name
 		print '\t}'
 		if func_name in simple_funcs:
 			print '\tif (pname == GL_UNPACK_ALIGNMENT ||'
