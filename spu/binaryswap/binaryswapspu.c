@@ -192,6 +192,9 @@ binaryswapspu_ResizeWindow(WindowInfo * window, int newWidth, int newHeight)
 
 		/* set child's viewport too */
 		binaryswap_spu.child.Viewport(0, 0, newWidth, newHeight);
+
+		/* clear the stencil buffer */
+		binaryswap_spu.super.Clear(GL_STENCIL_BUFFER_BIT);
 	}
 	AllocBuffers(window);
 	BuildSwapLimits(window);
@@ -459,29 +462,33 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 				incoming_depth =
 					(GLuint *) (incoming_color + draw_width * draw_height * 3);
 
-				/* mask portion to draw */
+				binaryswap_spu.super.WindowPos2iARB(draw_x, draw_y);
+
+				/* Draw the depth image into the depth buffer, setting the stencil
+				 * to one wherever we pass the Z test, clearinging to zero where
+				 * we fail.
+				 */
 				binaryswap_spu.super.ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+				binaryswap_spu.super.StencilOp(GL_KEEP, GL_ZERO, GL_REPLACE);
+				binaryswap_spu.super.StencilFunc(GL_ALWAYS, 1, ~0);
 				binaryswap_spu.super.Enable(GL_STENCIL_TEST);
 				binaryswap_spu.super.Enable(GL_DEPTH_TEST);
-				binaryswap_spu.super.ClearStencil(0);
-				binaryswap_spu.super.Clear(GL_STENCIL_BUFFER_BIT);
 				binaryswap_spu.super.DepthFunc(GL_LEQUAL);
-				binaryswap_spu.super.StencilFunc(GL_ALWAYS, 0x1, 0x1);
-				binaryswap_spu.super.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-				binaryswap_spu.super.WindowPos2iARB(draw_x, draw_y);
 				binaryswap_spu.super.DrawPixels(draw_width, draw_height,
 																				GL_DEPTH_COMPONENT,
 																				GL_UNSIGNED_INT, incoming_depth);
-				binaryswap_spu.super.Disable(GL_DEPTH_TEST);
 
-				/* draw where depth worked */
-				binaryswap_spu.super.StencilFunc(GL_EQUAL, 1, 1);
-				binaryswap_spu.super.StencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+				/* Now draw the RGBA image, only where the stencil is one, reset
+				 * stencil to zero as we go
+				 * (to avoid calling glClear(STENCIL_BUFFER_BIT)).
+				 */
+				binaryswap_spu.super.Disable(GL_DEPTH_TEST);
+				binaryswap_spu.super.StencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
+				binaryswap_spu.super.StencilFunc(GL_EQUAL, 1, ~0);
 				binaryswap_spu.super.ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 				binaryswap_spu.super.DrawPixels(draw_width, draw_height, GL_RGB,
 																				GL_UNSIGNED_BYTE, incoming_color);
 				binaryswap_spu.super.Disable(GL_STENCIL_TEST);
-				binaryswap_spu.super.Enable(GL_DEPTH_TEST);
 			}
 		}
 
