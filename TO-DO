@@ -36,6 +36,11 @@ tilesort, before glCallList, flush (state-diff) all those textures to
 be sure the servers' texture are up to date.  We currently flush all
 textures prior to glCallList (but that code's disabled).
 
+The unpacker routines for glCompressedTexImage1/3DARB and
+glCompressedTexSubImage1/2/3DARB are unfinished.  The unpacker for
+glCompressedTexImage2DARB _is_ done so it can be used as a model.
+
+
 
 
 CRServer context management issue
