@@ -29,8 +29,6 @@ SUBDIRS = \
 	tiletest \
 	viewports
 
-#	packertest \
-
 
 ifeq ($(THREADSAFE), 1)
 SUBDIRS += threadtest
@@ -43,7 +41,7 @@ endif
 ifeq ($(ARCH), WIN_NT)
 SUBDIRS += wgl
 else
-SUBDIRS += glx dlistperf1 dlistperf2
+SUBDIRS += glx dlistperf1 dlistperf2 packertest
 endif
 
 include ${TOP}/cr.mk
