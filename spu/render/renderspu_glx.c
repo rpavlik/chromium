@@ -192,9 +192,9 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 
 	crDebug( "Render SPU: Looks like we have GLX" );
 
-	crDebug( "Render SPU: Chose visual id=%ld: RGBA=(%d,%d,%d,%d) Z=%d stencil=%d"
+	crDebug( "Render SPU: Chose visual id=0x%x: RGBA=(%d,%d,%d,%d) Z=%d stencil=%d"
 					 " double=%d stereo=%d accum=(%d,%d,%d,%d)",
-					 visual->visual->visualid,
+					 (int) visual->visual->visualid,
 					 Attrib( visual, GLX_RED_SIZE ),
 					 Attrib( visual, GLX_GREEN_SIZE ),
 					 Attrib( visual, GLX_BLUE_SIZE ),
@@ -493,7 +493,6 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 
 		    -- jw
 		  */
-			printf("make current delete window\n");
 			renderspu_SystemDestroyWindow( window );
 #endif 
 			renderspu_SystemCreateWindow( context->visual, GL_FALSE, window );
