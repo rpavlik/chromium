@@ -134,7 +134,7 @@ void crDLMUseDLM(CRDLM *dlm)
 void crDLMFreeDLM(CRDLM *dlm)
 {
     /* We're about to change the displayLists hash; lock it first */
-    DLM_LOCK(dlm)
+    DLM_LOCK(dlm);
 
     /* Decrement the user count.  If the user count has gone to
      * 0, then free the rest of the DLM.  Otherwise, other
@@ -153,7 +153,7 @@ void crDLMFreeDLM(CRDLM *dlm)
 	dlm->displayLists = NULL;
 
 	/* Must unlock before freeing the mutex */
-	DLM_UNLOCK(dlm)
+	DLM_UNLOCK(dlm);
 
 #ifdef CHROMIUM_THREADSAFE
 	/* We release the mutex here; we really should delete the
@@ -191,7 +191,7 @@ void crDLMFreeDLM(CRDLM *dlm)
 	/* We're keeping the DLM around for other users.  Unlock it,
 	 * but retain its memory and display lists.
 	 */
-	DLM_UNLOCK(dlm)
+        DLM_UNLOCK(dlm);
     }
 }
 
