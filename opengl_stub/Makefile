@@ -24,15 +24,15 @@ ARCH_EXPORTS = $(ARCH)_exports.s
 endif
 
 ifeq ($(ARCH), IRIX64)
-FILES += $(ARCH)_exports glx
+FILES += $(ARCH)_exports glx IRIX_edgeflagpointer
 ARCH_EXPORTS_PY = $(ARCH)_exports.py
-ARCH_EXPORTS = $(ARCH)_exports.c
+ARCH_EXPORTS = $(ARCH)_exports.c 
 endif
 
 ifeq ($(ARCH), IRIX)
-FILES += IRIX64_exports glx
+FILES += IRIX64_exports glx IRIX_edgeflagpointer
 ARCH_EXPORTS_PY = IRIX64_exports.py
-ARCH_EXPORTS = IRIX64_exports.c
+ARCH_EXPORTS = IRIX64_exports.c 
 endif
 
 PRECOMP = $(ARCH_EXPORTS) init.c api_templates.h api_templates.c opengl.def
