@@ -665,28 +665,3 @@ tilesortspu_ListBase(GLuint base)
 	if (tilesort_spu.listTrack && tilesort_spu.lazySendDLists)
 		crdlm_ListBase(base);
 }
-
-
-/*
- * Need to delete local textures and textures on servers.
- * XXX this function should probably go elsewhere.
- */
-void TILESORTSPU_APIENTRY
-tilesortspu_DeleteTextures(GLsizei n, const GLuint *textures)
-{
-	crStateDeleteTextures(n, textures);
-	crPackDeleteTextures(n, textures);
-}
-
-
-/*
- * Need to delete local programs and programs on servers.
- * XXX this function should probably go elsewhere.
- */
-void TILESORTSPU_APIENTRY
-tilesortspu_DeleteProgramsARB(GLsizei n, const GLuint *programs)
-{
-	crStateDeleteProgramsARB(n, programs);
-	crPackDeleteProgramsARB(n, programs);
-}
-

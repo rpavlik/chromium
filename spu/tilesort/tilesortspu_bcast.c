@@ -248,3 +248,61 @@ void TILESORTSPU_APIENTRY tilesortspu_SemaphoreVCR(GLuint name)
 }
 
 
+
+
+/*
+ * Need to delete local textures and textures on servers.
+ * XXX this function should probably go elsewhere.
+ */
+void TILESORTSPU_APIENTRY
+tilesortspu_DeleteTextures(GLsizei n, const GLuint *textures)
+{
+	GET_THREAD(thread);
+	tilesortspuFlush(thread);
+	crStateDeleteTextures(n, textures);
+	if (tilesort_spu.swap)
+		crPackDeleteTexturesSWAP(n, textures);
+	else
+		crPackDeleteTextures(n, textures);
+	tilesortspuBroadcastGeom(0);
+	tilesortspuShipBuffers();
+}
+
+
+/*
+ * Need to delete local programs and programs on servers.
+ * XXX this function should probably go elsewhere.
+ */
+void TILESORTSPU_APIENTRY
+tilesortspu_DeleteProgramsARB(GLsizei n, const GLuint *programs)
+{
+	GET_THREAD(thread);
+	tilesortspuFlush(thread);
+	crStateDeleteProgramsARB(n, programs);
+	if (tilesort_spu.swap)
+		crPackDeleteProgramsARBSWAP(n, programs);
+	else
+		crPackDeleteProgramsARB(n, programs);
+	tilesortspuBroadcastGeom(0);
+	tilesortspuShipBuffers();
+}
+
+
+/*
+ * Need to delete local buffers and buffers on servers.
+ * XXX this function should probably go elsewhere.
+ */
+void TILESORTSPU_APIENTRY
+tilesortspu_DeleteBuffersARB(GLsizei n, const GLuint *buffers)
+{
+	GET_THREAD(thread);
+	tilesortspuFlush(thread);
+	crStateDeleteBuffersARB(n, buffers);
+	if (tilesort_spu.swap)
+		crPackDeleteBuffersARBSWAP(n, buffers);
+	else
+		crPackDeleteBuffersARB(n, buffers);
+	tilesortspuBroadcastGeom(0);
+	tilesortspuShipBuffers();
+}
+
