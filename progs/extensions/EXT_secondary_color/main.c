@@ -53,6 +53,9 @@ extern "C"
 #define CCN_DEBUG
 #define MULTIPLE_VIEWPORTS
 
+#ifndef APIENTRY
+#define APIENTRY
+#endif
 
 typedef void (APIENTRY * glSecondaryColor3fEXT_t) (GLfloat red, GLfloat green, GLfloat blue);
 typedef void (APIENTRY * glSecondaryColorPointerEXT_t) (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
