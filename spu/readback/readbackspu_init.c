@@ -10,7 +10,7 @@
 
 extern SPUNamedFunctionTable readback_table[];
 
-SPUFunctions the_functions = {
+SPUFunctions readback_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
 	readback_table /* THE ACTUAL FUNCTIONS */
@@ -37,7 +37,7 @@ SPUFunctions *readbackSPUInit( int id, SPU *child, SPU *super,
 	crSPUCopyDispatchTable( &(readback_spu.super), &(super->dispatch_table) );
 	readbackspuGatherConfiguration();
 
-	return &the_functions;
+	return &readback_functions;
 }
 
 void readbackSPUSelfDispatch(SPUDispatchTable *self)

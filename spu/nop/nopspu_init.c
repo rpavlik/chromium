@@ -9,7 +9,7 @@
 
 extern SPUNamedFunctionTable nop_table[];
 
-SPUFunctions the_functions = {
+SPUFunctions nop_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
 	nop_table /* THE ACTUAL FUNCTIONS */
@@ -24,7 +24,7 @@ SPUFunctions *nopSPUInit( int id, SPU *child, SPU *super,
 	(void) num_contexts;
 	(void) child;
 	(void) super;
-	return &the_functions;
+	return &nop_functions;
 }
 
 void nopSPUSelfDispatch(SPUDispatchTable *parent)

@@ -11,7 +11,7 @@
 
 extern SPUNamedFunctionTable print_table[];
 
-SPUFunctions the_functions = {
+SPUFunctions print_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
 	print_table /* THE ACTUAL FUNCTIONS */
@@ -34,7 +34,7 @@ SPUFunctions *printSPUInit( int id, SPU *child, SPU *super,
 	crSPUInitDispatchTable( &(print_spu.passthrough) );
 	crSPUCopyDispatchTable( &(print_spu.passthrough), &(super->dispatch_table) );
 	crDebug( "print_spu.passthrough = %p, super->dispatch_table = %p", &(print_spu.passthrough), &(super->dispatch_table) );
-	return &the_functions;
+	return &print_functions;
 }
 
 void printSPUSelfDispatch(SPUDispatchTable *parent)

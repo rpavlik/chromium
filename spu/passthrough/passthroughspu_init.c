@@ -11,7 +11,7 @@
 extern SPUNamedFunctionTable passthrough_table[];
 extern void BuildPassthroughTable( SPU *child );
 
-SPUFunctions the_functions = {
+SPUFunctions passthrough_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
 	passthrough_table /* THE ACTUAL FUNCTIONS */
@@ -31,7 +31,7 @@ SPUFunctions *passthroughSPUInit( int id, SPU *child, SPU *super,
 		crError( "You can't load the passthrough SPU as the last SPU in a chain!" );
 	}
 	BuildPassthroughTable( child );
-	return &the_functions;
+	return &passthrough_functions;
 }
 
 void passthroughSPUSelfDispatch(SPUDispatchTable *parent)

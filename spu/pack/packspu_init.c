@@ -13,7 +13,7 @@
 extern SPUNamedFunctionTable pack_table[];
 PackSPU pack_spu;
 
-SPUFunctions the_functions = {
+SPUFunctions pack_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
 	pack_table /* THE ACTUAL FUNCTIONS */
@@ -45,7 +45,7 @@ SPUFunctions *packSPUInit( int id, SPU *child, SPU *super,
 	/* GL Limits were computed in packspuGatherConfiguration() above */
 	pack_spu.ctx = crStateCreateContext( &pack_spu.limits );
 	crStateMakeCurrent( pack_spu.ctx );
-	return &the_functions;
+	return &pack_functions;
 }
 
 void packSPUSelfDispatch(SPUDispatchTable *self)

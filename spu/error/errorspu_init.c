@@ -9,7 +9,7 @@
 
 extern SPUNamedFunctionTable error_table[];
 
-SPUFunctions the_functions = {
+SPUFunctions error_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
 	error_table /* THE ACTUAL FUNCTIONS */
@@ -24,7 +24,7 @@ SPUFunctions *errorSPUInit( int id, SPU *child, SPU *super,
 	(void) num_contexts;
 	(void) child;
 	(void) super;
-	return &the_functions;
+	return &error_functions;
 }
 
 void errorSPUSelfDispatch(SPUDispatchTable *parent)

@@ -13,7 +13,7 @@
 extern SPUNamedFunctionTable tilesort_table[];
 TileSortSPU tilesort_spu;
 
-SPUFunctions the_functions = {
+SPUFunctions tilesort_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
 	tilesort_table /* THE ACTUAL FUNCTIONS */
@@ -88,7 +88,7 @@ SPUFunctions *tilesortSPUInit( int id, SPU *child, SPU *super,
 
 	tilesortspuBucketingInit();
 
-	return &the_functions;
+	return &tilesort_functions;
 }
 
 void tilesortSPUSelfDispatch(SPUDispatchTable *self)

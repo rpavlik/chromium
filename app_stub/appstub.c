@@ -128,7 +128,7 @@ static Library load_library( const char *name )
 		exit( 1 );
 	}
 #else
-	Library lib = dlopen( name, RTLD_NOW );
+	Library lib = dlopen( name, RTLD_GLOBAL | RTLD_NOW );
 
 	if ( lib == NULL )
 	{

@@ -14,7 +14,7 @@
 
 extern SPUNamedFunctionTable render_table[];
 
-SPUFunctions the_functions = {
+SPUFunctions render_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
 	render_table /* THE ACTUAL FUNCTIONS */
@@ -54,7 +54,7 @@ SPUFunctions *renderSPUInit( int id, SPU *child, SPU *super,
 	crSPUMergeGLLimits( 2, limits, &limits[2] );   /* intersection */
 	crSPUReportGLLimits( &limits[2], render_spu.id );
 
-	return &the_functions;
+	return &render_functions;
 }
 
 void renderSPUSelfDispatch(SPUDispatchTable *self)

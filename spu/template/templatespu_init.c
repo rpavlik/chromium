@@ -10,7 +10,7 @@
 
 extern SPUNamedFunctionTable template_table[];
 
-SPUFunctions the_functions = {
+SPUFunctions template_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
 	template_table /* THE ACTUAL FUNCTIONS */
@@ -37,7 +37,7 @@ SPUFunctions *templateSPUInit( int id, SPU *child, SPU *super,
 	crSPUCopyDispatchTable( &(template_spu.super), &(super->dispatch_table) );
 	templatespuGatherConfiguration();
 
-	return &the_functions;
+	return &template_functions;
 }
 
 void templateSPUSelfDispatch(SPUDispatchTable *self)

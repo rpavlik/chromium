@@ -10,7 +10,7 @@
 
 extern SPUNamedFunctionTable apichange_table[];
 
-SPUFunctions the_functions = {
+SPUFunctions apichange_functions = {
 	NULL, /* CHILD COPY */
 	NULL, /* DATA */
 	apichange_table /* THE ACTUAL FUNCTIONS */
@@ -37,7 +37,7 @@ SPUFunctions *apichangeSPUInit( int id, SPU *child, SPU *super,
 	crSPUCopyDispatchTable( &(apichange_spu.super), &(super->dispatch_table) );
 	apichangespuGatherConfiguration();
 
-	return &the_functions;
+	return &apichange_functions;
 }
 
 void apichangeSPUSelfDispatch(SPUDispatchTable *self)
