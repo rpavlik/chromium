@@ -32,15 +32,20 @@ void PACKSPU_APIENTRY packspu_SwapBuffers( GLint window, GLint flags )
 {
 	GET_THREAD(thread);
 
-        if (pack_spu.swap)
-        {
-                crPackSwapBuffersSWAP( window, flags );
-        }
-        else
-        {
-                crPackSwapBuffers( window, flags );
-        }
+	if (pack_spu.swap)
+	{
+		crPackSwapBuffersSWAP( window, flags );
+	}
+	else
+	{
+		crPackSwapBuffers( window, flags );
+	}
 	packspuFlush( (void *) thread );
+
+	if (thread->server.conn->type == CR_FILE) {
+		/* no synchronization for file networking */
+		return;
+	}
 
 	/* This won't block unless there has been more than 1 frame
 	 * since we received a writeback acknowledgement.  In the
