@@ -22,3 +22,6 @@ USE_VNC=0
 # Set THREADSAFE to 1 if you want thread safety for parallel applications.
 THREADSAFE=0
 
+
+# Set RELEASE to 1 to compile with optimizations and without debug info.
+#RELEASE=1
