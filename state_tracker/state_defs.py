@@ -45,4 +45,5 @@ crStateError
 crStateUpdateColorBits
 crStateClientInit
 crStateGetCurrent
+__currentContext
 """
