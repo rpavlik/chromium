@@ -323,9 +323,6 @@ int crFileDoConnect( CRConnection *conn )
 #else
 					S_IRUSR | S_IWUSR);
 #endif
- 	if (conn->fd < 0)
- 	{
- 		crWarning( "Couldn't open %s for writing!", conn->filename );
 	if (conn->fd < 0)
 	{
 		crWarning( "Couldn't open %s for writing!", conn->filename );
