@@ -84,6 +84,7 @@ typedef struct {
  * Context Info
  */
 typedef struct {
+	int id; /**< integer context ID */
 	VisualInfo *visual;
 	GLboolean everCurrent;
 	GLboolean haveWindowPosARB;

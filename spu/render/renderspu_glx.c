@@ -218,6 +218,20 @@ WaitForMapNotify( Display *display, XEvent *event, char *arg )
 
 
 /**
+ * Return the X Visual ID of the given window
+ */
+static int
+GetWindowVisualID( Display *dpy, Window w )
+{
+	XWindowAttributes attr;
+	int k = XGetWindowAttributes(dpy, w, &attr);
+	if (!k)
+		return -1;
+	return attr.visual->visualid;
+}
+
+
+/**
  * Wrapper for glXGetConfig().
  */
 static int
@@ -619,7 +633,8 @@ chooseFBConfig( Display *dpy, int screen, GLbitfield visAttribs )
 #endif /* GLX_VERSION_1_3 */
 
 
-GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
+GLboolean
+renderspu_SystemInitVisual( VisualInfo *visual )
 {
 	const char *dpyName;
 	int screen;
@@ -944,7 +959,6 @@ createWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
 		}
 	}
 
-
 	/* Make a clear cursor to get rid of the monitor cursor */
 	if ( render_spu.fullscreen )
 	{
@@ -1046,11 +1060,9 @@ createPBuffer( VisualInfo *visual, WindowInfo *window )
 	CRASSERT(window->height > 0);
 
 #ifdef GLX_VERSION_1_3
-
-	CRASSERT(visual->fbconfig);
-
 	{
 		int attribs[100], i = 0, w, h;
+		CRASSERT(visual->fbconfig);
 		if (render_spu.pbufferWidth == 0 && render_spu.pbufferHeight == 0) {
 			/* allocate the exact requested size */
 			w = window->width;
@@ -1072,13 +1084,12 @@ createPBuffer( VisualInfo *visual, WindowInfo *window )
 																										visual->fbconfig, attribs);
 		if (window->window) {
 			crDebug("Render SPU: Allocated %d x %d pbuffer", w, h);
+			return GL_TRUE;
 		}
 		else {
 			crWarning("Render SPU: Failed to allocate %d x %d pbuffer", w, h);
+			return GL_FALSE;
 		}
-	}
-	if (window->window) {
-		return GL_TRUE;
 	}
 #endif /* GLX_VERSION_1_3 */
 	return GL_FALSE;
@@ -1100,7 +1111,8 @@ renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt,
 }
 
 
-void renderspu_SystemDestroyWindow( WindowInfo *window )
+void
+renderspu_SystemDestroyWindow( WindowInfo *window )
 {
 	CRASSERT(window);
 	CRASSERT(window->visual);
@@ -1137,7 +1149,8 @@ void renderspu_SystemDestroyWindow( WindowInfo *window )
 }
 
 
-GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
+GLboolean
+renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
 {
 	Bool is_direct;
 
@@ -1194,7 +1207,8 @@ GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *contex
 }
 
 
-void renderspu_SystemDestroyContext( ContextInfo *context )
+void
+renderspu_SystemDestroyContext( ContextInfo *context )
 {
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa) 
@@ -1215,7 +1229,8 @@ void renderspu_SystemDestroyContext( ContextInfo *context )
 
 
 #ifdef USE_OSMESA
-static void check_buffer_size( WindowInfo *window )
+static void
+check_buffer_size( WindowInfo *window )
 {
 	if (window->width != window->in_buffer_width
 	    || window->height != window->in_buffer_height
@@ -1234,7 +1249,9 @@ static void check_buffer_size( WindowInfo *window )
 #endif
 
 
-void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, ContextInfo *context )
+void
+renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
+														 ContextInfo *context )
 {
 	CRConnection* conn;
 	char response[8096];
@@ -1291,47 +1308,61 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 		if (render_spu.render_to_crut_window) {
 			if (render_spu.crut_drawable == 0) {
 				/* We don't know the X drawable ID yet.  Ask mothership for it. */
-
 				conn = crMothershipConnect();
 				if (!conn)
 				{
-					crError("Couldn't connect to the mothership to get CRUT drawable-- I have no idea what to do!");
+					crError("Couldn't connect to the mothership to get CRUT drawable-- "
+									"I have no idea what to do!");
 				}
-
 				crMothershipGetParam( conn, "crut_drawable", response );
 				render_spu.crut_drawable = crStrToInt(response);
 				crMothershipDisconnect(conn);
 
-				crDebug("Received a drawable: %i", render_spu.crut_drawable);
+				crDebug("Render SPU: using CRUT drawable: 0x%x",
+								render_spu.crut_drawable);
 				if (!render_spu.crut_drawable) {
-					crDebug("Crut drawable is invalid\n");
-					/* Continue with nativeWindow = 0; we should render to the
-					* little window instead
-					*/
+					crDebug("Render SPU: Crut drawable 0 is invalid");
+					/* Continue with nativeWindow = 0; we'll render to the window that
+					 * we (the Render SPU) previously created.
+					 */
 				}
 			}
 
 			nativeWindow = render_spu.crut_drawable;
-			window->nativeWindow = render_spu.crut_drawable;
 		}
 
 		if ((render_spu.render_to_crut_window || render_spu.render_to_app_window)
 				&& nativeWindow)
 		{
-			/* The render_to_app_window option is set and we've got a nativeWindow
-			 * handle, save the handle for later calls to swapbuffers().
+			/* We're about to bind the rendering context to a window that we
+			 * (the Render SPU) did not create.  The window was created by the
+			 * application or the CRUT server.
+			 * Make sure the window ID is valid and that the window's X visual is
+			 * the same as the rendering context's.
 			 */
 			if (WindowExists(window->visual->dpy, nativeWindow))
 			{
-				window->nativeWindow = (Window) nativeWindow;
-				b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
-																					(Window) nativeWindow,
-																					context->context );
-				/* don't CRASSERT(b) - it causes a problem with CRUT */
+				int vid = GetWindowVisualID(window->visual->dpy, nativeWindow);
+				if (vid != (int) context->visual->visual->visualid) {
+					crWarning("Render SPU: Can't bind context %d to CRUT/native window "
+										"0x%x because of different visuals!",
+										context->id, (int) nativeWindow);
+				}
+				else {
+					/* OK, this should work */
+					window->nativeWindow = (Window) nativeWindow;
+					b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
+																						(Window) nativeWindow,
+																						context->context );
+					CRASSERT(b);
+				}
 			}
 			else
 			{
-				crWarning("render SPU's render_to_app_window option is set but the application window ID 0x%x is invalid on the display named %s", (unsigned int) nativeWindow, DisplayString(window->visual->dpy));
+				crWarning("Render SPU: render_to_app/crut_window option is set but "
+									"the window ID 0x%x is invalid on the display named %s",
+									(unsigned int) nativeWindow,
+									DisplayString(window->visual->dpy));
 				CRASSERT(window->window);
 				b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
 																			window->window, context->context );
@@ -1366,7 +1397,8 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 }
 
 
-void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
+void
+renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 {
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa) {
@@ -1442,7 +1474,8 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 }
 
 
-void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
+void
+renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
 {
 	Window root;
 	int x, y;
@@ -1481,7 +1514,8 @@ void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
 }
 
 
-void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
+void
+renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
 {
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa)
@@ -1499,7 +1533,8 @@ void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
 
 
 /* Either show or hide the render SPU's window. */
-void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
+void
+renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 {
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa)
@@ -1537,7 +1572,8 @@ MarkWindow(WindowInfo *w)
 }
 
 
-void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
+void
+renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 {
 	CRASSERT(w);
 

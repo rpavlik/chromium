@@ -129,7 +129,6 @@ GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyName, GLint visBits
 	ContextInfo *context;
 	VisualInfo *visual;
 
-	crDebug("Render SPU: In renderspuCreateContext(visBits=0x%x)", visBits);
 	if (!dpyName || crStrlen(render_spu.display_string)>0)
 		dpyName = render_spu.display_string;
 
@@ -144,9 +143,10 @@ GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyName, GLint visBits
 		return -1;
 
 	crHashtableAdd(render_spu.contextTable, render_spu.context_id, context);
+	context->id = render_spu.context_id;
 	render_spu.context_id++;
 
-	return render_spu.context_id - 1;
+	return context->id;
 }
 
 
