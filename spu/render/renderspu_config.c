@@ -44,6 +44,8 @@ static void set_default_visual( RenderSPU *render_spu, const char *response )
 				render_spu->default_visual |= CR_MULTISAMPLE_BIT;
 		if (crStrstr(response, "double"))
 				render_spu->default_visual |= CR_DOUBLE_BIT;
+		if (crStrstr(response, "pbuffer"))
+				render_spu->default_visual |= CR_PBUFFER_BIT;
 	}
 }
 
@@ -97,7 +99,7 @@ static void set_force_direct( RenderSPU *render_spu, const char *response )
 {
 	sscanf( response, "%d", &(render_spu->force_direct) );
 }
-#endif
+#endif /* GLX */
 
 static void render_to_app_window( RenderSPU *render_spu, const char *response )
 {

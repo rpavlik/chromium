@@ -36,6 +36,10 @@ WindowGroupRef masterGroup = NULL;
 
 GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 {
+	if (visual->visAttribs & CR_PBUFFER_BIT) {
+		crWarning("Render SPU: PBuffers not support on Darwin/AGL yet.");
+	}
+
 	if( !disp_valid ) {
 		display = CGMainDisplayID();
 		if( !display ) {

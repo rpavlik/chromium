@@ -25,6 +25,10 @@ bSetupPixelFormat( HDC hdc, GLbitfield visAttribs );
 
 GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 {
+	if (visual->visAttribs & CR_PBUFFER_BIT) {
+		crWarning("Render SPU: PBuffers not support on Windows yet.");
+	}
+
 	/* In the windows world, we need a window before a context.
 	 * Use the device_context as a marker to do just that */
 	visual->device_context = 0;
@@ -71,7 +75,7 @@ MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 }
 
 static BOOL
-bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs )
+bSetupPixelFormatEXT( HDC hdc, GLbitfield visAttribs)
 {
 	PIXELFORMATDESCRIPTOR ppfd;
 	int pixelFormat;

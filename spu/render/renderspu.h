@@ -31,7 +31,7 @@
 typedef struct {
 	GLbitfield visAttribs;
 	const char *displayName;
-#ifdef WINDOWS
+#if defined(WINDOWS)
 	HDC device_context;
 	HWND hWnd;
 #elif defined(DARWIN)
@@ -39,6 +39,9 @@ typedef struct {
 #elif defined(GLX)
 	Display *dpy;
 	XVisualInfo *visual;
+#ifdef GLX_VERSION_1_3
+	GLXFBConfig fbconfig;
+#endif /* GLX_VERSION_1_3 */
 #endif
 } VisualInfo;
 
@@ -54,7 +57,7 @@ typedef struct {
 	GLboolean visible;
 	GLboolean everCurrent; /**< has this window ever been bound? */
 	char *title;
-#ifdef WINDOWS
+#if defined(WINDOWS)
 	HDC nativeWindow; /**< for render_to_app_window */
 #elif defined(DARWIN)
 	WindowRef window;
@@ -65,7 +68,7 @@ typedef struct {
 #elif defined(GLX)
 	Window window;
 	Window nativeWindow;  /**< for render_to_app_window */
-	Window appWindow;       /**< Same as nativeWindow but for garbage collections purposes */
+	Window appWindow;     /**< Same as nativeWindow but for garbage collections purposes */
 #endif
 	int nvSwapGroup;
 
@@ -84,7 +87,8 @@ typedef struct {
 	VisualInfo *visual;
 	GLboolean everCurrent;
 	GLboolean haveWindowPosARB;
-#ifdef WINDOWS
+	WindowInfo *currentWindow;
+#if defined(WINDOWS)
 	HGLRC hRC;
 #elif defined(DARWIN)
 	AGLContext context;
@@ -163,7 +167,7 @@ typedef struct {
 	CRConnection **swap_conns;
 	
 #ifdef USE_OSMESA	
-        /** Off screen rendering hooks.  */
+	/** Off screen rendering hooks.  */
 	int use_osmesa;
 
 	OSMesaContext (*OSMesaCreateContext)( GLenum format, OSMesaContext sharelist );

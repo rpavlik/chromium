@@ -562,7 +562,8 @@ extern void APIENTRY glZPixCR(GLsizei, GLsizei, GLenum, GLenum, GLenum, GLint, G
 #define CR_STEREO_BIT         0x40
 #define CR_MULTISAMPLE_BIT    0x80
 #define CR_OVERLAY_BIT        0x100
-#define CR_ALL_BITS           0x1ff
+#define CR_PBUFFER_BIT        0x200
+#define CR_ALL_BITS           0x3ff
 
 
 /* Accepted by crSwapBuffers() flag parameter */

@@ -256,6 +256,7 @@ typedef CGLError (*CGLUpdateContextFunc_t)( CGLContextObj );
 typedef int (*glXGetConfigFunc_t)( Display *, XVisualInfo *, int, int * );
 typedef Bool (*glXQueryExtensionFunc_t) (Display *, int *, int * );
 typedef const char *(*glXQueryExtensionsStringFunc_t) (Display *, int );
+typedef Bool (*glXQueryVersionFunc_t)( Display *dpy, int *maj, int *min );
 typedef XVisualInfo *(*glXChooseVisualFunc_t)( Display *, int, int * );
 typedef GLXContext (*glXCreateContextFunc_t)( Display *, XVisualInfo *, GLXContext, Bool );
 typedef void (*glXUseXFontFunc_t)(Font font, int first, int count, int listBase);
@@ -265,6 +266,9 @@ typedef Bool (*glXMakeCurrentFunc_t)( Display *, GLXDrawable, GLXContext );
 typedef void (*glXSwapBuffersFunc_t)( Display *, GLXDrawable );
 typedef CR_GLXFuncPtr (*glXGetProcAddressARBFunc_t)( const GLubyte *name );
 typedef Display *(*glXGetCurrentDisplayFunc_t)( void );
+typedef GLXContext (*glXGetCurrentContextFunc_t)( void );
+typedef GLXDrawable (*glXGetCurrentDrawableFunc_t)( void );
+typedef char * (*glXGetClientStringFunc_t)( Display *dpy, int name );
 typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
 typedef Bool (*glXJoinSwapGroupNVFunc_t)(Display *dpy, GLXDrawable drawable, GLuint group);
 typedef Bool (*glXBindSwapBarrierNVFunc_t)(Display *dpy, GLuint group, GLuint barrier);
@@ -272,6 +276,19 @@ typedef Bool (*glXQuerySwapGroupNVFunc_t)(Display *dpy, GLXDrawable drawable, GL
 typedef Bool (*glXQueryMaxSwapGroupsNVFunc_t)(Display *dpy, int screen, GLuint *maxGroups, GLuint *maxBarriers);
 typedef Bool (*glXQueryFrameCountNVFunc_t)(Display *dpy, int screen, GLuint *count);
 typedef Bool (*glXResetFrameCountNVFunc_t)(Display *dpy, int screen);
+#ifdef GLX_VERSION_1_3
+typedef GLXContext (*glXCreateNewContextFunc_t)( Display *dpy, GLXFBConfig config, int renderType, GLXContext shareList, Bool direct );
+typedef GLXWindow (*glXCreateWindowFunc_t)(Display *dpy, GLXFBConfig config, Window win, const int *attrib_list);
+typedef Bool (*glXMakeContextCurrentFunc_t)( Display *dpy, GLXDrawable draw, GLXDrawable read, GLXContext ctx );
+typedef GLXFBConfig *(*glXChooseFBConfigFunc_t)( Display *dpy, int screen, const int *attribList, int *nitems );
+typedef GLXFBConfig *(*glXGetFBConfigsFunc_t)(Display *dpy, int screen, int *nelements);
+typedef int (*glXGetFBConfigAttribFunc_t)(Display *dpy, GLXFBConfig config, int attribute, int *value);
+typedef XVisualInfo *(*glXGetVisualFromFBConfigFunc_t)(Display *dpy, GLXFBConfig config);
+typedef GLXPbuffer (*glXCreatePbufferFunc_t)( Display *dpy, GLXFBConfig config, const int *attribList );
+typedef void (*glXDestroyPbufferFunc_t)( Display *dpy, GLXPbuffer pbuf );
+typedef int (*glXQueryContextFunc_t)(Display *dpy, GLXContext ctx, int attribute, int *value);
+typedef void (*glXQueryDrawableFunc_t)(Display *dpy, GLXDrawable draw, int attribute, unsigned int *value);
+#endif /* GLX_VERSION_1_3 */
 /*@}*/
 #endif
 
@@ -349,6 +366,7 @@ typedef struct {
 #else
 	glXGetConfigFunc_t  glXGetConfig;
 	glXQueryExtensionFunc_t glXQueryExtension;
+	glXQueryVersionFunc_t glXQueryVersion;
 	glXQueryExtensionsStringFunc_t glXQueryExtensionsString;
 	glXChooseVisualFunc_t glXChooseVisual;
 	glXCreateContextFunc_t glXCreateContext;
@@ -359,12 +377,29 @@ typedef struct {
 	glXSwapBuffersFunc_t glXSwapBuffers;
 	glXGetProcAddressARBFunc_t glXGetProcAddressARB;
 	glXGetCurrentDisplayFunc_t glXGetCurrentDisplay;
+	glXGetCurrentContextFunc_t glXGetCurrentContext;
+	glXGetCurrentDrawableFunc_t glXGetCurrentDrawable;
+	glXGetClientStringFunc_t glXGetClientString;
+	/* GLX_NV_swap_group */
 	glXJoinSwapGroupNVFunc_t glXJoinSwapGroupNV;
 	glXBindSwapBarrierNVFunc_t glXBindSwapBarrierNV;
 	glXQuerySwapGroupNVFunc_t glXQuerySwapGroupNV;
 	glXQueryMaxSwapGroupsNVFunc_t glXQueryMaxSwapGroupsNV;
 	glXQueryFrameCountNVFunc_t glXQueryFrameCountNV;
 	glXResetFrameCountNVFunc_t glXResetFrameCountNV;
+#ifdef GLX_VERSION_1_3
+	glXCreateNewContextFunc_t glXCreateNewContext;
+	glXCreateWindowFunc_t glXCreateWindow;
+	glXMakeContextCurrentFunc_t glXMakeContextCurrent;
+	glXChooseFBConfigFunc_t glXChooseFBConfig;
+	glXGetFBConfigsFunc_t glXGetFBConfigs;
+	glXGetFBConfigAttribFunc_t glXGetFBConfigAttrib;
+	glXGetVisualFromFBConfigFunc_t glXGetVisualFromFBConfig;
+	glXCreatePbufferFunc_t glXCreatePbuffer;
+	glXDestroyPbufferFunc_t glXDestroyPbuffer;
+	glXQueryContextFunc_t glXQueryContext;
+	glXQueryDrawableFunc_t glXQueryDrawable;
+#endif
 #endif
 	glGetStringFunc_t glGetString;
 } crOpenGLInterface;

@@ -12,6 +12,7 @@
 #include "renderspu.h"
 #include "cr_extstring.h"
 
+
 static void __doSync(void)
 {
 	CRMessage *in, out;
@@ -67,6 +68,8 @@ void renderspuMakeVisString( GLbitfield visAttribs, char *s )
 		crStrcat(s, ", Multisample");
 	if (visAttribs & CR_OVERLAY_BIT)
 		crStrcat(s, ", Overlay");
+	if (visAttribs & CR_PBUFFER_BIT)
+		crStrcat(s, ", PBuffer");
 }
 
 
@@ -173,6 +176,7 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 #else
 		render_spu.currentContext = context;
 #endif
+		context->currentWindow = window;
 		if (!window)
 		{
 			crDebug("renderspuMakeCurrent: invalid window id: %d", crWindow);

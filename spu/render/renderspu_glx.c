@@ -4,10 +4,10 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 #if 00 /*TEMPORARY*/
+#include <unistd.h>
 #include "cr_rand.h"
 #endif
 
-#include <unistd.h>
 #include <GL/glx.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -529,6 +529,91 @@ chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
 }
 
 
+/**
+ * Get an FBconfig for the specified attributes
+ */
+#ifdef GLX_VERSION_1_3
+static GLXFBConfig
+chooseFBConfig( Display *dpy, int screen, GLbitfield visAttribs )
+{
+	GLXFBConfig *fbconfig;
+	int attribs[1000], attrCount = 0, numConfigs;
+	int major, minor;
+
+	CRASSERT(visAttribs & CR_PBUFFER_BIT);
+
+	/* Make sure pbuffers are supported */
+	render_spu.ws.glXQueryVersion(dpy, &major, &minor);
+	if (major * 100 + minor < 103) {
+		crWarning("Render SPU: GLX %d.%d doesn't support pbuffers", major, minor);
+		return 0;
+	}
+
+	attribs[attrCount++] = GLX_DRAWABLE_TYPE;
+	attribs[attrCount++] = GLX_PBUFFER_BIT;
+
+	if (visAttribs & CR_RGB_BIT) {
+		attribs[attrCount++] = GLX_RENDER_TYPE;
+		attribs[attrCount++] = GLX_RGBA_BIT;
+		attribs[attrCount++] = GLX_RED_SIZE;
+		attribs[attrCount++] = 1;
+		attribs[attrCount++] = GLX_GREEN_SIZE;
+		attribs[attrCount++] = 1;
+		attribs[attrCount++] = GLX_BLUE_SIZE;
+		attribs[attrCount++] = 1;
+		if (visAttribs & CR_ALPHA_BIT) {
+			attribs[attrCount++] = GLX_ALPHA_SIZE;
+			attribs[attrCount++] = 1;
+		}
+	}
+
+	if (visAttribs & CR_DEPTH_BIT) {
+		attribs[attrCount++] = GLX_DEPTH_SIZE;
+		attribs[attrCount++] = 1;
+	}
+
+	if (visAttribs & CR_DOUBLE_BIT) {
+		attribs[attrCount++] = GLX_DOUBLEBUFFER;
+		attribs[attrCount++] = True;
+	}
+
+	if (visAttribs & CR_STENCIL_BIT) {
+		attribs[attrCount++] = GLX_STENCIL_SIZE;
+		attribs[attrCount++] = 1;
+	}
+
+	if (visAttribs & CR_ACCUM_BIT) {
+		attribs[attrCount++] = GLX_ACCUM_RED_SIZE;
+		attribs[attrCount++] = 1;
+		attribs[attrCount++] = GLX_ACCUM_GREEN_SIZE;
+		attribs[attrCount++] = 1;
+		attribs[attrCount++] = GLX_ACCUM_BLUE_SIZE;
+		attribs[attrCount++] = 1;
+		if (visAttribs & CR_ALPHA_BIT) {
+			attribs[attrCount++] = GLX_ACCUM_ALPHA_SIZE;
+			attribs[attrCount++] = 1;
+		}
+	}
+
+	if (visAttribs & CR_MULTISAMPLE_BIT) {
+		attribs[attrCount++] = GLX_SAMPLE_BUFFERS_SGIS;
+		attribs[attrCount++] = 1;
+		attribs[attrCount++] = GLX_SAMPLES_SGIS;
+		attribs[attrCount++] = 4;
+	}
+
+	/* terminate */
+	attribs[attrCount++] = 0;
+
+	fbconfig = render_spu.ws.glXChooseFBConfig(dpy, screen, attribs, &numConfigs);
+	if (fbconfig && numConfigs > 0)
+		return fbconfig[0];
+	else
+		return 0;
+}
+#endif /* GLX_VERSION_1_3 */
+
+
 GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 {
 	const char *dpyName;
@@ -551,28 +636,12 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 	else
 		dpyName = NULL;
 
+	crDebug("Render SPU: Opening display %s", dpyName);
 	visual->dpy = XOpenDisplay(dpyName);  
 	if (!visual->dpy)
 	{
 		crWarning( "Couldn't open X display named '%s'", dpyName );
 		return GL_FALSE;
-	}
-
-	screen = DefaultScreen(visual->dpy);
-	visual->visual = chooseVisualRetry(visual->dpy, screen, visual->visAttribs);
-	if (!visual->visual) {
-		char s[1000];
-		renderspuMakeVisString( visual->visAttribs, s );
-		crWarning( "Render SPU: Display %s doesn't have the necessary visual: %s",
-							 dpyName, s );
-		XCloseDisplay(visual->dpy);
-		return GL_FALSE;
-	}
-
-	if ( render_spu.sync )
-	{
-		crDebug( "Render SPU: Turning on XSynchronize" );
-		XSynchronize( visual->dpy, True );
 	}
 
 	if ( !render_spu.ws.glXQueryExtension( visual->dpy, NULL, NULL ) )
@@ -581,9 +650,48 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 		return GL_FALSE;
 	}
 
+	screen = DefaultScreen(visual->dpy);
+
+#ifdef GLX_VERSION_1_3
+	if (visual->visAttribs & CR_PBUFFER_BIT)
+	{
+		{
+			visual->fbconfig = chooseFBConfig(visual->dpy, screen, visual->visAttribs);
+		}
+
+		if (!visual->fbconfig) {
+			char s[1000];
+			renderspuMakeVisString( visual->visAttribs, s );
+			crWarning( "Render SPU: Display %s doesn't have the necessary fbconfig: %s",
+								 dpyName, s );
+			XCloseDisplay(visual->dpy);
+			return GL_FALSE;
+		}
+	}
+	else
+#endif /* GLX_VERSION_1_3 */
+	{
+		visual->visual = chooseVisualRetry(visual->dpy, screen, visual->visAttribs);
+		if (!visual->visual) {
+			char s[1000];
+			renderspuMakeVisString( visual->visAttribs, s );
+			crWarning( "Render SPU: Display %s doesn't have the necessary visual: %s",
+								 dpyName, s );
+			XCloseDisplay(visual->dpy);
+			return GL_FALSE;
+		}
+	}
+
+	if ( render_spu.sync )
+	{
+		crDebug( "Render SPU: Turning on XSynchronize" );
+		XSynchronize( visual->dpy, True );
+	}
+
 	crDebug( "Render SPU: Looks like we have GLX" );
 
-	crDebug( "Render SPU: Chose visual id=0x%x: RGBA=(%d,%d,%d,%d) Z=%d"
+	if (visual->visual) {
+			crDebug( "Render SPU: Chose visual id=0x%x: RGBA=(%d,%d,%d,%d) Z=%d"
 					 " stencil=%d double=%d stereo=%d accum=(%d,%d,%d,%d)",
 					 (int) visual->visual->visualid,
 					 Attrib( visual, GLX_RED_SIZE ),
@@ -599,6 +707,7 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 					 Attrib( visual, GLX_ACCUM_BLUE_SIZE ),
 					 Attrib( visual, GLX_ACCUM_ALPHA_SIZE )
 					 );
+	}
 
 	return GL_TRUE;
 }
@@ -640,7 +749,7 @@ JoinSwapGroup(Display *dpy, int screen, Window window,
 						group, (int) maxGroups);
 		return;
 	}
-	crDebug("Render SPU: max swap groups = %d, max barriers = %d\n",
+	crDebug("Render SPU: max swap groups = %d, max barriers = %d",
 					maxGroups, maxBarriers);
 
 	/* add this window to the swap group */
@@ -663,12 +772,13 @@ JoinSwapGroup(Display *dpy, int screen, Window window,
 		 crDebug("Render SPU: call to glXBindSwapBarrierNV(group=%d barrier=%d) worked!", group, barrier);
 	}
 
-	crDebug("Render SPU: window has joined swap group %d\n", group);
+	crDebug("Render SPU: window has joined swap group %d", group);
 }
 
 
 
-GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
+static GLboolean
+createWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
 {
 	Display             *dpy;
 	Colormap             cmap;
@@ -916,6 +1026,69 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 }
 
 
+static GLboolean
+createPBuffer( VisualInfo *visual, WindowInfo *window )
+{
+	window->visual = visual;
+	window->x = 0;
+	window->y = 0;
+	window->nativeWindow = 0;
+
+	CRASSERT(window->width > 0);
+	CRASSERT(window->height > 0);
+
+#ifdef GLX_VERSION_1_3
+
+	CRASSERT(visual->fbconfig);
+
+#if SEPIA3
+	if (render_spu.sepiaPam)
+	{
+		window->window = SepiaCreateDrawable(render_spu.sepiaPam, visual->dpy,
+																				 DefaultScreen(visual->dpy),
+																				 visual->fbconfig,
+																				 window->width, window->height,
+																				 visual->sepiaBuffers);
+		crDebug("Render SPU: SepiaCreateDrawable returned %d",
+						(int) window->window);
+	}
+	else
+#endif /* SEPIA3 */
+	{
+		int attribs[100], i = 0;
+		attribs[i++] = GLX_PRESERVED_CONTENTS;
+		attribs[i++] = True;
+		attribs[i++] = GLX_PBUFFER_WIDTH;
+		attribs[i++] = window->width;
+		attribs[i++] = GLX_PBUFFER_HEIGHT;
+		attribs[i++] = window->height;
+		attribs[i++] = 0; /* terminator */
+		window->window = render_spu.ws.glXCreatePbuffer(visual->dpy,
+																										visual->fbconfig, attribs);
+	}
+	if (window->window) {
+		return GL_TRUE;
+	}
+#endif /* GLX_VERSION_1_3 */
+	return GL_FALSE;
+}
+
+
+GLboolean
+renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt,
+															WindowInfo *window )
+{
+	if (visual->visAttribs & CR_PBUFFER_BIT) {
+		window->width = render_spu.defaultWidth;
+		window->height = render_spu.defaultHeight;
+		return createPBuffer(visual, window);
+	}
+	else {
+		return createWindow(visual, showIt, window);
+	}
+}
+
+
 void renderspu_SystemDestroyWindow( WindowInfo *window )
 {
 	CRASSERT(window);
@@ -930,16 +1103,21 @@ void renderspu_SystemDestroyWindow( WindowInfo *window )
 	else
 #endif
 	{
-		/*
-		 * The value window->nativeWindow will only be non-NULL if the
-		 * render_to_app_window option is set to true.  In this case, we
-		 * don't want to do anything, since we're not responsible for this
-		 * window.  I know...personal responsibility and all...
-		 */
-		if (!window->nativeWindow)
-		{
-			XDestroyWindow(window->visual->dpy, window->window);
-			XSync(window->visual->dpy, 0);
+		if (window->visual->visAttribs & CR_PBUFFER_BIT) {
+#ifdef GLX_VERSION_1_3
+			render_spu.ws.glXDestroyPbuffer(window->visual->dpy, window->window);
+#endif
+		}
+		else {
+			/* The value window->nativeWindow will only be non-NULL if the
+			 * render_to_app_window option is set to true.  In this case, we
+			 * don't want to do anything, since we're not responsible for this
+			 * window.  I know...personal responsibility and all...
+			 */
+			if (!window->nativeWindow) {
+				XDestroyWindow(window->visual->dpy, window->window);
+				XSync(window->visual->dpy, 0);
+			}
 		}
 	}
 	window->visual = NULL;
@@ -966,17 +1144,31 @@ GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *contex
 			return GL_FALSE;
 	}
 #endif
-	context->context = render_spu.ws.glXCreateContext( visual->dpy, 
-																										 visual->visual,
-																										 NULL,
-																										 render_spu.try_direct );
+
+#ifdef  GLX_VERSION_1_3
+	if (visual->visAttribs & CR_PBUFFER_BIT) {
+		context->context = render_spu.ws.glXCreateNewContext( visual->dpy, 
+																													visual->fbconfig,
+																													GLX_RGBA_TYPE,
+																													NULL,
+																													render_spu.try_direct);
+	}
+	else
+#endif
+	{
+		 context->context = render_spu.ws.glXCreateContext( visual->dpy, 
+																												visual->visual,
+																												NULL,
+																												render_spu.try_direct);
+	}
 	if (!context->context) {
 		crError( "Render SPU: Couldn't create rendering context" ); 
 		return GL_FALSE;
 	}
 
 	is_direct = render_spu.ws.glXIsDirect( visual->dpy, context->context );
-	crDebug( "Render SPU: Created %s context on display %s, Xvisual 0x%x",
+	if (visual->visual)
+		crDebug( "Render SPU: Created %s context on display %s, Xvisual 0x%x",
 					 is_direct ? "DIRECT" : "INDIRECT",
 					 DisplayString(visual->dpy),
 					 (int) visual->visual->visual->visualid );
@@ -1164,8 +1356,6 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 
 void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 {
-	 int attempt;
-
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa) {
 		window->width = w;
@@ -1177,24 +1367,48 @@ void renderspu_SystemWindowSize( WindowInfo *window, int w, int h )
 
 	CRASSERT(window);
 	CRASSERT(window->visual);
-
-	/*
-	 * This is ugly, but it seems to be the only thing that works.
-	 * Basically, XResizeWindow() doesn't seem to always take effect immediately.
-	 * Even after an XSync(), the GetWindowAttributes() call will sometimes
-	 * return the old window size.  So, we use a loop to repeat the window
-	 * resize until it seems to take effect.
-	 */
-	XResizeWindow(window->visual->dpy, window->window, w, h);
-	XSync(window->visual->dpy, 0);
-	for (attempt = 0; attempt < 3; attempt++) { /* try three times max */
-		XWindowAttributes attribs;
-		/* Now, query the window size */
-		XGetWindowAttributes(window->visual->dpy, window->window, &attribs);
-		if (attribs.width == w && attribs.height == h)
-			break;
-		/* sleep for a millisecond and try again */
-		crMsleep(1);
+	if (window->visual->visAttribs & CR_PBUFFER_BIT)
+	{
+#ifdef CHROMIUM_THREADSAFE
+		ContextInfo *currentContext = (ContextInfo *) crGetTSD(&_RenderTSD);
+#else
+		ContextInfo *currentContext = render_spu.currentContext;
+#endif
+		/* Can't resize pbuffers, so destroy it and make a new one */
+		render_spu.ws.glXDestroyPbuffer(window->visual->dpy, window->window);
+		window->width = w;
+		window->height = h;
+		crDebug("Creating new %d x %d PBuffer", w, h);
+		if (!createPBuffer(window->visual, window)) {
+			crWarning("Render SPU: Unable to create the PBuffer!");
+		}
+		else if (currentContext && currentContext->currentWindow == window) {
+			/* Determine if we need to bind the current context to the new pbuffer */
+			render_spu.ws.glXMakeCurrent(window->visual->dpy,
+																	 window->window, currentContext->context );
+		}
+	}
+	else
+	{
+		/*
+		 * This is ugly, but it seems to be the only thing that works.
+		 * Basically, XResizeWindow() doesn't seem to always take effect immediately.
+		 * Even after an XSync(), the GetWindowAttributes() call will sometimes
+		 * return the old window size.  So, we use a loop to repeat the window
+		 * resize until it seems to take effect.
+		 */
+		int attempt;
+		XResizeWindow(window->visual->dpy, window->window, w, h);
+		XSync(window->visual->dpy, 0);
+		for (attempt = 0; attempt < 3; attempt++) { /* try three times max */
+			XWindowAttributes attribs;
+			/* Now, query the window size */
+			XGetWindowAttributes(window->visual->dpy, window->window, &attribs);
+			if (attribs.width == w && attribs.height == h)
+				break;
+			/* sleep for a millisecond and try again */
+			crMsleep(1);
+		}
 	}
 }
 
@@ -1216,11 +1430,18 @@ void renderspu_SystemGetWindowSize( WindowInfo *window, int *w, int *h )
 	CRASSERT(window);
 	CRASSERT(window->visual);
 	CRASSERT(window->window);
-	XGetGeometry(window->visual->dpy,
-							 window->nativeWindow ? window->nativeWindow : window->window,
-							 &root, &x, &y, &width, &height, &bw, &d);
-	*w = (int) width;
-	*h = (int) height;
+	if (window->visual->visAttribs & CR_PBUFFER_BIT)
+	{
+		*w = window->width;
+		*h = window->height;
+	}
+	else
+	{
+		XGetGeometry(window->visual->dpy, window->window, &root,
+								 &x, &y, &width, &height, &bw, &d);
+		*w = (int) width;
+		*h = (int) height;
+	}
 }
 
 
@@ -1233,8 +1454,11 @@ void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y )
 
 	CRASSERT(window);
 	CRASSERT(window->visual);
-	XMoveWindow(window->visual->dpy, window->window, x, y);
-	XSync(window->visual->dpy, 0);
+	if ((window->visual->visAttribs & CR_PBUFFER_BIT) == 0)
+	{
+		XMoveWindow(window->visual->dpy, window->window, x, y);
+		XSync(window->visual->dpy, 0);
+	}
 }
 
 
@@ -1246,7 +1470,8 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 		return;
 #endif
 
-	if ( window->visual->dpy && window->window )
+	if (window->visual->dpy && window->window &&
+			(window->visual->visAttribs & CR_PBUFFER_BIT) == 0)
 	{
 		if (showIt)
 		{
@@ -1292,20 +1517,25 @@ void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 		usleep(k);
 	}
 #endif
-	/* render_to_app_window:
-	 * w->nativeWindow will only be non-zero if the
-	 * render_spu.render_to_app_window option is true and
-	 * MakeCurrent() recorded the nativeWindow handle in the WindowInfo
-	 * structure.
-	 */
-	if (w->nativeWindow) {
+
+	{
+		/* render_to_app_window:
+		 * w->nativeWindow will only be non-zero if the
+		 * render_spu.render_to_app_window option is true and
+		 * MakeCurrent() recorded the nativeWindow handle in the WindowInfo
+		 * structure.
+		 */
+		if (w->nativeWindow) {
 #if 0
-		MarkWindow(w);
+			MarkWindow(w);
 #else
-		(void) MarkWindow;
+			(void) MarkWindow;
 #endif
-		render_spu.ws.glXSwapBuffers( w->visual->dpy, w->nativeWindow );
+			render_spu.ws.glXSwapBuffers( w->visual->dpy, w->nativeWindow );
+		}
+		else {
+			render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );
+		}
 	}
-	else
-		render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );
+
 }
