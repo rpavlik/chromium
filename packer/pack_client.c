@@ -153,33 +153,33 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c)
 			case GL_SHORT:
 				switch (c->v.size) 
 				{
-					case 2: crPackVertex2svBBOX((GLshort *)p); break;
-					case 3: crPackVertex3svBBOX((GLshort *)p); break;
-					case 4: crPackVertex4svBBOX((GLshort *)p); break;
+					case 2: crPackVertex2svBBOX_COUNT((GLshort *)p); break;
+					case 3: crPackVertex3svBBOX_COUNT((GLshort *)p); break;
+					case 4: crPackVertex4svBBOX_COUNT((GLshort *)p); break;
 				}
 				break;
 			case GL_INT:
 				switch (c->v.size) 
 				{
-					case 2: crPackVertex2ivBBOX((GLint *)p); break;
-					case 3: crPackVertex3ivBBOX((GLint *)p); break;
-					case 4: crPackVertex4ivBBOX((GLint *)p); break;
+					case 2: crPackVertex2ivBBOX_COUNT((GLint *)p); break;
+					case 3: crPackVertex3ivBBOX_COUNT((GLint *)p); break;
+					case 4: crPackVertex4ivBBOX_COUNT((GLint *)p); break;
 				}
 				break;
 			case GL_FLOAT:
 				switch (c->v.size) 
 				{
-					case 2: crPackVertex2fvBBOX((GLfloat *)p); break;
-					case 3: crPackVertex3fvBBOX((GLfloat *)p); break;
-					case 4: crPackVertex4fvBBOX((GLfloat *)p); break;
+					case 2: crPackVertex2fvBBOX_COUNT((GLfloat *)p); break;
+					case 3: crPackVertex3fvBBOX_COUNT((GLfloat *)p); break;
+					case 4: crPackVertex4fvBBOX_COUNT((GLfloat *)p); break;
 				}
 				break;
 			case GL_DOUBLE:
 				switch (c->v.size) 
 				{
-					case 2: crPackVertex2dvBBOX((GLdouble *)p); break;
-					case 3: crPackVertex3dvBBOX((GLdouble *)p); break;
-					case 4: crPackVertex4dvBBOX((GLdouble *)p); break;
+					case 2: crPackVertex2dvBBOX_COUNT((GLdouble *)p); break;
+					case 3: crPackVertex3dvBBOX_COUNT((GLdouble *)p); break;
+					case 4: crPackVertex4dvBBOX_COUNT((GLdouble *)p); break;
 				}
 				break;
 		}
