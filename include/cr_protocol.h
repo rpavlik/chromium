@@ -74,10 +74,10 @@ typedef struct CRMessageReadPixels {
 	unsigned int           stride;
 	unsigned int           rows;
 	int                    alignment;
-    	int                    skipRows;
-    	int                    skipPixels;
-	int		       format;
-	int		       type;
+	int                    skipRows;
+	int                    skipPixels;
+	int                    format;
+	int                    type;
 	CRNetworkPointer       pixels;
 } CRMessageReadPixels;
 
@@ -89,7 +89,7 @@ typedef union {
 	CRMessageHeader      header;
 	CRMessageOpcodes     opcodes;
 	CRMessageWriteback   writeback;
-	CRMessageReadback   readback;
+	CRMessageReadback    readback;
 	CRMessageReadPixels  readPixels;
 	CRMessageMulti       multi;
 	CRMessageFlowControl flowControl;
