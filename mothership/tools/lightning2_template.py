@@ -852,16 +852,16 @@ class LightningDialog(wxDialog):
 		else:
 			scale = yscale
 
-		w = tileWidth * scale
-		h = tileHeight * scale
-
 		# draw the tiles as boxes
 		hosts = self.Template.ServerHosts
 		numColors = len(ServerColors)
 		numServers = self.Template.NumServers
 		for (server, x, y, w, h) in self.Template.ServerTiles:
-			x += border
-			y += border
+			# apply scale factor, bias to fit mural into the drawing area
+			x = x * scale + border
+			y = y * scale + border
+			w *= scale
+			h *= scale
 
 			color = server % numColors
 			dc.SetBrush(wxBrush(ServerColors[color]))
