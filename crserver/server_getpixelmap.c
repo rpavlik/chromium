@@ -12,23 +12,51 @@
 #include "server_dispatch.h"
 #include "server.h"
 
-static GLenum __sizeQuery( GLenum map )
+static GLint __sizeQuery( GLenum map )
 {
+	GLint get_values;
+	GLenum newmap;
+
 	switch( map )
 	{
-		case GL_PIXEL_MAP_I_TO_I: return GL_PIXEL_MAP_I_TO_I_SIZE;
-		case GL_PIXEL_MAP_S_TO_S: return GL_PIXEL_MAP_S_TO_S_SIZE;
-		case GL_PIXEL_MAP_I_TO_R: return GL_PIXEL_MAP_I_TO_R_SIZE;
-		case GL_PIXEL_MAP_I_TO_G: return GL_PIXEL_MAP_I_TO_G_SIZE;
-		case GL_PIXEL_MAP_I_TO_B: return GL_PIXEL_MAP_I_TO_B_SIZE;
-		case GL_PIXEL_MAP_I_TO_A: return GL_PIXEL_MAP_I_TO_A_SIZE;
-		case GL_PIXEL_MAP_R_TO_R: return GL_PIXEL_MAP_R_TO_R_SIZE;
-		case GL_PIXEL_MAP_G_TO_G: return GL_PIXEL_MAP_G_TO_G_SIZE;
-		case GL_PIXEL_MAP_B_TO_B: return GL_PIXEL_MAP_B_TO_B_SIZE;
-		case GL_PIXEL_MAP_A_TO_A: return GL_PIXEL_MAP_A_TO_A_SIZE;
-		default: crError( "Bad map in crServerDispatchGetPixelMap: %d", map );
+		case GL_PIXEL_MAP_I_TO_I: 
+			newmap = GL_PIXEL_MAP_I_TO_I_SIZE;
+			break;
+		case GL_PIXEL_MAP_S_TO_S: 
+			newmap = GL_PIXEL_MAP_S_TO_S_SIZE;
+			break;
+		case GL_PIXEL_MAP_I_TO_R: 
+			newmap = GL_PIXEL_MAP_I_TO_R_SIZE;
+			break;
+		case GL_PIXEL_MAP_I_TO_G: 
+			newmap = GL_PIXEL_MAP_I_TO_G_SIZE;
+			break;
+		case GL_PIXEL_MAP_I_TO_B: 
+			newmap = GL_PIXEL_MAP_I_TO_B_SIZE;
+			break;
+		case GL_PIXEL_MAP_I_TO_A: 
+			newmap = GL_PIXEL_MAP_I_TO_A_SIZE;
+			break;
+		case GL_PIXEL_MAP_R_TO_R: 
+			newmap = GL_PIXEL_MAP_R_TO_R_SIZE;
+			break;
+		case GL_PIXEL_MAP_G_TO_G: 
+			newmap = GL_PIXEL_MAP_G_TO_G_SIZE;
+			break;
+		case GL_PIXEL_MAP_B_TO_B: 
+			newmap = GL_PIXEL_MAP_B_TO_B_SIZE;
+			break;
+		case GL_PIXEL_MAP_A_TO_A: 
+			newmap = GL_PIXEL_MAP_A_TO_A_SIZE;
+			break;
+		default: 
+			crError( "Bad map in crServerDispatchGetPixelMap: %d", map );
+			break;
 	}
-	return 0;
+
+	cr_server.head_spu->dispatch_table.GetIntegerv( newmap, &get_values );
+
+	return get_values;
 }
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetPixelMapfv( GLenum map, GLfloat *values )
