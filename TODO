@@ -1,0 +1,41 @@
+Before Alpha release:
+	tilesort glFlush/glFinish
+	tilesort DrawPixels/RasterPos
+	tilesort Viewport testing
+	tilesort Pinching
+	GM support
+	Vertex arrays
+	Parallel applications
+	Documentation
+		How to run
+		How to configure
+		How to write a SPU
+		Code organization
+
+Before First release:
+	ReadPixels
+	Tilesort display lists
+	Readback SPU
+	Binary Swap SPU
+	State altering SPU
+	DirectShow SPU
+	Lightning-2 server support
+	Lightning-2 depth sort SPU
+	VTK support
+	Tee SPU
+	Hinting
+	tilesort BBOX hint
+	Parameter setting in the CM
+	CM auto application startup
+	NVIDIA extensions
+	Compression (color, normal, vertex, image (?))
+
+	Package demo applications
+		Terrain viewer (Zak)
+		NVIDIA apps (Chris)
+
+Future:
+	OS X port (Chris)?
+		Byte-swapping
+	VIA port?
+	Display list state changes?
