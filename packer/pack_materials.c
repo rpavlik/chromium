@@ -29,7 +29,8 @@ static void __handleMaterialData( GLenum face, GLenum pname, const GLfloat *para
 			params_length = sizeof( *params );
 			break;
 		default:
-			crError( "Unknown Parameter: %d", pname );
+			__PackError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMaterial(pname)");
+			return;
 	}
 	packet_length += params_length;
 
