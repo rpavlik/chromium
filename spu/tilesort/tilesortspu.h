@@ -41,6 +41,8 @@ typedef struct {
 	int splitBeginEnd;
 	int broadcast;
 	int optimizeBucketing;
+	int drawBBOX;
+	float bboxLineWidth;
 
 	int syncOnSwap;
 

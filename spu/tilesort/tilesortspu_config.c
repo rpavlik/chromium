@@ -17,6 +17,8 @@ static void __setDefaults( void )
 	tilesort_spu.optimizeBucketing = 1;
 	tilesort_spu.muralWidth = 0;
 	tilesort_spu.muralHeight = 0;
+	tilesort_spu.drawBBOX = 0;
+	tilesort_spu.bboxLineWidth = 5;
 
 	tilesort_spu.syncOnSwap = 1;
 
@@ -70,6 +72,16 @@ void tilesortspuGatherConfiguration( void )
 	if (crMothershipSPUParam( conn, response, "sync_on_swap") )
 	{
 		sscanf( response, "%d", &(tilesort_spu.syncOnSwap) );
+	}
+
+	if (crMothershipSPUParam( conn, response, "draw_bbox") )
+	{
+		sscanf( response, "%d", &(tilesort_spu.drawBBOX) );
+	}
+
+	if (crMothershipSPUParam( conn, response, "bbox_line_width") )
+	{
+		sscanf( response, "%f", &(tilesort_spu.bboxLineWidth) );
 	}
 
 	// The response to this tells us how many servers, what the

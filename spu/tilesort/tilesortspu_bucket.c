@@ -326,7 +326,7 @@ static TileSortBucketInfo *__doBucket( void )
 	if (xmin < -1.0f) xmin = -1.0f;
 	if (ymin < -1.0f) ymin = -1.0f;
 	if (xmax > 1.0f) xmax = 1.0f;
-	if (ymax > 1.0f) xmax = 1.0f;
+	if (ymax > 1.0f) ymax = 1.0f;
 
 	ibounds.x1 = (int) (tilesort_spu.halfViewportWidth*xmin + tilesort_spu.viewportCenterX);
 	ibounds.x2 = (int) (tilesort_spu.halfViewportWidth*xmax + tilesort_spu.viewportCenterX);

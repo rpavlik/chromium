@@ -6,6 +6,8 @@
 #include "cr_error.h"
 #include "cr_packfunctions.h"
 #include <memory.h>
+#include <math.h>
+#include <stdlib.h>
 
 static TileSortSPUServer *state_server = NULL;
 
@@ -109,6 +111,96 @@ void tilesortspuShipBuffers( void )
 		__sendServerBuffer( server );
 	}
 }
+
+static void __drawBBOX(const TileSortBucketInfo * bucket_info)
+{
+	
+#define DRAW_BBOX_MAX_SERVERS 128
+	static int init=0;
+	static GLfloat c[DRAW_BBOX_MAX_SERVERS][3];
+	unsigned int i;
+	GLbitvalue a;
+	GLfloat outcolor[3] = {0.0f, 0.0f, 0.0f};
+	GLfloat tot;
+	GLfloat xmin = bucket_info->objectMin.x;
+	GLfloat xmax = bucket_info->objectMax.x;
+	GLfloat ymin = bucket_info->objectMin.y;
+	GLfloat ymax = bucket_info->objectMax.y;
+	GLfloat zmin = bucket_info->objectMin.z;
+	GLfloat zmax = bucket_info->objectMax.z;
+
+	if (!init) 
+	{
+		for (i=0; i<DRAW_BBOX_MAX_SERVERS; i++) 
+		{
+			c[i][0] = (GLfloat) rand();
+			c[i][1] = (GLfloat) rand();
+			c[i][2] = (GLfloat) rand();
+			tot = (GLfloat) sqrt (c[i][0]*c[i][0] + c[i][1]*c[i][1] + c[i][2]*c[i][2]);
+			c[i][0] /= tot;
+			c[i][1] /= tot;
+			c[i][2] /= tot;
+		}
+		init = 1;
+	}		
+
+	tot = 0.0f;
+	for (i=0, a=1; i<DRAW_BBOX_MAX_SERVERS; i++, a <<= 1)
+	{
+		if (bucket_info->hits & a) 
+		{
+			outcolor[0] += c[i][0];
+			outcolor[1] += c[i][1];
+			outcolor[2] += c[i][2];
+			tot+=1.0f;
+		}
+	}
+	outcolor[0] /= tot;
+	outcolor[1] /= tot;
+	outcolor[2] /= tot;
+
+	crPackPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
+	crPackDisable(GL_TEXTURE_2D);
+	crPackDisable(GL_TEXTURE_1D);
+	crPackDisable(GL_LIGHTING);
+	crPackDisable(GL_BLEND);
+	crPackDisable(GL_ALPHA_TEST);
+	crPackDisable(GL_DEPTH_TEST);
+	crPackDisable(GL_FOG);
+	crPackDisable(GL_STENCIL_TEST);
+	crPackDisable(GL_SCISSOR_TEST);
+	crPackDisable(GL_LOGIC_OP);
+
+	crPackLineWidth(tilesort_spu.bboxLineWidth);
+	crPackColor3fv(outcolor);
+	crPackBegin(GL_LINE_LOOP);
+	crPackVertex3f(xmin, ymin, zmin);
+	crPackVertex3f(xmin, ymin, zmax);
+	crPackVertex3f(xmin, ymax, zmax);
+	crPackVertex3f(xmin, ymax, zmin);
+	crPackEnd();
+	crPackBegin(GL_LINE_LOOP);
+	crPackVertex3f(xmax, ymin, zmin);
+	crPackVertex3f(xmax, ymin, zmax);
+	crPackVertex3f(xmax, ymax, zmax);
+	crPackVertex3f(xmax, ymax, zmin);
+	crPackEnd();
+	crPackBegin(GL_LINE_LOOP);
+	crPackVertex3f(xmin, ymin, zmin);
+	crPackVertex3f(xmax, ymin, zmin);
+	crPackVertex3f(xmax, ymax, zmin);
+	crPackVertex3f(xmin, ymax, zmin);
+	crPackEnd();
+	crPackBegin(GL_LINE_LOOP);
+	crPackVertex3f(xmin, ymin, zmax);
+	crPackVertex3f(xmax, ymin, zmax);
+	crPackVertex3f(xmax, ymax, zmax);
+	crPackVertex3f(xmin, ymax, zmax);
+	crPackEnd();
+
+	crPackPopAttrib();
+}
+
 
 static void __doFlush( CRContext *ctx, int broadcast )
 {
@@ -216,6 +308,10 @@ static void __doFlush( CRContext *ctx, int broadcast )
 			//crDebug( "pack buffer before differencing" );
 			//tilesortspuDebugOpcodes( &(cr_packer_globals.buffer) );
 			crStateDiffContext( state_server->ctx, ctx );
+			if (tilesort_spu.drawBBOX)
+			{
+				__drawBBOX( bucket_info );
+			}
 			crPackGetBuffer( &(state_server->pack) );
 			//crDebug( "pack buffer after differencing" );
 			//tilesortspuDebugOpcodes( &(state_server->pack) );
