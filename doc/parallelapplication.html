@@ -1,216 +1,244 @@
 <!-- Copyright (c) 2001, Stanford University
      All rights reserved.
 
-	 See the file LICENSE.txt for information on redistributing this software.  -->
+     See the file LICENSE.txt for information on redistributing this software.  -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
-<title>New Page 1</title>
-<base target="_self">
-<link rel="stylesheet" type="text/css" href="chromium.css">
-</head>
-
-<body bgcolor="#FFFFFF">
-
-<h1 class="PageHeading">Writing a Parallel Application</h1>
-
-<table border="1" width="100%">
-	<tr>
-		<td align="center">
-            <p align="center"><img border="0" src="rings.jpg"></p>
-		</td>
-	</tr>
-	<tr>
-		<td align="center">
-            Each ring is submitted/rendered by a separate client in a
-            cluster-parallel program.
-		</td>
-	</tr>
-</table>
-
-<p>
-Parallel rendering is characterized by more two or more programs
-(or threads) simultaneously sending graphics commands to the rendering system.
-Typically, each process (or thread) will render a part of the entire model or
-scene.  The pieces are combined at some point to form the final image.
-</p>
-<p>
-When rendering very large, complex models the bottleneck may be in submitting
-graphics commands to the rendering system.
-Parallel rendering tries to overcome that bottleneck.
-</p>
-<p>
-Here we describe parallel rendering with Chromium by using a trivial
-program called <code>psubmit</code>.
-</p>
-
-<h2 class="PageSubHeading">The Basic Idea</h2>
-<p>Writing a parallel OpenGL application is pretty simple.&nbsp; You have a
-bunch of processes, each one of which is responsible for a portion of the model
-to be rendered.&nbsp; Each process renders its portion pretty much as if it
-were the only process in the world.&nbsp;
-The partial renderings may either be composited together according to Z or
-alpha (sort-last) or tiled together (sort-first).
-However, <i>ordering</i> requirements add some complexity to the process.</p>
-
-<p>OpenGL provides <i>ordered semantics</i>.&nbsp; That means that if function A
-is called before function B, the resulting image should look as if A happened
-before B.&nbsp; With parallel programs it's no longer clear which function is
-getting called first.&nbsp; Therefore, if you aren't using the depth test (for
-example), and you draw two overlapping triangles in parallel, you don't know
-which one will appear on top.&nbsp; To get around this problem, Chromium
-implements the parallel API proposed by <a href="http://graphics.stanford.edu/papers/parallel_api/" target="new_window">Igehy,
-Stoll and Hanrahan in SIGGRAPH '98</a>.&nbsp; This API extends OpenGL to have
-barriers and semaphores, which are sufficient to express almost all ordering
-constraints that come up in graphics.</p>
-
-<h2 class="PageSubHeading">The psubmit Program</h2>
-
-<p>Let's take a look at the <code>main</code> function of <code>psubmit.c</code>
-in <code>cr/progs/psubmit</code>.&nbsp; The first thing this function does is
-determines how many of its peers exist, and which instance number (starting from
-0) this particular <code>main</code> is running in.&nbsp; In <code>psubmit</code>,
-this is done with command line arguments, although more complex programs will
-probably need to do some sort of application-level communication or
-synchronization and would get this information from, say, MPI.</p>
-<p>Once the rank and size of the program are determined, the following two lines
-appear:</p>
-
-<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		context = crCreateContextCR(dpy, visual);<br>
-	crMakeCurrentCR(window, context);</td></tr></table>
-
-<p>crCreateContextCR and crMakeCurrentCR are actually function pointers
-initialized via crGetProcAddress.
-The typedefs for these functions are in the header file
-&quot;<code>chromium.h</code>&quot;.
-They provide a mechanism to use Chromium without using GLX or WGL and
-having to create applications windows, etc.
-This is particularly useful for parallel applications, since it doesn't
-really make sense to have a bunch of blank faked-out windows popping up
-all over the cluster.&nbsp; This also means that the client nodes in the
-cluster do not have to have a graphical environment running just to house
-a blank faked-out window.</p>
-
-<p>The <code>dpy</code>, <code>visual</code> and <code>window</code>
-parameters are initialied earlier in the function.</p>
-
-<p>The next thing that the application does is create a GL barrier:</p>
-
-<table width="100%"><tr><td class="GrayCodeListing">		glBarrierCreateCR( MASTER_BARRIER, size );</td></tr></table>
-
-<p>Notice that every node in the cluster will create this barrier.&nbsp; This is
-perfectly legal, as long as the &quot;size&quot; parameter matches up.&nbsp; <code>MASTER_BARRIER</code>
-is just an integer that &quot;names&quot; this barrier, much like an OpenGL
-display list or texture object (except that the namespace is shared between
-clients by default).</p>
-
-<p>After some GL initialization code comes the main drawing loop.&nbsp;
-This application follows the basic format of all simple parallel OpenGL
-applications.  The basic structure of the code is:</p>
-
-<table width="100%"><tr><td class="GrayCodeListing">
-<pre>
-for (frame = 0; ; frame++)
-{
-	if (clearFlag)
-		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-	glBarrierExecCR( MASTER_BARRIER );
-
-	draw the scene here
-
-	glBarrierExecCR( MASTER_BARRIER );
-
-	if (swapFlag)
-		crSwapBuffersCR( window, 0 );
-	else
-		crSwapBuffersCR( window, CR_SUPPRESS_SWAP_BIT );
-}
-</pre>
-</td></tr></table>
-
-<p>A few things to note about this code:</p>
-<ul>
-  <li>The <code>clearFlag</code> is set by the <code>-clear</code> command
-    line option.
-  <li>The <code>swapFlag</code> is set by the <code>-swap</code> command line
-    option.
-  <li>The <code>CR_SUPPRESS_SWAP_BIT</code> flag is used in sort-last
-    configurations to mark the end of the frame without actually swapping the
-    buffer.
-  <li>In a sort-last configuration <code>clearFlag</code> is set by
-    all clients and <code>swapFlag</code> will be set only for the zeroth
-    client.
-  <li>In a sort-first configuration <code>clearFlag</code> and
-    <code>swapFlag</code> will be set only for the zeroth client.
-  <li><code>glBarrierExecCR</code> (also declared in <code>chromium.h</code>)
-    is the call to enter a barrier.</li>
-  <li>The barrier following the clear ensures that the clear has happened before
-    <i>anyone</i> starts drawing</li>
-  <li>The barrier preceding the swap ensures that <i>everyone</i> is finished
-    drawing before the buffers are swapped</li>
-  <li>Barriers (and semaphores) do <i>not</i> block the application.&nbsp; They
-    simply indicate ordering constraints to be obeyed by the server when
-    switching contexts.&nbsp; Therefore, the clients do not have to stall, and
-    can get ahead of the servers.</li>
-</ul>
-
-<p>
-There are two sample parallel submission configuration scripts included
-with Chromium.
-psubmit_first.conf demonstrates parallel sort-first rendering with the
-tilesort SPU.
-psubmit_last.conf demonstrates parallel sort-last rendering with the
-readback SPU.
-</p>
-
-<p>To run the psubmit_first demo you'll need to issue the following commands,
-probably from five separate shell windows:</p>
-</p>
-<ul>
-<li><code>cd mothership/configs ; python psubmit_first.conf</code>
-<li><code>crserver</code>
-<li><code>crserver</code>
-<li><code>crappfaker</code>
-<li><code>crappfaker</code>
-</ul>
-
-<p>To run the psubmit_last demo you'll need to issue the following commands,
-probably from four separate shell windows:</p>
-</p>
-<ul>
-<li><code>cd mothership/configs ; python psubmit_last.conf</code>
-<li><code>crserver</code>
-<li><code>crappfaker</code>
-<li><code>crappfaker</code>
-</ul>
-
-
-<h2 class="PageSubHeading">Parallel Programming Difficulties</h2>
-
-<p>
-Among the difficulties in writing parallel applications are dealing with
-user input events and window management.
-Suppose you want to implement interactive rotation in your parallel
-application.  Since there are N client/application windows, mouse movement
-events that are detected in one window should be duplicated in all the
-other windows.  Otherwise only part of the rendering will be rotated.
-Similarly, if one window is resized, they should all be resized.
-</p>
-<p>
-At this time there is no simple solution to this problem.
-But looking forward, there are plans to develop a toolkit similar to GLUT,
-tentatively called CRUT (Chromium Utility Toolkit).
-With CRUT, input events and window changes will be automatically sent to
-all peers in a parallel application.
-For more information, try asking on the Chromium developers mailing list.
-</p>
-
-
-
-</body>
-
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+    <title>
+      Writing a Parallel Application
+    </title>
+    <base target="_self">
+    <link rel="stylesheet" type="text/css" href="chromium.css">
+  </head>
+  <body>
+    <h1 class="PageHeading">
+      Writing a Parallel Application
+    </h1>
+    <table border="0" width="100%">
+      <tr>
+        <td class="Center">
+          <img src="rings.jpg" class="noborder">
+        </td>
+      </tr>
+      <tr>
+        <td class="Center">
+          Each ring is submitted/rendered by a separate client in a
+          cluster-parallel program.
+        </td>
+      </tr>
+    </table>
+    <p>
+      Parallel rendering is characterized by more two or more programs (or
+      threads) simultaneously sending graphics commands to the rendering
+      system. Typically, each process (or thread) will render a part of the
+      entire model or scene. The pieces are combined at some point to form the
+      final image.
+    </p>
+    <p>
+      When rendering very large, complex models, the bottleneck may be in
+      submitting graphics commands to the rendering system. Parallel rendering
+      tries to overcome that bottleneck.
+    </p>
+    <p>
+      Here we describe parallel rendering with Chromium by using a trivial
+      program called <span class="CrProg">psubmit</span>.
+    </p>
+    <h2 class="PageSubHeading">
+      The Basic Idea
+    </h2>
+    <p>
+      Writing a parallel OpenGL application is pretty simple.&nbsp; You have a
+      bunch of processes, each one of which is responsible for a portion of the
+      model to be rendered.&nbsp; Each process renders its portion pretty much
+      as if it were the only process in the world.&nbsp; The partial renderings
+      may either be composited together according to Z or alpha (sort-last) or
+      tiled together (sort-first). However, <em>ordering</em> requirements add
+      some complexity to the process.
+    </p>
+    <p>
+      OpenGL provides <em>ordered semantics</em>.&nbsp; That means that if
+      function A is called before function B, the resulting image should look
+      as if A happened before B.&nbsp; With parallel programs it's no longer
+      clear which function is getting called first.&nbsp; Therefore, if you
+      aren't using the depth test (for example), and you draw two overlapping
+      triangles in parallel, you don't know which one will appear on top.&nbsp;
+      To get around this problem, Chromium implements the parallel API proposed
+      by <a href="http://graphics.stanford.edu/papers/parallel_api/" target=
+      "_parent">Igehy, Stoll and Hanrahan in SIGGRAPH '98</a>.&nbsp; This API
+      extends OpenGL to have barriers and semaphores, which are sufficient to
+      express almost all ordering constraints that come up in graphics.
+    </p>
+    <h2 class="PageSubHeading">
+      The psubmit Program
+    </h2>
+    <p>
+      Let's take a look at the <code class="Function">main</code> function of
+      <span class="File">psubmit.c</span> in <span class=
+      "Directory">progs/psubmit/</span>.&nbsp; The first thing this function
+      does is determines how many of its peers exist, and which instance number
+      (starting from 0) this particular <code class="Function">main</code> is
+      running in.&nbsp; In <span class="CrProg">psubmit</span>, this is done
+      with command line arguments, although more complex programs will probably
+      need to do some sort of application-level communication or
+      synchronization and would get this information from, say, MPI.
+    </p>
+    <p>
+      Once the rank and size of the program are determined, the following two
+      lines appear:
+    </p>
+    <p class="GrayCodeListing2">
+      context = crCreateContextCR( dpy, visual );<br>
+      crMakeCurrentCR( window, context );
+    </p>
+    <p>
+      <code class="Function">crCreateContextCR</code> and <code class=
+      "Function">crMakeCurrentCR</code> are actually function pointers
+      initialized via <code class="Function">crGetProcAddress</code>. The
+      typedefs for these functions are in the header file "<span class=
+      "File">chromium.h</span>". They provide a mechanism to use Chromium
+      without using GLX or WGL and having to create application windows, etc.
+      This is particularly useful for parallel applications, since it doesn't
+      really make sense to have a bunch of blank faked-out windows popping up
+      all over the cluster.&nbsp; This also means that the client nodes in the
+      cluster do not have to have a graphical environment running just to house
+      a blank faked-out window.
+    </p>
+    <p>
+      The <code>dpy</code>, <code>visual</code> and <code>window</code>
+      parameters are initialied earlier in the function.
+    </p>
+    <p>
+      The next thing that the application does is create a GL barrier:
+    </p>
+    <p class="GrayCodeListing2">
+      glBarrierCreateCR( MASTER_BARRIER, size );
+    </p>
+    <p>
+      Notice that every node in the cluster will create this barrier.&nbsp;
+      This is perfectly legal, as long as the "size" parameter matches
+      up.&nbsp; <code>MASTER_BARRIER</code> is just an integer that "names"
+      this barrier, much like an OpenGL display list or texture object (except
+      that the namespace is shared between clients by default).
+    </p>
+    <p>
+      After some GL initialization code comes the main drawing loop.&nbsp; This
+      application follows the basic format of all simple parallel OpenGL
+      applications. The basic structure of the code is:
+    </p>
+    <p class="GrayCodeListing2">
+      for( frame = 0; ; frame++ )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;if( clearFlag )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;glClear(
+      GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );<br>
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;glBarrierExecCR( MASTER_BARRIER );<br>
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;draw the scene here<br>
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;glBarrierExecCR( MASTER_BARRIER );<br>
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;if (swapFlag)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;crSwapBuffersCR( window,
+      0 );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;else<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;crSwapBuffersCR( window,
+      CR_SUPPRESS_SWAP_BIT );<br>
+      }
+    </p>
+    <p>
+      A few things to note about this code:
+    </p>
+    <ul>
+      <li>The <code>clearFlag</code> is set by the <code>-clear</code> command
+      line option.
+      </li>
+      <li>The <code>swapFlag</code> is set by the <code>-swap</code> command
+      line option.
+      </li>
+      <li>The <code>CR_SUPPRESS_SWAP_BIT</code> flag is used in sort-last
+      configurations to mark the end of the frame without actually swapping the
+      buffer.
+      </li>
+      <li>In a sort-last configuration <code>clearFlag</code> is set by all
+      clients and <code>swapFlag</code> will be set only for the zeroth client.
+      </li>
+      <li>In a sort-first configuration <code>clearFlag</code> and
+      <code>swapFlag</code> will be set only for the zeroth client.
+      </li>
+      <li>
+        <code class="Function">glBarrierExecCR</code> (also declared in
+        <span class="File">chromium.h</span>) is the call to enter a barrier.
+      </li>
+      <li>The barrier following the clear ensures that the clear has happened
+      before <em>anyone</em> starts drawing
+      </li>
+      <li>The barrier preceding the swap ensures that <em>everyone</em> is
+      finished drawing before the buffers are swapped
+      </li>
+      <li>Barriers (and semaphores) do <em>not</em> block the
+      application.&nbsp; They simply indicate ordering constraints to be obeyed
+      by the server when switching contexts.&nbsp; Therefore, the clients do
+      not have to stall, and can get ahead of the servers.
+      </li>
+    </ul>
+    <p>
+      There are two sample parallel submission configuration scripts included
+      with Chromium. <span class="File">psubmit_first.conf</span> demonstrates
+      parallel sort-first rendering with the <span class="SPU">tilesort
+      SPU</span>. <span class="File">psubmit_last.conf</span> demonstrates
+      parallel sort-last rendering with the <span class="SPU">readback</span>
+      SPU.
+    </p>
+    <p>
+      To run the psubmit_first demo you'll need to issue the following
+      commands, probably from five separate shell windows:
+    </p>
+    <ul class="Command">
+      <li>cd mothership/configs ; python psubmit_first.conf
+      </li>
+      <li>crserver
+      </li>
+      <li>crserver
+      </li>
+      <li>crappfaker
+      </li>
+      <li>crappfaker
+      </li>
+    </ul>
+    <p>
+      To run the psubmit_last demo you'll need to issue the following commands,
+      probably from four separate shell windows:
+    </p>
+    <ul class="Command">
+      <li>cd mothership/configs ; python psubmit_last.conf
+      </li>
+      <li>crserver
+      </li>
+      <li>crappfaker
+      </li>
+      <li>crappfaker
+      </li>
+    </ul>
+    <h2 class="PageSubHeading">
+      Parallel Programming Difficulties
+    </h2>
+    <p>
+      Among the difficulties in writing parallel applications are dealing with
+      user input events and window management. Suppose you want to implement
+      interactive rotation in your parallel application. Since there are N
+      client/application windows, mouse movement events that are detected in
+      one window should be duplicated in all the other windows. Otherwise only
+      part of the rendering will be rotated. Similarly, if one window is
+      resized, they should all be resized.
+    </p>
+    <p>
+      Chromium comes with a toolkit similar to GLUT, tentatively called CRUT
+      (Chromium Utility Toolkit). With CRUT, input events and window changes
+      are automatically sent to all peers in a parallel application. For more
+      information, see the <a href="crut.html">CRUT</a> page.
+    </p>
+  </body>
 </html>
