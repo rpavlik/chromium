@@ -214,7 +214,7 @@ void crUnpackTexGeniv( void )
 	INCR_VAR_PTR();
 }
 
-void crUnpackAreTexturesResident( void )
+void crUnpackExtendAreTexturesResident( void )
 {
 	GLsizei n = READ_DATA( 8, GLsizei );
 	GLboolean * residences;

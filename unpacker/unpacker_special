@@ -5,7 +5,6 @@
 #
 # Non-extended functions which can't be auto-generated
 #
-AreTexturesResident
 ArrayElement
 Bitmap
 CallLists

@@ -12,3 +12,4 @@ CombinerStageParameterfvNV
 ChromiumParametervCR
 CreateContext
 crCreateWindow
+AreTexturesResident
