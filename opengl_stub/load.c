@@ -37,7 +37,7 @@
 #endif
 
 
-SPUDispatchTable glim;
+/* NOTE: 'SPUDispatchTable glim' is declared in NULLfuncs.py now */
 SPUDispatchTable stubThreadsafeDispatch;
 Stub stub;
 

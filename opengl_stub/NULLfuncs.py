@@ -36,14 +36,22 @@ for func_name in keys:
 
 
 print "SPUDispatchTable stubNULLDispatch = {"
-
 for func_name in keys:
 	print "\tNULL_%s," % (func_name)
-
-
 print "\tNULL,  /* copyList */"
 print "\tNULL,  /* copy_of */"
 print "\t0,     /* mark */"
 print "\tNULL   /* server */"
+print "};"
 
+print ""
+print "/* Declare and initialize the glim dispatch table here so that we */"
+print "/* can initialize all entries to no-op routines. */"
+print "SPUDispatchTable glim = {"
+for func_name in keys:
+	print "\tNULL_%s," % (func_name)
+print "\tNULL,  /* copyList */"
+print "\tNULL,  /* copy_of */"
+print "\t0,     /* mark */"
+print "\tNULL   /* server */"
 print "};"
