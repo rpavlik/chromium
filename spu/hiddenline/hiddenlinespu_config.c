@@ -18,6 +18,21 @@ static void set_buffer_size( void *spu, const char *response )
 	sscanf( response, "%d", &(hiddenline_spu.buffer_size) );
 }
 
+static void set_fog_color( void *spu, const char *response )
+{
+	float r, g, b;
+	(void) spu;
+	if( response[0] == '[' )
+		sscanf( response, "[ %f, %f, %f ]", &r, &g, &b );
+	else if( crStrchr( response, ',' ))
+		sscanf( response, "%f, %f, %f", &r, &g, &b );
+	else
+		sscanf( response, "%f %f %f", &r, &g, &b );
+	hiddenline_spu.fog_color[0] = r;
+	hiddenline_spu.fog_color[1] = g;
+	hiddenline_spu.fog_color[2] = b;
+}
+
 static void set_poly_color( void *spu, const char *response )
 {
 	float r, g, b;
@@ -67,13 +82,16 @@ SPUOptions hiddenlineSPUOptions[] = {
 	{ "buffer_size", CR_INT, 1, "32768", "128", "1048576", 
 	  "Buffer Size (bytes)", (SPUOptionCB)set_buffer_size },
 
-	{ "poly_color", CR_FLOAT, 3, ".75, .75, 0", "0, 0, 0", "1, 1, 1", 
+	{ "fog_color", CR_FLOAT, 3, "0, 0, 0", "0, 0, 0", "1, 1, 1",
+	  "Fog Color (r, g, b)", (SPUOptionCB)set_fog_color },
+
+	{ "poly_color", CR_FLOAT, 3, "1, 1, 1", "0, 0, 0", "1, 1, 1", 
 	  "Polygon Color (r, g, b)", (SPUOptionCB)set_poly_color },
 
 	{ "line_color", CR_FLOAT, 3, "0, 0, 0", "0, 0, 0", "1, 1, 1", 
 	  "Line Color (r, g, b)", (SPUOptionCB)set_line_color },
 
-	{ "line_width", CR_FLOAT, 1, "1", "0", "20", 
+	{ "line_width", CR_FLOAT, 1, "3", "0", "20",
 	  "Line Width", (SPUOptionCB)set_line_width },
 
 	{ "single_clear", CR_BOOL, 1, "1", NULL, NULL,

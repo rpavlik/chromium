@@ -57,6 +57,7 @@ typedef struct {
 
 	/* config options */
 	int buffer_size;
+	float fog_color[3];
 	float poly_r, poly_g, poly_b;
 	float line_r, line_g, line_b;
 	float line_width;
