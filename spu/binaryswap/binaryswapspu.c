@@ -467,7 +467,7 @@ static void CompositeNode( WindowInfo *window,
 			if(read_width > 0 && read_height > 0)
 				binaryswap_spu.super.ReadPixels( read_start_x, read_start_y, 
 								 read_width, read_height, 
-								 GL_ABGR_EXT, GL_UNSIGNED_BYTE, 
+								 GL_RGBA, GL_UNSIGNED_BYTE, 
 								 (GLubyte*)window->msgBuffer +
 								 binaryswap_spu.offset ); 
 			
@@ -501,29 +501,29 @@ static void CompositeNode( WindowInfo *window,
 			/* get incoming fb */
 			if(draw_width > 0 && draw_width > 0){
 				incoming_color = (GLubyte*)((GLubyte*)incoming_msg + binaryswap_spu.offset);
-				binaryswap_spu.super.Enable(GL_BLEND);
 				/* figure out blend function based on z */
+					binaryswap_spu.super.Enable(GL_BLEND);
 				/* Other image is on top of ours! */
 				if(binaryswap_spu.depth > other_depth)
 				{
 					/* over operator */
-					binaryswap_spu.super.BlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA ); 
+					binaryswap_spu.super.BlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ); 
 				}
 				/* other image is under ours */
 				else
 				{  
 					/* under operator */
-					binaryswap_spu.super.BlendFunc( GL_ONE_MINUS_DST_ALPHA, GL_ONE );
+					binaryswap_spu.super.BlendFunc( GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA ); 
 				}	
+				binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
+				binaryswap_spu.super.DrawPixels( draw_width, draw_height, 
+																				 GL_RGBA, GL_UNSIGNED_BYTE, incoming_color ); 
 				
 				if(binaryswap_spu.depth < other_depth)
 				{
 					binaryswap_spu.depth = other_depth;
 				}
 				
-				binaryswap_spu.super.RasterPos2i( draw_x, draw_y );
-				binaryswap_spu.super.DrawPixels( draw_width, draw_height, 
-								 GL_ABGR_EXT, GL_UNSIGNED_BYTE, incoming_color ); 
 			}
 		}
 		/* depth composite */
@@ -532,7 +532,7 @@ static void CompositeNode( WindowInfo *window,
 			if(read_width > 0 && read_height > 0){
 				binaryswap_spu.super.ReadPixels( read_start_x, read_start_y, 
 								 read_width, read_height, 
-								 GL_BGR_EXT, GL_UNSIGNED_BYTE, 
+								 GL_RGB, GL_UNSIGNED_BYTE, 
 								 (GLubyte*)window->msgBuffer +
 								 binaryswap_spu.offset ); 
 				binaryswap_spu.super.ReadPixels( read_start_x, read_start_y, 
@@ -592,7 +592,7 @@ static void CompositeNode( WindowInfo *window,
 				binaryswap_spu.super.StencilFunc( GL_EQUAL, 1, 1 );
 				binaryswap_spu.super.StencilOp( GL_KEEP, GL_KEEP, GL_KEEP );
 				binaryswap_spu.super.ColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-				binaryswap_spu.super.DrawPixels( draw_width, draw_height, GL_BGR_EXT, 
+				binaryswap_spu.super.DrawPixels( draw_width, draw_height, GL_RGB, 
 								 GL_UNSIGNED_BYTE, incoming_color );
 				binaryswap_spu.super.Disable( GL_STENCIL_TEST );
 				binaryswap_spu.super.Enable( GL_DEPTH_TEST ); 
@@ -670,7 +670,7 @@ static void CompositeNode( WindowInfo *window,
 	if(draw_width > 0 && draw_height > 0){	
 		/* send our final portion off to child */
 		binaryswap_spu.super.ReadPixels( draw_x, draw_y, draw_width, draw_height, 
-						 GL_BGR_EXT, GL_UNSIGNED_BYTE, 
+						 GL_RGB, GL_UNSIGNED_BYTE, 
 						 window->msgBuffer + 
 						 binaryswap_spu.offset ); 
 		
@@ -693,7 +693,7 @@ static void CompositeNode( WindowInfo *window,
 		binaryswap_spu.child.RasterPos2i( 0, 0 );
 		binaryswap_spu.child.Bitmap( 0, 0, 0, 0, (GLfloat)draw_x, (GLfloat)draw_y, NULL); 
 		binaryswap_spu.child.DrawPixels( draw_width, draw_height, 
-						 GL_BGR_EXT, GL_UNSIGNED_BYTE, 
+						 GL_RGB, GL_UNSIGNED_BYTE, 
 						 window->msgBuffer + 
 						 binaryswap_spu.offset );
 		
