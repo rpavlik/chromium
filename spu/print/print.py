@@ -82,7 +82,7 @@ for func_name in keys:
 					printfstr += printf_mapping[vector_arg_type]
 					arg = '%s[%d]' % (names[len(names)-1], index)
 					if vector_arg_type == 'GLboolean':
-						argstr += '%s ? "true" : "false"' % arg
+						argstr += '%s ? "GL_TRUE" : "GL_FALSE"' % arg
 					else:
 						argstr += arg
 				if index != vector_nelem - 1:
@@ -95,7 +95,7 @@ for func_name in keys:
 				if type == 'GLenum':
 					argstr += 'printspuEnumToStr( %s )' % name
 				elif type == 'GLboolean':
-					argstr += '%s ? "true" : "false"' % name
+					argstr += '%s ? "GL_TRUE" : "GL_FALSE"' % name
 				else:
 					argstr += name
 			elif type.find( "*" ):
