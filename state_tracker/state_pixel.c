@@ -653,6 +653,18 @@ void crStatePixelSwitch(CRPixelBits *b, CRbitvalue *bitID,
 	i = 0; /* silence compiler */
 	if (CHECKDIRTY(b->transfer, bitID))
 	{
+		if (from->mapColor != to->mapColor)
+		{
+			diff_api.PixelTransferi (GL_MAP_COLOR, to->mapColor);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
+		if (from->mapStencil != to->mapStencil)
+		{
+			diff_api.PixelTransferi (GL_MAP_STENCIL, to->mapStencil);
+			FILLDIRTY(b->transfer);
+			FILLDIRTY(b->dirty);
+		}
 		if (from->indexOffset != to->indexOffset)
 		{
 			diff_api.PixelTransferi (GL_INDEX_OFFSET, to->indexOffset);
