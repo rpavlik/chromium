@@ -675,6 +675,7 @@ param		v		const GLshort *
 paramvec	v		1 1 1
 vector		v		3
 category	1.0
+props		pervertex
 vectoralias	Normal3s
 
 name		RasterPos2d
@@ -2349,6 +2350,7 @@ return		void
 param		i		GLint
 category	1.0
 chromium	pack
+props		pervertex
 
 name		EvalMesh2
 return		void
@@ -2367,6 +2369,7 @@ param		i		GLint
 param		j		GLint
 category	1.0
 chromium	pack
+props		pervertex
 
 name		AlphaFunc
 return		void
@@ -3329,6 +3332,7 @@ name		Indexub
 return		void
 param		c		GLubyte
 category	1.1
+props		pervertex
 chromium	pack
 
 name		Indexubv
@@ -3337,6 +3341,7 @@ param		c		const GLubyte *
 paramvec	c		1
 vector		c		1
 category	1.1
+props		pervertex
 vectoralias	Indexub
 
 name		PopClientAttrib
@@ -5639,6 +5644,7 @@ param		green		GLbyte
 param		blue		GLbyte
 category	GL_EXT_secondary_color
 chromium	pack
+props		pervertex
 
 name		SecondaryColor3bvEXT
 return		void
@@ -5647,6 +5653,7 @@ paramvec	v		2 2 2
 vector		v		3
 category	GL_EXT_secondary_color
 vectoralias	SecondaryColor3bEXT
+props		pervertex
 
 name		SecondaryColor3dEXT
 return		void
@@ -5655,6 +5662,7 @@ param		green		GLdouble
 param		blue		GLdouble
 category	GL_EXT_secondary_color
 chromium	pack
+props		pervertex
 
 name		SecondaryColor3dvEXT
 return		void
@@ -5663,6 +5671,7 @@ paramvec	v		2.0 2.0 2.0
 vector		v		3
 category	GL_EXT_secondary_color
 vectoralias	SecondaryColor3dEXT
+props		pervertex
 
 name		SecondaryColor3fEXT
 return		void
@@ -5671,6 +5680,7 @@ param		green		GLfloat
 param		blue		GLfloat
 category	GL_EXT_secondary_color
 chromium	pack
+props		pervertex
 
 name		SecondaryColor3fvEXT
 return		void
@@ -5679,6 +5689,7 @@ paramvec	v		2.0 2.0 2.0
 vector		v		3
 category	GL_EXT_secondary_color
 vectoralias	SecondaryColor3fEXT
+props		pervertex
 
 name		SecondaryColor3iEXT
 return		void
@@ -5687,6 +5698,7 @@ param		green		GLint
 param		blue		GLint
 category	GL_EXT_secondary_color
 chromium	pack
+props		pervertex
 
 name		SecondaryColor3ivEXT
 return		void
@@ -5695,6 +5707,7 @@ paramvec	v		2 2 2
 vector		v		3
 category	GL_EXT_secondary_color
 vectoralias	SecondaryColor3iEXT
+props		pervertex
 
 name		SecondaryColor3sEXT
 return		void
@@ -5703,6 +5716,7 @@ param		green		GLshort
 param		blue		GLshort
 category	GL_EXT_secondary_color
 chromium	pack
+props		pervertex
 
 name		SecondaryColor3svEXT
 return		void
@@ -5711,6 +5725,7 @@ paramvec	v		2 2 2
 vector		v		3
 category	GL_EXT_secondary_color
 vectoralias	SecondaryColor3sEXT
+props		pervertex
 
 name		SecondaryColor3ubEXT
 return		void
@@ -5719,6 +5734,7 @@ param		green		GLubyte
 param		blue		GLubyte
 category	GL_EXT_secondary_color
 chromium	pack
+props		pervertex
 
 name		SecondaryColor3ubvEXT
 return		void
@@ -5727,6 +5743,7 @@ paramvec	v		2 2 2
 vector		v		3
 category	GL_EXT_secondary_color
 vectoralias	SecondaryColor3ubEXT
+props		pervertex
 
 name		SecondaryColor3uiEXT
 return		void
@@ -5735,6 +5752,7 @@ param		green		GLuint
 param		blue		GLuint
 category	GL_EXT_secondary_color
 chromium	pack
+props		pervertex
 
 name		SecondaryColor3uivEXT
 return		void
@@ -5743,6 +5761,7 @@ paramvec	v		2 2 2
 vector		v		3
 category	GL_EXT_secondary_color
 vectoralias	SecondaryColor3uiEXT
+props		pervertex
 
 name		SecondaryColor3usEXT
 return		void
@@ -5751,6 +5770,7 @@ param		green		GLushort
 param		blue		GLushort
 category	GL_EXT_secondary_color
 chromium	pack
+props		pervertex
 
 name		SecondaryColor3usvEXT
 return		void
@@ -5759,6 +5779,7 @@ paramvec	v		2 2 2
 vector		v		3
 category	GL_EXT_secondary_color
 vectoralias	SecondaryColor3usEXT
+props		pervertex
 
 name		SecondaryColorPointerEXT
 return		void
@@ -6355,6 +6376,7 @@ param		green		GLbyte
 param		blue		GLbyte
 category	1.4
 alias		SecondaryColor3bEXT
+props		pervertex
 
 name		SecondaryColor3bv
 return		void
@@ -6362,6 +6384,7 @@ param		v		const GLbyte *
 vector		v		3
 category	1.4
 alias		SecondaryColor3bvEXT
+props		pervertex
 
 name		SecondaryColor3d
 return		void
@@ -6370,6 +6393,7 @@ param		green		GLdouble
 param		blue		GLdouble
 category	1.4
 alias		SecondaryColor3dEXT
+props		pervertex
 
 name		SecondaryColor3dv
 return		void
@@ -6377,6 +6401,7 @@ param		v		const GLdouble *
 vector		v		3
 category	1.4
 alias		SecondaryColor3dvEXT
+props		pervertex
 
 name		SecondaryColor3f
 return		void
@@ -6385,6 +6410,7 @@ param		green		GLfloat
 param		blue		GLfloat
 category	1.4
 alias		SecondaryColor3fEXT
+props		pervertex
 
 name		SecondaryColor3fv
 return		void
@@ -6392,6 +6418,7 @@ param		v		const GLfloat *
 vector		v		3
 category	1.4
 alias		SecondaryColor3fvEXT
+props		pervertex
 
 name		SecondaryColor3i
 return		void
@@ -6400,6 +6427,7 @@ param		green		GLint
 param		blue		GLint
 category	1.4
 alias		SecondaryColor3iEXT
+props		pervertex
 
 name		SecondaryColor3iv
 return		void
@@ -6407,6 +6435,7 @@ param		v		const GLint *
 vector		v		3
 category	1.4
 alias		SecondaryColor3ivEXT
+props		pervertex
 
 name		SecondaryColor3s
 return		void
@@ -6415,6 +6444,7 @@ param		green		GLshort
 param		blue		GLshort
 category	1.4
 alias		SecondaryColor3sEXT
+props		pervertex
 
 name		SecondaryColor3sv
 return		void
@@ -6422,6 +6452,7 @@ param		v		const GLshort *
 vector		v		3
 category	1.4
 alias		SecondaryColor3svEXT
+props		pervertex
 
 name		SecondaryColor3ub
 return		void
@@ -6430,6 +6461,7 @@ param		green		GLubyte
 param		blue		GLubyte
 category	1.4
 alias		SecondaryColor3ubEXT
+props		pervertex
 
 name		SecondaryColor3ubv
 return		void
@@ -6437,6 +6469,7 @@ param		v		const GLubyte *
 vector		v		3
 category	1.4
 alias		SecondaryColor3ubvEXT
+props		pervertex
 
 name		SecondaryColor3ui
 return		void
@@ -6445,6 +6478,7 @@ param		green		GLuint
 param		blue		GLuint
 category	1.4
 alias		SecondaryColor3uiEXT
+props		pervertex
 
 name		SecondaryColor3uiv
 return		void
@@ -6452,6 +6486,7 @@ param		v		const GLuint *
 vector		v		3
 category	1.4
 alias		SecondaryColor3uivEXT
+props		pervertex
 
 name		SecondaryColor3us
 return		void
@@ -6460,6 +6495,7 @@ param		green		GLushort
 param		blue		GLushort
 category	1.4
 alias		SecondaryColor3usEXT
+props		pervertex
 
 name		SecondaryColor3usv
 return		void
@@ -6467,6 +6503,7 @@ param		v		const GLushort *
 vector		v		3
 category	1.4
 alias		SecondaryColor3usvEXT
+props		pervertex
 
 name		SecondaryColorPointer
 return		void
