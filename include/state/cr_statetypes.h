@@ -11,7 +11,7 @@ typedef GLfloat GLdefault;
 #define GL_DEFAULTTYPE_FLOAT
 
 #ifndef CR_MAX_TEXTURE_UNITS
-#define CR_MAX_TEXTURE_UNITS 8
+#define CR_MAX_TEXTURE_UNITS 2
 #endif
 
 #define GL_MAXBYTE		(GLbyte)	0x7F

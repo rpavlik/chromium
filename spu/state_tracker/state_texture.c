@@ -588,6 +588,12 @@ void STATE_APIENTRY crStateClientActiveTextureARB( GLenum texture )
 		return;
 	}
 
+	if ( texture < GL_TEXTURE0_ARB || texture >= GL_TEXTURE0_ARB + CR_MAX_TEXTURE_UNITS)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "Bad texture unit passed to crStateClientActiveTexture: %d (max is %d)", texture, CR_MAX_TEXTURE_UNITS );
+		return;
+	}
+
 	FLUSH();
 
 	c->curClientTextureUnit = texture;
@@ -600,7 +606,13 @@ void STATE_APIENTRY crStateActiveTextureARB( GLenum texture )
 
 	if (g->current.inBeginEnd)
 	{
-		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glClientActiveTextureARB called in Begin/End");
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "glActiveTextureARB called in Begin/End");
+		return;
+	}
+
+	if ( texture < GL_TEXTURE0_ARB || texture >= GL_TEXTURE0_ARB + CR_MAX_TEXTURE_UNITS)
+	{
+		crStateError(__LINE__, __FILE__, GL_INVALID_OPERATION, "Bad texture unit passed to crStateActiveTexture: %d (max is %d)", texture, CR_MAX_TEXTURE_UNITS );
 		return;
 	}
 
