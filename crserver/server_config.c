@@ -157,7 +157,7 @@ void crServerGatherConfiguration(char *mothership)
 		int tile;
 		if (!crMothershipGetTiles( conn, response, i ))
 		{
-			crError( "No tile information for server %d!  I can't continue!", i );
+			break;
 		}
 
 		tilechain = crStrSplitn( response, " ", 1 );
