@@ -67,6 +67,18 @@ extern "C" {
 /*
  * Define missing WGL tokens:
  */
+#ifndef WGL_COLOR_BITS_EXT
+#define WGL_COLOR_BITS_EXT			0x2014
+#endif
+#ifndef WGL_DRAW_TO_WINDOW_EXT
+#define WGL_DRAW_TO_WINDOW_EXT			0x2001
+#endif
+#ifndef WGL_FULL_ACCELERATION_EXT
+#define WGL_FULL_ACCELERATION_EXT		0x2027
+#endif
+#ifndef WGL_ACCELERATION_EXT
+#define WGL_ACCELERATION_EXT			0x2003
+#endif
 #ifndef WGL_TYPE_RGBA_EXT
 #define WGL_TYPE_RGBA_EXT			0x202B
 #endif
