@@ -62,6 +62,7 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 	if (a->attribStackDepth == CR_MAX_ATTRIB_STACK_DEPTH - 1)
 	{
 		crStateError(__LINE__, __FILE__, GL_STACK_OVERFLOW, "glPushAttrib called with a full stack!" );
+		return;
 	}
 
 	FLUSH();
@@ -509,6 +510,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 	if (a->attribStackDepth == 0)
 	{
 		crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty stack!" );
+		return;
 	}
 
 	FLUSH();
@@ -520,6 +522,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->accumBufferStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty accum buffer stack!" );
+			return;
 		}
 		a->accumBufferStackDepth--;
 		g->buffer.accumClearValue = a->accumBufferStack[a->accumBufferStackDepth].accumClearValue;
@@ -531,6 +534,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->colorBufferStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty color buffer stack!" );
+			return;
 		}
 		a->colorBufferStackDepth--;
 		g->buffer.alphaTest = a->colorBufferStack[a->colorBufferStackDepth].alphaTest;
@@ -577,6 +581,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->currentStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty current stack!" );
+			return;
 		}
 		a->currentStackDepth--;
 		g->current.color = a->currentStack[a->currentStackDepth].color;
@@ -608,6 +613,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->depthBufferStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty depth buffer stack!" );
+			return;
 		}
 		a->depthBufferStackDepth--;
 		g->buffer.depthTest = a->depthBufferStack[a->depthBufferStackDepth].depthTest;
@@ -625,6 +631,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->enableStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty enable stack!" );
+			return;
 		}
 		a->enableStackDepth--;
 		g->buffer.alphaTest = a->enableStack[a->enableStackDepth].alphaTest;
@@ -710,6 +717,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->evalStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty eval stack!" );
+			return;
 		}
 		a->evalStackDepth--;
 		for (i = 0 ; i < GLEVAL_TOT ; i++)
@@ -756,6 +764,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->fogStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty fog stack!" );
+			return;
 		}
 		a->fogStackDepth--;
 		g->fog.enable = a->fogStack[a->fogStackDepth].enable;
@@ -779,6 +788,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->hintStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty hint stack!" );
+			return;
 		}
 		a->hintStackDepth--;
 		g->hint.perspectiveCorrection = a->hintStack[a->hintStackDepth].perspectiveCorrection;
@@ -809,6 +819,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->lightingStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty lighting stack!" );
+			return;
 		}
 		a->lightingStackDepth--;
 		g->lighting.lightModelAmbient = a->lightingStack[a->lightingStackDepth].lightModelAmbient;
@@ -866,6 +877,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->lineStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty line stack!" );
+			return;
 		}
 		a->lineStackDepth--;
 		g->line.lineSmooth = a->lineStack[a->lineStackDepth].lineSmooth;
@@ -883,6 +895,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->listStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty list stack!" );
+			return;
 		}
 		a->listStackDepth--;
 		g->lists.base = a->listStack[a->listStackDepth].base;
@@ -893,6 +906,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->pixelModeStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty pixel mode stack!" );
+			return;
 		}
 		a->pixelModeStackDepth--;
 		g->pixel.bias = a->pixelModeStack[a->pixelModeStackDepth].bias;
@@ -915,6 +929,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->pointStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty point stack!" );
+			return;
 		}
 		a->pointStackDepth--;
 		g->point.pointSmooth = a->pointStack[a->pointStackDepth].pointSmooth;
@@ -928,6 +943,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->polygonStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty polygon stack!" );
+			return;
 		}
 		a->polygonStackDepth--;
 		g->polygon.cullFace = a->polygonStack[a->polygonStackDepth].cullFace;
@@ -953,6 +969,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->polygonStippleStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty polygon stipple stack!" );
+			return;
 		}
 		a->polygonStippleStackDepth--;
 		crMemcpy( g->polygon.stipple, a->polygonStippleStack[a->polygonStippleStackDepth].pattern, 32*sizeof(GLint) );
@@ -964,6 +981,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->scissorStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty scissor stack!" );
+			return;
 		}
 		a->scissorStackDepth--;
 		g->viewport.scissorTest = a->scissorStack[a->scissorStackDepth].scissorTest;
@@ -980,6 +998,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->stencilBufferStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty stencil stack!" );
+			return;
 		}
 		a->stencilBufferStackDepth--;
 		g->stencil.stencilTest = a->stencilBufferStack[a->stencilBufferStackDepth].stencilTest;
@@ -1003,6 +1022,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->textureStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty texture stack!" );
+			return;
 		}
 		a->textureStackDepth--;
 		g->texture.curTextureUnit = a->textureStack[a->textureStackDepth].curTextureUnit;
@@ -1119,6 +1139,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->transformStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty transform stack!" );
+			return;
 		}
 		a->transformStackDepth--;
 		g->transform.mode = a->transformStack[a->transformStackDepth].mode;
@@ -1141,6 +1162,7 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		if (a->viewportStackDepth == 0)
 		{
 			crStateError(__LINE__, __FILE__, GL_STACK_UNDERFLOW, "glPopAttrib called with an empty viewport stack!" );
+			return;
 		}
 		a->viewportStackDepth--;
 		g->viewport.viewportX = a->viewportStack[a->viewportStackDepth].viewportX;

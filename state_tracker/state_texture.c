@@ -1554,6 +1554,7 @@ void STATE_APIENTRY crStateTexSubImage1D (GLenum target, GLint level, GLint xoff
 	if (width + xoffset > tl->width) 
 	{
 		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "glTexSubImage1D(bad width or xoffset)" );
+		return;
 	}
 
 	xoffset += tl->border;
@@ -1651,11 +1652,13 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 	{
 		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE,
 									"glTexSubImage2D(bad width or xoffset)" );
+		return;
 	}
 	if (height + yoffset > tl->height) 
 	{
 		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE,
 									"glTexSubImage2D(bad heigh or yoffset)" );
+		return;
 	}
 
 	xoffset += tl->border;

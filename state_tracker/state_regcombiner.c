@@ -173,6 +173,7 @@ void STATE_APIENTRY crStateCombinerParameterfNV( GLenum pname, GLfloat param )
 	if( pname == GL_CONSTANT_COLOR0_NV || pname == GL_CONSTANT_COLOR1_NV )
 	{
 		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "Invalid pname (CONSTANT_COLOR%d) passed to CombinerParameterfNV: 0x%x", (GLint)param-GL_CONSTANT_COLOR0_NV, pname );
+		return;
 	}
 	crStateCombinerParameterfvNV( pname, fparam );
 }
@@ -184,6 +185,7 @@ void STATE_APIENTRY crStateCombinerParameteriNV( GLenum pname, GLint param )
 	if( pname == GL_CONSTANT_COLOR0_NV || pname == GL_CONSTANT_COLOR1_NV )
 	{
 		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "Invalid pname (CONSTANT_COLOR%d) passed to CombinerParameteriNV: 0x%x", param-GL_CONSTANT_COLOR0_NV, pname );
+		return;
 	}
 	crStateCombinerParameterfvNV( pname, fparam );
 }

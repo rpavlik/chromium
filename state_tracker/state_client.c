@@ -369,6 +369,7 @@ void crStateClientSetPointer (CRClientPointer *cp, GLint size,
 			break;
 		default:
 			crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "Unknown type of vertex array: %d", type );
+			return;
 	}
 
 	/* 

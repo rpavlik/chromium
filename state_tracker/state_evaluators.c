@@ -306,6 +306,7 @@ map1(GLenum target, GLfloat u1, GLfloat u2, GLint ustride,
 
 	if (k == 0) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMap1d(k=0)");
+		return;
 	}
 
 	if (ustride < k) {
@@ -417,6 +418,7 @@ map2(GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
 
 	if (k == 0) {
 		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glMap2d()");
+		return;
 	}
 
 	if (ustride < k) {
