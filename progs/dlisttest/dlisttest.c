@@ -14,10 +14,10 @@
 #include <math.h>
 #if USE_CHROMIUM
 #include "chromium.h"
-#else
-#include <GL/glut.h>
 #include <GL/glx.h>
 #endif
+#include <GL/glut.h>
+
 
 static GLfloat Xrot = 15, Yrot = 0, Zrot = 0;
 static GLboolean Anim = GL_FALSE;
