@@ -575,15 +575,9 @@ crTCPIPSend( CRConnection *conn, void **bufp,
 		 * to get fancy.  Simply write the length & the payload and
 		 * return. */
 		const int sendable_len = conn->swap ? SWAP32(len) : len;
-#if 0
-		int sendable_len=len;/* can't swap len then use it for length*/
-		if (conn->swap)
-		{
-			sendable_len = SWAP32(len);
-		}
-#endif
 		crTCPIPWriteExact( conn, &sendable_len, sizeof(len) );
-		if ( !conn || conn->type == CR_NO_CONNECTION) return;
+		if ( !conn || conn->type == CR_NO_CONNECTION)
+			return;
 		crTCPIPWriteExact( conn, start, len );
 		return;
 	}
@@ -596,14 +590,7 @@ crTCPIPSend( CRConnection *conn, void **bufp,
 	 * length field, to insure that we always have a place to write
 	 * the length field, even when start == *bufp. */
 	lenp = (unsigned int *) start - 1;
-	if (conn->swap)
-	{
-		*lenp = SWAP32(len);
-	}
-	else
-	{
-		*lenp = len;
-	}
+	*lenp = conn->swap ? SWAP32(len) : len;
 
 	if ( __tcpip_write_exact( conn->tcp_socket, lenp, len + sizeof(int) ) < 0 )
 	{
@@ -783,10 +770,10 @@ crTCPIPRecv( void )
 		{
 			/* 
 			 * NOTE: may want to always put the FD in the descriptor
-               		 * set so we'll notice broken connections.  Down in the
-               		 * loop that iterates over the ready sockets only peek
-               		 * (MSG_PEEK flag to recv()?) if the connection isn't
-               		 * enabled. 
+			 * set so we'll notice broken connections.  Down in the
+			 * loop that iterates over the ready sockets only peek
+			 * (MSG_PEEK flag to recv()?) if the connection isn't
+			 * enabled. 
 			 */
 #ifndef ADDRINFO
 			struct sockaddr s;
@@ -1040,8 +1027,7 @@ crTCPIPRecv( void )
 
 
 static void
-crTCPIPHandleNewMessage( CRConnection *conn, CRMessage *msg,
-		unsigned int len )
+crTCPIPHandleNewMessage( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
 	CRTCPIPBuffer *buf = ((CRTCPIPBuffer *) msg) - 1;
 

@@ -390,8 +390,10 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 		cr_net.recv_list = NULL;
 		cr_net.close_list = NULL;
 	}
+
 	if (recvFunc != NULL)
 	{
+		/* check if function is already in the list */
 		for (rfl = cr_net.recv_list ; rfl ; rfl = rfl->next )
 		{
 			if (rfl->recv == recvFunc)
@@ -400,16 +402,19 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 				break;
 			}
 		}
+		/* not in list, so insert at the head */
 		if (!rfl)
 		{
-			rfl = (CRNetReceiveFuncList *) malloc( sizeof (*rfl ));
+			rfl = (CRNetReceiveFuncList *) crAlloc( sizeof (*rfl ));
 			rfl->recv = recvFunc;
 			rfl->next = cr_net.recv_list;
 			cr_net.recv_list = rfl;
 		}
 	}
+
 	if (closeFunc != NULL)
 	{
+		/* check if function is already in the list */
 		for (cfl = cr_net.close_list ; cfl ; cfl = cfl->next )
 		{
 			if (cfl->close == closeFunc)
@@ -418,9 +423,10 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 				break;
 			}
 		}
+		/* not in list, so insert at the head */
 		if (!cfl)
 		{
-			cfl = (CRNetCloseFuncList *) malloc( sizeof (*cfl ));
+			cfl = (CRNetCloseFuncList *) crAlloc( sizeof (*cfl ));
 			cfl->close = closeFunc;
 			cfl->next = cr_net.close_list;
 			cr_net.close_list = cfl;
@@ -494,8 +500,9 @@ void crNetFree( CRConnection *conn, void *buf )
  *
  * \param conn  the network connection
  * \param bufp  if non-null the buffer was provided by the network layer
- *              and should be returned to the 'free' pool after it's sent.
- * \param start  points to first byte to send
+ *              and will be returned to the 'free' pool after it's sent.
+ * \param start  points to first byte to send, which must point to a CRMessage
+ *               object!
  * \param len  number of bytes to send
  */
 void crNetSend( CRConnection *conn, void **bufp,
@@ -629,6 +636,12 @@ void crNetSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 }
 
 
+/**
+ * Receive a chunk of a CR_MESSAGE_MULTI_BODY/TAIL transmission.
+ * \param conn  the network connection
+ * \param msg  the incoming multi-part message
+ * \param len  number of bytes in the message
+ */
 static void
 crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned int len )
 {
@@ -638,13 +651,15 @@ crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned int len )
 	CRASSERT( len > sizeof(*msg) );
 	len -= sizeof(*msg);
 
+	/* Check if there's enough room in the multi-buffer to append 'len' bytes */
 	if ( len + multi->len > multi->max )
 	{
 		if ( multi->max == 0 )
 		{
 			multi->len = conn->sizeof_buffer_header;
-			multi->max = 8192;
+			multi->max = 8192;  /* arbitrary initial size */
 		}
+		/* grow the buffer by 2x until it's big enough */
 		while ( len + multi->len > multi->max )
 		{
 			multi->max <<= 1;
@@ -659,6 +674,7 @@ crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned int len )
 
 	if (msg->header.type == CR_MESSAGE_MULTI_TAIL)
 	{
+		/* OK, we've collected the last chunck of the multi-part message */
 		conn->HandleNewMessage(
 				conn,
 				(CRMessage *) (((char *) multi->buf) + conn->sizeof_buffer_header),
@@ -674,21 +690,16 @@ crNetRecvMulti( CRConnection *conn, CRMessageMulti *msg, unsigned int len )
 	conn->InstantReclaim( conn, (CRMessage *) msg );
 }
 
-static void crNetRecvFlowControl( CRConnection *conn,
-		CRMessageFlowControl *msg, unsigned int len )
+
+/**
+ * Increment the connection's send_credits by msg->credits.
+ */
+static void
+crNetRecvFlowControl( CRConnection *conn,	CRMessageFlowControl *msg,
+											unsigned int len )
 {
 	CRASSERT( len == sizeof(CRMessageFlowControl) );
-
-	/*crWarning ("Getting %d credits!", msg->credits); */
-	if (conn->swap)
-	{
-		conn->send_credits += SWAP32(msg->credits);
-	}
-	else
-	{
-		conn->send_credits += msg->credits;
-	}
-
+	conn->send_credits += (conn->swap ? SWAP32(msg->credits) : msg->credits);
 	conn->InstantReclaim( conn, (CRMessage *) msg );
 }
 
@@ -825,6 +836,7 @@ crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn,
 	{
 		if (rfl->recv( conn, buf, len ))
 		{
+			/* message was consumed - all done */
 			return;
 		}
 	}

@@ -57,7 +57,6 @@ typedef int    CRSocket;
 #endif
 
 typedef void (*CRVoidFunc)( void );
-/* XXX make void *buf const??? */
 typedef int (*CRNetReceiveFunc)( CRConnection *conn, void *buf, unsigned int len );
 typedef int (*CRNetConnectFunc)( CRConnection *conn );
 typedef void (*CRNetCloseFunc)( unsigned int sender_id );
@@ -78,12 +77,18 @@ typedef struct __messageList {
 	struct __messageList *next;
 } CRMessageList;
 
+/**
+ * Used to accumulate CR_MESSAGE_MULTI_BODY/TAIL chunks into one big buffer.
+ */
 typedef struct CRMultiBuffer {
-	unsigned int  len;
-	unsigned int  max;
-	void         *buf;
+	unsigned int  len;  /* current length (<= max) (with sizeof_buffer_header) */
+	unsigned int  max;  /* size in bytes of data buffer */
+	void         *buf;  /* data buffer */
 } CRMultiBuffer;
 
+/**
+ * Chromium network connection (bidirectional).
+ */
 struct CRConnection {
 	int ignore;
 	CRConnectionType type;
@@ -107,21 +112,23 @@ struct CRConnection {
 	char *hostname;
 	int port;
 
-	/* To allocate a data buffer */
+	/* To allocate a data buffer of size conn->buffer_size bytes */
 	void *(*Alloc)( CRConnection *conn );
 	/* To indicate the client's done with a data buffer */
 	void  (*Free)( CRConnection *conn, void *buf );
-	/* To send a data buffer */
+	/* To send a data buffer.  If bufp is non-null, it must have been obtained
+	 * from Alloc() and it'll be freed when Send() returns.
+	 */
 	void  (*Send)( CRConnection *conn, void **buf, const void *start, unsigned int len );
-	/* To drop a data buffer on the floor */
+	/* To send a data buffer than can optionally be dropped on the floor */
 	void  (*Barf)( CRConnection *conn, void **buf, const void *start, unsigned int len );
-	/* To send a data buffer */
+	/* To send 'len' bytes from buffer at 'start', no funny business */
 	void  (*SendExact)( CRConnection *conn, const void *start, unsigned int len );
-	/* To receive data */
+	/* To receive data.  'len' bytes will be placed into 'buf'. */
 	void  (*Recv)( CRConnection *conn, void *buf, unsigned int len );
 	/* What's this??? */
 	void  (*InstantReclaim)( CRConnection *conn, CRMessage *mess );
-	/* What's this??? */
+ /* Called when a full CR_MESSAGE_MULTI_HEAD/TAIL message has been received */
 	void  (*HandleNewMessage)( CRConnection *conn, CRMessage *mess, unsigned int len );
 	/* To accept a new connection from a client */
 	void  (*Accept)( CRConnection *conn, const char *hostname, unsigned short port );
