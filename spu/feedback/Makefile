@@ -21,7 +21,7 @@ else
 LIBRARIES = spuload crutil crmothership crstate
 endif
 
-PRECOMP = feedbackspu.c feedback.h
+PRECOMP = feedbackspu.c feedbackspu_state.c feedback.h
 SLOP = $(PRECOMP)
 
 LIB_DEFS += feedback.def
