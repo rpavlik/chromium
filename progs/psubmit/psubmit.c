@@ -79,6 +79,34 @@ doughnut(GLfloat r, GLfloat R, GLint nsides, GLint rings)
 }
 
 
+static void
+drawBBox(const GLfloat bbox[6])
+{
+	const GLfloat x0 = bbox[0], y0 = bbox[1], z0 = bbox[2];
+	const GLfloat x1 = bbox[3], y1 = bbox[4], z1 = bbox[5];
+	 
+	glColor3f(1, 1, 1);
+	glBegin(GL_LINE_LOOP);
+	glVertex3f(x0, y0, z0);
+	glVertex3f(x1, y0, z0);
+	glVertex3f(x1, y1, z0);
+	glVertex3f(x0, y1, z0);
+	glEnd();
+	glBegin(GL_LINE_LOOP);
+	glVertex3f(x0, y0, z1);
+	glVertex3f(x1, y0, z1);
+	glVertex3f(x1, y1, z1);
+	glVertex3f(x0, y1, z1);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex3f(x0, y0, z0);	 glVertex3f(x0, y0, z1);
+	glVertex3f(x1, y0, z0);	 glVertex3f(x1, y0, z1);
+	glVertex3f(x1, y1, z0);	 glVertex3f(x1, y1, z1);
+	glVertex3f(x0, y1, z0);	 glVertex3f(x0, y1, z1);
+	glEnd();
+}
+
+
 
 int main(int argc, char *argv[])
 {
@@ -95,6 +123,7 @@ int main(int argc, char *argv[])
 	int triangles = 15 * 30 * 2;
 	int sides, rings;
 	float aspectRatio;
+	int useBBox = 0;
 
 	if (argc < 5)
 	{
@@ -145,6 +174,10 @@ int main(int argc, char *argv[])
 			}
 			triangles = crStrToInt( argv[i+1] );
 			i++;
+		}
+		else if (!crStrcmp( argv[i], "-bbox" ))
+		{
+			useBBox = 1;
 		}
 	} 
 
@@ -221,11 +254,10 @@ int main(int argc, char *argv[])
 
 	for (frame = 0; ; frame++)
 	{
-		/*
-		static const GLfloat boundingBox[6] = {
-			-0.85, 0.85, -0.85, 0.85, -0.7, 0.7
-		};
-		*/
+		const GLfloat innerRadius = 0.15;
+		const GLfloat outerRadius = 0.70;
+		GLfloat bbox[6];
+
 		if (clearFlag)
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -238,9 +270,20 @@ int main(int argc, char *argv[])
 
 		glTranslatef(0.5, 0, 0);
 		glRotatef(18, 1, 0, 0);
+
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, colors[rank%7]);
-		/*glChromiumParametervCR_ptr(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, boundingBox);*/
-		doughnut((GLfloat).15,(GLfloat)0.7, sides, rings);
+
+		if (useBBox) {
+			bbox[0] = -(innerRadius + outerRadius);
+			bbox[1] = -(innerRadius + outerRadius);
+			bbox[2] = -innerRadius;
+			bbox[3] = +(innerRadius + outerRadius);
+			bbox[4] = +(innerRadius + outerRadius);
+			bbox[5] = +innerRadius;
+			glChromiumParametervCR_ptr(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bbox);
+			drawBBox(bbox);
+		}
+		doughnut(innerRadius, outerRadius, sides, rings);
 
 		glPopMatrix();
 
