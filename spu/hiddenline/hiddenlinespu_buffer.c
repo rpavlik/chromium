@@ -2,8 +2,12 @@
 #include "cr_bufpool.h"
 #include "cr_mem.h"
 
-CRBufferPool bufpool;
+static CRBufferPool bufpool;
 
+/*
+ * Get an empty packing buffer from the buffer pool, or allocate a new one.
+ * Then tell the packer to use it.
+ */
 void hiddenlineProvidePackBuffer(void)
 {
 	static int first_time = 1;
@@ -23,6 +27,10 @@ void hiddenlineProvidePackBuffer(void)
 	crPackSetBuffer( hiddenline_spu.packer, &(hiddenline_spu.pack_buffer) );
 }
 
+/*
+ * Put the given buffer list into the free buffer pool.  We do this when
+ * we've finished rendering a frame and no longer need the buffer list.
+ */
 void hiddenlineReclaimPackBuffer( BufList *bl )
 {
 	if (bl->can_reclaim)
@@ -35,6 +43,13 @@ void hiddenlineReclaimPackBuffer( BufList *bl )
 	}
 }
 
+/*
+ * Allocate a BufList object and initialize it with the given parameters.
+ * Add it to the tail of the linked list anchored to frame_head.
+ * The idea is that we're building a linked list of OpenGL command
+ * buffers which we'll replay later.
+ * Called by the Flush/Huge functions below.
+ */
 static void hiddenlineRecord( void *buf, void *data, void *opcodes, unsigned int num_opcodes, int can_reclaim )
 {
 	BufList *bl;
@@ -57,6 +72,11 @@ static void hiddenlineRecord( void *buf, void *data, void *opcodes, unsigned int
 	hiddenline_spu.frame_tail = bl;
 }
 
+/*
+ * This is called by the packer when the packer's buffer is full and
+ * it needs to be emptied.
+ * This function is registered as a callback with crPackFlushFunc().
+ */
 void hiddenlineFlush( void *arg )
 {
 	CRPackBuffer *buf = &(hiddenline_spu.pack_buffer);
@@ -68,6 +88,10 @@ void hiddenlineFlush( void *arg )
 	(void) arg;
 }
 
+/*
+ * This is a callback function called by the packer when it needs to
+ * pack something big (like glDrawPixels).
+ */
 void hiddenlineHuge( CROpcode opcode, void *buf )
 {
 	/* write the opcode in just before the packet length */
