@@ -476,39 +476,6 @@ void TILESORTSPU_APIENTRY tilesortspu_Bitmap(
 		}
 	}
 }
-
-
-
-void TILESORTSPU_APIENTRY tilesortspu_PixelMapfv (GLenum map, GLint mapsize, const GLfloat * values)
-{
-	crStatePixelMapfv ( map, mapsize, values );
-	if (tilesort_spu.swap) {
-		crPackPixelMapfvSWAP ( map, mapsize, values );
-	} else {
-		crPackPixelMapfv ( map, mapsize, values );
-	}
-}
-
-void TILESORTSPU_APIENTRY tilesortspu_PixelMapuiv (GLenum map, GLint mapsize, const GLuint * values)
-{
-	crStatePixelMapuiv ( map, mapsize, values );
-	if (tilesort_spu.swap) {
-		crPackPixelMapuivSWAP ( map, mapsize, values );
-	} else {
-		crPackPixelMapuiv ( map, mapsize, values );
-	}
-}
- 
-void TILESORTSPU_APIENTRY tilesortspu_PixelMapusv (GLenum map, GLint mapsize, const GLushort * values)
-{
-	crStatePixelMapusv ( map, mapsize, values );
-	if (tilesort_spu.swap) {
-		crPackPixelMapusvSWAP ( map, mapsize, values );
-	} else {
-		crPackPixelMapusv ( map, mapsize, values );
-	}
-}
-
 /* 
  * Here we want to flush texture state before we call PixelTransfer*().
  * This will ensure that situations such as:
@@ -681,3 +648,58 @@ void TILESORTSPU_APIENTRY tilesortspu_PixelTransferf (GLenum pname, GLfloat para
 	pixeltransfer_flush();
 	crStatePixelTransferf( pname, param );
 }
+
+
+void TILESORTSPU_APIENTRY tilesortspu_PixelMapfv (GLenum map, GLint mapsize, const GLfloat * values)
+{
+	/* This flush ensures that any pixel operations that should be touched by
+	 * the old map are pushed out the door.
+	 */
+	pixeltransfer_flush();
+
+	crStatePixelMapfv ( map, mapsize, values );
+
+	if (tilesort_spu.swap) {
+		crPackPixelMapfvSWAP ( map, mapsize, values );
+	} else {
+		crPackPixelMapfv ( map, mapsize, values );
+	}
+	/* This broadcast makes sure that the new map goes out the door before anyone
+	 * that is supposed to use it.
+	 */
+	tilesortspuBroadcastGeom(1);
+}
+
+void TILESORTSPU_APIENTRY tilesortspu_PixelMapuiv (GLenum map, GLint mapsize, const GLuint * values)
+{
+	/* see longer comment in PixelMapfv */
+	pixeltransfer_flush();
+
+	crStatePixelMapuiv ( map, mapsize, values );
+	if (tilesort_spu.swap) {
+		crPackPixelMapuivSWAP ( map, mapsize, values );
+	} else {
+		crPackPixelMapuiv ( map, mapsize, values );
+	}
+
+	/* see longer comment in PixelMapfv */
+	tilesortspuBroadcastGeom(1);
+}
+ 
+void TILESORTSPU_APIENTRY tilesortspu_PixelMapusv (GLenum map, GLint mapsize, const GLushort * values)
+{
+	/* see longer comment in PixelMapfv */
+	pixeltransfer_flush();
+
+	crStatePixelMapusv ( map, mapsize, values );
+	if (tilesort_spu.swap) {
+		crPackPixelMapusvSWAP ( map, mapsize, values );
+	} else {
+		crPackPixelMapusv ( map, mapsize, values );
+	}
+
+	/* see longer comment in PixelMapfv */
+	tilesortspuBroadcastGeom(1);
+}
+
+
