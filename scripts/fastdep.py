@@ -1,15 +1,15 @@
+# File: fastdep.py
+# Author: Christopher R. Waters <crw7@msstate.edu>
+# Last Modified: 2004/09/30 3:00pm CST
 
-import sys
-import re
-import os
+""" 'Fast' dependency generation
 
-def directory( dfile ):
-	if "/" in dfile:
-		d = re.match("^(.*)\/([^\/])+$", dfile ).group(1)
-	else:
-		d = "."
+Initial version: direct port from perl (fastdep.pl)
+Current version: geared more towards actual speed.
+"""
 
-	return ( d + "/" )
+import sys, getopt, os
+from os.path import dirname, exists, splitext
 
 dInc = dict()
 
@@ -20,31 +20,38 @@ def includes( incfile ):
 		return dInc[ incfile ]
 
 	try: hFile = file( incfile )
-	except (IOError, TypeError):
+	except ( IOError, TypeError ):
 		return None
 
 	angles = []
 	quotes = []
 
-	for line in hFile.readlines():
-		if re.match("\s*\#", line) == None:
+	for line in hFile:
+		line = line.lstrip()
+		if len(line) == 0 or line[0] != '#':
 			continue
-		m = re.match("^\s*#\s*include\s*([<\"])(.*)[>\"]", line)
-		if m:
-			if m.group(1) == "<":
-				angles.append( m.group(2) )
-			else:
-				quotes.append( m.group(2) )
+
+		line = line[1:].lstrip()
+		if not line.startswith( "include" ):
+			continue
+
+		line = line[7:].lstrip().rstrip()
+		if len(line) == 0: continue
+
+		if line[0] == '<' and line[-1] == '>':
+			angles.append( line[1:-1] )
+		elif line[0] == '\"' and line[-1] == '\"':
+			quotes.append( line[1:-1] )
+		# else invalid
 
 	hFile.close()
 
-	incdir = directory(incfile)
+	incdir = dirname( incfile ) + '/'
 	files = []
 
-	while len(quotes):
-		name = quotes.pop()
+	for name in quotes:
 		f = incdir + name
-		if os.path.exists(f):
+		if exists( f ):
 			files.append( f )
 		else:
 			angles.append( name )
@@ -52,26 +59,25 @@ def includes( incfile ):
 	for name in angles:
 		for incdir in incpath:
 			f = incdir + name
-			if os.path.exists(f):
-				files.append(f)
+			if exists( f ):
+				files.append( f )
 				break
 
-	dInc[incfile] = files
+	dInc[ incfile ] = files
 
 	return files
 
 def depends( depfile ):
-	depfiles = [depfile]
+	depfiles = [ depfile ]
 	dFiles = dict()
 
-	while len(depfiles):
-		f = depfiles.pop()
-		if f in dFiles:
+	while len( depfiles ):
+		_file = depfiles.pop()
+		if _file in dFiles:
 			continue
 
-		dFiles[f] = 1
-		f = includes(f)
-		if f: depfiles[:0] = f
+		dFiles[ _file ] = 1
+		depfiles += includes( _file )
 
 	return dFiles.keys()
 
@@ -85,41 +91,42 @@ extra_targets = []
 incpath = []
 files = []
 
-for arg in sys.argv[1:]:
-	val = re.match(r"^-I(.+/)$", arg)
-	if val:
-		incpath.append( val.group(1) )
-		continue
+"""Options accepted:
+	-I<include path>
+	--obj-prefix=<prefix>
+	--obj-suffix=<suffix>
+	--extra-target=<targets>
+	<files>
+"""
+optlist, args = getopt.getopt( sys.argv[1:], 'I:', ['obj-prefix=', 'obj-suffix=', 'extra-target='] )
+files = [ arg for arg in args if arg[0] != '/' ]
 
-	val = re.match("^-I(.+)$", arg)
-	if val:
-		incpath.append( val.group(1) + "/" )
-		continue
+for option, val in optlist:
+	if len(val) == 0: continue
 
-	val = re.match("^--obj-prefix=(.*)$", arg )
-	if val:
-		obj_prefix = val.group(1)
-		continue
+	if option == '-I':
+		if val[-1] != '/': val += '/'
+		incpath.append( val )
 
-	val = re.match("^--obj-suffix=(.*)$", arg )
-	if val:
-		obj_suffix = val.group(1)
-		continue
+	elif option == '--obj-prefix':
+		obj_prefix = val
 
-	val = re.match("^--extra-target=(.*)$", arg )
-	if val:
-		extra_targets.append(val.group(1))
-		continue
+	elif option == '--obj-suffix':
+		obj_suffix = val
 
-	if arg[0] != '/':
-		files += [arg]
+	elif option == '--extra-target':
+		extra_targets.append( val )
+
+# Remove any quotes.
+if obj_prefix[0] in ('\'','\"'): obj_prefix = obj_prefix.replace( obj_prefix[0], '' )
+if obj_suffix[0] in ('\'','\"'): obj_suffix = obj_suffix.replace( obj_suffix[0], '' )
 
 for incfile in files:
-	val = re.match("^(.*)\.\w+$", incfile )
-	obj = obj_prefix + val.group(1) + obj_suffix
+	val = splitext( incfile )[0] # strip the extension
+	obj = obj_prefix + val + obj_suffix
 
 	for t in extra_targets:
 		obj += " " + t
 
-	for incfile in depends(incfile):
-		print "%s: %s" % (obj, incfile)
+	for incfile in depends( incfile ):
+		print "%s: %s" % ( obj, incfile )
