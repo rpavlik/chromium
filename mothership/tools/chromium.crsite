@@ -14,6 +14,7 @@
 {
 	"mural_size" : (2, 2),          # (cols, rows)
 	"screen_size" : (1280, 1024),   # in pixels
+	"tile_size" : (256, 256),       # for lightning-2 (in pixels)
 	"client_hosts" : ["localhost"],
 	"server_hosts" : ["cr1", "cr2", "cr3", "cr4"]
 }
