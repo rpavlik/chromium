@@ -6,3 +6,8 @@ Grep the code for 'XXX' for miscellaneous loose ends.
 
 Convert the last two Perl scripts in scripts/fastdep.pl and
 state_tracker/gendiffcode.pl to Python. 
+
+Pass a callback function to crHashtableFree and crHashtableDelete to be
+called to deallocate table entries.  This would fix the ambiguity in whether
+or not (and how) hash tables entries should be deallocated.  (Brian)
+
