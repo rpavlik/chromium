@@ -13,10 +13,10 @@
 """
 
 
-import string, os.path
+import string, os.path, types, random
 from wxPython.wx import *
+from crutils import *
 
-import traceback, types
 
 #----------------------------------------------------------------------------
 #                            System Constants
@@ -34,6 +34,7 @@ menu_SPU_OPTIONS   = 10007
 menu_HELP          = 10008
 menu_ABOUT         = 10009
 menu_DELETE_SPU    = 10010
+menu_LAYOUT_NODES  = 10011
 
 # Widget IDs
 id_NewServerNode  = 3000
@@ -51,37 +52,31 @@ SpuClasses = [ "New SPU", "Pack", "Render", "Readback", "Tilesort", "Wet", "Hidd
 SpuMaxServers = { "Pack" : 1,  "Tilesort" : 1000 }
 
 # SPUs which must be at the end of a chain, other than packers
-TerminalSPUs = [ "Render" ]
+TerminalSPUs = [ "Render", "Pack", "Tilesort" ]
 
 Templates = [ "New Template", "Tilesort", "Sort-last" ]
 
+WildcardPattern = "Chromium Configs (*.conf)|*.conf|All (*)|*"
 
 AppNodeBrush = wxBrush(wxColor(55, 160, 55))
 ServerNodeBrush = wxBrush(wxColor(210, 105, 135))
 BackgroundColor = wxColor(90, 150, 190)
 
-#----------------------------------------------------------------------------
-# Utility functions
+ConfigFileHeader = """
+import string
+import sys
+sys.path.append( "../server" )
+sys.path.append( "../tools" )
+from mothership import *
+from crutils import *
 
-class HostGenerator:
-	"""Utility class for generating a sequence of numbered hostnames."""
-	_letterPattern = "[a-zA-Z0-9_\.\-]*"
-	_hashPattern = "#*"
-	_fullPattern = "^" + _letterPattern + _hashPattern + _letterPattern + "$"
+cr = CR()
 
-	def ValidateFormatString(format):
-		if re.match(_fullPattern, format):
-			return 1
-		else:
-			return 0
+"""
 
-	def MakeHostname(format, number):
-		# find the hash characters first
-		p = re.match(_hashPattern, format)
-		len = len(p.string)
-		print "len = %s" % len
-		return "host05"
-
+ConfigFileTail = """
+cr.Go()
+"""
 
 
 
@@ -126,21 +121,23 @@ class MainFrame(wxFrame):
 		self.editMenu = wxMenu()
 		self.editMenu.Append(menu_UNDO,          "Undo\tCTRL-Z")
 		self.editMenu.AppendSeparator()
-		self.editMenu.Append(menu_DELETE,        "Delete Node(s)\tCTRL-D")
-		self.editMenu.Append(menu_DELETE_SPU,    "Delete SPU(s)\tCTRL-D")
+		self.editMenu.Append(menu_DELETE,        "Delete Node(s)")
+		self.editMenu.Append(menu_DELETE_SPU,    "Delete SPU(s)")
 		self.editMenu.Append(menu_SELECT_ALL,    "Select All\tCTRL-A")
 		self.editMenu.AppendSeparator()
 		self.editMenu.Append(menu_CONNECT,       "Connect Nodes")
 		self.editMenu.Append(menu_DISCONNECT,    "Disconnect Nodes")
 		self.editMenu.Append(menu_SET_HOST,      "Set Host...")
 		self.editMenu.Append(menu_SPU_OPTIONS,   "SPU Options...")
-		EVT_MENU(self, menu_DELETE, self.doDelete)
+		self.editMenu.Append(menu_LAYOUT_NODES,  "Layout Nodes")
+		EVT_MENU(self, menu_DELETE, self.doDeleteNodes)
 		EVT_MENU(self, menu_DELETE_SPU, self.doDeleteSPU)
 		EVT_MENU(self, menu_SELECT_ALL, self.doSelectAll)
 		EVT_MENU(self, menu_CONNECT, self.doConnect)
 		EVT_MENU(self, menu_DISCONNECT, self.doDisconnect)
 		EVT_MENU(self, menu_SET_HOST, self.doSetHost)
 		EVT_MENU(self, menu_SPU_OPTIONS, self.doSpuOptions)
+		EVT_MENU(self, menu_LAYOUT_NODES, self.doLayoutNodes)
 		menuBar.Append(self.editMenu, "Edit")
 
 		# Help menu
@@ -258,6 +255,75 @@ class MainFrame(wxFrame):
 			if node.IsSelected():
 				n += 1
 		return n
+
+	def __compareFunc(self, node1, node2):
+		(x1, y1) = node1.GetPosition()
+		(x2, y2) = node2.GetPosition()
+		if x1 < x2:
+			return -1
+		elif x1 > x2:
+			return 1
+		else:
+			if y1 < y2:
+				return -1
+			elif y1 > y2:
+				return 1
+			else:
+				return 0
+
+	def SortNodesByPosition(self, list):
+		"""Return a list all the nodes sorted by position (X-major)"""
+		list.sort(self.__compareFunc)
+
+	def LayoutNodes(self):
+		"""Compute reasonable window positions for all the nodes"""
+		nodeColumn = {}
+		nodeRow = {}
+		# first, put all nodes into column 0
+		for node in self.Nodes:
+			nodeColumn[node] = 0
+		# assign nodes to columns
+		# depth-first traversal over the node graph, using a stack
+		stack = []
+		for node in self.Nodes:
+			stack.append(node)
+		while len(stack) > 0:
+			# pop node
+			node = stack[0]
+			stack.remove(node)
+			# loop over this node's children
+			for server in node.GetServers():
+				if server in stack:
+					stack.remove(server)
+				# position this server to the right of the node
+				nodeColumn[server] = nodeColumn[node] + 1
+				# push the server's children onto the unresolved list
+				if len(server.GetServers()) > 0:
+					stack.insert(0, server)
+
+		# compute rows for nodes
+		columnSize = {}
+		for node in self.Nodes:
+			col = nodeColumn[node]
+			if col in columnSize:
+				row = columnSize[col]
+				columnSize[col] += 1
+			else:
+				row = 0
+				columnSize[col] = 1
+			nodeRow[node] = row
+		# find tallest column
+		tallest = 0
+		for col in columnSize.keys():
+			if columnSize[col] >= tallest:
+				tallest = columnSize[col]
+		# set the (x,y) positions for each node
+		for node in self.Nodes:
+			x = nodeColumn[node] * 200 + 10
+			y = nodeRow[node] * 60 + 10
+			node.SetPosition(x, y)
+			node.InvalidateLayout()
+
 
 	SELECT_ONE = 1
 	SELECT_EXTEND = 2
@@ -394,7 +460,7 @@ class MainFrame(wxFrame):
 		# draw the wires between the nodes
 		pen = wxPen(wxColor(0, 0, 250))
 		pen.SetWidth(2)
-		dc.SetPen(pen);
+		dc.SetPen(pen)
 		for node in self.Nodes:
 			servers = node.GetServers()
 			for s in servers:
@@ -406,10 +472,12 @@ class MainFrame(wxFrame):
 	# called when New App Node button is pressed
 	def onNewAppNode(self, event):
 		self.DeselectAll()
+		xstart = random.randrange(10, 50, 5)
+		ystart = random.randrange(50, 100, 5)
 		n = self.newAppChoice.GetSelection()
 		for i in range(0, n):
-			node = ApplicationNode()
-			node.SetPosition(x=10, y=50+i*65)
+			node = ApplicationNode("app%d" % i)
+			node.SetPosition(xstart, ystart + i * 65)
 			node.Select()
 			self.AddNode(node)
 		self.newAppChoice.SetSelection(0)
@@ -419,10 +487,12 @@ class MainFrame(wxFrame):
 	# called when New Server Node button is pressed
 	def onNewServerNode(self, event):
 		self.DeselectAll()
+		xstart = random.randrange(250, 300, 5)
+		ystart = random.randrange(50, 100, 5)
 		n = self.newServerChoice.GetSelection()
 		for i in range(0, n):
-			node = NetworkNode()
-			node.SetPosition(x=250, y=50+i*65)
+			node = NetworkNode("cr%d" % i)
+			node.SetPosition(xstart, ystart + i * 65)
 			node.Select()
 			self.AddNode(node)
 		self.newServerChoice.SetSelection(0)
@@ -433,17 +503,37 @@ class MainFrame(wxFrame):
 		"""New SPU button callback"""
 		# add a new SPU to all selected nodes
 		i = self.newSpuChoice.GetSelection()
-		if i > 0:
-			for node in self.Nodes:
-				if node.IsSelected():
-					if node.NumSPUs() > 0 and (node.LastSPU().IsPacker() or node.LastSPU().IsTerminal()):
-						self.Notify("You can't chain a %s SPU after a %s SPU." % (SpuClasses[i], node.LastSPU().Name()))
-						break
-					else:
-						s = SpuObject( SpuClasses[i] )
-						node.AddSPU(s)
-			self.drawArea.Refresh()
-			self.newSpuChoice.SetSelection(0)
+		if i <= 0:
+			return # didn't really select an SPU class
+		for node in self.Nodes:
+			if node.IsSelected():
+				# we'll insert before the first selected SPU, or at the
+				# end if no SPUs are selected
+				pos = node.GetFirstSelectedSPUPos()
+				# get the predecessor SPU
+				if pos == -1:
+					pred = node.LastSPU()
+				elif pos > 0:
+					pred = node.GetSPU(pos - 1)
+				else:
+					pred = 0
+				# check if it's legal to put this SPU after the predecessor
+				if pred and pred.IsTerminal():
+					self.Notify("You can't put a %s SPU after a %s SPU." %
+								(SpuClasses[i], pred.Name()))
+					break
+				# check if it's legal to put this SPU before another
+				if pos >= 0 and SpuClasses[i] in TerminalSPUs:
+					self.Notify("You can't insert a %s SPU before a %s SPU." %
+								(SpuClasses[i], node.GetSPU(pos).Name()))
+					break
+				# OK, we're all set, add the SPU
+				s = SpuObject( SpuClasses[i] )
+				node.AddSPU(s, pos)
+				# XXX make the new SPU the only one selected
+				
+		self.drawArea.Refresh()
+		self.newSpuChoice.SetSelection(0)
 
 	def onNewTemplate(self, event):
 		"""New Template button callback"""
@@ -469,7 +559,7 @@ class MainFrame(wxFrame):
 			if p >= 1:
 				hitNode = node
 				if p > 1 and event.LeftDown():
-					hitSPU = hitNode.GetSPUs()[p-2]
+					hitSPU = hitNode.GetSPU(p - 2)
 				break
 			# endif
 		# endfor
@@ -493,15 +583,17 @@ class MainFrame(wxFrame):
 					mode = self.SELECT_ONE
 				if hitSPU:
 					# also hit an SPU
-					self.UpdateSelection(hitNode.GetSPUs(), hitSPU, mode)
+					self.UpdateSelection(hitNode.SPUChain(), hitSPU, mode)
 					self.UpdateSelection(self.Nodes, hitNode, self.SELECT_EXTEND)
 				else:
-					self.UpdateSelection(hitNode.GetSPUs(), 0, self.DESELECT_ALL)
+					self.UpdateSelection(hitNode.SPUChain(), 0, self.DESELECT_ALL)
 					self.UpdateSelection(self.Nodes, hitNode, mode)
-			else:
+			elif event.ControlDown() or event.ShiftDown():
+				self.LeftDown = 0
+			else: #if not 
 				# didn't hit an SPU or a node
 				for node in self.Nodes:
-					self.UpdateSelection(node.GetSPUs(), 0, self.DESELECT_ALL)
+					self.UpdateSelection(node.SPUChain(), 0, self.DESELECT_ALL)
 				self.UpdateSelection(self.Nodes, 0, self.DESELECT_ALL)
 		else:
 			# mouse up
@@ -515,6 +607,7 @@ class MainFrame(wxFrame):
 					node.SetPosition(x, y)
 			self.SelectDeltaX = 0
 			self.SelectDeltaY = 0
+			self.LeftDown = 0
 
 		self.UpdateMenus()
 		self.drawArea.Refresh()
@@ -523,7 +616,7 @@ class MainFrame(wxFrame):
 	# mouse button is also pressed, but I don't see a way to specify that with
 	# wxWindows as you can do with X.
 	def onMouseMotion(self, event):
-		if event.LeftIsDown():
+		if event.LeftIsDown() and self.LeftDown:
 			# SelectDeltaX/Y is added to the position of selected objects
 			(x,y) = self.drawArea.CalcUnscrolledPosition(event.GetX(), event.GetY())
 			self.SelectDeltaX = x - self.DragStartX
@@ -560,9 +653,10 @@ class MainFrame(wxFrame):
 		global _docList
 
 		curDir = os.getcwd()
-		fileName = wxFileSelector("Open File", default_extension="psk",
+		fileName = wxFileSelector("Open File", default_extension="conf",
 					  flags = wxOPEN | wxFILE_MUST_EXIST)
-		if fileName == "": return
+		if fileName == "":
+			return
 		fileName = os.path.join(os.getcwd(), fileName)
 		os.chdir(curDir)
 
@@ -586,7 +680,8 @@ class MainFrame(wxFrame):
 		global _docList
 
 		if self.dirty:
-			if not self.askIfUserWantsToSave("closing"): return
+			if not self.askIfUserWantsToSave("closing"):
+				return
 
 		_docList.remove(self)
 		self.Destroy()
@@ -595,7 +690,7 @@ class MainFrame(wxFrame):
 	def doSave(self, event):
 		"""File / Save callback"""
 		if self.fileName != None:
-			self.saveContents()
+			self.saveGraph()
 
 
 	def doSaveAs(self, event):
@@ -606,12 +701,13 @@ class MainFrame(wxFrame):
 			default = self.fileName
 
 		curDir = os.getcwd()
-		fileName = wxFileSelector("Save File As", "Saving",
+		fileName = wxFileSelector("Save File As",
 					  default_filename=default,
-					  default_extension="psk",
-					  wildcard="*.psk",
+					  default_extension="conf",
+					  wildcard=WildcardPattern,
 					  flags = wxSAVE | wxOVERWRITE_PROMPT)
-		if fileName == "": return # User cancelled.
+		if fileName == "":
+			return # User cancelled.
 		fileName = os.path.join(os.getcwd(), fileName)
 		os.chdir(curDir)
 
@@ -619,17 +715,19 @@ class MainFrame(wxFrame):
 		self.SetTitle(title)
 
 		self.fileName = fileName
-		self.saveContents()
+		self.saveGraph()
 
 
 	def doRevert(self, event):
 		""" Respond to the "Revert" menu command.
 		"""
-		if not self.dirty: return
+		if not self.dirty:
+			return
 
 		if wxMessageBox("Discard changes made to this document?", "Confirm",
 				style = wxOK | wxCANCEL | wxICON_QUESTION,
-				parent=self) == wxCANCEL: return
+				parent=self) == wxCANCEL:
+			return
 		self.loadContents()
 
 
@@ -640,15 +738,16 @@ class MainFrame(wxFrame):
 		for doc in _docList:
 			if not doc.dirty: continue
 			doc.Raise()
-			if not doc.askIfUserWantsToSave("quitting"): return
+			if not doc.askIfUserWantsToSave("quitting"):
+				return
 			_docList.remove(doc)
 			doc.Destroy()
 
 		_app.ExitMainLoop()
 
 
-	def doDelete(self, event):
-		"""Edit / Delete Node callback"""
+	def doDeleteNodes(self, event):
+		"""Edit / Delete Nodes callback"""
 		# Ugh, I can't find a Python counterpart to the C++ STL's remove_if()
 		# function.
 		# Have to make a temporary list of the objects to delete so we don't
@@ -657,6 +756,11 @@ class MainFrame(wxFrame):
 		for node in self.Nodes:
 			if node.IsSelected():
 				deleteList.append(node)
+		# loop over nodes again to remove server connections
+		for node in self.Nodes:
+			for server in node.GetServers():
+				if server.IsSelected():
+					node.LastSPU().RemoveServer(server)
 		# now delete the objects in the deleteList
 		for node in deleteList:
 			 self.Nodes.remove(node)
@@ -665,8 +769,15 @@ class MainFrame(wxFrame):
 
 	def doDeleteSPU(self, event):
 		"""Edit / Delete SPU callback"""
+		# make list of SPUs to delete
 		for node in self.Nodes:
-			node.DeleteSelectedSPUs()
+			removeList = []
+			for spu in node.SPUChain():
+				if spu.IsSelected():
+					removeList.append(spu)
+			# now remove
+			for spu in removeList:
+				node.RemoveSPU(spu)
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
@@ -678,41 +789,69 @@ class MainFrame(wxFrame):
 
 	def doConnect(self, event):
 		"""Edit / Connect callback"""
-		# First, count how many app nodes and network/server nodes we have
-		numAppNodes = 0
-		numServerNodes = 0
+		# Make list of packer(app and net) nodes and server nodes
+		netPackerNodes = []
+		appPackerNodes = []
+		serverNodes = []
 		for node in self.Nodes:
 			if node.IsSelected():
-				if node.IsServer():
-					numServerNodes += 1
-				elif node.IsAppNode() and node.HasAvailablePacker():
-					numAppNodes += 1
+				if node.HasAvailablePacker():
+					if node.IsServer():
+						netPackerNodes.append(node)
+					else:
+						appPackerNodes.append(node)
+				elif node.IsServer():
+					serverNodes.append(node)
+		#print "appPackerNodes: %d" % len(appPackerNodes)
+		#print "netPackerNodes: %d" % len(netPackerNodes)
+		#print "serverNodes: %d" % len(serverNodes)
 
-		# Now, wire-up the connections
-		if numAppNodes == 1 and numServerNodes > 0:
-			# connect the app node to all server nodes (probably tilesort)
-			for node in self.Nodes:
-				if node.IsSelected() and node.IsAppNode() and node.HasAvailablePacker():
-					# look for server nodes
-					for n in self.Nodes:
-						if n.IsSelected() and n.IsServer():
-							node.LastSPU().AddServer(n)
-					#endfor
-			#endfor
-		elif numAppNodes > 0 and numServerNodes == 1:
-			# connect all app nodes to the server (probably sort-last)
-			for node in self.Nodes:
-				if node.IsSelected() and node.IsServer():
-					# look for app nodes
-					for n in self.Nodes:
-						if n.IsSelected() and n.IsAppNode() and n.HasAvailablePacker():
-							n.LastSPU().AddServer(node)
-					#endfor
-			#endfor
+		if len(appPackerNodes) == 0 and len(netPackerNodes) == 0:
+			#print "no packers!"
+			return
+
+		# see if we need to reassign any packers as servers.
+		# solving this situation is done via an ad hoc heuristic.
+		if len(serverNodes) == 0:
+			# reassign a network packer as a server
+			if len(netPackerNodes) > 1:
+				# sort the packer nodes by position
+				self.SortNodesByPosition(netPackerNodes)
+				# look if leftmost node has a tilesorter
+				leftMost = netPackerNodes[0]
+				if SpuMaxServers[leftMost.LastSPU().Name()] > 1:
+					# leftMost node is tilesorter
+					serverNodes = netPackerNodes
+					serverNodes.remove(leftMost)
+					netPackerNodes = [ leftMost ]
+				else:
+					# find rightmost netPacker node
+					rightMost = netPackerNodes[-1]
+					serverNodes.append(rightMost)
+					netPackerNodes.remove(rightMost)
+			else:
+				#print "no packers 2!"
+				return
+		packerNodes = appPackerNodes + netPackerNodes
+
+		#print "ending: packerNodes: %d" % len(packerNodes)
+		#print "ending: serverNodes: %d" % len(serverNodes)
+		
+		# this is useful special case to look for
+		if len(packerNodes) == len(serverNodes):
+			oneToOne = 1
 		else:
-			# not sure what to do here yet
-			print "doConnect() not fully implemented yet, sorry."
-			
+			oneToOne = 0
+
+		# Now wire-up the connections from packers to servers
+		for packer in packerNodes:
+			for server in serverNodes:
+				if packer.HasAvailablePacker() and not server.HasChild(packer):
+					packer.LastSPU().AddServer(server)
+					if not packer.HasAvailablePacker() and oneToOne:
+						# nobody else can connect to this server now
+						serverNodes.remove(server)
+		# Done!
 		self.drawArea.Refresh()
 
 	def doDisconnect(self, event):
@@ -745,6 +884,11 @@ class MainFrame(wxFrame):
 		"""Edit / SPU Options callback"""
 		return
 		
+	def doLayoutNodes(self, event):
+		"""Edit / Layout Nodes callback"""
+		self.LayoutNodes()
+		self.drawArea.Refresh()
+
 	def doShowIntro(self, event):
 		"""Help / Introduction callback"""
 		dialog = wxDialog(self, -1, "Introduction") # ,
@@ -856,8 +1000,10 @@ class MainFrame(wxFrame):
 			self.newSpuChoice.Enable(0)
 		if len(self.Nodes) > 0:
 			self.editMenu.Enable(menu_SELECT_ALL, 1)
+			self.editMenu.Enable(menu_LAYOUT_NODES, 1)
 		else:
 			self.editMenu.Enable(menu_SELECT_ALL, 0)
+			self.editMenu.Enable(menu_LAYOUT_NODES, 0)
 		# always disabled for now
 		self.editMenu.Enable(menu_UNDO, 0)
 
@@ -873,92 +1019,88 @@ class MainFrame(wxFrame):
 	# File I/O
 
 	def loadContents(self):
-		""" Load the contents of our document into memory.
-		"""
+		"""Load a graph from a file"""
 		self.dirty = false
 
 		self.drawArea.Refresh()
 
 
-	def saveContents(self):
-		""" Save the contents of our document to disk.
-		"""
+	def saveGraph(self):
+		"""Save the Chromium configuration to a file."""
+		print "Saving graph!"
+		f = open(self.fileName, "w")
+		if f:
+			# file header
+			f.write("# Chromium configuration produced by graph.py\n")
+			f.write(ConfigFileHeader)
+			# write the nodes and SPUs
+			nodeNames = {}
+			spuNames = {}
+			n = 0
+			s = 0
+			for node in self.Nodes:
+				nodeNames[node] = "node%d" % n
+				if node.IsServer():
+					f.write("node%d = crNetworkNode('%s')\n" % (n, node.Host()))
+				else:
+					f.write("node%d = crApplicationNode('%s')\n" % (n, node.Host()))
+				# write the node's SPUs
+				for spu in node.SPUChain():
+					spuNames[spu] = "spu%d" % s
+					f.write("spu%d = SPU('%s')\n" % (s, spu.Name()))
+					f.write("node%d.AddSPU(spu%d)\n" % (n, s))
+					f.write("#set spu options here\n")
+					s += 1
+				n += 1
+				f.write("\n")
+			# add servers to tilesort/packer SPUs
+			for node in self.Nodes:
+				lastSPU = node.LastSPU()
+				if lastSPU:
+					for server in lastSPU.GetServers():
+						f.write("%s.AddServer(%s)\n" % (spuNames[lastSPU], nodeNames[server]))
+			# endfor
+			f.write("\n")
+			# add nodes to mothership
+			for node in self.Nodes:
+				f.write("cr.AddNode(%s)\n" % nodeNames[node])
+			# tail of file
+			f.write(ConfigFileTail)
+			f.close()
+		else:
+			print "Error opening %s" % self.fileName
 		self.dirty = false
 
 
 	def askIfUserWantsToSave(self, action):
 		""" Give the user the opportunity to save the current document.
-
 			'action' is a string describing the action about to be taken.  If
 			the user wants to save the document, it is saved immediately.  If
 			the user cancels, we return false.
 		"""
-		if not self.dirty: return true # Nothing to do.
+		if not self.dirty:
+			return true # Nothing to do.
 
 		response = wxMessageBox("Save changes before " + action + "?",
 					"Confirm", wxYES_NO | wxCANCEL, self)
 
 		if response == wxYES:
 			if self.fileName == None:
-				fileName = wxFileSelector("Save File As", "Saving",
-						  default_extension="psk",
-						  wildcard="*.psk",
-						  flags = wxSAVE | wxOVERWRITE_PROMPT)
-				if fileName == "": return false # User cancelled.
+				fileName = wxFileSelector("Save File As",
+										  default_extension="conf",
+										  wildcard=WildcardPattern,
+										  flags = wxSAVE | wxOVERWRITE_PROMPT)
+				if fileName == "":
+					return false # User cancelled.
 				self.fileName = fileName
 
-			self.saveContents()
+			self.saveGraph()
 			return true
 		elif response == wxNO:
 			return true # User doesn't want changes saved.
 		elif response == wxCANCEL:
 			return false # User cancelled.
 
-
-#----------------------------------------------------------------------------
-
-class ExceptionHandler:
-	""" A simple error-handling class to write exceptions to a text file.
-
-	    Under MS Windows, the standard DOS console window doesn't scroll and
-	    closes as soon as the application exits, making it hard to find and
-	    view Python exceptions.  This utility class allows you to handle Python
-	    exceptions in a more friendly manner.
-	"""
-
-	def __init__(self):
-		""" Standard constructor.
-		"""
-		self._buff = ""
-		if os.path.exists("errors.txt"):
-			os.remove("errors.txt") # Delete previous error log, if any.
-
-
-	def write(self, s):
-		""" Write the given error message to a text file.
-
-			Note that if the error message doesn't end in a carriage return, we
-			have to buffer up the inputs until a carriage return is received.
-		"""
-		if (s[-1] != "\n") and (s[-1] != "\r"):
-			self._buff = self._buff + s
-			return
-
-		try:
-			s = self._buff + s
-			self._buff = ""
-
-			if s[:9] == "Traceback":
-			# Tell the user than an exception occurred.
-				wxMessageBox("An internal error has occurred.\nPlease " + \
-					 "refer to the 'errors.txt' file for details.",
-					 "Error", wxOK | wxCENTRE | wxICON_EXCLAMATION)
-
-			f = open("errors.txt", "a")
-			f.write(s)
-			f.close()
-		except:
-			pass # Don't recursively crash on errors.
 
 #----------------------------------------------------------------------------
 
@@ -1009,10 +1151,12 @@ class SpuObject:
 
 	def AddServer(self, serverNode, protocol='tcpip', port=7000):
 		"""Add a server to this SPU.  The SPU must have a packer!"""
-		if self.IsPacker() and len(self.__Servers) < SpuMaxServers[self.__Name]:
+		if self.IsPacker() and not serverNode in self.__Servers and len(self.__Servers) < SpuMaxServers[self.__Name]:
 			self.__Servers.append(serverNode)
 			self.__Protocol = protocol
 			self.__Port = port
+		else:
+			print "AddServer() failed!"
 
 	def RemoveServer(self, serverNode):
 		if serverNode in self.__Servers:
@@ -1115,6 +1259,16 @@ class Node:
 		else:
 			return 0
 
+	def HasChild(self, childCandidate):
+		"""Test if childCandidate is a down-stream child (server) of this node
+		"""
+		if childCandidate in self.GetServers():
+			return 1
+		else:
+			for server in self.GetServers():
+				return server.HasChild(childCandidate)
+			return 0
+
 	def SetHost(self, hostname):
 		self.__Host = hostname
 		if self.__IsServer:
@@ -1122,6 +1276,9 @@ class Node:
 		else:
 			self.__Label = "App node host=" + hostname
 		self.InvalidateLayout()
+
+	def Host(self):
+		return self.__Host
 
 	def Select(self):
 		self.__IsSelected = 1
@@ -1131,6 +1288,27 @@ class Node:
 
 	def IsSelected(self):
 		return self.__IsSelected
+
+	def NumSPUs(self):
+		"""Return number of SPUs in the chain"""
+		return len(self.__SpuChain)
+
+	def LastSPU(self):
+		"""Return the last SPU in this node's SPU chain"""
+		if len(self.__SpuChain) == 0:
+			return 0
+		else:
+			return self.__SpuChain[-1]
+
+	def GetSPU(self, pos):
+		"""Return this node's SPU chain"""
+		assert pos >= 0
+		assert pos < len(self.__SpuChain)
+		return self.__SpuChain[pos]
+
+	def SPUChain(self):
+		"""Return this node's SPU chain"""
+		return self.__SpuChain
 
 	def GetFirstSelectedSPUPos(self):
 		"""Return the position (index) of this node's first selected SPU"""
@@ -1142,6 +1320,7 @@ class Node:
 		return -1
 
 	def AddSPU(self, s, pos = -1):
+		"""Add a new SPU at the given position (-1 = the end)"""
 		if pos < 0:
 			# add at tail
 			self.__SpuChain.append(s)
@@ -1152,29 +1331,12 @@ class Node:
 			self.__SpuChain.insert(pos, s)
 		self.InvalidateLayout()
 
-	def NumSPUs(self):
-		return len(self.__SpuChain)
-
-	def DeleteSelectedSPUs(self):
-		"""Delete all selected SPUs in this node"""
-		deleteList = []
-		for spu in self.__SpuChain:
-			if spu.IsSelected():
-				deleteList.append(spu)
-		for spu in deleteList:
+	def RemoveSPU(self, spu):
+		"""Remove an SPU from the node's SPU chain"""
+		if spu in self.__SpuChain:
 			self.__SpuChain.remove(spu)
-		self.InvalidateLayout()
-
-	def LastSPU(self):
-		"""Return the last SPU in this node's SPU chain"""
-		if len(self.__SpuChain) == 0:
-			return 0
 		else:
-			return self.__SpuChain[-1]
-
-	def GetSPUs(self):
-		"""Return this node's SPU chain"""
-		return self.__SpuChain
+			print "Problem spu not in spu chain!"
 
 	def GetServers(self):
 		"""Return a list of servers that the last SPU (a packing SPU) are
@@ -1184,25 +1346,12 @@ class Node:
 		else:
 			return []
 
-	def SelectSPU(self, i):
-		self.__SpuChain[i].Select()
-
-	def DeselectSPU(self, i):
-		self.__SpuChain[i].Deselect()
-
-	def DeselectAllSPUs(self):
-		for spu in self.__SpuChain:
-			spu.Deselect()
-
-	def IsSelectedSPU(self, i):
-		return self.__SpuChain[i].IsSelected()
-
 	def GetPosition(self):
 		return (self.__X, self.__Y)
 
 	def SetPosition(self, x, y):
-		self.__X = x;
-		self.__Y = y;
+		self.__X = x
+		self.__Y = y
 
 	# Return the (x,y) coordinate of the node's input socket
 	def GetInputPlugPos(self):
@@ -1235,16 +1384,16 @@ class Node:
 		if self.__Width < 100:
 			self.__Width = 100
 		if self.__Height == 0:
-			self.__Height = 4 * h
+			self.__Height = int(h * 3.5)
 
 	def Draw(self, dc, dx=0, dy=0):
 		"""Draw this node.  (dx,dy) are the temporary translation values
 		used when a mouse drag is in progress."""
 		# setup the brush and pen
 		if self.__IsServer:
-			dc.SetBrush(ServerNodeBrush);
+			dc.SetBrush(ServerNodeBrush)
 		else:
-			dc.SetBrush(AppNodeBrush);
+			dc.SetBrush(AppNodeBrush)
 		p = wxPen(wxColor(0,0,0), width=1, style=0)
 		if self.__IsSelected:
 			p.SetWidth(3)
@@ -1337,6 +1486,51 @@ class ConfigApp(wxApp):
 					_docList.append(frame)
 
 		return TRUE
+
+#----------------------------------------------------------------------------
+
+class ExceptionHandler:
+	""" A simple error-handling class to write exceptions to a text file.
+
+	    Under MS Windows, the standard DOS console window doesn't scroll and
+	    closes as soon as the application exits, making it hard to find and
+	    view Python exceptions.  This utility class allows you to handle Python
+	    exceptions in a more friendly manner.
+	"""
+
+	def __init__(self):
+		""" Standard constructor.
+		"""
+		self._buff = ""
+		if os.path.exists("errors.txt"):
+			os.remove("errors.txt") # Delete previous error log, if any.
+
+
+	def write(self, s):
+		""" Write the given error message to a text file.
+
+			Note that if the error message doesn't end in a carriage return, we
+			have to buffer up the inputs until a carriage return is received.
+		"""
+		if (s[-1] != "\n") and (s[-1] != "\r"):
+			self._buff = self._buff + s
+			return
+
+		try:
+			s = self._buff + s
+			self._buff = ""
+
+			if s[:9] == "Traceback":
+			# Tell the user than an exception occurred.
+				wxMessageBox("An internal error has occurred.\nPlease " + \
+					 "refer to the 'errors.txt' file for details.",
+					 "Error", wxOK | wxCENTRE | wxICON_EXCLAMATION)
+
+			f = open("errors.txt", "a")
+			f.write(s)
+			f.close()
+		except:
+			pass # Don't recursively crash on errors.
 
 #----------------------------------------------------------------------------
 
