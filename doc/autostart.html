@@ -23,9 +23,6 @@ mothership then one or more server nodes (crserver) and application nodes
 With the auto-start / auto-config feature you can simply run an OpenGL
 program normally and have it run on Chromium.
 </p>
-<p>
-NOTE: For the Chromium 1.0 release this only works on Unix/Linux systems.
-</p>
 
 <h2 class="PageSubHeading">Preparation</h2>
 
@@ -33,7 +30,7 @@ NOTE: For the Chromium 1.0 release this only works on Unix/Linux systems.
 The following steps need to be taken first:
 </p>
 
-<p><b>1. Use libcrfaker.so instead of libGL.so</b></p>
+<p><b>1. (For Unix/Linux) Use libcrfaker.so instead of libGL.so</b></p>
 <p>
 We have to trick the OpenGL application into using the crfaker library
 instead of the normal OpenGL library.
@@ -49,6 +46,20 @@ For example:
    setenv LD_LIBRARY_PATH /usr/local/Chromium-1.0/cr/lib/Linux
 </pre>
 
+<p><b>1. (For Microsoft Windows) Use libcrfaker.dll instead of opengl32.dll</b></p>
+<p>
+We have to trick the OpenGL application into using the crfaker library
+instead of the normal OpenGL library.
+One solution is to copy the libcrfaker.dll to opengl32.dll and then
+use the PATH environment variable to tell the application where to
+find the library. This will ensure that the new opengl32.dll will
+be picked up before the system's version.
+
+<pre>
+   cd c:\Chromium-1.0\cr\bin\WIN_NT
+   copy libcrfaker.dll opengl32.dll
+   set PATH=c:\Chromium-1.0\cr\bin\WIN_NT;....
+</pre>
 
 <p><b>2. Make a configuration file</b></p>
 <p>
@@ -170,13 +181,14 @@ will load their SPUs.
 Here are some things to check if this doesn't work:
 </p>
 <ul>
-<li>Run <code>ldd programname</code> and verify that you're linked against
+<li>(Unix/Linux only) Run <code>ldd programname</code> and verify that you're linked against
 the faker library.  You should see something like this:
 <pre>
     libGL.so => /usr/local/Chromium-1.0/cr/lib/Linux/libGL.so (0x4010b000)
 </pre>
 /usr/local/Chromium-1.0/cr/lib/Linux/libGL.so should be a symlink to
 libcrfaker.so
+<li>(Microsoft Windows only) Check that the 'python.exe' application is within the system PATH if crSpawn fails. The easiest way to check this is open a 'cmd' prompt and type 'python' and hit return. If Python doesn't start - check your setup.
 <li>Examine the output of the crfaker to see if your configuration is
 being found:
 <pre>
