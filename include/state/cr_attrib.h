@@ -242,6 +242,10 @@ typedef struct {
 #ifdef CR_OPENGL_VERSION_1_2
 	GLenum wrapR[4];
 #endif
+
+	GLenum		envMode[CR_MAX_TEXTURE_UNITS];
+	GLcolorf	envColor[CR_MAX_TEXTURE_UNITS];
+
 	GLtexcoordb	textureGen[CR_MAX_TEXTURE_UNITS];
 	GLvectorf	objSCoeff[CR_MAX_TEXTURE_UNITS];
 	GLvectorf	objTCoeff[CR_MAX_TEXTURE_UNITS];

@@ -368,6 +368,8 @@ void STATE_APIENTRY crStatePushAttrib(GLbitfield mask)
 			a->textureStack[a->textureStackDepth].eyeRCoeff[i] = g->texture.unit[i].eyeRCoeff;
 			a->textureStack[a->textureStackDepth].eyeQCoeff[i] = g->texture.unit[i].eyeQCoeff;
 			a->textureStack[a->textureStackDepth].gen[i] = g->texture.unit[i].gen;
+			a->textureStack[a->textureStackDepth].envMode[i] = g->texture.unit[i].envMode;
+			a->textureStack[a->textureStackDepth].envColor[i] = g->texture.unit[i].envColor;
 		}
 		/* Is this right?  It sure doesn't seem right. */
 		a->textureStack[a->textureStackDepth].borderColor[0] = g->texture.currentTexture1D->borderColor;
@@ -945,6 +947,8 @@ void STATE_APIENTRY crStatePopAttrib(void)
 			g->texture.unit[i].eyeRCoeff = a->textureStack[a->textureStackDepth].eyeRCoeff[i];
 			g->texture.unit[i].eyeQCoeff = a->textureStack[a->textureStackDepth].eyeQCoeff[i];
 			g->texture.unit[i].gen = a->textureStack[a->textureStackDepth].gen[i];
+			g->texture.unit[i].envMode = a->textureStack[a->textureStackDepth].envMode[i];
+			g->texture.unit[i].envColor = a->textureStack[a->textureStackDepth].envColor[i];
 		}
 		/* Is this right?  It sure doesn't seem right. */
 		g->texture.currentTexture1D->borderColor = a->textureStack[a->textureStackDepth].borderColor[0];
