@@ -46,7 +46,7 @@ void set_log_file( void *foo, const char *response )
       perf_spu.log_file = stdout;
    }
    else {
-      strncpy( filename, response, strlen( response ));
+      strncpy( filename, response, strlen( filename ));
 
       /* break up the string with our specialized tokens.
        *
@@ -83,7 +83,7 @@ void set_log_file( void *foo, const char *response )
 
 void set_token( void *foo, const char *response )
 {
-   strncpy(perf_spu.token, response, strlen(response));
+   strncpy(perf_spu.token, response, strlen(perf_spu.token));
 }
 
 void set_dump_on_swap_count( void *foo, const char *response )
@@ -93,7 +93,7 @@ void set_dump_on_swap_count( void *foo, const char *response )
 
 void set_separator( void *foo, const char *response )
 {
-   strncpy(perf_spu.separator, response, strlen(response));
+   strncpy(perf_spu.separator, response, strlen(perf_spu.separator));
 }
 
 void set_mothership_log( void *foo, const char *response )

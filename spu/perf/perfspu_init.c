@@ -59,7 +59,7 @@ SPUFunctions *perfSPUInit( int id, SPU *child, SPU *super,
 
 	if ( perf_spu.mothership_log )
 		perf_spu.conn = crMothershipConnect( );
-	else if (crStrlen(perf_spu.log_filename)>0)
+	else if (perf_spu.log_filename && crStrlen(perf_spu.log_filename)>0)
       		perf_spu.log_file = fopen( perf_spu.log_filename, "w" );
       		if (perf_spu.log_file == NULL) {
 	 	    crError( "Couldn't open perf SPU log file %s", perf_spu.log_filename );

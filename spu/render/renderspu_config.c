@@ -31,7 +31,7 @@ static void set_window_geometry( RenderSPU *render_spu, const char *response )
 
 static void set_display_string( RenderSPU *render_spu, const char *response )
 {
-   	strncpy(render_spu->display_string, response, strlen(response));
+   	strncpy(render_spu->display_string, response, strlen(render_spu->display_string));
 }
 
 static void set_fullscreen( RenderSPU *render_spu, const char *response )

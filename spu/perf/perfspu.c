@@ -247,7 +247,7 @@ void PERFSPU_APIENTRY perfspuChromiumParametervCR(GLenum target, GLenum type, GL
 
 	switch (target) {
 	case GL_PERF_SET_TOKEN_CR:
-		strncpy(perf_spu.token, (char *)values, strlen((char*)values));
+		strncpy(perf_spu.token, (char *)values, strlen(perf_spu.token));
 		break;
 	default:
 		break;
