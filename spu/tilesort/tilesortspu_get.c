@@ -6,6 +6,7 @@
 	
 #include "tilesortspu.h"
 #include "cr_packfunctions.h"
+#include "cr_mem.h"
 
 
 /* OpenGL doesn't have this token, be we want it here */
@@ -26,100 +27,100 @@ GetLimit(GLenum pname, GLenum type, void *results)
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
 	GLint numValues = 1;
 	GLboolean minMax = GL_FALSE;
-	GLint params[16];
+	GLfloat params[16];
 	GLint i, j;
 
 	switch (pname) {
 	case GL_MAX_ATTRIB_STACK_DEPTH:
-		params[0] = CR_MAX_ATTRIB_STACK_DEPTH;
+		params[0] = (GLfloat) CR_MAX_ATTRIB_STACK_DEPTH;
 		break;
 	case GL_MAX_CLIENT_ATTRIB_STACK_DEPTH:
-		params[0] = CR_MAX_ATTRIB_STACK_DEPTH;
+		params[0] = (GLfloat) CR_MAX_ATTRIB_STACK_DEPTH;
 		break;
 	case GL_MAX_CLIP_PLANES:
-		params[0] = CR_MAX_CLIP_PLANES;
+		params[0] = (GLfloat) CR_MAX_CLIP_PLANES;
 		break;
 	case GL_MAX_ELEMENTS_VERTICES:  /* 1.2 */
-		params[0] = CR_MAX_ELEMENTS_VERTICES;
+		params[0] = (GLfloat) CR_MAX_ELEMENTS_VERTICES;
 		break;
 	case GL_MAX_ELEMENTS_INDICES:   /* 1.2 */
-		params[0] = CR_MAX_ELEMENTS_INDICES;
+		params[0] = (GLfloat) CR_MAX_ELEMENTS_INDICES;
 		break;
 	case GL_MAX_EVAL_ORDER:
-		params[0] = CR_MAX_EVAL_ORDER;
+		params[0] = (GLfloat) CR_MAX_EVAL_ORDER;
 		break;
 	case GL_MAX_LIGHTS:
-		params[0] = CR_MAX_LIGHTS;
+		params[0] = (GLfloat) CR_MAX_LIGHTS;
 		break;
 	case GL_MAX_LIST_NESTING:
-		params[0] = CR_MAX_LIST_NESTING;
+		params[0] = (GLfloat) CR_MAX_LIST_NESTING;
 		break;
 	case GL_MAX_MODELVIEW_STACK_DEPTH:
-		params[0] = CR_MAX_MODELVIEW_STACK_DEPTH;
+		params[0] = (GLfloat) CR_MAX_MODELVIEW_STACK_DEPTH;
 		break;
 	case GL_MAX_NAME_STACK_DEPTH:
-		params[0] = CR_MAX_NAME_STACK_DEPTH;
+		params[0] = (GLfloat) CR_MAX_NAME_STACK_DEPTH;
 		break;
 	case GL_MAX_PIXEL_MAP_TABLE:
-		params[0] = CR_MAX_PIXEL_MAP_TABLE;
+		params[0] = (GLfloat) CR_MAX_PIXEL_MAP_TABLE;
 		break;
 	case GL_MAX_PROJECTION_STACK_DEPTH:
-		params[0] = CR_MAX_PROJECTION_STACK_DEPTH;
+		params[0] = (GLfloat) CR_MAX_PROJECTION_STACK_DEPTH;
 		break;
 	case GL_MAX_TEXTURE_SIZE:
-		params[0] = CR_MAX_TEXTURE_SIZE;
+		params[0] = (GLfloat) CR_MAX_TEXTURE_SIZE;
 		break;
 	case GL_MAX_3D_TEXTURE_SIZE:
-		params[0] = CR_MAX_3D_TEXTURE_SIZE;
+		params[0] = (GLfloat) CR_MAX_3D_TEXTURE_SIZE;
 		break;
 	case GL_MAX_TEXTURE_STACK_DEPTH:
-		params[0] = CR_MAX_TEXTURE_STACK_DEPTH;
+		params[0] = (GLfloat) CR_MAX_TEXTURE_STACK_DEPTH;
 		break;
 	case GL_MAX_VIEWPORT_DIMS:
-		params[0] = CR_MAX_VIEWPORT_DIM;
-		params[1] = CR_MAX_VIEWPORT_DIM;
+		params[0] = (GLfloat) CR_MAX_VIEWPORT_DIM;
+		params[1] = (GLfloat) CR_MAX_VIEWPORT_DIM;
 		numValues = 2;
 		break;
 	case GL_SUBPIXEL_BITS:
-		params[0] = CR_SUBPIXEL_BITS;
+		params[0] = (GLfloat) CR_SUBPIXEL_BITS;
 		break;
 	case GL_ALIASED_POINT_SIZE_RANGE:
-		params[0] = CR_ALIASED_POINT_SIZE_MIN;
-		params[1] = CR_ALIASED_POINT_SIZE_MAX;
+		params[0] = (GLfloat) CR_ALIASED_POINT_SIZE_MIN;
+		params[1] = (GLfloat) CR_ALIASED_POINT_SIZE_MAX;
 		numValues = 2;
 		minMax = GL_TRUE;
 		break;
 	case GL_SMOOTH_POINT_SIZE_RANGE:
-		params[0] = CR_SMOOTH_POINT_SIZE_MIN;
-		params[1] = CR_SMOOTH_POINT_SIZE_MAX;
+		params[0] = (GLfloat) CR_SMOOTH_POINT_SIZE_MIN;
+		params[1] = (GLfloat) CR_SMOOTH_POINT_SIZE_MAX;
 		numValues = 2;
 		minMax = GL_TRUE;
 		break;
 	case GL_SMOOTH_POINT_SIZE_GRANULARITY:
-		params[0] = CR_POINT_SIZE_GRANULARITY;
+		params[0] = (GLfloat) CR_POINT_SIZE_GRANULARITY;
 		break;
 	case GL_ALIASED_LINE_WIDTH_RANGE:
-		params[0] = CR_ALIASED_LINE_WIDTH_MIN;
-		params[1] = CR_ALIASED_LINE_WIDTH_MAX;
+		params[0] = (GLfloat) CR_ALIASED_LINE_WIDTH_MIN;
+		params[1] = (GLfloat) CR_ALIASED_LINE_WIDTH_MAX;
 		numValues = 2;
 		minMax = GL_TRUE;
 		break;
 	case GL_SMOOTH_LINE_WIDTH_RANGE:
-		params[0] = CR_SMOOTH_LINE_WIDTH_MIN;
-		params[1] = CR_SMOOTH_LINE_WIDTH_MAX;
+		params[0] = (GLfloat) CR_SMOOTH_LINE_WIDTH_MIN;
+		params[1] = (GLfloat) CR_SMOOTH_LINE_WIDTH_MAX;
 		numValues = 2;
 		minMax = GL_TRUE;
 		break;
 	case GL_SMOOTH_LINE_WIDTH_GRANULARITY:
-		params[0] = CR_LINE_WIDTH_GRANULARITY;
+		params[0] = (GLfloat) CR_LINE_WIDTH_GRANULARITY;
 		break;
 	/* GL_ARB_multitexture */
 	case GL_MAX_TEXTURE_UNITS_ARB:
-		params[0] = CR_MAX_TEXTURE_UNITS;
+		params[0] = (GLfloat) CR_MAX_TEXTURE_UNITS;
 		break;
 	/* GL_NV_register_combiners */
 	case GL_MAX_GENERAL_COMBINERS_NV:
-		params[0] = CR_MAX_GENERAL_COMBINERS;
+		params[0] = (GLfloat) CR_MAX_GENERAL_COMBINERS;
 		break;
 	default:
 		return GL_FALSE; /* not a GL limit */
@@ -137,14 +138,14 @@ GetLimit(GLenum pname, GLenum type, void *results)
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
 		int writeback = 1;
-		GLint values[16];
+		GLfloat values[16];
 
 		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
 
 		if (tilesort_spu.swap)
-			crPackGetIntegervSWAP( pname, values, &writeback );
+			crPackGetFloatvSWAP( pname, values, &writeback );
 		else
-			crPackGetIntegerv( pname, values, &writeback );
+			crPackGetFloatv( pname, values, &writeback );
 
 		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
 
@@ -228,3 +229,85 @@ void TILESORTSPU_APIENTRY tilesortspu_GetBooleanv( GLenum pname, GLboolean *para
 	if (!GetLimit(pname, GL_BOOL, params))
 		crStateGetBooleanv( pname, params );
 }
+
+
+#if 000
+/* NOT FINISHED YET (BP) */
+
+static const GLubyte *
+GetExtensionsString(void)
+{
+	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
+	GLubyte **extensions;
+	GLint i;
+	GLubyte *ext;
+
+	extensions = (GLubyte **) crCalloc(tilesort_spu.num_servers * sizeof(GLubyte *));
+	if (!extensions)
+	{
+		crWarning("Out of memory in tilesortspu::GetExtensionsString");
+		return NULL;
+	}
+
+	/* Save the default pack buffer */
+	crPackGetBuffer( thread0->packer, &(thread0->geometry_pack) );
+
+	/*
+	 * loop over servers, issuing the glGet.
+	 * We send it via the zero-th thread's server connections.
+	 */
+	for (i = 0; i < tilesort_spu.num_servers; i++)
+	{
+		int writeback = 1;
+
+		extensions[i] = crCalloc(50 * 1000);
+		CRASSERT(extensions[i]);
+		extensions[i][50*1000-1] = 123;
+
+		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
+
+		if (tilesort_spu.swap)
+			crPackGetStringSWAP( GL_EXTENSIONS, extensions[i], &writeback );
+		else
+			crPackGetString( GL_EXTENSIONS, extensions[i], &writeback );
+
+		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
+
+		/* Flush buffer (send to server) */
+		tilesortspuSendServerBuffer( i );
+
+		/* Get return value */
+		while (writeback) {
+			crNetRecv();
+		}
+
+		/* make sure we didn't overflow the buffer */
+		CRASSERT(extensions[i][50*1000-1] == 123);
+
+	}
+
+	/* Restore the default pack buffer */
+	crPackSetBuffer( thread0->packer, &(thread0->geometry_pack) );
+
+	ext = crSPUMergeExtensions(tilesort_spu.num_servers, extensions);
+
+	for (i = 0; i < tilesort_spu.num_servers; i++)
+		crFree(extensions[i]);
+	crFree(extensions);
+
+	return ext;
+}
+
+const GLubyte * TILESORTSPU_APIENTRY tilesortspu_GetString( GLenum pname )
+{
+	if (pname == GL_EXTENSIONS+1000)
+	{
+		/* Query all servers for their extensions, return the intersection */
+		return GetExtensionsString();
+	}
+	else
+	{
+		return crStateGetString(pname);
+	}
+}
+#endif
