@@ -1643,6 +1643,7 @@ param		pname		GLenum
 paramprop	pname		GL_SHININESS
 param		param		GLfloat
 paramlist	param		1.0
+props		pervertex
 category	1.0
 chromium	pack
 
@@ -1654,6 +1655,7 @@ param		pname		GLenum
 paramprop	pname		GL_AMBIENT GL_DIFFUSE GL_SPECULAR GL_EMISSION GL_SHININESS GL_AMBIENT_AND_DIFFUSE GL_COLOR_INDEXES
 param		params		const GLfloat *
 paramvec	params		0.8 0.8 0.5 0.1
+props		pervertex
 category	1.0
 chromium	pack
 
@@ -1665,6 +1667,7 @@ param		pname		GLenum
 paramprop	pname		GL_SHININESS
 param		param		GLint
 paramlist	param		1
+props		pervertex
 category	1.0
 chromium	pack
 
@@ -1676,6 +1679,7 @@ param		pname		GLenum
 paramprop	pname		GL_AMBIENT GL_DIFFUSE GL_SPECULAR GL_EMISSION GL_SHININESS GL_AMBIENT_AND_DIFFUSE GL_COLOR_INDEXES
 param		params		const GLint *
 paramvec	params		1 0 1 0
+props		pervertex
 category	1.0
 chromium	pack
 
