@@ -42,7 +42,9 @@ getClippedWindow(int *xstart, int* ystart,
 		return 0;
 	}
 	
-	crProjectBBox(binaryswap_spu.modl, binaryswap_spu.proj, &x1, &y1, &z1, &x2, &y2, &z2);
+	crProjectBBox(binaryswap_spu.modl, binaryswap_spu.proj,
+								&x1, &y1, &z1, &x2, &y2, &z2);
+
 	/* Sanity check... */
 	if( x2 < x1 || y2 < y1 || z2 < z1){
 		crWarning( "Damnit!!!!, we screwed up the clipping somehow..." );
@@ -692,10 +694,6 @@ static void DoBinaryswap( WindowInfo *window )
 	binaryswap_spu.super.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	binaryswap_spu.child.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	/* Get modelview and projection matrices, for bbox testing */
-	binaryswap_spu.super.GetFloatv ( GL_PROJECTION_MATRIX, binaryswap_spu.proj);
-	binaryswap_spu.super.GetFloatv ( GL_MODELVIEW_MATRIX, binaryswap_spu.modl);
-
 	/* Things alpha compositing mucks with */
 	if(binaryswap_spu.alpha_composite)
 	{
@@ -993,7 +991,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuViewport( GLint x,
 static void BINARYSWAPSPU_APIENTRY binaryswapspuChromiumParametervCR(GLenum target, 
 								     GLenum type, 
 								     GLsizei count, 
-								     GLvoid *values)
+								     const GLvoid *values)
 {
 	switch( target )
 	{
