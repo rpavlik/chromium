@@ -12,16 +12,23 @@
 
 void PACK_APIENTRY
 crPackMapBufferARB( GLenum target, GLenum access,
-										void * return_value, int * writeback )
+		    void * return_value, int * writeback )
 {
-	crWarning("Can't pack MapBufferARB command!");
+     (void)writeback;
+     (void)return_value;
+     (void)target;
+     (void)access;
+     crWarning("Can't pack MapBufferARB command!");
 }
 
 
 void PACK_APIENTRY
 crPackUnmapBufferARB( GLenum target, GLboolean* return_value, int * writeback )
 {
-	crWarning("Can't pack UnmapBufferARB command!");
+     (void)target;
+     (void)return_value;
+     (void)writeback;
+     crWarning("Can't pack UnmapBufferARB command!");
 }
 
 

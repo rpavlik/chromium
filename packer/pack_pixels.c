@@ -65,6 +65,7 @@ void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width,
 	GLint stride = 0;
 	GLint bytes_per_row;
 	int bytes_per_pixel;
+	(void)writeback;
 
 	switch ( type )
 	{
@@ -222,6 +223,7 @@ void PACK_APIENTRY crPackZPix( GLsizei width, GLsizei height,
 {
 	unsigned char *data_ptr;
 	int packet_length;
+	(void)unpackstate;
 
 	if (pixels == NULL)
 	{
