@@ -24,7 +24,8 @@ FILES = main \
 PRECOMP = server_dispatch.h server_dispatch.c server_get.c server_retval.c server_simpleget.c
 SLOP = ${PRECOMP}
 
-LIBRARIES = spuload crunpacker crutil crmothership crstate
+LIBRARIES = spuload crunpacker crutil crmothership 
+TRACKS_STATE = 1
 
 include $(TOP)/cr.mk
 

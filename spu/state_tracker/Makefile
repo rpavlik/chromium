@@ -51,6 +51,11 @@ PRECOMP = state_get.c state_isenabled.c state.def ../../include/state/cr_statefu
 PRECOMP += $(addsuffix .c, $(DIFF_FILES2)) 
 SLOP = $(PRECOMP)
 
+LIB_COPIES = crserver \
+	packspu \
+	tilesortspu \
+	seethroughspu
+
 include $(TOP)/cr.mk
 
 state_get.c: state_get.py state_get.txt state_extensions_get.txt

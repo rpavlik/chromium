@@ -2,7 +2,9 @@ TOP = ../..
 
 SHARED = 1
 LIBRARY = templatespu
-FILES = templatespu templatespu_config templatespu_init
+FILES = templatespu \
+	templatespu_config \
+	templatespu_init
 
 LIBRARIES = spuload crutil crmothership
 

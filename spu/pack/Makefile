@@ -12,7 +12,8 @@ FILES = packspu \
 	packspu_net \
 	packspu_pixel
 
-LIBRARIES = crutil crmothership crstate crpacker
+LIBRARIES = crutil crmothership crpacker
+TRACKS_STATE = 1
 
 PRECOMP = packspu.c packspu_get.c packspu_flush.c packspu_pixel.c 
 SLOP = $(PRECOMP)

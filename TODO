@@ -1,7 +1,4 @@
 Before July Alpha release:
-	DrawPixels
-	test GM support 
-		can't test without a switch -- DAMMIT!
 	Parallel applications
 		Debug parallel test application (server runs out of memory quick)
 		Test context switching code
@@ -9,6 +6,8 @@ Before July Alpha release:
 	Documentation
 
 Before October release:
+	DrawPixels
+		Treat it like bitmaps, or do something more clever with the tilesorter?
 	Implement LSB and SWAP_BYTES for pixel data (un)packing.
 		Lazy lazy lazy who uses this stuff anyhow?
 	ReadPixels
