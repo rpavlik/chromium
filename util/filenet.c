@@ -317,8 +317,15 @@ void crFileInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc, unsigned i
 int crFileDoConnect( CRConnection *conn )
 {
 	conn->file_direction = CR_FILE_WRITE;
-	conn->fd = open( conn->filename, O_CREAT | O_WRONLY | O_BINARY,
-                     S_IRUSR | S_IWUSR);
+	conn->fd = open( conn->filename, O_CREAT | O_WRONLY | O_BINARY |
+#ifdef WINDOWS
+					S_IREAD | S_IWRITE);
+#else
+					S_IRUSR | S_IWUSR);
+#endif
+ 	if (conn->fd < 0)
+ 	{
+ 		crWarning( "Couldn't open %s for writing!", conn->filename );
 	if (conn->fd < 0)
 	{
 		crWarning( "Couldn't open %s for writing!", conn->filename );
