@@ -313,6 +313,7 @@ static void RENDER_APIENTRY renderspuWindowSize( GLint win, GLint w, GLint h )
 	CRASSERT(h > 0);
 	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
 	if (window) {
+		/* XXX check if window size really is changing */
 		renderspu_SystemWindowSize( window, w, h );
 		window->width = w;
 		window->height = h;
@@ -684,17 +685,6 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 
 			break;
 
-	case GL_CURSOR_POSITION_CR:
-		if (type == GL_INT && count == 2) {
-			render_spu.cursorX = ((GLint *) values)[0];
-			render_spu.cursorY = ((GLint *) values)[1];
-		}
-		else {
-			crWarning("Render SPU: Bad type or count for ChromiumParametervCR(GL_CURSOR_POSITION_CR)");
-		}
-		break;
-
-
 	case GL_GATHER_DRAWPIXELS_CR:
 		pingback.header.type = CR_MESSAGE_OOB;
 
@@ -734,7 +724,21 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 
 		render_spu.self.SwapBuffers(((GLint *)values)[6], 0);
 		break;
+
+	case GL_CURSOR_POSITION_CR:
+		if (type == GL_INT && count == 2) {
+			render_spu.cursorX = ((GLint *) values)[0];
+			render_spu.cursorY = ((GLint *) values)[1];
+		}
+		else {
+			crWarning("Render SPU: Bad type or count for ChromiumParametervCR(GL_CURSOR_POSITION_CR)");
+		}
+		break;
+
 	case GL_WINDOW_SIZE_CR:
+		/* XXX this is old code that should be removed.
+		 * NOTE: we can only resize the default (id=0) window!!!
+		 */
 		{
 			GLint w, h;
 			WindowInfo *window;
@@ -750,7 +754,6 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 			}
 		}
 		break;
-	
 
 	default:
 #if 0
