@@ -19,6 +19,8 @@ extern void crKill( unsigned long pid );
 
 extern void crGetProcName( char *name, int maxLen );
 
+extern void crGetCurrentDir( char *dir, int maxLen );
+
 #ifdef __cplusplus
 }
 #endif
