@@ -52,7 +52,7 @@ CRTimer *crTimerNewTimer( void )
 
 	phys_addr = syssgi(SGI_QUERY_CYCLECNTR, &(t->cycleval));
 	if (phys_addr == ENODEV) {
-		crSimpleError( "Sorry, this SGI doesn't support timers." );
+		crError( "Sorry, this SGI doesn't support timers." );
 	}
 
 	raddr = phys_addr & ~poffmask;
@@ -77,7 +77,7 @@ CRTimer *crTimerNewTimer( void )
 				(phys_addr & poffmask));
 	}
 	else {
-		crSimpleError( "Fatal timer init error" );
+		crError( "Fatal timer init error" );
 	}
 #elif defined( WINDOWS )
 	QueryPerformanceFrequency( &t->performance_frequency );
