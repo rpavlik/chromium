@@ -576,18 +576,14 @@ Bool stubMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext context )
 		 * vice versa, we have to change all the OpenGL entrypoint pointers.
 		 */
 
-		if (stub.Context[i].type == NATIVE /*&& glim.Accum != stub.nativeDispatch.Accum*/) {
+		if (stub.Context[i].type == NATIVE) {
 			/* Switch to native API */
-			/*
-			printf("  Switching to native API\n");
-			*/
+			/*printf("  Switching to native API\n");*/
 			stubSetDispatch(&stub.nativeDispatch);
 		}
-		else if (stub.Context[i].type == CHROMIUM /*&& glim.Accum != stub.spuDispatch.Accum*/) {
+		else if (stub.Context[i].type == CHROMIUM) {
 			/* Switch to stub (SPU) API */
-			/*
-			printf("  Switching to spu API\n");
-			*/
+			/*printf("  Switching to spu API\n");*/
 			stubSetDispatch(&stub.spuDispatch);
 		}
 		else {
@@ -601,7 +597,7 @@ Bool stubMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext context )
 
 	stub.currentContext = i;
 
-	if (!stub.spuWindowWidth) {
+	if (!stub.spuWindowWidth && stub.Context[i].type == CHROMIUM) {
 		/* Now call Viewport to setup initial parameters */
 		unsigned int winW, winH;
 
