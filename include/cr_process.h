@@ -28,6 +28,8 @@ typedef unsigned long CRpid;
 
 extern void crSleep( unsigned int seconds );
 
+extern void crMsleep( unsigned int msec );
+
 extern CRpid crSpawn( const char *command, const char *argv[] );
 
 extern void crKill( CRpid pid );

@@ -30,6 +30,15 @@ void crSleep( unsigned int seconds )
 #endif
 }
 
+void crMsleep( unsigned int msec )
+{
+#ifdef WINDOWS
+     Sleep(msec); 
+#else
+     sleep(msec*1000); /* usecs */
+#endif
+}
+
 
 /*
  * Spawn (i.e. fork/exec) a new process.

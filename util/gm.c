@@ -70,6 +70,7 @@ typedef struct CRGmBuffer {
 	unsigned int       magic;
 	CRGmBufferKind kind;
 	unsigned int       len;
+	unsigned int       allocated;
 	unsigned int       pad;
 } CRGmBuffer;
 
@@ -85,7 +86,7 @@ typedef struct CRGmConnection {
 
 /* Use a power of 2 to the lookup is just a mask -- this works fine
  * because we expect the gm node numbering to be dense */
-#define CR_GM_CONN_HASH_SIZE	64
+#define CR_GM_CONN_HASH_SIZE	1024
 
 static struct {
 	unsigned int          initialized;
@@ -116,6 +117,9 @@ static struct {
 	unsigned int          inside_recv;
 	CRNetReceiveFuncList  *recv_list;
 	CRNetCloseFuncList    *close_list;
+
+	unsigned int num_buffer_sizes;
+	unsigned int buffer_sizes[8];
 } cr_gm;
 
 #define CR_GM_PINNED_READ_MEMORY_SIZE   ( 8 << 20 )
@@ -160,27 +164,27 @@ static void cr_gm_info( unsigned int mtu )
 	gm_get_host_name( cr_gm.port, name );
 	gm_get_node_id( cr_gm.port, &node_id );
 	crWarning( "GM: name=\"%s\" id=%u port=%u",
-			name, node_id, cr_gm.port_num );
-
+		   name, node_id, cr_gm.port_num );
+	
 	gm_max_node_id_inuse( cr_gm.port, &max_node_id );
 	crWarning( "GM: gm_max_node_id_inuse=%u",
-			max_node_id );
-
+		   max_node_id );
+	
 	min_size = gm_min_size_for_length( mtu );
 	crWarning( "GM: gm_min_size_for_length( "
-			"mtu=%u ) = %u", mtu, min_size );
-
+		   "mtu=%u ) = %u", mtu, min_size );
+	
 	crWarning( "GM: gm_max_length_for_size( "
-			"size=%u ) = %u", min_size,
-			(unsigned int) gm_max_length_for_size( min_size ) );
-
+		   "size=%u ) = %u", min_size,
+		   (unsigned int) gm_max_length_for_size( min_size ) );
+	
 	crWarning( "GM: gm_min_message_size() = %u",
-			(unsigned int) gm_min_message_size( cr_gm.port ) );
-
+		   (unsigned int) gm_min_message_size( cr_gm.port ) );
+	
 	crWarning( "GM: num_send_tokens=%u "
-			"num_receive_tokens=%u",
-			(unsigned int) gm_num_send_tokens( cr_gm.port ),
-			(unsigned int) gm_num_receive_tokens( cr_gm.port ) );
+		   "num_receive_tokens=%u",
+		   (unsigned int) gm_num_send_tokens( cr_gm.port ),
+		   (unsigned int) gm_num_receive_tokens( cr_gm.port ) );
 }
 
 #if CR_GM_DEBUG
@@ -188,9 +192,9 @@ static void cr_gm_info( unsigned int mtu )
 static const char * cr_gm_str_event_type( gm_recv_event_t *event )
 {
 	const char *description;
-
+	
 #define CASE(error) case error : description = # error; break
-
+	
 	switch ( GM_RECV_EVENT_TYPE(event) )
 	{
 		CASE(GM_NO_RECV_EVENT);
@@ -225,19 +229,17 @@ static const char * cr_gm_str_event_type( gm_recv_event_t *event )
 		default:
 		description = "unknown type";
 	}
-
+	
 #undef CASE
-
+	
 	return description;
 }
 
 static void cr_gm_check_recv_event( gm_recv_event_t *event )
 {
-#if 0
 	crWarning( "GM: gm_receive( type=%u )",
-			GM_RECV_EVENT_TYPE(event) );
-#endif
-
+		   GM_RECV_EVENT_TYPE(event) );
+	
 	switch ( GM_RECV_EVENT_TYPE(event) )
 	{
 		case GM_NO_RECV_EVENT:
@@ -260,10 +262,8 @@ static void cr_gm_check_recv_event( gm_recv_event_t *event )
 		case GM_FAST_HIGH_RECV_EVENT:
 		case GM_FAST_PEER_RECV_EVENT:
 		case GM_FAST_HIGH_PEER_RECV_EVENT:
-#if 1
 			crWarning( "GM fast event (type=%u)",
-					GM_RECV_EVENT_TYPE(event) );
-#endif
+				   GM_RECV_EVENT_TYPE(event) );
 			break;
 
 		case GM_SENDS_FAILED_EVENT:
@@ -279,12 +279,12 @@ static void cr_gm_check_recv_event( gm_recv_event_t *event )
 		case GM_BAD_SEND_VMA_EVENT:
 		case GM_BAD_RECV_VMA_EVENT:
 			crWarning( "GM error event (type=%u)",
-					event->recv.type );
+				   event->recv.type );
 			break;
 
 		default:
 			crWarning( "GM unknown event (type=%u)",
-					event->recv.type );
+				   event->recv.type );
 			break;
 	}
 }
@@ -390,7 +390,7 @@ static void crGmCreditIncrease( CRGmConnection *gm_conn )
 
 	/* move this node up the doubly-linked, if it isn't already in the
 	 * right position */
-
+	
 	parent = gm_conn->credit_prev;
 	my_credits = gm_conn->conn->recv_credits;
 	if ( parent && parent->conn->recv_credits < my_credits )
@@ -401,7 +401,8 @@ static void crGmCreditIncrease( CRGmConnection *gm_conn )
 		/* are we the tail of the list? */
 		if ( cr_gm.credit_tail == gm_conn )
 		{
-			/* yes, pull up the tail pointer, and fix our parent to be tail */
+			/* yes, pull up the tail pointer, 
+			   and fix our parent to be tail */
 			cr_gm.credit_tail = parent;
 			parent->credit_next = NULL;
 		}
@@ -444,8 +445,7 @@ static void crGmCreditIncrease( CRGmConnection *gm_conn )
 	}
 }
 
-	static void
-crGmCreditZero( CRGmConnection *gm_conn )
+static void crGmCreditZero( CRGmConnection *gm_conn )
 {
 	CRASSERT( cr_gm.credit_head == gm_conn );
 
@@ -469,23 +469,22 @@ crGmCreditZero( CRGmConnection *gm_conn )
 static void crGmConnectionAdd( CRConnection *conn )
 {
 	CRGmConnection *gm_conn, **bucket;
-
+	
 	crDebug( "Adding a connection with id 0x%x", conn->id );
 	bucket = &CR_GM_HASH( conn->id );
 	crDebug( "The initial bucket was %p", bucket );
-
-#if 0
-	for ( gm_conn = *bucket; gm_conn != NULL; gm_conn = gm_conn->hash_next )
+	
+	for ( gm_conn = *bucket; gm_conn != NULL; 
+	      gm_conn = gm_conn->hash_next )
 	{
 		if ( gm_conn->node_id  == conn->gm_node_id && 
-				gm_conn->port_num == conn->gm_port_num )
+		     gm_conn->port_num == conn->gm_port_num )
 		{
-			crError( "GM: I've already got a connection from node=%u "
-					"port=%u (\"%s\"), so why is it connecting again?",
-					conn->gm_node_id, conn->gm_port_num, conn->hostname );
+			crWarning( "GM: I've already got a connection from node=%u "
+				   "port=%u (\"%s\"), so why is it connecting again?",
+				   conn->gm_node_id, conn->gm_port_num, conn->hostname );
 		}
 	}
-#endif
 
 	gm_conn = (CRGmConnection*)crAlloc( sizeof(*gm_conn) );
 	gm_conn->node_id   = conn->gm_node_id;
@@ -515,14 +514,13 @@ static void crGmConnectionAdd( CRConnection *conn )
 }
 
 
-void 
-crGmAccept( CRConnection *conn, char *hostname, unsigned short port )
+void crGmAccept( CRConnection *conn, char *hostname, unsigned short port )
 {
 	CRConnection *mother;
 	char response[8096];
-  char my_hostname[256];
+	char my_hostname[256];
 	crWarning( "crGmAccept is being called -- brokering the connection through the mothership!." );
-
+	
 	mother = __copy_of_crMothershipConnect( );
 
 	if (!hostname)
@@ -536,7 +534,10 @@ crGmAccept( CRConnection *conn, char *hostname, unsigned short port )
 		crStrcpy(my_hostname, hostname);
 
 	/* Tell the mothership I'm willing to receive a client, and what my GM info is */
-	if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest gm %s %d %d %d %d", my_hostname, conn->port, cr_gm.node_id, cr_gm.port_num, conn->endianness ) )
+	if (!__copy_of_crMothershipSendString( mother, response, 
+					       "acceptrequest gm %s %d %d %d %d", 
+					       my_hostname, conn->port, cr_gm.node_id, 
+					       cr_gm.port_num, conn->endianness ) )
 	{
 		crError( "Mothership didn't like my accept request request" );
 	}
@@ -545,7 +546,8 @@ crGmAccept( CRConnection *conn, char *hostname, unsigned short port )
 	 * this connection.  The mothership will sit on the acceptrequest 
 	 * until someone connects. */
 	
-	sscanf( response, "%d %d %d", &(conn->id), &(conn->gm_node_id), &(conn->gm_port_num) );
+	sscanf( response, "%d %d %d", &(conn->id), 
+		&(conn->gm_node_id), &(conn->gm_port_num) );
 	
 	/* NOW, we can add the connection, since we have enough information 
 	 * to uniquely determine the sender when we get a packet! */
@@ -566,7 +568,10 @@ int crGmDoConnect( CRConnection *conn )
 	mother = __copy_of_crMothershipConnect( );
 
 	/* Tell the mothership who I want to connect to, and what my GM info is */
-	if (!__copy_of_crMothershipSendString( mother, response, "connectrequest gm %s %d %d %d %d", conn->hostname, conn->port, cr_gm.node_id, cr_gm.port_num, conn->endianness ) )
+	if (!__copy_of_crMothershipSendString( mother, response, 
+					       "connectrequest gm %s %d %d %d %d", 
+					       conn->hostname, conn->port, cr_gm.node_id, 
+					       cr_gm.port_num, conn->endianness ) )
 	{
 		crError( "Mothership didn't like my connect request request" );
 	}
@@ -575,7 +580,8 @@ int crGmDoConnect( CRConnection *conn )
 	 * this connection.  The mothership will sit on the connectrequest 
 	 * until someone accepts. */
 	
-	sscanf( response, "%d %d %d %d", &(conn->id), &(conn->gm_node_id), &(conn->gm_port_num), &(remote_endianness) );
+	sscanf( response, "%d %d %d %d", &(conn->id), &(conn->gm_node_id), 
+		&(conn->gm_port_num), &(remote_endianness) );
 
 	if (remote_endianness != conn->endianness)
 	{
@@ -599,22 +605,17 @@ void crGmDoDisconnect( CRConnection *conn )
 
 
 
-	static __inline CRGmConnection *
-crGmConnectionLookup( unsigned int id )
+static __inline CRGmConnection * crGmConnectionLookup( unsigned int id )
 {
 	CRGmConnection *gm_conn;
 
-	/* crDebug( "I was asked to lookup a connection with id %d", id ); */
 	gm_conn = CR_GM_HASH( id );
-	/* crDebug( "Initially, it hashed to %p", gm_conn ); */
 	while ( gm_conn )
 	{
 		if ( gm_conn->conn->id == id )
 		{
 			return gm_conn;
 		}
-		/* crDebug( "I rejected that connection, because it's ID was %d and I'm looking for %d", gm_conn->conn->id, id );
-		crDebug( "Moving on to %p", gm_conn->hash_next ); */
 		gm_conn = gm_conn->hash_next;
 	}
 
@@ -628,86 +629,85 @@ crGmConnectionLookup( unsigned int id )
 void *crGmAlloc( CRConnection *conn )
 {
 	CRGmBuffer *gm_buffer;
-
+	
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_gm.write_mutex);
 #endif
-
-	gm_buffer = (CRGmBuffer *) crBufferPoolPop( cr_gm.write_pool, conn->buffer_size );
-
+	
+	gm_buffer = (CRGmBuffer *) 
+		crBufferPoolPop( cr_gm.write_pool, conn->buffer_size );
+	
 	while ( gm_buffer == NULL )
 	{
 		if ( cr_gm.num_outstanding_sends == 0 )
 		{
 			crError( "crGmAlloc: no available buffers, "
-					"and none outstanding." );
+				 "and none outstanding." );
 		}
 		crGmRecv( );
-		gm_buffer = (CRGmBuffer *)
+		gm_buffer = (CRGmBuffer *) 
 			crBufferPoolPop( cr_gm.write_pool, conn->buffer_size );
 	}
-
+	
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_gm.write_mutex);
 #endif
-
+	
 	return (void *)( gm_buffer + 1 );
 }
 
-	static void
-cr_gm_provide_receive_buffer( void *buf )
+static void cr_gm_provide_receive_buffer( void *buf )
 {
 	CRMessage *msg = (CRMessage *) buf;
-
+	
 	CRASSERT( ((CRGmBuffer *) msg - 1)->magic 
-			== CR_GM_BUFFER_RECV_MAGIC );
-
+		  == CR_GM_BUFFER_RECV_MAGIC );
+	
 	msg->header.type = CR_MESSAGE_ERROR;
 	msg->header.conn_id = 0x69;
-
+	
 	gm_provide_receive_buffer( cr_gm.port, buf,
-			cr_gm.message_size,
-			CR_GM_PRIORITY );
+				   cr_gm.message_size,
+				   CR_GM_PRIORITY );
 }
 
 void crGmHandleNewMessage( CRConnection *conn, CRMessage *msg,
-		unsigned int len )
+			   unsigned int len )
 {
 	CRGmBuffer *gm_buffer = ((CRGmBuffer *) msg) - 1;
-
+	
 	/* build a header so we can delete the message later */
 	gm_buffer->magic = CR_GM_BUFFER_RECV_MAGIC;
 	gm_buffer->kind  = CRGmMemoryBig;
 	gm_buffer->len   = len;
 	gm_buffer->pad   = 0;
-
+	
 	crNetDispatchMessage( cr_gm.recv_list, conn, msg, len );
 }
 
-static void
-crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
-		unsigned int len )
+static void crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
+			   unsigned int len )
 {
 	CRGmBuffer *temp;
 	CRMessageType cached_type;
-
+	
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_gm.read_mutex);
 #endif
-
+	
 	temp = (CRGmBuffer *) crBufferPoolPop( cr_gm.read_pool, gm_conn->conn->buffer_size );
-
+	
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_gm.read_mutex);
 #endif
-
+	
 	if ( temp == NULL )
 	{
 #if CR_GM_DEBUG
 		cr_gm_debug( "crGmRecv: ran out of pinned memory, "
-				"copying to unpinned" );
+			     "copying to unpinned" );
 #endif
-
+		
 		/* we're out of pinned buffers, copy this message into
 		 * an unpinned buffer so we can jam the just received
 		 * buffer back in the hardware */
@@ -716,32 +716,39 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 #endif
 		temp = (CRGmBuffer *) 
 			crBufferPoolPop( cr_gm.unpinned_read_pool, gm_conn->conn->buffer_size );
+		
 #ifdef CHROMIUM_THREADSAFE
 		crUnlockMutex(&cr_gm.read_mutex);
 #endif
 		if ( temp == NULL )
 		{
 #if CR_GM_DEBUG
-		     cr_gm_debug( "crGmRecv: ran out of unpinned memory (%u left out of %u), "
-				  "copying to fresh", crBufferPoolGetNumBuffers(cr_gm.unpinned_read_pool), 
-				  crBufferPoolGetNumBuffers(cr_gm.unpinned_read_pool) );
+			cr_gm_debug( "crGmRecv: ran out of unpinned memory (%u left out of %u), "
+				     "copying to fresh", 
+				     crBufferPoolGetMaxBuffers(cr_gm.unpinned_read_pool) - 
+				     crBufferPoolGetNumBuffers(cr_gm.unpinned_read_pool), 
+				     crBufferPoolGetMaxBuffers(cr_gm.unpinned_read_pool) );
 #endif
-		     /* AdB - Need to ensure the buffer's _length_ 
-		      *      is greater than the message _size_ here...
-		      */
-		     temp = (CRGmBuffer *) crAlloc(sizeof(CRGmBuffer) + gm_max_length_for_size(gm_min_size_for_length(gm_conn->conn->buffer_size)));
-		     temp->magic = CR_GM_BUFFER_RECV_MAGIC;
-		     temp->kind  = CRGmMemoryUnpinned;
-		     temp->pad   = 0;
+			/* AdB - Need to ensure the buffer's _length_ 
+			 *      is greater than the message _size_ here...
+			 */
+			temp = (CRGmBuffer *) crAlloc(sizeof(CRGmBuffer) + 
+						      gm_max_length_for_size(
+							      gm_min_size_for_length(
+								      gm_conn->conn->buffer_size)));
+			temp->magic = CR_GM_BUFFER_RECV_MAGIC;
+			temp->kind  = CRGmMemoryUnpinned;
+			temp->allocated = gm_conn->conn->buffer_size;
+			temp->pad   = 0;
 		}
 		temp->len = len;
 		crMemcpy( temp+1, msg, len );
 		cached_type = msg->header.type;
-
+		
 		cr_gm_provide_receive_buffer( msg );
-
+		
 		crNetDispatchMessage( cr_gm.recv_list, gm_conn->conn, temp+1, len );
-
+		
 		switch( cached_type )
 		{
 		case CR_MESSAGE_FLOW_CONTROL: /* Handled by InstantReclaim */
@@ -750,7 +757,7 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 		case CR_MESSAGE_OPCODES:	/* Handled in crserverlib/server_stream.c */
 		case CR_MESSAGE_OOB:		/* The programmer's problem (according to humper in util/tcpip.c) */
 			break;
-
+			
 		default:
 			crGmFree( gm_conn->conn, temp+1 );
 			break;
@@ -759,60 +766,59 @@ crGmRecvOther( CRGmConnection *gm_conn, CRMessage *msg,
 	else
 	{
 		cr_gm_provide_receive_buffer( temp + 1 );
-
+		
 		temp = (CRGmBuffer *) msg - 1;
 		temp->len = len;
-
+		
 		crNetDispatchMessage( cr_gm.recv_list, gm_conn->conn, msg, len );
 	}
 }
 
-	static void 
-cr_gm_send_callback( struct gm_port *port, void *ctx, gm_status_t status )
+static void cr_gm_send_callback( struct gm_port *port, void *ctx, 
+				 gm_status_t status )
 {
 	CRGmBuffer *buf = (CRGmBuffer *) ctx - 1;
-
+	
 	if ( status != GM_SUCCESS )
 	{
 		crError( "cr_gm_send_callback error: %s (%d)",
-				cr_gm_str_error( status ), status );
+			 cr_gm_str_error( status ), status );
 	}
-
+	
 	CRASSERT( buf->magic == CR_GM_BUFFER_SEND_MAGIC );
-
+	
 #if CR_GM_DEBUG
 	cr_gm_debug( "send callback, ctx=%p", ctx );
 #endif
-
+	
 	CRASSERT( cr_gm.num_outstanding_sends > 0 );
 	cr_gm.num_outstanding_sends--;
 	cr_gm.num_send_tokens++;
 	(void)(port);
-
+	
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_gm.write_mutex);
 #endif
-	crBufferPoolPush( cr_gm.write_pool, buf, buf->len );
+	crBufferPoolPush( cr_gm.write_pool, buf, buf->allocated );
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_gm.write_mutex);
 #endif
 }
 
-static void
-cr_gm_send( CRConnection *conn, void *buf, unsigned int len,
-		void *ctx )
+static void cr_gm_send( CRConnection *conn, void *buf, 
+			unsigned int len, void *ctx )
 {
 #if CR_GM_DEBUG
 	cr_gm_debug( "gm_send: dst=%u:%u buf=%p len=%d ctx=%p",
-			conn->gm_node_id, conn->gm_port_num, buf, len, ctx );
+		     conn->gm_node_id, conn->gm_port_num, buf, len, ctx );
 #endif
-
+	
 	/* get a send token */
 	while ( cr_gm.num_send_tokens == 0 )
 	{
 		crGmRecv( );
 	}
-
+	
 #if CR_GM_BROKEN_SHORT_SENDS
 	if ( len <= 256 && CR_GM_BUFFER_SPANS_PAGE_BOUNDARY(buf,len) )
 	{
@@ -826,51 +832,50 @@ cr_gm_send( CRConnection *conn, void *buf, unsigned int len,
 		{
 			temp = CR_GM_PAGE_ALIGN(temp);
 		}
-#if 0
+#if CR_GM_DEBUG
 		crWarning( "GM: copying len=%u send from "
-				"start=%p to %p in ctx=%p", len, buf, temp, ctx );
+			   "start=%p to %p in ctx=%p", len, buf, temp, ctx );
 #endif
-
+		
 		/* the source and destination may overlap, but memmove handles
-			 that cases correctly */
+		   that cases correctly */
 		memmove( temp, buf, len );
 		buf = temp;
 	}
 #endif
-
+	
 	cr_gm.num_outstanding_sends++;
 	cr_gm.num_send_tokens--;
-
+	
 	if ( conn->gm_port_num == cr_gm.port_num )
 	{
 		/* only when both are on the same port... */
 		gm_send_to_peer_with_callback( cr_gm.port, buf,
-				cr_gm.message_size, len,
-				CR_GM_PRIORITY, conn->gm_node_id,
-				cr_gm_send_callback, ctx );
+					       cr_gm.message_size, len,
+					       CR_GM_PRIORITY, conn->gm_node_id,
+					       cr_gm_send_callback, ctx );
 	}
 	else
 	{
 		gm_send_with_callback( cr_gm.port, buf,
-				cr_gm.message_size, len,
-				CR_GM_PRIORITY, conn->gm_node_id,
-				conn->gm_port_num,
-				cr_gm_send_callback, ctx );
+				       cr_gm.message_size, len,
+				       CR_GM_PRIORITY, conn->gm_node_id,
+				       conn->gm_port_num,
+				       cr_gm_send_callback, ctx );
 	}
-
+	
 #if CR_GM_SYNCHRONOUS
 	/* force synchronous sends */
 	while ( cr_gm.num_outstanding_sends > 0 )
 		crGmRecv( );
 #endif
-
+	
 #if CR_GM_DEBUG
 	cr_gm_debug( "send complete" );
 #endif
 }
 
-	static void
-crGmSendCredits( CRConnection *conn )
+static void crGmSendCredits( CRConnection *conn )
 {
 	CRGmBuffer *gm_buffer;
 	CRMessageFlowControl *msg;
@@ -883,6 +888,7 @@ crGmSendCredits( CRConnection *conn )
 #endif
 	gm_buffer = (CRGmBuffer *)
 		crBufferPoolPop( cr_gm.write_pool, conn->buffer_size );
+
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_gm.write_mutex);
 #endif
@@ -904,15 +910,14 @@ crGmSendCredits( CRConnection *conn )
 	cr_gm_send( conn, msg, sizeof(*msg), msg );
 }
 
-	static void
-crGmMaybeSendCredits( void )
+static void crGmMaybeSendCredits( void )
 {
 	if ( cr_gm.num_send_tokens == 0 || crBufferPoolGetNumBuffers(cr_gm.write_pool) == 0 )
 		return;
-
+	
 	if ( cr_gm.credit_head && 
-			cr_gm.credit_head->conn->recv_credits >= 
-			CR_GM_SEND_CREDITS_THRESHOLD )
+	     cr_gm.credit_head->conn->recv_credits >= 
+	     CR_GM_SEND_CREDITS_THRESHOLD )
 	{
 		crGmSendCredits( cr_gm.credit_head->conn );
 		crGmCreditZero( cr_gm.credit_head );
@@ -922,32 +927,21 @@ crGmMaybeSendCredits( void )
 int crGmRecv( void )
 {
 	gm_recv_event_t *event;
-
+	
 	/* MWE: Note that we are inside a recv so we can catch the error
-		 of calling crGmSend or crGmFlowControl within a recv
-		 callback.  This prevents the observed problem of the send
-		 function checking for any pending recvs and having those
-		 processed as well, and a resulting recv->send->recv recursion
-		 that eventually explodes. */
+	   of calling crGmSend or crGmFlowControl within a recv
+	   callback.  This prevents the observed problem of the send
+	   function checking for any pending recvs and having those
+	   processed as well, and a resulting recv->send->recv recursion
+	   that eventually explodes. */
 	cr_gm.inside_recv++;
-
+	
 #if CR_GM_USE_CREDITS
-#if CR_GM_SYNCHRONOUS_XXX
-	/* HACK - don't do this for now, it changes the bug we are trying
-		 to find... */
-	/* if we are doing synchronous sends, only ever send credits if we
-		 don't already have an outstanding send */
-	if ( cr_gm.num_outstanding_sends == 0 )
-	{
-		crGmMaybeSendCredits( );
-	}
-#else
 	crGmMaybeSendCredits( );
 #endif
-#endif
-
+	
 	event = gm_receive( cr_gm.port );
-
+	
 	if ( GM_RECV_EVENT_TYPE(event) == GM_NO_RECV_EVENT )
 	{
 		cr_gm.inside_recv--;
@@ -955,7 +949,7 @@ int crGmRecv( void )
 	}
 
 #if CR_GM_DEBUG
-	/* cr_gm_check_recv_event( event ); */
+	cr_gm_check_recv_event( event );
 #endif
 
 	switch ( GM_RECV_EVENT_TYPE(event) ) 
@@ -964,38 +958,37 @@ int crGmRecv( void )
 		case GM_HIGH_RECV_EVENT:
 		case GM_PEER_RECV_EVENT:
 		case GM_HIGH_PEER_RECV_EVENT:
-			{
-				gm_u32_t len = gm_ntoh_u32( event->recv.length );
-				CRMessage *msg = (CRMessage *) gm_ntohp( event->recv.buffer );
-				CRGmConnection *gm_conn = crGmConnectionLookup( msg->header.conn_id );
-				crGmRecvOther( gm_conn, msg, len );
-			}
-			break;
-
+		{
+			gm_u32_t len = gm_ntoh_u32( event->recv.length );
+			CRMessage *msg = (CRMessage *) gm_ntohp( event->recv.buffer );
+			CRGmConnection *gm_conn = crGmConnectionLookup( msg->header.conn_id );
+			crGmRecvOther( gm_conn, msg, len );
+		}
+		break;
+		
 		case GM_FAST_RECV_EVENT:
 		case GM_FAST_HIGH_RECV_EVENT:
 		case GM_FAST_PEER_RECV_EVENT:
 		case GM_FAST_HIGH_PEER_RECV_EVENT:
 			/* can't handle these yet, I don't know if we need to call
 			 * gm_provide_receive_buffer() after handling these or not */
-
-		default:
+			
+	        default:
 #if CR_GM_DEBUG
 			cr_gm_debug( "gm_unknown: %s", cr_gm_str_event_type( event ) );
 #endif
 			gm_unknown( cr_gm.port, event );
 	}
-
+	
 	cr_gm.inside_recv--;
 
 	return 1;
 }
 
-	static void
-crGmWaitForSendCredits( CRConnection *conn )
+static void crGmWaitForSendCredits( CRConnection *conn )
 {
 	double start, elapsed;
-
+	
 	start = cr_gm_clock( );
 	do
 	{
@@ -1003,30 +996,29 @@ crGmWaitForSendCredits( CRConnection *conn )
 		elapsed = cr_gm_clock( ) - start;
 	}
 	while ( conn->send_credits <= 0 && elapsed < 1.0 );
-
+	
 	if ( conn->send_credits <= 0 )
 	{
 		crWarning( "GM: waiting for credits to "
-				"talk to \"%s\"", conn->hostname );
-
+			   "talk to \"%s\"", conn->hostname );
+		
 		while ( conn->send_credits <= 0 )
 		{
 			crGmRecv( );
 		}
-
+		
 		elapsed = cr_gm_clock( ) - start;
-
+		
 		crWarning( "GM: waited %.1f seconds for "
-				"credits to talk to \"%s\"", elapsed, conn->hostname );
+			   "credits to talk to \"%s\"", elapsed, conn->hostname );
 	}
 }
 
-	static void
-crGmSendMulti( CRConnection *conn, void *buf, unsigned int len )
+static void crGmSendMulti( CRConnection *conn, void *buf, unsigned int len )
 {
 	unsigned char *src;
 	CRASSERT( buf != NULL && len > 0 );
-
+	
 	if ( len <= conn->buffer_size )
 	{
 		/* the user is doing a send from memory not allocated by the
@@ -1037,23 +1029,23 @@ crGmSendMulti( CRConnection *conn, void *buf, unsigned int len )
 		crGmSend( conn, &pack, pack, len );
 		return;
 	}
-
+	
 #if CR_GM_USE_CREDITS
 	/* first get some credits */
 	if ( conn->send_credits <= 0 )
 	{
 		crGmWaitForSendCredits( conn );
 	}
-
+	
 	conn->send_credits -= len;
 #endif
-
+	
 	src = (unsigned char *) buf;
 	while ( len > 0 )
 	{
 		CRMessageMulti *msg = (CRMessageMulti *) crGmAlloc( conn );
 		unsigned int        n_bytes;
-
+		
 		if ( len + sizeof(*msg) > conn->buffer_size )
 		{
 			msg->header.type = CR_MESSAGE_MULTI_BODY;
@@ -1067,79 +1059,79 @@ crGmSendMulti( CRConnection *conn, void *buf, unsigned int len )
 			n_bytes   = len;
 		}
 		crMemcpy( msg + 1, src, n_bytes );
-
+		
 		cr_gm_send( conn, msg, n_bytes + sizeof(*msg), msg );
-
+		
 		src += n_bytes;
 		len -= n_bytes;
 	}
 }
 
 void crGmSend( CRConnection *conn, void **bufp, 
-		void *start, unsigned int len )
+	       void *start, unsigned int len )
 {
 	CRGmBuffer *gm_buffer;
-
+	
 	if ( cr_gm.inside_recv )
 	{
 		crError( "crGmSend: can not be called within crGmRecv" );
 	}
-
+	
 	if ( bufp == NULL )
 	{
 		crGmSendMulti( conn, start, len );
 		return;
 	}
-
+	
 	gm_buffer = (CRGmBuffer *) (*bufp) - 1;
-
+	
 	CRASSERT( gm_buffer->magic == CR_GM_BUFFER_SEND_MAGIC );
-
+	
 #if CR_GM_USE_CREDITS && CR_GM_CREDITS_DEBUG
 	if ( conn->send_credits <= 0 )
 	{
 		cr_gm_debug( "need %d credits to talk to host %s, only have %d",
-				len, conn->hostname, conn->send_credits );
+			     len, conn->hostname, conn->send_credits );
 	}
 #endif
-
+	
 	/* Every time the client calls send we try to be polite and grab
 	 * any pending GM messages.  We also have to block if we don't
 	 * have any credits. */
 	while ( crGmRecv( ) )
 		;
-
+	
 #if CR_GM_USE_CREDITS
 	if ( conn->send_credits <= 0 )
 	{
 		crGmWaitForSendCredits( conn );
 	}
-
+	
 	conn->send_credits -= len;
 #endif
-
+	
 #if CR_GM_CREDITS_DEBUG
 	cr_gm_debug( "sending a len=%d message to host=%s, have %d credits "
-			"remaining", len, conn->hostname, conn->send_credits );
+		     "remaining", len, conn->hostname, conn->send_credits );
 #endif
-
+	
 	cr_gm_send( conn, start, len, *bufp );
-
+	
 	*bufp = NULL;
 }
 
 void crGmInstantReclaim( CRConnection *conn, CRMessage *msg )
 {
 	CRGmBuffer *gm_buffer = (CRGmBuffer *) msg - 1;
-
+	
 	CRASSERT( gm_buffer->magic == CR_GM_BUFFER_RECV_MAGIC );
-
+	
 	switch ( gm_buffer->kind )
 	{
 		case CRGmMemoryPinned:
 			cr_gm_provide_receive_buffer( msg );
 			break;
-
+			
 		case CRGmMemoryUnpinned:
 		case CRGmMemoryBig:
 			crFree( gm_buffer );
@@ -1151,21 +1143,20 @@ void crGmInstantReclaim( CRConnection *conn, CRMessage *msg )
 	}
 }
 
-	void
-crGmFree( CRConnection *conn, void *buf )
+void crGmFree( CRConnection *conn, void *buf )
 {
 	CRGmBuffer *gm_buffer = (CRGmBuffer *) buf - 1;
-
+	
 	CRASSERT( gm_buffer->magic == CR_GM_BUFFER_RECV_MAGIC );
 	conn->recv_credits += gm_buffer->len;
-
+	
 	switch ( gm_buffer->kind )
 	{
 		case CRGmMemoryPinned:
 #ifdef CHROMIUM_THREADSAFE
 			crLockMutex(&cr_gm.read_mutex);
 #endif
-			crBufferPoolPush( cr_gm.read_pool, gm_buffer, conn->buffer_size );
+			crBufferPoolPush( cr_gm.read_pool, gm_buffer, gm_buffer->allocated );
 #ifdef CHROMIUM_THREADSAFE
 			crUnlockMutex(&cr_gm.read_mutex);
 #endif
@@ -1175,7 +1166,7 @@ crGmFree( CRConnection *conn, void *buf )
 #ifdef CHROMIUM_THREADSAFE
 			crLockMutex(&cr_gm.unpinned_read_mutex);
 #endif
-			crBufferPoolPush( cr_gm.unpinned_read_pool, gm_buffer, conn->buffer_size );
+			crBufferPoolPush( cr_gm.unpinned_read_pool, gm_buffer, gm_buffer->allocated );
 #ifdef CHROMIUM_THREADSAFE
 			crUnlockMutex(&cr_gm.unpinned_read_mutex);
 #endif
@@ -1193,81 +1184,64 @@ crGmFree( CRConnection *conn, void *buf )
 	crGmCreditIncrease( crGmConnectionLookup( conn->id ) );
 }
 
-#if 0
-	static int 
-cr_gm_looks_like_same_host( const char *a, const char *b )
-{
-	CRASSERT( a && b );
-	while ( *a && *b ) {
-		if ( tolower(*a) != tolower(*b) )
-			return 0;
-		a++;
-		b++;
-	}
 
-	/* they're the same if the names match, or if one is a DNS prefix
-		 of the other */
-	return ( ( *a == '\0' && *b == '\0' ) ||
-			( *a == '.'  && *b == '\0' ) ||
-			( *a == '\0' && *b == '.'  ) );
-}
-#endif
-
-	static void
-cr_gm_set_acceptable_sizes( void )
+static void cr_gm_set_acceptable_sizes( void )
 {
 	gm_status_t      status;
 	enum gm_priority priority;
 	unsigned long    mask;
-
+	
 	for ( priority = 0; priority < GM_NUM_PRIORITIES; priority++ )
 	{
 		mask = 0;
 		if ( priority == CR_GM_PRIORITY )
 			mask = 1 << cr_gm.message_size;
-
+		
 		status = gm_set_acceptable_sizes( cr_gm.port, priority, mask );
 		if ( status != GM_SUCCESS )
 		{
 			crError( "GM: gm_set_acceptable_sizes( port=%u, pri=%u, "
-					"mask=%ld ) failed: %s (%d)", cr_gm.port_num,
-					priority, mask, 
-					cr_gm_str_error( status ), status );
+				 "mask=%ld ) failed: %s (%d)", cr_gm.port_num,
+				 priority, mask, 
+				 cr_gm_str_error( status ), status );
 		}
 	}
 }
 
-void crGmInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu )
+void crGmInit( CRNetReceiveFuncList *rfl,
+	       CRNetCloseFuncList *cfl, 
+	       unsigned int mtu )
 {
 	gm_status_t status;
 	unsigned int port, min_port, max_port;
 	unsigned int node_id, max_node_id, i;
 	unsigned int stride, count, n_bytes, num_recv_tokens;
-	unsigned char *mem;
+	unsigned char *mem;	
 
+	cr_gm.recv_list = rfl;
+	cr_gm.close_list = cfl;
+	
 	if ( cr_gm.initialized )
 	{
-		cr_gm.recv_list = rfl;
-		cr_gm.close_list = cfl;
 		return;
 	}
-
+	
 	crWarning( "GM: initializing" );
-
+	
 	status = gm_init( );
 	if ( status != GM_SUCCESS )
 	{
 		crError( "GM: gm_init() failed: %s (%d)",
-				cr_gm_str_error( status ), status );
+			 cr_gm_str_error( status ), status );
 	}
-
+	
 	/* open a reasonable port */
 	min_port = 4;
 	max_port = gm_num_ports( NULL /* known unused */ ) - 1;
 	for ( port = min_port; port <= max_port; port++ )
 	{
 		status = gm_open( &cr_gm.port, 0, port,
-				"CR GM", CR_GM_API_VERSION );
+				  "CR GM", CR_GM_API_VERSION );
 		if ( status == GM_SUCCESS )
 		{
 			break;
@@ -1275,36 +1249,36 @@ void crGmInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int 
 		if ( status != GM_BUSY )
 		{
 			crError( "GM: gm_open( port=%u ) failed: %s (%d)",
-					port, cr_gm_str_error( status ), status );
+				 port, cr_gm_str_error( status ), status );
 		}
 	}
 	if ( port > max_port )
 	{
 		crError( "GM: all ports busy (tried port %u through %u)",
-				min_port, max_port );
+			 min_port, max_port );
 	}
 	cr_gm.port_num = port;
-
+	
 	cr_gm.message_size = gm_min_size_for_length( mtu );
-
+	
 	cr_gm_set_acceptable_sizes( );
-
+	
 	cr_gm_info( mtu );
-
+	
 	gm_max_node_id_inuse( cr_gm.port, &max_node_id );
-
+	
 	cr_gm.num_nodes = max_node_id + 1;
 	for ( i = 0; i < CR_GM_CONN_HASH_SIZE; i++ )
 	{
 		cr_gm.gm_conn_hash[i] = NULL;
 	}
-
+	
 	cr_gm.credit_head = NULL;
 	cr_gm.credit_tail = NULL;
-
+	
 	gm_get_node_id( cr_gm.port, &node_id );
 	cr_gm.node_id = node_id;
-
+	
 	stride  = mtu;
 #if CR_GM_ROUND_UP
 	stride  = gm_max_length_for_size( gm_min_size_for_length( stride ) );
@@ -1313,21 +1287,25 @@ void crGmInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int 
 	count   = CR_GM_PINNED_READ_MEMORY_SIZE / stride;
 	n_bytes = count * stride;
 	crWarning( "GM: read pool: bufsize=%u, "
-			"%u buffers, %u bytes", stride, count, n_bytes );
+		   "%u buffers, %u bytes", stride, count, n_bytes );
 	mem     = cr_gm_dma_malloc( n_bytes );
-
+	
+	/* We need to give the GM layer receive buffers
+	   so we need to know how many to give.  We don't
+	   need to give more that we are going to allocate
+	   below and this sets an upper bound */
 	num_recv_tokens = gm_num_receive_tokens( cr_gm.port );
-
+	
 #ifdef CHROMIUM_THREADSAFE
 	crInitMutex(&cr_gm.read_mutex);
 #endif
 	cr_gm.read_pool = crBufferPoolInit( count );
 	for ( i = 0; i < count; i++ )
 	{
-		CRGmBuffer *buf = (CRGmBuffer *) ( mem + i * stride );
+		CRGmBuffer *buf = (CRGmBuffer *) (mem + i*stride);
 		buf->magic = CR_GM_BUFFER_RECV_MAGIC;
 		buf->kind  = CRGmMemoryPinned;
-		buf->len   = mtu;
+		buf->allocated = mtu;
 		buf->pad   = 0;
 		if ( i < num_recv_tokens )
 		{
@@ -1340,18 +1318,19 @@ void crGmInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int 
 #ifdef CHROMIUM_THREADSAFE
 			crLockMutex(&cr_gm.read_mutex);
 #endif
-			crBufferPoolPush( cr_gm.read_pool, buf, buf->len );
+			crDebug("Init read push");
+			crBufferPoolPush( cr_gm.read_pool, buf, buf->allocated );
 #ifdef CHROMIUM_THREADSAFE
 			crUnlockMutex(&cr_gm.read_mutex);
 #endif
 		}
 	}
-
+	
 #ifdef CHROMIUM_THREADSAFE
 	crInitMutex(&cr_gm.unpinned_read_mutex);
 #endif
 	cr_gm.unpinned_read_pool = crBufferPoolInit( 16 );
-
+	
 	stride  = mtu;
 #if CR_GM_ROUND_UP
 	stride  = gm_max_length_for_size( gm_min_size_for_length( stride ) );
@@ -1360,41 +1339,41 @@ void crGmInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int 
 	count   = CR_GM_PINNED_WRITE_MEMORY_SIZE / stride;
 	n_bytes = count * stride;
 	crWarning( "GM: write pool: bufsize=%u, "
-			"%u buffers, %u bytes", stride, count, n_bytes );
+		   "%u buffers, %u bytes", stride, count, n_bytes );
 	mem     = cr_gm_dma_malloc( n_bytes );
-
+	
 #ifdef CHROMIUM_THREADSAFE
 	crInitMutex(&cr_gm.write_mutex);
 #endif
 	cr_gm.write_pool = crBufferPoolInit( count );
 	for ( i = 0; i < count; i++ )
 	{
-		CRGmBuffer *buf = (CRGmBuffer *) ( mem + i * stride );
+		CRGmBuffer *buf = (CRGmBuffer *) (mem + i*stride);
 		buf->magic = CR_GM_BUFFER_SEND_MAGIC;
 		buf->kind  = CRGmMemoryPinned;
-		buf->len   = mtu;
+		buf->allocated = mtu;
 		buf->pad   = 0;
-
+		
 		/* Shouldn't need the locks here as we only
 		 * call gmInit once. But hey..... */
 #ifdef CHROMIUM_THREADSAFE
 		crLockMutex(&cr_gm.write_mutex);
 #endif
-		crBufferPoolPush( cr_gm.write_pool, buf, mtu );
+		crBufferPoolPush( cr_gm.write_pool, buf, buf->allocated );
 #ifdef CHROMIUM_THREADSAFE
 		crUnlockMutex(&cr_gm.write_mutex);
 #endif
 	}
-
-	cr_gm.recv_list = rfl;
-	cr_gm.close_list = cfl;
-
+	
 	cr_gm.num_outstanding_sends = 0;
 	cr_gm.num_send_tokens = gm_num_send_tokens( cr_gm.port );
-
+	
 	cr_gm.inside_recv = 0;
-
+	
 	cr_gm.initialized = 1;
+
+	cr_gm.num_buffer_sizes = 1;
+	cr_gm.buffer_sizes[cr_gm.num_buffer_sizes-1] = mtu;
 }
 
 unsigned int crGmNodeId( void )
@@ -1411,19 +1390,10 @@ unsigned int crGmPortNum( void )
 
 void crGmConnection( CRConnection *conn )
 {
-	/* The #if 0'ed out code here did some sanity checking on 
-	 * the integrity of the GM network.  This doesn't quite work 
-	 * any more because we don't have an initial TCPIP handshake 
-	 * to establish the GM node ID of the other party.  Perhaps 
-	 * we can do this validation in GmAccept once the mothership 
-	 * is brokering connections? */
-#if 0
-	char *actual_name;
-#endif
-
+	
 	CRASSERT( cr_gm.initialized );
 
-#if 0
+#if CR_GM_DEBUG
 	if ( conn->gm_node_id == GM_NO_SUCH_NODE_ID )
 	{
 		crError( "GM: there's no host called \"%s\"?",
@@ -1451,17 +1421,17 @@ void crGmConnection( CRConnection *conn )
 	conn->Alloc = crGmAlloc;
 	conn->Send  = crGmSend;
 	conn->SendExact = crGmSendExact;
-	conn->Recv = crGmBogusRecv;
+	conn->Recv  = crGmBogusRecv;
 	conn->Free  = crGmFree;
-	conn->InstantReclaim = crGmInstantReclaim;
+	conn->InstantReclaim   = crGmInstantReclaim;
 	conn->HandleNewMessage = crGmHandleNewMessage;
-	conn->Accept = crGmAccept;
+	conn->Accept  = crGmAccept;
 	conn->Connect = crGmDoConnect;
 	conn->Disconnect = crGmDoDisconnect;
 	conn->sizeof_buffer_header = sizeof( CRGmBuffer );
 	conn->actual_network = 1;
 
-#if 0
+#if CR_GM_DEBUG
 	crWarning( "GM: accepted connection from "
 			"host=%s id=%d (gm_name=%s)", conn->hostname,
 			conn->gm_node_id, actual_name );
@@ -1471,7 +1441,7 @@ void crGmConnection( CRConnection *conn )
 CRConnection** crGmDump( int *num )
 {
 	/* TODO */
-
+	
 	*num = 0;
 	return NULL;
 }

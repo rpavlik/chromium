@@ -7,6 +7,7 @@
 #include "cr_mem.h"
 #include "cr_error.h"
 #include "cr_bufpool.h"
+#include <limits.h>
 
 
 /*
@@ -24,6 +25,10 @@
  * We're just using a simple linked list here.  Since we seldom have
  * more than about 10-15 buffers in the pool, that's OK.  A binary tree
  * would be nicer though.
+ *
+ * MCH: BufferPoolPop will now return the smallest buffer in the pool that
+ *      is >= to the size required.  This fixes BufferPool overruns with lots
+ *      of MTUs.
  */
 
 
@@ -104,9 +109,13 @@ crBufferPoolPush( CRBufferPool *pool, void *buf, unsigned int bytes )
 void *
 crBufferPoolPop( CRBufferPool *pool, unsigned int bytes )
 {
-	Buffer *b, *prev;
+	Buffer *b, *prev, *maybe_use;
+	unsigned int next_smallest = UINT_MAX;
+	int i;
+
 	prev = NULL;
-	for (b = pool->head; b; b = b->next) {
+	maybe_use = NULL;
+	for (b = pool->head, i=0; i<pool->numBuffers; b = b->next, i++) {
 		if (b->size == bytes) {
 			void *p = b->address;
 			if (prev) {
@@ -119,7 +128,24 @@ crBufferPoolPop( CRBufferPool *pool, unsigned int bytes )
 			pool->numBuffers--;
 			return p;
 		}
+		else if(b->size >= bytes){
+			if (b->size < next_smallest){
+			     maybe_use = b;
+			}
+		}
 		prev = b;
+	}
+	if(maybe_use != NULL){
+	     void *p = maybe_use->address;
+	     if (prev) {
+		  prev->next = maybe_use->next;
+	     }
+	     else {
+		  pool->head = maybe_use->next;
+	     }
+	     crFree(maybe_use);
+	     pool->numBuffers--;
+	     return p;
 	}
 	return NULL;
 }

@@ -12,9 +12,9 @@
 #pragma warning( disable : 4514 )
 #pragma warning( disable : 4127 )
 typedef int ssize_t;
-#define write(a,b,c) send(a,b,c,0)
 #else
 #include <sys/types.h>
+#include <sys/wait.h>
 #ifdef DARWIN
 typedef unsigned int socklen_t;
 #elif defined(OSF1)
@@ -95,9 +95,9 @@ int crTCPIPErrno( void )
 char *crTCPIPErrorString( int err )
 {
 	static char buf[512], *temp;
-
+	
 	sprintf( buf, "err=%d", err );
-
+	
 #define X(x)	crStrcpy(buf,x); break
 
 	switch ( err )
@@ -198,7 +198,6 @@ int
 __tcpip_read_exact( CRSocket sock, void *buf, unsigned int len )
 {
 	char *dst = (char *) buf;
-
 	/* 
 	 * Shouldn't write to a non-existent socket, ie when 
 	 * crTCPIPDoDisconnect has removed it from the pool
@@ -270,24 +269,27 @@ __tcpip_write_exact( CRSocket sock, void *buf, unsigned int len )
 	if ( sock <= 0 )
 		return 1;
 
+	
+	     
 	while ( len > 0 )
 	{
-		int num_written = write( sock, src, len );
-		if ( num_written <= 0 )
-		{
-			if ( (err = crTCPIPErrno( )) == EINTR )
-			{
-				crWarning( "__tcpip_write_exact(TCPIP): "
-						"caught an EINTR, continuing" );
-				continue;
-			}
-			return -err;
-		}
-
-		len -= num_written;
-		src += num_written;
+	     int num_written = send( sock, src, len, 0 );
+	     if ( num_written <= 0 )
+	     {
+		  if ( (err = crTCPIPErrno( )) == EINTR )
+		  {
+		       crWarning( "__tcpip_write_exact(TCPIP): "
+				  "caught an EINTR, continuing" );
+		       continue;
+		  }
+		  
+		  return -err;
+	     }
+	     
+	     len -= num_written;
+	     src += num_written;
 	}
-
+	     
 	return 1;
 }
 
@@ -323,36 +325,36 @@ __crSpankSocket( CRSocket sock )
 	int tcp_nodelay = 1;
 
 	if ( setsockopt( sock, SOL_SOCKET, SO_SNDBUF, 
-				(char *) &sndbuf, sizeof(sndbuf) ) )
+			 (char *) &sndbuf, sizeof(sndbuf) ) )
 	{
 		int err = crTCPIPErrno( );
 		crWarning( "setsockopt( SO_SNDBUF=%d ) : %s",
-				sndbuf, crTCPIPErrorString( err ) );
+			   sndbuf, crTCPIPErrorString( err ) );
 	}
-
+	
 	if ( setsockopt( sock, SOL_SOCKET, SO_RCVBUF,
-				(char *) &rcvbuf, sizeof(rcvbuf) ) )
+			 (char *) &rcvbuf, sizeof(rcvbuf) ) )
 	{
 		int err = crTCPIPErrno( );
 		crWarning( "setsockopt( SO_RCVBUF=%d ) : %s",
-				rcvbuf, crTCPIPErrorString( err ) );
+			   rcvbuf, crTCPIPErrorString( err ) );
 	}
-
+	
 	
 	if ( setsockopt( sock, SOL_SOCKET, SO_REUSEADDR,
-				(char *) &so_reuseaddr, sizeof(so_reuseaddr) ) )
+			 (char *) &so_reuseaddr, sizeof(so_reuseaddr) ) )
 	{
 		int err = crTCPIPErrno( );
 		crWarning( "setsockopt( SO_REUSEADDR=%d ) : %s",
-				so_reuseaddr, crTCPIPErrorString( err ) );
+			   so_reuseaddr, crTCPIPErrorString( err ) );
 	}
-
+	
 	if ( setsockopt( sock, IPPROTO_TCP, TCP_NODELAY,
-				(char *) &tcp_nodelay, sizeof(tcp_nodelay) ) )
+			 (char *) &tcp_nodelay, sizeof(tcp_nodelay) ) )
 	{
 		int err = crTCPIPErrno( );
 		crWarning( "setsockopt( TCP_NODELAY=%d )"
-				" : %s", tcp_nodelay, crTCPIPErrorString( err ) );
+			   " : %s", tcp_nodelay, crTCPIPErrorString( err ) );
 	}
 }
 
@@ -429,7 +431,8 @@ crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 			{
 				err = crTCPIPErrno( );
 				if (err != EAFNOSUPPORT)
-					crWarning( "Couldn't create socket of family %i: %s, trying another", cur->ai_family, crTCPIPErrorString( err ) );
+					crWarning( "Couldn't create socket of family %i: %s, trying another", 
+						   cur->ai_family, crTCPIPErrorString( err ) );
 				continue;
 			}
 			__crSpankSocket( cr_tcpip.server_sock );
@@ -437,7 +440,8 @@ crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 			if ( bind( cr_tcpip.server_sock, cur->ai_addr, cur->ai_addrlen ) )
 			{
 				err = crTCPIPErrno( );
-				crWarning( "Couldn't bind to socket (port=%d): %s", port, crTCPIPErrorString( err ) );
+				crWarning( "Couldn't bind to socket (port=%d): %s", 
+					   port, crTCPIPErrorString( err ) );
 				crCloseSocket( cr_tcpip.server_sock );
 				continue;
 			}
@@ -457,7 +461,7 @@ crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 			crError( "Couldn't find local TCP port %s", port_s);
 #endif
 	}
-
+	
 	if (conn->broker)
 	{
 		CRConnection *mother;
@@ -465,7 +469,7 @@ crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 		char my_hostname[256];
 		char *temp;
 		mother = __copy_of_crMothershipConnect( );
-
+		
 		if (!hostname)
 		{
 			if ( crGetHostname( my_hostname, sizeof( my_hostname ) ) )
@@ -475,20 +479,20 @@ crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 		}
 		else
 			crStrcpy(my_hostname, hostname);
-
+		
 		temp = crStrchr( my_hostname, '.' );
 		if (temp) *temp='\0';
-
+		
 		if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest tcpip %s %d %d", my_hostname, conn->port, conn->endianness ) )
 		{
 			crError( "Mothership didn't like my accept request request" );
 		}
-
+		
 		__copy_of_crMothershipDisconnect( mother );
-
+		
 		sscanf( response, "%u", &(conn->id) );
 	}
-
+	
 	addr_length =	sizeof( addr );
 	conn->tcp_socket = accept( cr_tcpip.server_sock, (struct sockaddr *) &addr, &addr_length );
 	if (conn->tcp_socket == -1)
@@ -496,7 +500,7 @@ crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 		err = crTCPIPErrno( );
 		crError( "Couldn't accept client: %s", crTCPIPErrorString( err ) );
 	}
-
+	
 #ifndef ADDRINFO
 	sin_addr = ((struct sockaddr_in *) &addr)->sin_addr;
 	host = gethostbyaddr( (char *) &sin_addr, sizeof( sin_addr), AF_INET );
@@ -507,13 +511,13 @@ crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port )
 	}
 #else
 	err = getnameinfo ( (struct sockaddr *) &addr, addr_length,
-			host, sizeof( host),
-			NULL, 0, NI_NAMEREQD);
+			    host, sizeof( host),
+			    NULL, 0, NI_NAMEREQD);
 	if ( err )
 	{
 		err = getnameinfo ( (struct sockaddr *) &addr, addr_length,
-			host, sizeof( host),
-			NULL, 0, NI_NUMERICHOST);
+				    host, sizeof( host),
+				    NULL, 0, NI_NUMERICHOST);
 		if ( err )	/* shouldn't ever happen */
 			conn->hostname = "unknown ?!";
 		else
@@ -560,8 +564,8 @@ crTCPIPAlloc( CRConnection *conn )
 	if ( buf == NULL )
 	{
 		crDebug( "Buffer pool %p was empty, so I allocated %d bytes.\n\tI did so from the buffer: %p", 
-						 cr_tcpip.bufpool,
-			(unsigned int)sizeof(CRTCPIPBuffer) + conn->buffer_size, &cr_tcpip.bufpool );
+			 cr_tcpip.bufpool,
+			 (unsigned int)sizeof(CRTCPIPBuffer) + conn->buffer_size, &cr_tcpip.bufpool );
 		crDebug("sizeof(CRTCPIPBuffer): %d", (unsigned int)sizeof(CRTCPIPBuffer));
 		crDebug("sizeof(conn->buffer_size): %d", conn->buffer_size);
 		buf = (CRTCPIPBuffer *) 
@@ -571,11 +575,7 @@ crTCPIPAlloc( CRConnection *conn )
 		buf->pad   = 0;
 		buf->allocated = conn->buffer_size;
 	}
-	else
-	{
-	  /* crDebug( "I asked for a message of size %d, and I got one from the pool, which was of size %d", conn->buffer_size, buf->allocated );*/
-	}
-
+	
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_tcpip.mutex);
 #endif
@@ -586,12 +586,13 @@ crTCPIPAlloc( CRConnection *conn )
 static void
 crTCPIPSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 {
+    
 	crTCPIPReadExact( conn, buf, len );
 }
 
 static void
 crTCPIPSend( CRConnection *conn, void **bufp,
-				 void *start, unsigned int len )
+	     void *start, unsigned int len )
 {
 	CRTCPIPBuffer *tcpip_buffer;
 	unsigned int      *lenp;
@@ -614,7 +615,6 @@ crTCPIPSend( CRConnection *conn, void **bufp,
 		crTCPIPWriteExact( conn, start, len );
 		return;
 	}
-
 	tcpip_buffer = (CRTCPIPBuffer *)(*bufp) - 1;
 
 	CRASSERT( tcpip_buffer->magic == CR_TCPIP_BUFFER_MAGIC );
@@ -643,7 +643,7 @@ crTCPIPSend( CRConnection *conn, void **bufp,
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_tcpip.mutex);
 #endif
-	crBufferPoolPush( cr_tcpip.bufpool, tcpip_buffer, conn->buffer_size );
+	crBufferPoolPush( cr_tcpip.bufpool, tcpip_buffer, tcpip_buffer->allocated );
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_tcpip.mutex);
 #endif
@@ -711,7 +711,7 @@ void crTCPIPFree( CRConnection *conn, void *buf )
 #ifdef CHROMIUM_THREADSAFE
 			crLockMutex(&cr_tcpip.mutex);
 #endif
-			crBufferPoolPush( cr_tcpip.bufpool, tcpip_buffer, conn->buffer_size );
+			crBufferPoolPush( cr_tcpip.bufpool, tcpip_buffer, tcpip_buffer->allocated );
 #ifdef CHROMIUM_THREADSAFE
 			crUnlockMutex(&cr_tcpip.mutex);
 #endif
@@ -1086,6 +1086,7 @@ crTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mt
 		return;
 	}
 
+	cr_tcpip.initialized = 1;
 	crDebug("Initializing TCPIP\n");
 
 	cr_tcpip.num_conns = 0;
@@ -1098,12 +1099,10 @@ crTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mt
 	crInitMutex(&cr_tcpip.recvmutex);
 #endif
 	cr_tcpip.bufpool = crBufferPoolInit(16);
-
-	cr_tcpip.initialized = 1;
 }
+
 /* The function that actually connects.  This should only be called by clients 
  * Servers have another way to set up the socket. */
-
 int
 crTCPIPDoConnect( CRConnection *conn )
 {
@@ -1167,7 +1166,8 @@ crTCPIPDoConnect( CRConnection *conn )
 		int remote_endianness;
 		mother = __copy_of_crMothershipConnect( );
 
-		if (!__copy_of_crMothershipSendString( mother, response, "connectrequest tcpip %s %d %d", conn->hostname, conn->port, conn->endianness) )
+		if (!__copy_of_crMothershipSendString( mother, response, "connectrequest tcpip %s %d %d", 
+						       conn->hostname, conn->port, conn->endianness) )
 		{
 #ifdef ADDRINFO
 			freeaddrinfo(res);
