@@ -106,14 +106,23 @@ void TILESORTSPU_APIENTRY tilesortspu_Viewport( GLint x, GLint y, GLsizei width,
 	printf("%s() %d, %d, %d, %d   muralWidth=%d muralHeight=%d  wScale=%f hScale=%f\n", __FUNCTION__, x, y, width, height, tilesort_spu.muralWidth, tilesort_spu.muralHeight, tilesort_spu.widthScale, tilesort_spu.heightScale);
 	*/
 
-	crStateViewport( (int) (x*tilesort_spu.widthScale + 0.5f), 
-			 (int) (y*tilesort_spu.heightScale + 0.5f),
-			 (int) (width*tilesort_spu.widthScale + 0.5f), 
-			 (int) (height*tilesort_spu.heightScale + 0.5f) );
-	tilesortspuSetBucketingBounds( (int) (x*tilesort_spu.widthScale + 0.5f),
-			               (int) (y*tilesort_spu.heightScale + 0.5f),
-			               (int) (width*tilesort_spu.widthScale + 0.5f), 
-			               (int) (height*tilesort_spu.heightScale + 0.5f) );
+	/* Scale the viewport up to the mural's size */
+	{
+		GLint vpx, vpy, vpw, vph;
+
+		vpx = (int) (x * tilesort_spu.widthScale + 0.5f);
+		vpy = (int) (y * tilesort_spu.heightScale + 0.5f);
+		vpw = (int) (width * tilesort_spu.widthScale + 0.5f);
+		vph = (int) (height * tilesort_spu.heightScale + 0.5f);
+
+		if (vpw == 0 && width > 0)
+			vpw = 1;
+		if (vph == 0 && height > 0)
+			vph = 1;
+
+		crStateViewport(vpx, vpy, vpw, vph);
+		tilesortspuSetBucketingBounds(vpx, vpy, vpw, vph);
+	}
 }
 
 void TILESORTSPU_APIENTRY tilesortspu_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
