@@ -50,3 +50,8 @@ GLboolean GL_PER_STAGE_CONSTANTS_NV GL_NV_register_combiners2 g->regcombiner.ena
 GLboolean GL_TEXTURE_CUBE_MAP_ARB GL_ARB_texture_cube_map g->texture.unit[g->texture.curTextureUnit].enabledCubeMap
 GLint GL_TEXTURE_BINDING_CUBE_MAP_ARB GL_ARB_texture_cube_map g->texture.unit[g->texture.curTextureUnit].currentTextureCubeMapName
 GLint GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB GL_ARB_texture_cube_map g->limits.maxCubeMapTextureSize
+
+# GL_ARB_transpose_matrix
+GLdefault GL_TRANSPOSE_MODELVIEW_MATRIX_ARB GL_ARB_transpose_matrix            %TRANSPOSE(tm,g->transform.modelView[g->transform.modelViewDepth]) tm.m00 tm.m01 tm.m02 tm.m03 tm.m10 tm.m11 tm.m12 tm.m13 tm.m20 tm.m21 tm.m22 tm.m23 tm.m30 tm.m31 tm.m32 tm.m33
+GLdefault GL_TRANSPOSE_PROJECTION_MATRIX_ARB GL_ARB_transpose_matrix           %TRANSPOSE(tm,g->transform.projection[g->transform.projectionDepth]) tm.m00 tm.m01 tm.m02 tm.m03 tm.m10 tm.m11 tm.m12 tm.m13 tm.m20 tm.m21 tm.m22 tm.m23 tm.m30 tm.m31 tm.m32 tm.m33
+GLdefault GL_TRANSPOSE_TEXTURE_MATRIX_ARB GL_ARB_transpose_matrix              %TRANSPOSE(tm,g->transform.texture[g->texture.curTextureUnit][g->transform.textureDepth[g->texture.curTextureUnit]]) tm.m00 tm.m01 tm.m02 tm.m03 tm.m10 tm.m11 tm.m12 tm.m13 tm.m20 tm.m21 tm.m22 tm.m23 tm.m30 tm.m31 tm.m32 tm.m33
