@@ -89,15 +89,20 @@ static void CheckWindowSize( WindowInfo *window )
 		 */
 		if (readback_spu.resizable)
 		{
+			/* ask downstream SPU (probably render) for its window size */
 			GLint size[2];
+			size[0] = size[1] = 0;
 			readback_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
 																								 w, GL_INT, 2, size);
-			geometry[2] = size[0];
-			geometry[3] = size[1];
 			if (size[0] == 0)
 			{
 				/* something went wrong - recover */
 				readback_spu.super.GetIntegerv( GL_VIEWPORT, geometry );
+			}
+			else
+			{
+				geometry[2] = size[0];
+				geometry[3] = size[1];
 			}
 		}
 		else
