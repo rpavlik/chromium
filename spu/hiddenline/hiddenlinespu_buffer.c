@@ -65,7 +65,7 @@ void hiddenlineFlush( void *arg )
 	hiddenlineRecord( buf->pack, buf->data_start, buf->opcode_start, buf->opcode_start - buf->opcode_current , 1 );
 
 	hiddenlineProvidePackBuffer();
-	(void *) arg;
+	(void) arg;
 }
 
 void hiddenlineHuge( CROpcode opcode, void *buf )
