@@ -60,6 +60,15 @@ PFNGLMULTITEXCOORD2FARBPROC	glMultiTexCoord2fARB;
 PFNGLACTIVETEXTUREARBPROC	glActiveTextureARB;
 #endif
 
+#ifdef IRIX  /* IRIX work-around */
+void glActiveTextureARB(GLenum texture)
+{
+}
+
+void glMultiTexCoord2fARB(GLenum texture, GLfloat s, GLfloat t)
+{
+}
+#endif
 
 /* --- Function Definitions ------------------------------------------------- */
 
