@@ -6,8 +6,13 @@
 TOP = ../..
 PROGRAM = statecopytest
 FILES = statecopytest
-TRACKS_STATE = 1
 
-LIBRARIES = crutil
+ifdef WINDOWS
+TRACKS_STATE = 1
+LIBRARIES = crutil spuload
+else
+LIBRARIES = crutil spuload crstate
+endif
+
 
 include ${TOP}/cr.mk
