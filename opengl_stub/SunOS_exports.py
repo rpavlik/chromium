@@ -34,14 +34,21 @@ for func_name in keys:
 		continue
 	( return_type, arg_names, arg_types ) = gl_mapping[func_name]
 
-	print "%s gl%s%s" % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
-	print "{"
-	print "\t",
-	if return_type != "void":
-		print "return ",
-	print "glim.%s%s;" % (func_name, stub_common.CallString( arg_names ))
-	print "}"
-	print ""
+	if func_name == "TexImage3D":
+		# Ugly hack - Sun's gl.h has wrong type for internalFormat
+		print "void glTexImage3D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels )"
+		print "{"
+		print "\tglim.TexImage3D( target, level, (GLint) internalformat, width, height, depth, border, format, type, pixels );"
+		print "}"
+	else:
+		print "%s gl%s%s" % (return_type, func_name, stub_common.ArgumentString( arg_names, arg_types ) )
+		print "{"
+		print "\t",
+		if return_type != "void":
+			print "return ",
+		print "glim.%s%s;" % (func_name, stub_common.CallString( arg_names ))
+		print "}"
+		print ""
 
 	real_func_name = alias_exports.AliasMap(func_name);
 	if real_func_name:
