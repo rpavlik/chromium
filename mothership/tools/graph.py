@@ -51,7 +51,9 @@ menu_GRAPH              = 401
 menu_TILESORT           = 402
 menu_LIGHTNING2         = 403
 
-menu_SYSTEM_OPTIONS     = 500
+menu_APP_OPTIONS        = 500
+menu_APP_RUN            = 501
+menu_APP_STOP           = 502
 
 menu_HELP               = 600
 menu_ABOUT              = 601
@@ -67,6 +69,8 @@ id_TemplateOptions = 3004
 # Size of the drawing page, in pixels.
 PAGE_WIDTH  = 1000
 PAGE_HEIGHT = 1000
+
+TitleString = "Chromium Configuration Tool"
 
 WildcardPattern = "Chromium Configs (*.conf)|*.conf|All (*)|*"
 
@@ -174,11 +178,13 @@ class MainFrame(wxFrame):
 		EVT_MENU(self, menu_LAYOUT_NODES, self.doLayoutNodes)
 		menuBar.Append(self.viewMenu, "View")
 
-		# System menu
+		# Application menu
 		self.systemMenu = wxMenu()
-		self.systemMenu.Append(menu_SYSTEM_OPTIONS, "Options...")
-		menuBar.Append(self.systemMenu, "System")
-		EVT_MENU(self, menu_SYSTEM_OPTIONS, self.doSystemOptions)
+		self.systemMenu.Append(menu_APP_OPTIONS, "Options...")
+		self.systemMenu.Append(menu_APP_RUN, "Run...")
+		self.systemMenu.Append(menu_APP_STOP, "Stop...")
+		menuBar.Append(self.systemMenu, "Application")
+		EVT_MENU(self, menu_APP_OPTIONS, self.doAppOptions)
 
 		# Help menu
 		self.helpMenu = wxMenu()
@@ -639,7 +645,7 @@ class MainFrame(wxFrame):
 	def doNew(self, event):
 		"""File / New callback"""
 		global _docList
-		newFrame = MainFrame(None, -1, "Chromium Configuration Tool")
+		newFrame = MainFrame(None, -1, TitleString)
 		newFrame.Show(TRUE)
 		_docList.append(newFrame)
 
@@ -661,13 +667,13 @@ class MainFrame(wxFrame):
 		if (self.fileName == None) and (len(self.mothership.Nodes()) == 0):
 			# Load contents into current (empty) document.
 			self.fileName = fileName
-			title = "Chromium Configuration Tool: " +os.path.basename(fileName)
+			title = TitleString + ": " + os.path.basename(fileName)
 			self.SetTitle(title)
 			self.loadConfig()
 		else:
 			# Open a new frame for this document.
-			newFrame = MainFrame(None, -1, os.path.basename(fileName),
-						fileName=fileName)
+			title = TitleString + ": " + os.path.basename(fileName)
+			newFrame = MainFrame(None, -1, title, fileName=fileName)
 			newFrame.Show(true)
 			_docList.append(newFrame)
 
@@ -709,7 +715,7 @@ class MainFrame(wxFrame):
 		fileName = os.path.join(os.getcwd(), fileName)
 		os.chdir(curDir)
 
-		title = "Chromium Configuration Tool: " + os.path.basename(fileName)
+		title = TitleString + ": " + os.path.basename(fileName)
 		self.SetTitle(title)
 
 		self.fileName = fileName
@@ -991,9 +997,10 @@ class MainFrame(wxFrame):
 
 	def doServerOptions(self, event):
 		"""Node / Server Options callback"""
-		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
+		dialog = spudialog.SPUDialog(parent=self, id=-1,
 									 title="Server Options",
 									 options=self.mothership.ServerOptions)
+		dialog.Centre()
 		dialog.SetValues(self.mothership.GetServerOptions())
 		if dialog.ShowModal() == wxID_OK:
 			self.mothership.SetServerOptions(dialog.GetValues())
@@ -1039,9 +1046,10 @@ class MainFrame(wxFrame):
 			if name in SPUInfo.keys():
 				(params, opts) = SPUInfo[name]
 				# create the dialog
-				dialog = spudialog.SPUDialog(parent=NULL, id=-1,
+				dialog = spudialog.SPUDialog(parent=self, id=-1,
 											 title=name + " SPU Options",
 											 options = opts)
+				dialog.Centre()
 				# set the dialog widget values
 				dialog.SetValues(spuList[0].GetOptions())
 				# wait for OK or cancel
@@ -1058,11 +1066,12 @@ class MainFrame(wxFrame):
 	# ----------------------------------------------------------------------
 	# System menu callbacks
 	
-	def doSystemOptions(self, event):
-		"""System / Options callback"""
-		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
-									 title="System Options",
+	def doAppOptions(self, event):
+		"""Application / Options callback"""
+		dialog = spudialog.SPUDialog(parent=self, id=-1,
+									 title="Application Options",
 									 options=self.mothership.GlobalOptions)
+		dialog.Centre()
 		dialog.SetValues(self.mothership.GetGlobalOptions())
 		if dialog.ShowModal() == wxID_OK:
 			self.mothership.SetGlobalOptions(dialog.GetValues())
@@ -1311,7 +1320,7 @@ class ConfigApp(wxApp):
 		if len(sys.argv) == 1:
 			# No file name was specified on the command line -> start with a
 			# blank document.
-			frame = MainFrame(None, -1, "Chromium Configuration Tool")
+			frame = MainFrame(None, -1, TitleString)
 			frame.Centre()
 			frame.Show(TRUE)
 			_docList.append(frame)
@@ -1320,9 +1329,8 @@ class ConfigApp(wxApp):
 			for arg in sys.argv[1:]:
 				fileName = os.path.join(os.getcwd(), arg)
 				if os.path.isfile(fileName):
-					frame = MainFrame(None, -1,
-						 os.path.basename(fileName),
-						 fileName=fileName)
+					title = TitleString + ": " + os.path.basename(fileName)
+					frame = MainFrame(None, -1, title, fileName=fileName)
 					frame.Show(TRUE)
 					_docList.append(frame)
 
