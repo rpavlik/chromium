@@ -594,6 +594,12 @@ def Read_Sortlast(mothership, file):
 
 	numAppNodes = 1
 
+	# useful regex patterns
+	integerPat = "[0-9]+"
+	listPat = "\[.+\]"
+	tuplePat = "\(.+\)"
+	quotedStringPat = '\".+\"'
+
 	while true:
 		l = file.readline()
 		if not l:
@@ -602,18 +608,18 @@ def Read_Sortlast(mothership, file):
 		if l[-1:] == '\n':
 			l = l[:-1]
 		if re.match("^COMPOSITE_HOST = ", l):
-			v = re.search('\".+\"$', l)
+			v = re.search(quotedStringPat + "$", l)
 			host = eval(l[v.start() : v.end()])
 			serverNode.SetHosts( [ host ] )
-		elif re.match("^NUM_APP_NODES = [0-9]+$", l):
-			v = re.search("[0-9]+", l)
+		elif re.match("^NUM_APP_NODES = " + integerPat + "$", l):
+			v = re.search(integerPat, l)
 			clientNode.SetCount( int(l[v.start() : v.end()]) )
 		elif re.match("^APP_HOSTS = ", l):
-			v = re.search("\[.+\]$", l)
+			v = re.search(listPat + "$", l)
 			hosts = eval(l[v.start() : v.end()])
 			clientNode.SetHosts( hosts )
 		elif re.match("^APP_PATTERN = ", l):
-			v = re.search("\(.+\)$", l)
+			v = re.search(tuplePat + "$", l)
 			pattern = eval(l[v.start() : v.end()])
 			clientNode.SetHostNamePattern(pattern)
 		elif re.match("^READBACK_", l):

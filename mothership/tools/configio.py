@@ -168,7 +168,9 @@ def ParseOption(s, prefix):
 	# parentheses in the regexp define groups
 	# \"? is an optional double-quote character
 	# [^\"] is any character but double-quote
-	pattern = "^" + prefix + "_([a-zA-Z0-9\_]+) = (\"?[^\"]*\"?)"
+	varNamePat = "[\w\_]+"    # \w = alphanumeric
+	quotedPat = '\"?[^\"]*\"?'   # string in optional double-quotes
+	pattern = "^" + prefix + "_(" + varNamePat + ") = (" + quotedPat + ")$"
 	v = re.search(pattern, s)
 	if v:
 		name = v.group(1)

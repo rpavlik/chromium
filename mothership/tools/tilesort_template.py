@@ -731,6 +731,11 @@ def Read_Tilesort(mothership, fileHandle):
 
 	numClients = 1
 
+	# useful regex patterns
+	integerPat = "[0-9]+"
+	listPat = "\[.+\]"
+	tuplePat = "\(.+\)"
+
 	while true:
 		l = fileHandle.readline()
 		if not l:
@@ -738,34 +743,34 @@ def Read_Tilesort(mothership, fileHandle):
 		# remove trailing newline character
 		if l[-1:] == '\n':
 			l = l[:-1]
-		if re.match("^TILE_ROWS = [0-9]+$", l):
-			v = re.search("[0-9]+", l)
+		if re.match("^TILE_ROWS = " + integerPat + "$", l):
+			v = re.search(integerPat, l)
 			mothership.Tilesort.Rows = int(l[v.start() : v.end()])
-		elif re.match("^TILE_COLS = [0-9]+$", l):
-			v = re.search("[0-9]+", l)
+		elif re.match("^TILE_COLS = " + integerPat + "$", l):
+			v = re.search(integerPat, l)
 			mothership.Tilesort.Columns = int(l[v.start() : v.end()])
-		elif re.match("^TILE_WIDTH = [0-9]+$", l):
-			v = re.search("[0-9]+", l)
+		elif re.match("^TILE_WIDTH = " + integerPat + "$", l):
+			v = re.search(integerPat, l)
 			mothership.Tilesort.TileWidth = int(l[v.start() : v.end()])
-		elif re.match("^TILE_HEIGHT = [0-9]+$", l):
-			v = re.search("[0-9]+", l)
+		elif re.match("^TILE_HEIGHT = " + integerPat + "$", l):
+			v = re.search(integerPat, l)
 			mothership.Tilesort.TileHeight = int(l[v.start() : v.end()])
-		elif re.match("^BOTTOM_TO_TOP = [01]$", l):
-			v = re.search("[01]", l)
+		elif re.match("^BOTTOM_TO_TOP = " + integerPat + "$", l):
+			v = re.search(integerPat, l)
 			mothership.Tilesort.BottomToTop = int(l[v.start() : v.end()])
-		elif re.match("^RIGHT_TO_LEFT = [01]$", l):
-			v = re.search("[01]", l)
+		elif re.match("^RIGHT_TO_LEFT = " + integerPat + "$", l):
+			v = re.search(integerPat, l)
 			mothership.Tilesort.RightToLeft = int(l[v.start() : v.end()])
 		elif re.match("^SERVER_HOSTS = ", l):
-			v = re.search("\[.+\]$", l)
+			v = re.search(listPat + "$", l)
 			hosts = eval(l[v.start() : v.end()])
 			serverNode.SetHosts(hosts)
 		elif re.match("^SERVER_PATTERN = ", l):
-			v = re.search("\(.+\)$", l)
+			v = re.search(tuplePat + "$", l)
 			pattern = eval(l[v.start() : v.end()])
 			serverNode.SetHostNamePattern(pattern)
-		elif re.match("^NUM_APP_NODES = [0-9]+$", l):
-			v = re.search("[0-9]+", l)
+		elif re.match("^NUM_APP_NODES = " + integerPat + "$", l):
+			v = re.search(integerPat, l)
 			numClients = int(l[v.start() : v.end()])
 		elif re.match("^TILESORT_", l):
 			# A tilesort SPU option
@@ -832,3 +837,4 @@ def Write_Tilesort(mothership, file):
 
 	file.write("# end of options, the rest is boilerplate\n")
 	file.write(__ConfigBody)
+	return 1
