@@ -36,7 +36,7 @@ typedef struct {
 	HWND hWnd;
 #elif defined(DARWIN)
 	WindowRef window;
-#else
+#elif defined(GLX)
 	Display *dpy;
 	XVisualInfo *visual;
 #endif
@@ -60,10 +60,9 @@ typedef struct {
 	WindowRef window;
 	WindowRef nativeWindow; /**< for render_to_app_window */
 	WindowRef appWindow;
-
 	EventHandlerUPP event_handler;
-/*	unsigned long context_ptr; */
-#else
+	/* unsigned long context_ptr; */
+#elif defined(GLX)
 	Window window;
 	Window nativeWindow;  /**< for render_to_app_window */
 	Window appWindow;       /**< Same as nativeWindow but for garbage collections purposes */
@@ -89,7 +88,7 @@ typedef struct {
 	HGLRC hRC;
 #elif defined(DARWIN)
 	AGLContext context;
-#else
+#elif defined(GLX)
 	GLXContext context;
 #endif
 } ContextInfo;
@@ -121,7 +120,7 @@ typedef struct {
 	int use_L2;
 	int fullscreen, ontop;
 	char display_string[100];
-#ifndef WINDOWS
+#if defined(GLX)
 	int try_direct;
 	int force_direct;
 	int sync;

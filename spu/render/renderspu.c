@@ -82,13 +82,13 @@ VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
 		displayName = "";
 
 	/* first, try to find a match */
-#if ( defined(WINDOWS) || defined(DARWIN) )
+#if defined(WINDOWS) || defined(DARWIN)
 	for (i = 0; i < render_spu.numVisuals; i++) {
 		if (visAttribs == render_spu.visuals[i].visAttribs) {
 			return &(render_spu.visuals[i]);
 		}
 	}
-#else
+#elif defined(GLX)
 	for (i = 0; i < render_spu.numVisuals; i++) {
 		if (crStrcmp(displayName, render_spu.visuals[i].displayName) == 0
 			&& visAttribs == render_spu.visuals[i].visAttribs) {
@@ -328,8 +328,16 @@ static void RENDER_APIENTRY renderspuWindowShow( GLint win, GLint flag )
 	WindowInfo *window;
 	CRASSERT(win >= 0);
 	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
-	if (window)
+	if (window) {
+		if (window->nativeWindow) {
+			/* We're rendering back to the native app window instead of the
+			 * new window which we (the Render SPU) created earlier.
+			 * So, we never want to show the Render SPU's window.
+			 */
+			flag = 0;
+		}
 		renderspu_SystemShowWindow( window, (GLboolean) flag );
+	}
 }
 
 /*

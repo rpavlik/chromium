@@ -87,7 +87,7 @@ static void set_title( RenderSPU *render_spu, const char *response )
 	render_spu->window_title = crStrdup( response );
 }
 
-#ifndef WINDOWS
+#if defined(GLX)
 static void set_try_direct( RenderSPU *render_spu, const char *response )
 {
 	sscanf( response, "%d", &(render_spu->try_direct) );
@@ -230,7 +230,7 @@ SPUOptions renderSPUOptions[] = {
 	{ "default_visual", CR_STRING, 1, "rgb", NULL, NULL,
 		"Default GL Visual", (SPUOptionCB) set_default_visual },
 
-#ifndef WINDOWS
+#if defined(GLX)
 	{ "try_direct", CR_BOOL, 1, "1", NULL, NULL, 
 		"Try Direct Rendering", (SPUOptionCB)set_try_direct  },
 
@@ -314,7 +314,7 @@ void renderspuGatherConfiguration( RenderSPU *render_spu )
 	render_spu->use_L2 = 0;
 	render_spu->cursorX = 0;
 	render_spu->cursorY = 0;
-#ifndef WINDOWS	
+#if defined(GLX)
 	render_spu->sync = 0;
 #endif
 }
