@@ -1157,9 +1157,9 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 			b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
 																				window->window, context->context );
 			if (!b) {
-				crWarning("glXMakecurrent(%p, 0x%x, 0x%x) failed!",
+				crWarning("glXMakecurrent(%p, 0x%x, %p) failed!",
 									window->visual->dpy,
-									(int) window->window, (int) context->context );
+									(int) window->window, (void *) context->context );
 			}
 			/*CRASSERT(b);*/
 		}
