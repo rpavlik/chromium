@@ -64,18 +64,6 @@ static void set_node( void *spu, const char *response )
 	}
 }
 
-static void set_swapmtu( void *spu, const char *response )
-{
-	(void) spu;
-	if (*response) {
-		binaryswap_spu.mtu = crStrToInt( response );
-	}
-	else { 
-		binaryswap_spu.mtu = -1;
-		crWarning("No swap MTU specified, using default from mothership" );
-	}
-}
-
 static void set_type( void *spu, const char *response )
 {
 	(void) spu;
@@ -124,9 +112,6 @@ SPUOptions binaryswapspuOptions[] = {
 	
 	{ "type", CR_ENUM, 1, "depth", "'depth', 'alpha'", NULL, 
 	  "Composite type",  (SPUOptionCB)set_type},
-	
-	{ "swapmtu", CR_INT, 1, "-1", "1024", NULL, 
-	  "MTU size for swapping", (SPUOptionCB)set_swapmtu},
 	
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
