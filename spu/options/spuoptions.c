@@ -10,6 +10,7 @@
 #include "cr_dll.h"
 #include "cr_error.h"
 #include "cr_spu.h"
+#include "cr_string.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -85,45 +86,82 @@ SPU * SPULoadLite( SPU *child, int id, char *name, char *dir, void *server )
 
 
 
-static void print_spu_header( SPU *spu )
+static void print_spu_header( SPU *spu, int pythonMode )
 {
-   printf("param terminal %s\n", (spu->spu_flags & SPU_IS_TERMINAL) ? "yes" : "no");
-   printf("param packer %s\n", (spu->spu_flags & SPU_HAS_PACKER) ? "yes" : "no");
-   printf("param maxservers %s\n",
-          ((spu->spu_flags & SPU_MAX_SERVERS_ONE) ? "one" : 
-	   (spu->spu_flags & SPU_MAX_SERVERS_UNLIMITED) ? "unlimited" : 
-	   "zero"));
+	if (pythonMode) {
+		printf("({\n");
+		printf("  'terminal' : '%s',\n", (spu->spu_flags & SPU_IS_TERMINAL) ? "yes" : "no");
+		printf("  'packer' : '%s',\n", (spu->spu_flags & SPU_HAS_PACKER) ? "yes" : "no");
+		printf("  'maxservers' : '%s'},\n",
+			   ((spu->spu_flags & SPU_MAX_SERVERS_ONE) ? "one" : 
+				(spu->spu_flags & SPU_MAX_SERVERS_UNLIMITED) ? "unlimited" : 
+				"zero"));
+		printf(" [\n");
+	}
+	else {
+		printf("param terminal %s\n", (spu->spu_flags & SPU_IS_TERMINAL) ? "yes" : "no");
+		printf("param packer %s\n", (spu->spu_flags & SPU_HAS_PACKER) ? "yes" : "no");
+		printf("param maxservers %s\n",
+			   ((spu->spu_flags & SPU_MAX_SERVERS_ONE) ? "one" : 
+				(spu->spu_flags & SPU_MAX_SERVERS_UNLIMITED) ? "unlimited" : 
+				"zero"));
+	}
 }
 
 static const char *type_string[] = {
-   "CR_BOOL", 
-   "CR_INT",
-   "CR_FLOAT",
-   "CR_STRING"
+   "BOOL", 
+   "INT",
+   "FLOAT",
+   "STRING"
 };
 
-static void print_option( SPUOptions *opt )
+static void print_option( SPUOptions *opt, int pythonMode )
 {
-   printf("option %s \"%s\" %s %d [%s] ", 
-	  opt->option, 
-	  opt->description,
-	  type_string[(int)opt->type],
-	  opt->numValues,
-	  opt->deflt);
+	if (pythonMode) {
+		printf("  ('%s', '%s', '%s', %d, ",
+			   opt->option,
+			   opt->description,
+			   type_string[(int)opt->type],
+			   opt->numValues);
+		if (opt->type == CR_STRING)
+		   printf("['%s']", opt->deflt);
+		else
+		   printf("[%s]", opt->deflt);
 
-   if (opt->min) {
-      printf("[%s] ", opt->min);
-      if (opt->max) {
-         printf("[%s]", opt->max);
-      }
-   }
-   
-   printf("\n");
+		if (opt->min) {
+			printf(", [%s] ", opt->min);
+			if (opt->max) {
+				printf(", [%s]", opt->max);
+			}
+		}
+		printf("),\n");
+	}
+	else {
+		printf("option %s \"%s\" %s %d [%s] ", 
+			   opt->option, 
+			   opt->description,
+			   type_string[(int)opt->type],
+			   opt->numValues,
+			   opt->deflt);
+
+		if (opt->min) {
+			printf("[%s] ", opt->min);
+			if (opt->max) {
+				printf("[%s]", opt->max);
+			}
+		}
+		printf("\n");
+	}
 }
 
-static void print_spu_footer( SPU *spu )
+static void print_spu_footer( SPU *spu, int pythonMode )
 {
-   printf("\n");
+	if (pythonMode) {
+		printf(" ]\n)\n");
+	}
+	else {
+		printf("\n");
+	}
 }
 
 
@@ -132,19 +170,27 @@ int main(int argc, char *argv[])
 {
 	SPU *spu;
 	SPUOptions *opt;
+	int pythonMode = 0;
+	int i = 1;
 
-	while (--argc) {
-	   spu = SPULoadLite( NULL, 1, *++argv, NULL, NULL );
+	while (i < argc) {
+		if (crStrcmp(argv[i], "--pythonmode") == 0) {
+			pythonMode = 1;
+		}
+		else {
+			spu = SPULoadLite( NULL, 1, argv[i], NULL, NULL );
 
-	   print_spu_header( spu );
+			print_spu_header( spu, pythonMode );
 
-	   for ( opt = &spu->options[0] ; opt->option ; opt++ ) 
-	      print_option( opt );
+			for ( opt = &spu->options[0] ; opt->option ; opt++ ) 
+				print_option( opt, pythonMode );
 
-	   print_spu_footer( spu );
+			print_spu_footer( spu, pythonMode );
 
-	   /* How to unload the spu???
-	    */
+			/* How to unload the spu???
+			 */
+		}
+		i++;
 	}
 
 	return 0;
