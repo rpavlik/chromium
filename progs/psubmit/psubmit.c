@@ -108,28 +108,29 @@ drawBBox(const GLfloat bbox[6])
 }
 
 
-
-int main(int argc, char *argv[])
+struct options
 {
-	static const GLfloat white[4] = { 1, 1, 1, 1 };
-	static const GLfloat gray[4] = { 0.25, 0.25, 0.25, 1 };
-	static const GLfloat pos[4] = { -1, -1, 10, 0 };
-	int rank = -1, size = -1, barrierSize = -1;
-	int i, ctx, frame;
-	int window;
-	float theta;
-	int swapFlag = 0, clearFlag = 0;
-	const char *dpy = NULL;
-	int visual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
-	int triangles = 15 * 30 * 2;
-	int sides, rings;
-	float aspectRatio;
-	int useBBox = 0;
+	int rank, size, barrierSize;
+	int swapFlag, clearFlag;
+	int triangles;
+	int useBBox;
+	int usePBuffer;
+};
 
-	if (argc < 5)
-	{
-		crError( "Usage: %s -rank <ID NUMBER> -size <SIZE> [-swap]", argv[0] );
-	}
+
+static void
+parseOptions(int argc, char *argv[], struct options *opt)
+{
+	int i;
+
+	opt->rank = 0;
+	opt->size = 1;
+	opt->barrierSize = -1;
+	opt->swapFlag = 0;
+	opt->clearFlag = 0;
+	opt->triangles = 15 * 30 * 2;
+	opt->useBBox = 0;
+	opt->usePBuffer = 0;
 
 	for (i = 1 ; i < argc ; i++)
 	{
@@ -139,7 +140,7 @@ int main(int argc, char *argv[])
 			{
 				crError( "-rank requires an argument" );
 			}
-			rank = crStrToInt( argv[i+1] );
+			opt->rank = crStrToInt( argv[i+1] );
 			i++;
 		}
 		else if (!crStrcmp( argv[i], "-size" ))
@@ -148,7 +149,7 @@ int main(int argc, char *argv[])
 			{
 				crError( "-size requires an argument" );
 			}
-			size = crStrToInt( argv[i+1] );
+			opt->size = crStrToInt( argv[i+1] );
 			i++;
 		}
 		else if (!crStrcmp( argv[i], "-barrier" ))
@@ -157,50 +158,80 @@ int main(int argc, char *argv[])
 			{
 				crError( "-barrier requires an argument" );
 			}
-			barrierSize = crStrToInt( argv[i+1] );
+			opt->barrierSize = crStrToInt( argv[i+1] );
 			i++;
 		}
 		else if (!crStrcmp( argv[i], "-swap" ))
 		{
-			swapFlag = 1;
+			opt->swapFlag = 1;
 		}
 		else if (!crStrcmp( argv[i], "-clear" ))
 		{
-			clearFlag = 1;
+			opt->clearFlag = 1;
 		}
 		else if (!crStrcmp( argv[i], "-t")) {
 			if (i == argc - 1)
 			{
 				crError( "-t (triangles) requires an argument" );
 			}
-			triangles = crStrToInt( argv[i+1] );
+			opt->triangles = crStrToInt( argv[i+1] );
 			i++;
 		}
 		else if (!crStrcmp( argv[i], "-bbox" ))
 		{
-			useBBox = 1;
+			opt->useBBox = 1;
+		}
+		else if (!crStrcmp( argv[i], "-pbuffer" ))
+		{
+			opt->usePBuffer = 1;
 		}
 	} 
 
-	if (rank == -1)
+	if (opt->barrierSize < 0)
+		opt->barrierSize = opt->size;
+}
+
+
+
+int main(int argc, char *argv[])
+{
+	static const GLfloat white[4] = { 1, 1, 1, 1 };
+	static const GLfloat gray[4] = { 0.25, 0.25, 0.25, 1 };
+	static const GLfloat pos[4] = { -1, -1, 10, 0 };
+	int ctx, window, frame;
+	float theta;
+	const char *dpy = NULL;
+	int visual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
+	int sides, rings;
+	float aspectRatio;
+	struct options opt;
+
+	if (argc < 5)
+	{
+		crError( "Usage: %s -rank <ID NUMBER> -size <SIZE> [-swap]", argv[0] );
+	}
+
+	parseOptions(argc, argv, &opt);
+
+	if (opt.rank == -1)
 	{
 		crError( "Rank not specified" );
 	}
-	if (size == -1)
+	if (opt.size == -1)
 	{
 		crError( "Size not specified" );
 	}
-	if (rank >= size || rank < 0)
+	if (opt.rank >= opt.size || opt.rank < 0)
 	{
-		crError( "Bogus rank: %d (size = %d)", rank, size );
+		crError( "Bogus rank: %d (size = %d)", opt.rank, opt.size );
 	}
-	if (barrierSize < 0)
-		barrierSize = size;
+	if (opt.usePBuffer)
+		visual |= CR_PBUFFER_BIT;
 
-	printf("psubmit: %d triangles/ring\n", triangles);
+	printf("psubmit: %d triangles/ring\n", opt.triangles);
 
 	/* Note: rings * sides * 2 ~= triangles */
-	rings = (int) sqrt(triangles / 4);
+	rings = (int) sqrt(opt.triangles / 4);
 	sides = rings * 2;
 
 #define LOAD( x ) x##_ptr = (x##Proc) crGetProcAddress( #x )
@@ -239,9 +270,9 @@ int main(int argc, char *argv[])
 	}
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
-	glBarrierCreateCR_ptr( MASTER_BARRIER, barrierSize );
+	glBarrierCreateCR_ptr( MASTER_BARRIER, opt.barrierSize );
 
-	theta = (float)(360.0 / (float) size);
+	theta = (float)(360.0 / (float) opt.size);
 
 	glEnable( GL_DEPTH_TEST );
 	glEnable(GL_LIGHTING);
@@ -266,7 +297,7 @@ int main(int argc, char *argv[])
 		const GLfloat innerRadius = 0.15f;
 		const GLfloat outerRadius = 0.70f;
 
-		if (clearFlag)
+		if (opt.clearFlag)
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 		glBarrierExecCR_ptr( MASTER_BARRIER );
@@ -274,14 +305,14 @@ int main(int argc, char *argv[])
 		glPushMatrix();
 		glRotatef((GLfloat)frame, 1, 0, 0);
 		glRotatef((GLfloat)(-2 * frame), 0, 1, 0);
-		glRotatef((GLfloat)(frame + rank * theta), 0, 0, 1);
+		glRotatef((GLfloat)(frame + opt.rank * theta), 0, 0, 1);
 
 		glTranslatef(0.5, 0, 0);
 		glRotatef(18, 1, 0, 0);
 
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, colors[rank%7]);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, colors[opt.rank%7]);
 
-		if (useBBox) {
+		if (opt.useBBox) {
 			GLfloat bbox[6];
 			bbox[0] = -(innerRadius + outerRadius);
 			bbox[1] = -(innerRadius + outerRadius);
@@ -313,7 +344,7 @@ int main(int argc, char *argv[])
 		 *    be used to indicate end-of-frame without swapping the color buffers.
 		 */
 
-		if (swapFlag) {
+		if (opt.swapFlag) {
 			/* really swap */
 			crSwapBuffers_ptr( window, 0 );
 		}
