@@ -54,7 +54,7 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_SwapBuffers( GLint window, GLint flags
 	static SPUDispatchTable hacked_child_dispatch;
 	BufList *temp, *next;
 	static int frame_counter = 1;
-	static int do_hiddenline = 0; /* So textures can load (in Windows) */
+	static int do_hiddenline = 1; /* So textures can load (in Windows) */
 	GET_CONTEXT(context);
 
 #ifdef WINDOWS

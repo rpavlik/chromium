@@ -67,6 +67,8 @@ typedef struct {
 
 	CRContext *context[CR_MAX_CONTEXTS];
 
+	int ignore_papi;
+
 	unsigned int maxBarrierCount;
 	unsigned int clearCount;
 	int only_swap_once;

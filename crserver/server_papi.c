@@ -38,6 +38,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreateCR( GLuint name, GLui
 	char debug_buf[4096];
 #endif
 
+	if (cr_server.ignore_papi)
+	{
+		cr_server.head_spu->dispatch_table.BarrierCreateCR( name, count );
+		return;
+	}
+
 	barrier = (CRBarrier *) crHashtableSearch( cr_barriers, name );
 
 #if DEBUG_BARRIERS
@@ -102,6 +108,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierCreateCR( GLuint name, GLui
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierDestroyCR( GLuint name )
 {
+	if (cr_server.ignore_papi)
+	{
+		cr_server.head_spu->dispatch_table.BarrierDestroyCR( name );
+		return;
+	}
+
 	crError( "NO BARRIER DESTROY FOR YOU!  (name=%u)", name );
 }
 
@@ -111,6 +123,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchBarrierExecCR( GLuint name )
 #if DEBUG_BARRIERS
 	char debug_buf[4096];
 #endif
+
+	if (cr_server.ignore_papi)
+	{
+		cr_server.head_spu->dispatch_table.BarrierExecCR( name );
+		return;
+	}
 
 	barrier = (CRBarrier *) crHashtableSearch( cr_barriers, name );
 	if ( barrier == NULL )
@@ -151,6 +169,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreCreateCR( GLuint name, GL
 {
 	CRSemaphore *sema;
 
+	if (cr_server.ignore_papi)
+	{
+		cr_server.head_spu->dispatch_table.SemaphoreCreateCR( name, count );
+		return;
+	}
+
 	sema = crHashtableSearch(cr_semaphores, name);
 	if (sema)
 	   return; /* already created */
@@ -165,6 +189,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreCreateCR( GLuint name, GL
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreDestroyCR( GLuint name )
 {
+	if (cr_server.ignore_papi)
+	{
+		cr_server.head_spu->dispatch_table.SemaphoreDestroyCR( name );
+		return;
+	}
+
 	crError( "NO DESTROY FOR YOU! (name=%u)", name );
 }
 
@@ -172,6 +202,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreDestroyCR( GLuint name )
 void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphorePCR( GLuint name )
 {
 	CRSemaphore *sema;
+
+	if (cr_server.ignore_papi)
+	{
+		cr_server.head_spu->dispatch_table.SemaphorePCR( name );
+		return;
+	}
 
 	sema = (CRSemaphore *) crHashtableSearch( cr_semaphores, name );
 	if (!sema)
@@ -213,6 +249,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphorePCR( GLuint name )
 void SERVER_DISPATCH_APIENTRY crServerDispatchSemaphoreVCR( GLuint name )
 {
 	CRSemaphore *sema;
+
+	if (cr_server.ignore_papi)
+	{
+		cr_server.head_spu->dispatch_table.SemaphoreVCR( name );
+		return;
+	}
 
 	sema = (CRSemaphore *) crHashtableSearch( cr_semaphores, name );
 	if (!sema)

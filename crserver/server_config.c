@@ -26,6 +26,7 @@ __setDefaults(void)
 	cr_server.optimizeBucket = 1;
 	cr_server.useL2 = 0;
 	cr_server.maxBarrierCount = 0;
+	cr_server.ignore_papi = 0;
 	cr_server.only_swap_once = 0;
 	cr_server.debug_barriers = 0;
 	cr_server.SpuContext = 0;
@@ -145,6 +146,10 @@ crServerGatherConfiguration(char *mothership)
 	if (crMothershipGetServerParam(conn, response, "lightning2"))
 	{
 		cr_server.useL2 = crStrToInt(response);
+	}
+	if (crMothershipGetServerParam(conn, response, "ignore_papi"))
+	{
+		cr_server.ignore_papi = crStrToInt(response);
 	}
 	if (crMothershipGetServerParam(conn, response, "only_swap_once"))
 	{

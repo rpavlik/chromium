@@ -34,7 +34,7 @@ LIB_DEFS += render.def
 include ${TOP}/cr.mk
 
 ifdef WINDOWS
-LDFLAGS += user32.lib gdi32.liB
+LDFLAGS += user32.lib gdi32.lib
 else
 LDFLAGS += -lXmu -lX11
 endif
