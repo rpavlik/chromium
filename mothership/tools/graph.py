@@ -14,7 +14,7 @@ for creating/editing Chromium graphs.
 """
 
 
-import string, os.path, types, re, random, copy
+import string, os, signal, os.path, types, re, random, copy
 from wxPython.wx import *
 
 import crtypes, crutils
@@ -83,8 +83,8 @@ menu_SPU_TYPES            = 320
 menu_LAYOUT_NODES         = 400
 
 menu_MOTHERSHIP_OPTIONS   = 500
-menu_APP_RUN              = 501
-menu_APP_STOP             = 502
+menu_MOTHERSHIP_RUN       = 501
+menu_MOTHERSHIP_STOP      = 502
 
 menu_ABOUT              = 600
 menu_DOCS               = 601
@@ -240,11 +240,12 @@ class GraphFrame(wxFrame):
 		# Application menu
 		self.systemMenu = wxMenu()
 		self.systemMenu.Append(menu_MOTHERSHIP_OPTIONS, "Options...")
-		self.systemMenu.Append(menu_APP_RUN, "Run...")
-		self.systemMenu.Append(menu_APP_STOP, "Stop...")
+		self.systemMenu.Append(menu_MOTHERSHIP_RUN, "Run...")
+		self.systemMenu.Append(menu_MOTHERSHIP_STOP, "Stop...")
+		self.systemMenu.Enable(menu_MOTHERSHIP_STOP, 0) #disable
 		EVT_MENU(self, menu_MOTHERSHIP_OPTIONS, self.doMothershipOptions)
-		EVT_MENU(self, menu_APP_RUN, self.doRunApp)
-		EVT_MENU(self, menu_APP_STOP, self.doStopApp)
+		EVT_MENU(self, menu_MOTHERSHIP_RUN, self.doMothershipRun)
+		EVT_MENU(self, menu_MOTHERSHIP_STOP, self.doMothershipStop)
 		menuBar.Append(self.systemMenu, "Mothership")
 
 		# Help menu
@@ -356,6 +357,7 @@ class GraphFrame(wxFrame):
 		self.SelectDeltaX = 0
 		self.SelectDeltaY = 0
 		self.__FontHeight = 0
+		self._mothershipProcess = None
 
 		self.UpdateMenus()
 
@@ -1352,18 +1354,45 @@ class GraphFrame(wxFrame):
 				self.mothership.SetOption(opt.Name, value)
 			self.dirty = true
 
-
-	def doRunApp(self, event):
+	def doMothershipRun(self, event):
 		"""Run the mothership"""
-		self.Notify("Not implemented yet, sorry.")
+		if self._mothershipProcess != None:
+			# kill previous instance
+			os.kill(self._mothershipProcess, signal.SIGKILL)
+		print "spawning python"
+		# write config to a temp file
+		f = open("temp.conf", "w")
+		if not f:
+			print "Error writing temporary file: temp.conf"
+			return
+		configio.WriteConfig(self.mothership, f)
+		f.close()
+		# enable the "stop" menu item
+		self.systemMenu.Enable(menu_MOTHERSHIP_STOP, 1)
+		if 1:
+			# this works on linux but the python docs say that spawnvp
+			# won't work on windows. <sigh>
+			self._mothershipProcess = os.spawnvp( os.P_NOWAIT, "python", ["python", "temp.conf"] )
+		else:
+			# This doesn't seem to work on linux
+			self._mothershipProcess = os.fork()
+			if self._mothershipProcess == 0:
+				# I'm the child
+				os.execvp( "python", ["python", "foo.conf"] )
+		print "Mothership process = %d" % self._mothershipProcess
 
-	def doStopApp(self, event):
+	def doMothershipStop(self, event):
 		"""Stop the mothership"""
-		self.Notify("Not implemented yet, sorry.")
+		if self._mothershipProcess != None:
+			print "Killing process %d" % self._mothershipProcess
+			os.kill(self._mothershipProcess, signal.SIGKILL)
+			self._mothershipProcess = None
+		# disable menu item
+		self.systemMenu.Enable(menu_MOTHERSHIP_STOP, 0)
+
 
 	# ----------------------------------------------------------------------
 	# Help menu callbacks
-
 
 	def doShowDocs(self, event):
 		"""Help / Documentation callback"""
