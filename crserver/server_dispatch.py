@@ -28,7 +28,7 @@ print """
 CRCurrentStatePointers crServerCurrent;
 """
 
-for func_name in stub_common.AllSpecials( "../spu/state_tracker/state" ):
+for func_name in stub_common.AllSpecials( "../state_tracker/state" ):
 	(return_type, names, types) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "server", func_name ) or stub_common.FindSpecial( "../packer/packer_get", func_name ) or return_type != 'void':
 		continue
