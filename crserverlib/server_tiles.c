@@ -28,15 +28,15 @@ initializeExtents(CRMuralInfo *mural)
 	y = 0;
 	y_max = 0;
 
-	CRASSERT(mural->width > 0);
-	CRASSERT(mural->height > 0);
-
 	/* Basically just copy the server's list of tiles to the RunQueue
 	 * and compute some derived tile information.
 	 */
 	for ( i = 0; i < mural->numExtents; i++ )
 	{
 		CRExtent *extent = &mural->extents[i];
+
+		CRASSERT(mural->width > 0);
+		CRASSERT(mural->height > 0);
 
 		/* extent->display = find_output_display( extent->imagewindow ); */
 
