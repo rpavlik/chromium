@@ -19,6 +19,7 @@
 #ifdef USE_DMX
 #include <X11/Xlib.h>
 #include <X11/extensions/dmxext.h>
+/* XXX Remove all the old API version 1 stuff someday - it's pretty old */
 #ifdef DmxBadXinerama
 #define DMX_API_VERSION 2
 #else
@@ -105,24 +106,30 @@ chooseVisual( Display *dpy, int screen, GLint visAttribs )
 	return vis;
 }
 
+
+/**
+ * Try to get an XVisualInfo that satisfies the visAttribs mask.
+ * If we can't get multisample, try without.  If we can't get stereo,
+ * try without, etc.
+ */
 static XVisualInfo *
 chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
 {
   while (1) {
-	XVisualInfo *vis = chooseVisual(dpy, screen, visAttribs);
-	if (vis)
-	  return vis;
+		XVisualInfo *vis = chooseVisual(dpy, screen, visAttribs);
+		if (vis)
+			return vis;
 
-	if (visAttribs & CR_MULTISAMPLE_BIT)
-	  visAttribs &= ~CR_MULTISAMPLE_BIT;
-	else if (visAttribs & CR_STEREO_BIT)
-	  visAttribs &= ~CR_STEREO_BIT;
-	else if (visAttribs & CR_ACCUM_BIT)
-	  visAttribs &= ~CR_ACCUM_BIT;
-	else if (visAttribs & CR_ALPHA_BIT)
-	  visAttribs &= ~CR_ALPHA_BIT;
-	else
-	  return NULL;
+		if (visAttribs & CR_MULTISAMPLE_BIT)
+			visAttribs &= ~CR_MULTISAMPLE_BIT;
+		else if (visAttribs & CR_STEREO_BIT)
+			visAttribs &= ~CR_STEREO_BIT;
+		else if (visAttribs & CR_ACCUM_BIT)
+			visAttribs &= ~CR_ACCUM_BIT;
+		else if (visAttribs & CR_ALPHA_BIT)
+			visAttribs &= ~CR_ALPHA_BIT;
+		else
+			return NULL;
   }
 }
 
@@ -132,7 +139,8 @@ chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
  * IDs for the corresponding back-end windows.  Create back-end sub
  * windows if needed.  Compute new tiling.
  */
-static void tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
+static void
+tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 {
 	int numScreens, count, i;
 #if DMX_API_VERSION == 2
@@ -231,6 +239,7 @@ static void tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 			/* Create a child of the back-end X window.  We do this to work
 			 * around a memory allocation problem found with NVIDIA drivers.
 			 * See discussion from Feb 2002 on the DMX-devel mailing list.
+			 * This also gives us flexibility in choosing the window's visual.
 			 */
 			XSetWindowAttributes attribs;
 			Window root;
@@ -250,16 +259,15 @@ static void tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 																				 visInfo->visual, AllocNone);
 			attribMask = /*CWBackPixel |*/ CWBorderPixel | CWColormap;
 
-			backend->xsubwin =
-				XCreateWindow(backend->dpy,
-							  backend->xwin, /* parent */
-							  subwinX, subwinY,
-							  subwinW, subwinH,
-							  0, /* border width */
-							  visInfo->depth, /* depth */
-							  InputOutput, /* class */
-							  visInfo->visual,
-							  attribMask, &attribs);
+			backend->xsubwin = XCreateWindow(backend->dpy,
+																			 backend->xwin, /* parent */
+																			 subwinX, subwinY,
+																			 subwinW, subwinH,
+																			 0, /* border width */
+																			 visInfo->depth, /* depth */
+																			 InputOutput, /* class */
+																			 visInfo->visual,
+																			 attribMask, &attribs);
 
 			/*
 			crDebug("Created child 0x%x of 0x%x on server %d with visual 0x%x\n",
@@ -296,6 +304,7 @@ static void tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 	crFree(dmxScreenInfo);
 }
 #endif /* USE_DMX */
+
 
 
 /**
@@ -371,7 +380,7 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 			winInfo->lastHeight = tilesort_spu.fakeWindowHeight;
 		}
 	}
-#else
+#else /* GLX */
 	int x, y;
 	unsigned int width, height, borderWidth, depth;
 	Window root, child;
@@ -405,7 +414,8 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 #ifdef USE_DMX
 	if (winInfo->isDMXWindow &&
 			(winInfo->lastX != x || winInfo->lastY != y ||
-			 winInfo->lastWidth != (int)width || winInfo->lastHeight != (int)height)) {
+			 winInfo->lastWidth != (int)width || winInfo->lastHeight != (int)height))
+	{
 		tilesortspuGetBackendWindowInfo(winInfo);
 	}
 #endif
