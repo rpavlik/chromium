@@ -8,11 +8,11 @@ CXX = c++ -fno-common
 CC = cc -I/sw/include -I/usr/X11R6/include -fno-common
 
 CXXFLAGS          += -DDARWIN -Wall -Werror
-CXX_RELEASE_FLAGS += -g -O3 -DNDEBUG
+CXX_RELEASE_FLAGS += -O3 -DNDEBUG
 CXX_DEBUG_FLAGS   += -g
 
 CFLAGS            += -DDARWIN -Wall -Werror
-C_RELEASE_FLAGS   += -g -O3 -DNDEBUG
+C_RELEASE_FLAGS   += -O3 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 
 LDFLAGS           += -L/usr/X11R6/lib -L/sw/lib

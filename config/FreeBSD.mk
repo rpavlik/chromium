@@ -8,11 +8,11 @@ CXX = g++
 CC = gcc
 
 CXXFLAGS          += -DFREEBSD -Wall -Werror
-CXX_RELEASE_FLAGS += -g -O3 -DNDEBUG
+CXX_RELEASE_FLAGS += -O3 -DNDEBUG
 CXX_DEBUG_FLAGS   += -g
 
 CFLAGS            += -DFREEBSD -Wall -Werror
-C_RELEASE_FLAGS   += -g -O3 -DNDEBUG
+C_RELEASE_FLAGS   += -O3 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 
 LDFLAGS           += -lX11 -lXext -L/usr/X11R6/lib -rpath-link=/usr/X11R6/lib

@@ -8,11 +8,11 @@ CXX = g++
 CC = gcc
 
 CXXFLAGS          += -DLINUX -Wall -Werror
-CXX_RELEASE_FLAGS += -g -O3 -DNDEBUG
+CXX_RELEASE_FLAGS += -O3 -DNDEBUG
 CXX_DEBUG_FLAGS   += -g
 
 CFLAGS            += -DLINUX -Wall -Werror
-C_RELEASE_FLAGS   += -g -O3 -DNDEBUG
+C_RELEASE_FLAGS   += -O3 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 
 LDFLAGS           += -L/usr/X11R6/lib
@@ -20,8 +20,8 @@ LD_RELEASE_FLAGS  +=
 LD_DEBUG_FLAGS    += 
 
 ifeq ($(MACHTYPE), alpha)
-CXXFLAGS          += -mieee
-CFLAGS            += -mieee
+CXXFLAGS          += -mieee -mcpu=ev67
+CFLAGS            += -mieee -mcpu=ev67
 endif
 
 PROFILEFLAGS = -pg -a
