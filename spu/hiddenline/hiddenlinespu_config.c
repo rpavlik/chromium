@@ -43,13 +43,13 @@ SPUOptions hiddenlineSPUOptions[] = {
      "Buffer Size", (SPUOptionCB)set_buffer_size },
 
    { "poly_color", CR_FLOAT, 3, ".75, .75, 0", "0, 0, 0", "1, 1, 1", 
-     "Polygon Color", (SPUOptionCB)set_poly_color },
+     "Polygon Color (r, g, b)", (SPUOptionCB)set_poly_color },
 
    { "line_color", CR_FLOAT, 3, "0, 0, 0", "0, 0, 0", "1, 1, 1", 
-     "Line Color", (SPUOptionCB)set_line_color },
+     "Line Color (r, g, b)", (SPUOptionCB)set_line_color },
 
    { "line_width", CR_FLOAT, 1, "1", "0", "20", 
-     "Line Color", (SPUOptionCB)set_line_color },
+     "Line Width", (SPUOptionCB)set_line_width },
 
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 
