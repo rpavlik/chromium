@@ -198,10 +198,12 @@ void PERFSPU_APIENTRY perfspuChromiumParameteriCR(GLenum target, GLint value)
 		perfspuDumpCounters(rstr, &perf_spu.old_framestats, &perf_spu.framestats);
 		break;
 	default:
-		perf_spu.super.ChromiumParameteriCR( target, value );
 		break;
 	}
 
+ 	/* we always pass this down, as there could be other perfSPU's
+  	 * attached anywhere in the chain */
+	perf_spu.super.ChromiumParameteriCR( target, value );
 }
 
 void PERFSPU_APIENTRY perfspuChromiumParameterfCR(GLenum target, GLfloat value)
@@ -218,9 +220,12 @@ void PERFSPU_APIENTRY perfspuChromiumParameterfCR(GLenum target, GLfloat value)
 			crStopTimer( perf_spu.timer );
 		break;
 	default:
-		perf_spu.super.ChromiumParameterfCR( target, value );
 		break;
 	}
+
+ 	/* we always pass this down, as there could be other perfSPU's
+  	 * attached anywhere in the chain */
+	perf_spu.super.ChromiumParameterfCR( target, value );
 }
 
 void PERFSPU_APIENTRY perfspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
@@ -230,8 +235,12 @@ void PERFSPU_APIENTRY perfspuChromiumParametervCR(GLenum target, GLenum type, GL
 		strncpy(perf_spu.token, (char *)values, strlen((char*)values));
 		break;
 	default:
-		perf_spu.super.ChromiumParametervCR( target, type, count, values );
+		break;
 	}
+
+ 	/* we always pass this down, as there could be other perfSPU's
+  	 * attached anywhere in the chain */
+	perf_spu.super.ChromiumParametervCR( target, type, count, values );
 }
 
 void PERFSPU_APIENTRY perfspuGetChromiumParametervCR(GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values)
@@ -244,8 +253,12 @@ void PERFSPU_APIENTRY perfspuGetChromiumParametervCR(GLenum target, GLuint index
 		values = (GLvoid *)&perf_spu.timerstats;
 		break;
 	default:
-		perf_spu.super.GetChromiumParametervCR( target, index, type, count, values);
+		break;
 	}
+
+ 	/* we always pass this down, as there could be other perfSPU's
+  	 * attached anywhere in the chain */
+	perf_spu.super.GetChromiumParametervCR( target, index, type, count, values);
 }
 
 
