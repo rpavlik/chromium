@@ -240,6 +240,12 @@ crServerApplyBaseProjection(const CRmatrix *baseProj)
 }
 
 
+/*
+ * Called via unpacker module.
+ * Note: when there's a tilesort SPU upstream, the viewport dimensions
+ * will typically match the mural size.  That is, the viewport dimensions
+ * probably won't be the same values that the application issues.
+ */
 void SERVER_DISPATCH_APIENTRY crServerDispatchViewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
 	CRMuralInfo *mural = cr_server.curClient->currentMural;
