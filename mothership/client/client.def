@@ -33,3 +33,4 @@ crMothershipGetCRUTServer
 crMothershipIdentifyCRUTClient
 crMothershipIdentifyCRUTProxy
 crMothershipIdentifyCRUTServer
+crMothershipExit
