@@ -15,11 +15,12 @@
 
 #include <stdio.h>
 #include <assert.h>
+
+#include "cr_spu.h"
+
 #ifdef JPEG
 #include <jpeglib.h>
 #endif
-
-#include "cr_spu.h"
 
 void saveframespuGatherConfiguration( const SPU *child_spu );
 void ResizeBuffer(void);
