@@ -607,19 +607,41 @@ void
 crDequeueMessage(CRMessageList *list, CRMessage **msg, unsigned int *len,
 								 CRConnection **conn)
 {
-	while (1) {
-		int k = crDequeueMessageNoBlock(list, msg, len, conn);
-		if (k) {
-			return;
-		}
-		else {
+	CRMessageListNode *node;
+
 #ifdef CHROMIUM_THREADSAFE
-			crLockMutex(&list->lock);
-			crWaitCondition(&list->nonEmpty, &list->lock);
-			crUnlockMutex(&list->lock);
+	crLockMutex(&list->lock);
 #endif
-		}
+
+#ifdef CHROMIUM_THREADSAFE
+	while (!list->head) {
+		crWaitCondition(&list->nonEmpty, &list->lock);
 	}
+#else
+	CRASSERT(list->head);
+#endif
+
+	node = list->head;
+
+	/* unlink the node */
+	list->head = node->next;
+	if (!list->head) {
+		/* empty list */
+		list->tail = NULL;
+	}
+
+	*msg = node->mesg;
+	*len = node->len;
+	if (conn)
+		*conn = node->conn;
+
+	list->numMessages--;
+
+	crFree(node);
+
+#ifdef CHROMIUM_THREADSAFE
+	crUnlockMutex(&list->lock);
+#endif
 }
 
 
@@ -711,6 +733,7 @@ void crNetBarf( CRConnection *conn, void **bufp,
  */
 void crNetSendExact( CRConnection *conn, const void *buf, unsigned int len )
 {
+  CRASSERT(conn->SendExact);
 	conn->SendExact( conn, buf, len );
 }
 
