@@ -29,13 +29,22 @@ static GLboolean PixelLight = GL_TRUE;
 
 static GLfloat Xrot = 0, Yrot = 0;
 
-PFNGLPROGRAMNAMEDPARAMETER4FVNVPROC glProgramNamedParameter4fvNV_func;
-PFNGLGENPROGRAMSNVPROC glGenProgramsNV_func;
-PFNGLLOADPROGRAMNVPROC glLoadProgramNV_func;
-PFNGLBINDPROGRAMNVPROC glBindProgramNV_func;
-PFNGLTRACKMATRIXNVPROC glTrackMatrixNV_func;
-PFNGLISPROGRAMNVPROC glIsProgramNV_func;
-PFNGLVERTEXATTRIB3FNVPROC glVertexAttrib3fNV_func;
+typedef void (APIENTRY * glProgramNamedParameter4fvNV_t) (GLuint id, GLsizei len, const GLubyte *name, const GLfloat *v);
+typedef void (APIENTRY * glGenProgramsNV_t) (GLsizei n, GLuint *programs);
+typedef void (APIENTRY * glLoadProgramNV_t) (GLenum target, GLuint id, GLsizei len, const GLubyte *program);
+typedef void (APIENTRY * glBindProgramNV_t) (GLenum target, GLuint id);
+typedef void (APIENTRY * glTrackMatrixNV_t) (GLenum target, GLuint address, GLenum matrix, GLenum transform);
+typedef GLboolean (APIENTRY * glIsProgramNV_t) (GLuint id);
+typedef void (APIENTRY * glVertexAttrib3fNV_t) (GLuint index, GLfloat x, GLfloat y, GLfloat z);
+
+
+static glProgramNamedParameter4fvNV_t glProgramNamedParameter4fvNV_func;
+static glGenProgramsNV_t glGenProgramsNV_func;
+static glLoadProgramNV_t glLoadProgramNV_func;
+static glBindProgramNV_t glBindProgramNV_func;
+static glTrackMatrixNV_t glTrackMatrixNV_func;
+static glIsProgramNV_t glIsProgramNV_func;
+static glVertexAttrib3fNV_t glVertexAttrib3fNV_func;
 
 
 #define NAMED_PARAMETER4FV(prog, name, v)        \
@@ -316,25 +325,25 @@ static void Init( void )
       exit(1);
    }
          
-   glProgramNamedParameter4fvNV_func = (PFNGLPROGRAMNAMEDPARAMETER4FVNVPROC) crGetProcAddress("glProgramNamedParameter4fvNV");
+   glProgramNamedParameter4fvNV_func = (glProgramNamedParameter4fvNV_t) crGetProcAddress("glProgramNamedParameter4fvNV");
    assert(glProgramNamedParameter4fvNV_func);
 
-   glGenProgramsNV_func = (PFNGLGENPROGRAMSNVPROC) crGetProcAddress("glGenProgramsNV");
+   glGenProgramsNV_func = (glGenProgramsNV_t) crGetProcAddress("glGenProgramsNV");
    assert(glGenProgramsNV_func);
 
-   glLoadProgramNV_func = (PFNGLLOADPROGRAMNVPROC) crGetProcAddress("glLoadProgramNV");
+   glLoadProgramNV_func = (glLoadProgramNV_t) crGetProcAddress("glLoadProgramNV");
    assert(glLoadProgramNV_func);
 
-   glBindProgramNV_func = (PFNGLBINDPROGRAMNVPROC) crGetProcAddress("glBindProgramNV");
+   glBindProgramNV_func = (glBindProgramNV_t) crGetProcAddress("glBindProgramNV");
    assert(glBindProgramNV_func);
 
-   glIsProgramNV_func = (PFNGLISPROGRAMNVPROC) crGetProcAddress("glIsProgramNV");
+   glIsProgramNV_func = (glIsProgramNV_t) crGetProcAddress("glIsProgramNV");
    assert(glIsProgramNV_func);
 
-   glTrackMatrixNV_func = (PFNGLTRACKMATRIXNVPROC) crGetProcAddress("glTrackMatrixNV");
+   glTrackMatrixNV_func = (glTrackMatrixNV_t) crGetProcAddress("glTrackMatrixNV");
    assert(glTrackMatrixNV_func);
 
-   glVertexAttrib3fNV_func = (PFNGLVERTEXATTRIB3FNVPROC) crGetProcAddress("glVertexAttrib3fNV");
+   glVertexAttrib3fNV_func = (glVertexAttrib3fNV_t) crGetProcAddress("glVertexAttrib3fNV");
    assert(glVertexAttrib3fNV_func);
 
 
