@@ -13,7 +13,7 @@
 """
 
 
-import string, cPickle, os.path
+import string, os.path
 from wxPython.wx import *
 
 import traceback, types
@@ -46,8 +46,8 @@ PAGE_HEIGHT = 1000
 
 SpuClasses = [ "New SPU", "Pack", "Render", "Readback", "Tilesort", "Wet", "Hiddenline" ]
 
-# SPUs that pack for a downstream server
-PackingSPUs = [ "Pack", "Tilesort" ]
+# How many servers can this SPU connect to
+SpuMaxServers = { "Pack" : 1,  "Tilesort" : 1000 }
 
 # SPUs which must be at the end of a chain, other than packers
 TerminalSPUs = [ "Render" ]
@@ -216,8 +216,7 @@ class MainFrame(wxFrame):
 
 		self.dirty     = false
 		self.fileName  = fileName
-		self.Objects = []
-		self.Connections = []
+		self.Nodes = []
 		self.LeftDown = 0
 		self.DragStartX = 0
 		self.DragStartY = 0
@@ -228,23 +227,26 @@ class MainFrame(wxFrame):
 			self.loadContents()
 
 
+	# ----------------------------------------------------------------------
+	# Node functions
+
 	def SelectAll(self):
-		for obj in self.Objects:
-			obj.Select()
+		for node in self.Nodes:
+			node.Select()
 
 	def DeselectAll(self):
-		for obj in self.Objects:
-			obj.Deselect()
+		for node in self.Nodes:
+			node.Deselect()
 
-	def AddConnection(self, fromNode, toNode):
-		self.Connections.append((fromNode, toNode))
+	def AddNode(self, node):
+		"""Add a new node to the system"""
+		self.Nodes.append(node)
 
-	def RemoveConnections(self, targetNode):
-		# XXX this isn't 100% correct
-		for c in self.Connections:
-			(fromNode, toNode) = c
-			if fromNode == targetNode or toNode == targetNode:
-				self.Connections.remove(c)
+	def RemoveNode(self, node):
+		"""Remove a node from the system"""
+		if node in self.Nodes:
+			self.Nodes.remove(node)
+
 
 	#----------------------------------------------------------------------
 	# Template functions
@@ -261,21 +263,23 @@ class MainFrame(wxFrame):
 			# Create the app node
 			xPos = 5
 			yPos = numServers * 70 / 2 - 20
-			appNode = NodeObject(host=hostname, x=xPos, y=yPos, isServer=0)
+			appNode = ApplicationNode(host=hostname)
+			appNode.SetPosition(xPos, yPos)
 			appNode.Select()
-			tilesortSPU = SpuObject("Tilesort", packer=1)
+			tilesortSPU = SpuObject("Tilesort")
 			appNode.AddSPU(tilesortSPU)
-			self.Objects.append(appNode)
+			self.AddNode(appNode)
 			# Create the server nodes
 			xPos = 300
 			yPos = 5
 			for i in range(0, numServers):
-				serverNode = NodeObject(host=hostname, x=xPos, y=yPos, isServer=1)
+				serverNode = NetworkNode(host=hostname)
+				serverNode.SetPosition(xPos, yPos)
 				serverNode.Select()
-				renderSPU = SpuObject("Render", packer=0)
+				renderSPU = SpuObject("Render")
 				serverNode.AddSPU(renderSPU)
-				self.Objects.append(serverNode)
-				self.AddConnection(appNode, serverNode)
+				self.AddNode(serverNode)
+				tilesortSPU.AddServer(serverNode)
 				yPos += 70
 			
 		dialog.Destroy()
@@ -293,23 +297,25 @@ class MainFrame(wxFrame):
 			# Create the server/render node
 			xPos = 300
 			yPos = numClients * 70 / 2 - 20
-			serverNode = NodeObject(host="foobar", x=xPos, y=yPos, isServer=1)
+			serverNode = NetworkNode(host="foobar")
+			serverNode.SetPosition(xPos, yPos)
 			serverNode.Select()
 			renderSPU = SpuObject("Render")
 			serverNode.AddSPU(renderSPU)
-			self.Objects.append(serverNode)
+			self.AddNode(serverNode)
 			# Create the client/app nodes
 			xPos = 5
 			yPos = 5
 			for i in range(0, numClients):
-				appNode = NodeObject(host=hostname, x=xPos, y=yPos, isServer=0)
+				appNode = ApplicationNode(host=hostname)
+				appNode.SetPosition(xPos, yPos)
 				appNode.Select()
-				readbackSPU = SpuObject("Readback", packer=0)
+				readbackSPU = SpuObject("Readback")
 				appNode.AddSPU(readbackSPU)
-				packSPU = SpuObject("Pack", packer=1)
+				packSPU = SpuObject("Pack")
 				appNode.AddSPU(packSPU)
-				self.Objects.append(appNode)
-				self.AddConnection(appNode, serverNode)
+				self.AddNode(appNode)
+				packSPU.AddServer(serverNode)
 				yPos += 70
 			
 		dialog.Destroy()
@@ -326,22 +332,22 @@ class MainFrame(wxFrame):
 		dc.BeginDrawing()
 
 		# draw the nodes
-		for obj in self.Objects:
-			if obj.IsSelected():
-				obj.Draw(dc, self.SelectDeltaX, self.SelectDeltaY)
+		for node in self.Nodes:
+			if node.IsSelected():
+				node.Draw(dc, self.SelectDeltaX, self.SelectDeltaY)
 			else:
-				obj.Draw(dc)
+				node.Draw(dc)
 
 		# draw the wires between the nodes
 		pen = wxPen(wxColor(0, 0, 250))
 		pen.SetWidth(2)
 		dc.SetPen(pen);
-		for conn in self.Connections:
-			(fromNode, toNode) = conn
-			p = fromNode.GetOutputPlugPos()
-			q = toNode.GetInputPlugPos()
-			dc.DrawLine( p[0], p[1], q[0], q[1])
-
+		for node in self.Nodes:
+			servers = node.GetServers()
+			for s in servers:
+				p = node.GetOutputPlugPos()
+				q = s.GetInputPlugPos()
+				dc.DrawLine( p[0], p[1], q[0], q[1] )
 		dc.EndDrawing()
 
 	# called when New App Node button is pressed
@@ -349,9 +355,10 @@ class MainFrame(wxFrame):
 		self.DeselectAll()
 		n = self.newAppChoice.GetSelection()
 		for i in range(0, n):
-			obj = NodeObject(x=10, y=50+i*65, isServer=0)
-			obj.Select()
-			self.Objects.append(obj)
+			node = ApplicationNode()
+			node.SetPosition(x=10, y=50+i*65)
+			node.Select()
+			self.AddNode(node)
 		self.newAppChoice.SetSelection(0)
 		self.drawArea.Refresh()
 
@@ -360,9 +367,10 @@ class MainFrame(wxFrame):
 		self.DeselectAll()
 		n = self.newServerChoice.GetSelection()
 		for i in range(0, n):
-			obj = NodeObject(x=250, y=50+i*65, isServer=1)
-			obj.Select()
-			self.Objects.append(obj)
+			node = NetworkNode()
+			node.SetPosition(x=250, y=50+i*65)
+			node.Select()
+			self.AddNode(node)
 		self.newServerChoice.SetSelection(0)
 		self.drawArea.Refresh()
 
@@ -371,15 +379,14 @@ class MainFrame(wxFrame):
 		# add a new SPU to all selected nodes
 		i = self.newSpuChoice.GetSelection()
 		if i > 0:
-			for obj in self.Objects:
-				if obj.IsSelected():
-					if obj.NumSPUs() > 0 and (obj.LastSPU().IsPacker() or obj.LastSPU().IsTerminal()):
-						self.Notify("You can't chain a %s SPU after a %s SPU." % (SpuClasses[i], obj.LastSPU().Name()))
+			for node in self.Nodes:
+				if node.IsSelected():
+					if node.NumSPUs() > 0 and (node.LastSPU().IsPacker() or node.LastSPU().IsTerminal()):
+						self.Notify("You can't chain a %s SPU after a %s SPU." % (SpuClasses[i], node.LastSPU().Name()))
 						break
 					else:
-						p = (SpuClasses[i] in PackingSPUs)
-						s = SpuObject( SpuClasses[i], packer=p )
-						obj.AddSPU(s)
+						s = SpuObject( SpuClasses[i] )
+						node.AddSPU(s)
 			self.drawArea.Refresh()
 			self.newSpuChoice.SetSelection(0)
 
@@ -399,18 +406,18 @@ class MainFrame(wxFrame):
 		(x,y) = self.drawArea.CalcUnscrolledPosition(event.GetX(), event.GetY())
 		# First, determine if we're clicking on an object
 		# iterate backward through the object list so we get the topmost one
-		hitObj = 0
-		for i in range(len(self.Objects) - 1, -1, -1):
-			obj = self.Objects[i]
-			p = obj.PickTest(x,y)
+		hitNode = 0
+		for i in range(len(self.Nodes) - 1, -1, -1):
+			node = self.Nodes[i]
+			p = node.PickTest(x,y)
 			if p >= 1:
-				hitObj = obj
+				hitNode = node
 				if p > 1 and event.LeftDown():
 					# clicked on the p-2 SPU in the node
-					if obj.IsSelectedSPU(p-2):
-						obj.DeselectSPU(p - 2)
+					if node.IsSelectedSPU(p-2):
+						node.DeselectSPU(p - 2)
 					else:
-						obj.SelectSPU(p - 2)
+						node.SelectSPU(p - 2)
 				break
 			# endif
 		# endfor
@@ -420,36 +427,36 @@ class MainFrame(wxFrame):
 		# Now handle selection/deselection
 		if self.LeftDown:
 			# mouse down
-			if hitObj:
+			if hitNode:
 				self.DragStartX = x
 				self.DragStartY = y
 				self.SelectDeltaX = 0
 				self.SelectDeltaY = 0
 				if event.ControlDown():
 					# toggle selection status of one object
-					if hitObj.IsSelected():
-						hitObj.Deselect()
+					if hitNode.IsSelected():
+						hitNode.Deselect()
 					else:
-						hitObj.Select()
-				elif not hitObj.IsSelected():
+						hitNode.Select()
+				elif not hitNode.IsSelected():
 					if not event.ShiftDown():
-						for obj in self.Objects:
-							obj.Deselect()
-					hitObj.Select()
+						for node in self.Nodes:
+							node.Deselect()
+					hitNode.Select()
 			else:
 				# deselect all
-				for obj in self.Objects:
-					obj.Deselect()
+				for node in self.Nodes:
+					node.Deselect()
 		else:
 			# mouse up
-			for obj in self.Objects:
-				if obj.IsSelected():
-					p = obj.GetPosition()
+			for node in self.Nodes:
+				if node.IsSelected():
+					p = node.GetPosition()
 					x = p[0]
 					y = p[1]
 					x += self.SelectDeltaX
 					y += self.SelectDeltaY
-					obj.SetPosition(x, y)
+					node.SetPosition(x, y)
 			self.SelectDeltaX = 0
 			self.SelectDeltaY = 0
 
@@ -473,8 +480,8 @@ class MainFrame(wxFrame):
 				self.SelectDeltaY = 0
 
 			anySelected = 0
-			for obj in self.Objects:
-				if obj.IsSelected():
+			for node in self.Nodes:
+				if node.IsSelected():
 					anySelected = 1
 					break
 			if anySelected:
@@ -590,44 +597,72 @@ class MainFrame(wxFrame):
 		# Have to make a temporary list of the objects to delete so we don't
 		# screw-up the iteration as we remove things
 		deleteList = []
-		for obj in self.Objects:
-			if obj.IsSelected():
-				deleteList.append(obj)
+		for node in self.Nodes:
+			if node.IsSelected():
+				deleteList.append(node)
 		# now delete the objects in the deleteList
-		for obj in deleteList:
-			 self.Objects.remove(obj)
+		for node in deleteList:
+			 self.Nodes.remove(node)
 		self.drawArea.Refresh()
 
 	def doSelectAll(self, event):
 		"""Edit / Select All callback"""
-		for obj in self.Objects:
-			obj.Select()
+		for node in self.Nodes:
+			node.Select()
 		self.drawArea.Refresh()
 
 	def doConnect(self, event):
 		"""Edit / Connect callback"""
-		for obj in self.Objects:
-			if obj.IsSelected():
-				if not obj.IsServer() and obj.HasPacker():
-					# Connect this app node to all selected servers
-					for s in self.Objects:
-						if s.IsServer() and s.IsSelected():
-							self.AddConnection(obj, s)
-							
+		# First, count how many app nodes and network/server nodes we have
+		numAppNodes = 0
+		numServerNodes = 0
+		for node in self.Nodes:
+			if node.IsSelected():
+				if node.IsServer():
+					numServerNodes += 1
+				elif node.IsAppNode() and node.HasAvailablePacker():
+					numAppNodes += 1
+
+		# Now, wire-up the connections
+		if numAppNodes == 1 and numServerNodes > 0:
+			# connect the app node to all server nodes (probably tilesort)
+			for node in self.Nodes:
+				if node.IsSelected() and node.IsAppNode() and node.HasAvailablePacker():
+					# look for server nodes
+					for n in self.Nodes:
+						if n.IsSelected() and n.IsServer():
+							node.LastSPU().AddServer(n)
+					#endfor
+			#endfor
+		elif numAppNodes > 0 and numServerNodes == 1:
+			# connect all app nodes to the server (probably sort-last)
+			for node in self.Nodes:
+				if node.IsSelected() and node.IsServer():
+					# look for app nodes
+					for n in self.Nodes:
+						if n.IsSelected() and n.IsAppNode() and n.HasAvailablePacker():
+							n.LastSPU().AddServer(node)
+					#endfor
+			#endfor
+		else:
+			# not sure what to do here yet
+			print "doConnect() not fully implemented yet, sorry."
+			
 		self.drawArea.Refresh()
 
 	def doDisconnect(self, event):
 		"""Edit / Disconnect callback"""
-		removeList = []
-		for conn in self.Connections:
-			(fromNode, toNode) = conn
-			if fromNode.IsSelected() and not conn in removeList:
-				removeList.append(conn)
-			elif toNode.IsSelected() and not conn in removeList:
-				removeList.append(conn)
-		# Now remove those connections
-		for conn in removeList:
-			self.Connections.remove(conn)
+		for node in self.Nodes:
+			if node.IsSelected():
+				servers = node.GetServers()
+				# make list of servers to remove
+				removeList = []
+				for s in servers:
+					if s.IsSelected():
+						removeList.append(s)
+				# now remove them
+				for s in removeList:
+					node.LastSPU().RemoveServer(s)
 		self.drawArea.Refresh()
 
 	def doSetHost(self, event):
@@ -635,9 +670,9 @@ class MainFrame(wxFrame):
 		dialog = wxTextEntryDialog(self, message="Enter the hostname for the selected nodes")
 		dialog.SetTitle("Chromium host")
 		if dialog.ShowModal() == wxID_OK:
-			for obj in self.Objects:
-				if obj.IsSelected():
-					obj.SetHost(dialog.GetValue())
+			for node in self.Nodes:
+				if node.IsSelected():
+					node.SetHost(dialog.GetValue())
 		dialog.Destroy()
 		self.drawArea.Refresh()
 
@@ -748,15 +783,6 @@ class MainFrame(wxFrame):
 	def loadContents(self):
 		""" Load the contents of our document into memory.
 		"""
-		f = open(self.fileName, "rb")
-		objData = cPickle.load(f)
-		f.close()
-
-#		for type, data in objData:
-#			obj = DrawingObject(type)
-#			obj.setData(data)
-#			self.contents.append(obj)
-
 		self.dirty = false
 
 		self.drawArea.Refresh()
@@ -765,14 +791,6 @@ class MainFrame(wxFrame):
 	def saveContents(self):
 		""" Save the contents of our document to disk.
 		"""
-		objData = []
-		for obj in self.contents:
-			objData.append([obj.getType(), obj.getData()])
-
-		f = open(self.fileName, "wb")
-		cPickle.dump(objData, f)
-		f.close()
-
 		self.dirty = false
 
 
@@ -853,21 +871,27 @@ class ExceptionHandler:
 #----------------------------------------------------------------------------
 
 class SpuObject:
-	def __init__(self, name, packer=0):
+	def __init__(self, name):
 		self.X = 0
 		self.Y = 0
 		self._Name = name
 		self.Width = 0
 		self.Height = 30
-		self._IsPacker = packer
 		self._IsSelected = 0
+		self._Port = 7000
+		self._Protocol = "tcpip"
+		self._Servers = []
 
-	# Return true if this SPU has a packer
 	def IsPacker(self):
-		return self._IsPacker
+		"""Return true if this SPU has a packer"""
+		if self._Name in SpuMaxServers.keys():
+			return 1
+		else:
+			return 0
 
-	# Return true if this SPU has to be the last in a chain (a terminal)
 	def IsTerminal(self):
+		"""Return true if this SPU has to be the last in a chain (a terminal)
+		"""
 		return self._Name in TerminalSPUs
 
 	def Select(self):
@@ -879,15 +903,56 @@ class SpuObject:
 	def IsSelected(self):
 		return self._IsSelected
 
+	def CanAddServer(self):
+		"""Test if a server can be added to this SPU.
+		Return "OK" if so, else return reason why not.
+		"""
+		if not self.IsPacker():
+			return "This SPU doesn't have a command packer"
+		if len(self._Servers) >= SpuMaxServers[self._Name]:
+			return "This SPU is limited to %d server(s)" % SpuMaxServers[self._Name]
+		return "OK"
+
+	def AddServer(self, serverNode, protocol='tcpip', port=7000):
+		"""Add a server to this SPU.  The SPU must have a packer!"""
+		if self.IsPacker() and len(self._Servers) < SpuMaxServers[self._Name]:
+			self._Servers.append(serverNode)
+			self._Protocol = protocol
+			self._Port = port
+
+	def RemoveServer(self, serverNode):
+		if serverNode in self._Servers:
+			self._Servers.remove(serverNode)
+
+	def GetServers(self):
+		"""Return the list of servers for this SPU.
+		For a pack SPU the list will contain zero or one server.
+		For a tilesort SPU the list will contain zero or more servers.
+		Otherw SPU classes have no servers.
+		"""
+		return self._Servers
+
+	def Name(self):
+		return self._Name
+
+	def SetPosition(self, x, y):
+		self.X = x
+		self.Y = y
+
+	def GetPosition(self):
+		return (self.X, self.Y)
+
+	def GetWidth(self):
+		return self.Width
+
+	def GetHeight(self):
+		return self.Height
+
 	def PickTest(self, x, y):
 		if x >= self.X and x < self.X + self.Width and y >= self.Y and y < self.Y + self.Height:
 			return 1
 		else:
 			return 0
-
-	def SetPosition(self, x, y):
-		self.X = x
-		self.Y = y
 
 	def Draw(self, dc):
 		dc.SetBrush(wxLIGHT_GREY_BRUSH)
@@ -902,29 +967,18 @@ class SpuObject:
 		# draw the SPU as rectangle with text label
 		dc.DrawRectangle(self.X, self.Y, self.Width, self.Height)
 		dc.DrawText(self._Name, self.X + 3, self.Y + 3)
-		if self._IsPacker:
+		if self.IsPacker():
 			dc.SetBrush(wxBLACK_BRUSH)
 			dc.DrawRectangle(self.X + self.Width, self.Y + self.Height/2 - 4, 4, 8)
 
-	def Name(self):
-		return self._Name
-
-	def GetPosition(self):
-		return (self.X, self.Y)
-
-	def GetWidth(self):
-		return self.Width
-
-	def GetHeight(self):
-		return self.Height
-
-class NodeObject:
-	""" The graphical representation of a Cr node.
+class Node:
+	""" The graphical representation of a Cr node (app or network).
+	This is the base class for the ServerNode and NetworkNode classes.
 	"""
 
-	def __init__(self, host="localhost", x=100, y=100, isServer = 0):
-		self.X = x
-		self.Y = y
+	def __init__(self, host="localhost", isServer = 0):
+		self.X = 0
+		self.Y = 0
 		self.Width = 200
 		self.Height = 60
 		self.SpuChain = []
@@ -933,16 +987,28 @@ class NodeObject:
 		self._InputPlugPos = (0,0)
 		self._Host = host
 
-	# Return true if this is a server, false otherwise
+	def IsAppNode(self):
+		"""Return true if this is an app node, false otherwise."""
+		return not self._IsServer
+
 	def IsServer(self):
+		"""Return true if this is a server, false otherwise."""
 		return self._IsServer
 
-	# Return true if the last SPU has a packer:
+	def HasAvailablePacker(self):
+		"""Return true if we can connect a server to this node."""
+		if len(self.SpuChain) >= 1 and self.LastSPU().CanAddServer() == "OK":
+			return 1
+		else:
+			return 0
+
 	def HasPacker(self):
+		"""Return true if the last SPU has a packer."""
 		if len(self.SpuChain) >= 1 and self.LastSPU().IsPacker():
 			return 1
 		else:
 			return 0
+
 	def SetHost(self, hostname):
 		self._Host = hostname
 
@@ -963,6 +1029,12 @@ class NodeObject:
 
 	def LastSPU(self):
 		return self.SpuChain[-1]
+
+	def GetServers(self):
+		if self.NumSPUs() > 0:
+			return self.LastSPU().GetServers()
+		else:
+			return []
 
 	def SelectSPU(self, i):
 		self.SpuChain[i].Select()
@@ -1041,6 +1113,17 @@ class NodeObject:
 			return 1
 		else:
 			return 0
+
+class NetworkNode(Node):
+	"""A CRNetworkNode object"""
+	def __init__(self, host="localhost"):
+		Node.__init__(self, host, isServer=1)
+
+
+class ApplicationNode(Node):
+	"""A CRApplicationNode object"""
+	def __init__(self, host="localhost"):
+		Node.__init__(self, host, isServer=0)
 
 
 #----------------------------------------------------------------------------
