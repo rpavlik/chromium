@@ -10,6 +10,7 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <string.h>
 
 #include "cr_error.h"
 #include "cr_mem.h"
@@ -60,11 +61,31 @@ static struct {
 
 /* Forward declarations */
 void crTcscommFree( CRConnection *, void * );
-int  crTcscommRecv( void );
-void crTCPIPReadExact( CRSocket sock, void *buf, unsigned int len );
-void crTCPIPWriteExact( CRConnection *conn, void *buf, unsigned int len );
-void crTCPIPAccept( CRConnection *conn, char *hostname, unsigned short port );
-int  crTCPIPDoConnect( CRConnection *conn );
+int crTcscommErrno( void );
+char *crTcscommErrorString( int err );
+void crTcscommReadExact( int tcscomm_id, void *buf, unsigned int len );
+void crTcscommWriteExact( CRConnection *conn, void *buf, unsigned int len );
+void *crTcscommAlloc( CRConnection *conn );
+void crTcscommSend( CRConnection *conn, void **bufp,
+		    void *start, unsigned int len );
+void crTcscommSingleRecv( CRConnection *conn, void *buf, unsigned int len );
+void crTcscommHandleNewMessage( CRConnection *conn, CRMessage *msg,
+				unsigned int len );
+void crTcscommInstantReclaim( CRConnection *conn, CRMessage *mess );
+void crTcscommAccept( CRConnection *conn, char *hostname, 
+		      unsigned short port );
+int crTcscommDoConnect( CRConnection *conn );
+void crTcscommDoDisconnect( CRConnection *conn );
+void crTcscommSetRank( int rank );
+void crTcscommSetContextRange( int low_context, int high_context );
+void crTcscommSetNodeRange( const char *low_node, const char *high_node );
+
+
+
+
+
+
+
 
 int
 crTcscommErrno( void )
@@ -299,11 +320,11 @@ crTcscommWaitForSendCredits( CRConnection *conn )
     void *msg_buffer;
     CRMessage *msg;
 
-    crTCPIPReadExact( conn->tcp_socket, &len, sizeof( int ) );
+    crTCPIPReadExact( conn, &len, sizeof( int ) );
     CRASSERT( len > 0 );
     
     msg_buffer = (void *) crAlloc( len );
-    crTCPIPReadExact( conn->tcp_socket, msg_buffer, len );
+    crTCPIPReadExact( conn, msg_buffer, len );
     
     msg = (CRMessage *) msg_buffer;
     switch ( msg->header.type ) {
@@ -620,7 +641,7 @@ crTcscommAccept( CRConnection *conn, char *hostname, unsigned short port )
   crDebug( "crTcscommAccept:  connecting to %s:%d on port %d "
 	   "for out-of-band communication",
 	   conn->hostname, client_rank, CR_TCSCOMM_TCPIP_PORT );
-  crTCPIPAccept( conn, CR_TCSCOMM_TCPIP_PORT );
+  crTCPIPAccept( conn, hostname, CR_TCSCOMM_TCPIP_PORT );
   conn->send_credits = 0;
   conn->recv_credits = CR_TCSCOMM_INITIAL_RECV_CREDITS;
   crDebug( "crTcscommAccept:  connected to %s:%d on port %d for "
@@ -703,7 +724,7 @@ void crTcscommDoDisconnect( CRConnection *conn )
   }
 }
 
-void crTcscommConnection( CRConnection *conn, void *tcscomm_conn, int rank )
+void crTcscommConnection( CRConnection *conn )
 {
   CRASSERT( cr_tcscomm.initialized );
 

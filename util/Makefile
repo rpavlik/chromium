@@ -80,13 +80,16 @@ endif
 endif
 
 ifeq ($(TEAC_SUPPORT), 1)
-CFLAGS += -DTEAC_SUPPORT -I/usr/opt/rms/include
+CFLAGS += -DTEAC_SUPPORT -DCHROMIUM
+ifeq ($(ARCH), OSF1)
+CFLAGS += -I/usr/opt/rms/include
+endif
 LDFLAGS += -lelan3
 FILES += libteac teac
 endif
 
 ifeq ($(TCSCOMM_SUPPORT), 1)
-CFLAGS += -DTCSCOMM_SUPPORT -I/usr/opt/rms/include
+CFLAGS += -DTCSCOMM_SUPPORT -DCHROMIUM -I/usr/opt/rms/include
 LDFLAGS += -lelan3
 FILES += tcscomm 
 endif

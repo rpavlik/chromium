@@ -34,7 +34,7 @@ import sys, string, types, traceback, re, threading, os, socket, select
 from crconfig import arch, crdir, crbindir, crlibdir
 
 # This controls whether debug messages are printed (1=yes, 0=no)
-DebugMode = 1
+DebugMode = 0
 
 def CRInfo( str ):
 	"""CRInfo(str)
@@ -81,10 +81,16 @@ def SameHost( host1, host2 ):
 	"""Return 1 if host1 and host2 name the same host.	Return 0 otherwise.
 	For example, if host1='foo' and host2='foo.bar.com' we'll return 1.
 	"""
-	if socket.gethostbyname(host1) == socket.gethostbyname(host2):
-		return 1
-	else:
-		return 0
+	try: 
+		if socket.gethostbyname(host1) == socket.gethostbyname(host2):
+			return 1
+		else:
+			return 0
+	except socket.gaierror:
+		if string.split(host1,".")[0] == string.split(host2,".")[0]:
+			return 1
+		else:
+			return 0;
 
 
 class SPU:
@@ -571,8 +577,8 @@ class CR:
 	def ContextRange( self, low_context, high_context ):
 		"""ContextRange( low_context, high_context )
 		Sets the context range to use with Elan."""
-		self.low_context  = low_context;
-		self.high_context = high_context;
+		self.config["low_context"]  = low_context;
+		self.config["high_context"] = high_context;
 
 	def NodeRange( self, low_node, high_node ):
 		"""NodeRange( low_node, high_node )
@@ -580,11 +586,11 @@ class CR:
 		period = low_node.find( "." )
 		if period != -1:
 			low_node = low_node[:period]
-		self.low_node  = low_node;
+		self.config["low_node"]  = low_node;
 		period = high_node.find( "." )
 		if period != -1:
 			high_node = high_node[:period]
-			self.high_node = high_node;
+			self.config["high_node"] = high_node;
 
 	def AllSPUConf( self, regex, key, *values ):
 		"""AllSPUConf(regex, key, *values)
@@ -759,7 +765,7 @@ class CR:
 						server_sock.Success( "%d %s %d %d" % (self.conn_id, my_hostname, my_rank, my_endianness) )
 						self.conn_id += 1
 						return
-			sock.teac_connect_wait = (my_hostname, my_rank, my_endianness)
+			sock.teac_connect_wait = (my_hostname, my_rank, my_endianness, remote_hostname, remote_rank)
 		elif (protocol == 'quadrics-tcscomm'):
 			(p, remote_hostname, remote_rank_str, my_hostname, my_rank_str, my_endianness_str) = connect_info
 			remote_rank = int(remote_rank_str)
@@ -773,7 +779,7 @@ class CR:
 						server_sock.Success( "%d %s %d %d" % (self.conn_id, my_hostname, my_rank, my_endianness) )
 						self.conn_id += 1
 						return
-			sock.tcscomm_connect_wait = (my_hostname, my_rank, my_endianness)
+			sock.tcscomm_connect_wait = (my_hostname, my_rank, my_endianness, remote_hostname, remote_rank)
 		else:
 			sock.Failure( SockWrapper.UNKNOWNPROTOCOL, "Never heard of protocol %s" % protocol )
 
@@ -820,10 +826,10 @@ class CR:
 			endianness = int(endianness_str)
 			for client_sock in self.wrappers.values():
 				if client_sock.teac_connect_wait != None:
-					(remote_hostname, remote_rank, remote_endianness) = client_sock.teac_connect_wait
-					if SameHost(remote_hostname, hostname) and remote_rank == rank:
-						sock.Success( "%d %s %d %d" % (self.conn_id, remote_hostname, remote_rank, remote_endianness) )
-						client_sock.Success( "%d %d" % (self.conn_id, my_endianness) )
+					(client_hostname, client_rank, client_endianness, server_hostname, server_rank) = client_sock.teac_connect_wait
+					if SameHost(server_hostname, hostname) and server_rank == rank:
+						sock.Success( "%d %s %d %d" % (self.conn_id, client_hostname, client_rank, client_endianness) )
+						client_sock.Success( "%d %d" % (self.conn_id, endianness) )
 						self.conn_id += 1
 						return
 			sock.teac_accept_wait = (hostname, rank, endianness)
@@ -833,9 +839,9 @@ class CR:
 			endianness = int(endianness_str)
 			for client_sock in self.wrappers.values():
 				if client_sock.tcscomm_connect_wait != None:
-					(remote_hostname, remote_rank, remote_endianness) = client_sock.tcscomm_connect_wait
+					(client_hostname, client_rank, client_endianness, server_hostname, server_rank) = client_sock.tcscomm_connect_wait
 					if SameHost(remote_hostname, hostname) and remote_rank == rank:
-						sock.Success( "%d %s %d %d" % (self.conn_id, remote_hostname, remote_rank, remote_endianness) )
+						sock.Success( "%d %s %d %d" % (self.conn_id, client_hostname, client_rank, client_endianness) )
 						client_sock.Success( "%d %d" % (self.conn_id, my_endianness) )
 						self.conn_id += 1
 						return

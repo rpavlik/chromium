@@ -33,9 +33,28 @@ extern int __tcpip_write_exact( CRSocket sock, void *buf, unsigned int len );
 extern int __tcpip_read_exact( CRSocket sock, void *buf, unsigned int len );
 extern void __tcpip_dead_connection( CRConnection *conn );
 
+
+
+
 extern void crUDPTCPIPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu );
 extern void crUDPTCPIPConnection( CRConnection *conn );
 extern int crUDPTCPIPRecv( void );
+
+#ifdef TEAC_SUPPORT
+extern void crTeacInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
+			unsigned int mtu );
+extern void crTeacConnection( CRConnection *conn );
+extern int  crTeacRecv( void );
+#endif
+
+#ifdef TCSCOMM_SUPPORT
+extern void crTcscommInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
+		    unsigned int mtu );
+extern void crTcscommConnection( CRConnection *conn );
+extern int  crTcscommRecv( void );
+
+
+#endif
 
 extern CRConnection** crNetDump( int* num );
 

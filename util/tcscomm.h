@@ -190,6 +190,8 @@ typedef struct _host {
   int	id;
 } host_t;
 
+#ifdef never
+
 static host_t hosts[] = { { "mini-t0", 0, 0 }, { "mini-t1", 0, 1 },
 			  { "mini-t2", 0, 2 }, { "mini-t3", 0, 3 }, { "tcsini0", 0, 0 },
 			  { "tcsini1", 0, 1 }, { "tcsini2", 0, 2 }, { "tcsini3", 0, 3 },
@@ -217,6 +219,8 @@ static host_t hosts[] = { { "mini-t0", 0, 0 }, { "mini-t1", 0, 1 },
 			  { "vis2", 0, 18 }, { "cog14", 0, 19} };
 
 #define MAXHOSTS (sizeof(hosts)/sizeof(host_t))
+
+#endif
 
 #ifdef __cplusplus
 extern "C" {

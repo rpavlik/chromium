@@ -4,11 +4,11 @@ G++-INCLUDE-DIR = /usr/include/g++
 CXX = cxx
 CC = cc
 
-CXXFLAGS          += -DOSF1 -Wall -Werror -pthread
+CXXFLAGS          += -DOSF1 -Wall -Werror -pthread -DELAN_PRE_KITE
 CXX_RELEASE_FLAGS += -g -O3 -DNDEBUG
 CXX_DEBUG_FLAGS   += -g
 
-CFLAGS            += -DOSF1 -Wall -Werror -pthread
+CFLAGS            += -DOSF1 -Wall -Werror -pthread -DELAN_PRE_KITE
 C_RELEASE_FLAGS   += -g -O3 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 

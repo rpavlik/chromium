@@ -15,6 +15,7 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <string.h>
 
 #include "cr_error.h"
 #include "cr_mem.h"
@@ -51,7 +52,7 @@ static struct {
   int                  initialized;
   int                  num_conns;
   CRNetReceiveFuncList *recv_list;
-  CRNetCloseFuncList *close_list;
+  CRNetCloseFuncList  *close_list;
   CRTeacConnection    *credit_head;
   CRTeacConnection    *credit_tail;
   unsigned int         inside_recv;
@@ -67,7 +68,23 @@ static struct {
 /* Forward declarations */
 void *crTeacAlloc( CRConnection * );
 void  crTeacFree( CRConnection *, void * );
-int   crTeacRecv( void );
+int crTeacErrno( void );
+char* crTeacErrorString( int err );
+void crTeacInstantReclaim( CRConnection *conn, CRMessage *msg );
+void crTeacSend( CRConnection *conn, void **bufp,
+		 void *start, unsigned int len );
+CRConnection *crTeacSelect( void );
+void crTeacAccept( CRConnection *conn, char *hostname, unsigned short port );
+int crTeacDoConnect( CRConnection *conn );
+void crTeacDoDisconnect( CRConnection *conn );
+void crTeacHandleNewMessage( CRConnection *conn, CRMessage *msg,
+			     unsigned int len );
+void crTeacSingleRecv( CRConnection *conn, void *buf, unsigned int len );
+void crTeacSendExact( CRConnection *conn, void *buf, unsigned int len );
+void crTeacSetRank( int rank );
+void crTeacSetContextRange( int low_context, int high_context );
+void crTeacSetNodeRange( const char *low_node, const char *high_node );
+
 
 int
 crTeacErrno( void )
@@ -443,8 +460,8 @@ void crTeacInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
 		 unsigned int mtu )
 {
   (void) mtu;
-  cr_teac.recv = recvFunc;
-  cr_teac.close = closeFunc;
+  cr_teac.recv_list = rfl;
+  cr_teac.close_list = cfl;
 
   if ( cr_teac.initialized )
     {
@@ -614,7 +631,8 @@ crTeacSingleRecv( CRConnection *conn, void *buf, unsigned int len )
 }
 
 void
-crTeacSendExact( CRConnection *conn, void *buf, unsigned int len ) {
+crTeacSendExact( CRConnection *conn, void *buf, unsigned int len ) 
+{
   crError( "crTeacSendExact should not get called." );
   (void) conn;
   (void) buf;
@@ -643,8 +661,7 @@ void crTeacConnection( CRConnection *conn )
   cr_teac.num_conns++;
 }
 
-void
-crTeacSetRank( int rank )
+void crTeacSetRank( int rank )
 {
   cr_teac.my_rank = rank;
 }
