@@ -15,6 +15,7 @@
 
 import string, os.path, types, random
 from wxPython.wx import *
+from spudialog import *
 from crutils import *
 
 
@@ -24,17 +25,23 @@ from crutils import *
 
 # Our menu item IDs:
 
-menu_UNDO          = 10001 # Edit menu items.
-menu_SELECT_ALL    = 10002
-menu_DELETE        = 10003
-menu_CONNECT       = 10004
-menu_DISCONNECT    = 10005
-menu_SET_HOST      = 10006
-menu_SPU_OPTIONS   = 10007
-menu_HELP          = 10008
-menu_ABOUT         = 10009
-menu_DELETE_SPU    = 10010
-menu_LAYOUT_NODES  = 10011
+menu_SELECT_ALL_NODES   = 200
+menu_DESELECT_ALL_NODES = 201
+menu_DELETE_NODE        = 202
+menu_CONNECT            = 203
+menu_DISCONNECT         = 204
+menu_LAYOUT_NODES       = 205
+menu_SET_HOST           = 206
+menu_SERVER_OPTIONS     = 207
+
+menu_SELECT_ALL_SPUS    = 300
+menu_DESELECT_ALL_SPUS  = 301
+menu_DELETE_SPU         = 302
+menu_SPU_OPTIONS        = 303
+
+menu_HELP               = 400
+menu_ABOUT              = 401
+
 
 # Widget IDs
 id_NewServerNode  = 3000
@@ -46,7 +53,7 @@ id_NewTemplate    = 3003
 PAGE_WIDTH  = 1000
 PAGE_HEIGHT = 1000
 
-SpuClasses = [ "New SPU", "Pack", "Render", "Readback", "Tilesort", "Wet", "Hiddenline" ]
+SpuClasses = [ "New SPU", "Pack", "Tilesort", "Render", "Readback", "Wet", "Hiddenline", "Print", "Saveframe", "Comm", "Binaryswap", "Array", "Counter", "Dist_texture" ]
 
 # How many servers can this SPU connect to
 SpuMaxServers = { "Pack" : 1,  "Tilesort" : 1000 }
@@ -78,6 +85,30 @@ ConfigFileTail = """
 cr.Go()
 """
 
+# XXX this is a temporary hack.  We want to eventually retrieve this
+# info automatically via an external SPU utility program.
+SPUOptions = {
+	"Tilesort" : [
+		("broadcast", "bool", 1, false, "Broadcast Primitives"),
+		("optimize_bucket", "bool", 1, true, "Optimized Bucketing"),
+		("split_begin_end", "bool", 1, false, "Split glBegin/glEnd"),
+		("sync_on_swap", "bool", 1, false, "Sync on SwapBuffers()")
+		],
+	"Render" : [
+		("try_direct", "bool", 1, true, "Try Direct Rendering"),
+		("force_direct", "bool", 1, true, "Force Direct Rendering"),
+		("fullscreen", "bool", 1, false, "Full-screen Window"),
+		("on_top", "bool", 1, false, "Display on top")
+		],
+	"Print" : [
+		("log_file", "string", 1, "logfile", "Log file name")
+		],
+	"Readback" : [
+		("extract_depth", "bool", 1, true, "Extract Z Zalues"),
+		("extract_alpha", "bool", 1, true, "Extract Alpha Zalues"),
+		("local_visualization", "bool", 1, false, "Local Visualization")
+		]
+}
 
 
 #----------------------------------------------------------------------------
@@ -117,28 +148,44 @@ class MainFrame(wxFrame):
 		EVT_MENU(self, wxID_EXIT,   self.doExit)
 		menuBar.Append(self.fileMenu, "File")
 
-		# Edit menu
-		self.editMenu = wxMenu()
-		self.editMenu.Append(menu_UNDO,          "Undo\tCTRL-Z")
-		self.editMenu.AppendSeparator()
-		self.editMenu.Append(menu_DELETE,        "Delete Node(s)")
-		self.editMenu.Append(menu_DELETE_SPU,    "Delete SPU(s)")
-		self.editMenu.Append(menu_SELECT_ALL,    "Select All\tCTRL-A")
-		self.editMenu.AppendSeparator()
-		self.editMenu.Append(menu_CONNECT,       "Connect Nodes")
-		self.editMenu.Append(menu_DISCONNECT,    "Disconnect Nodes")
-		self.editMenu.Append(menu_SET_HOST,      "Set Host...")
-		self.editMenu.Append(menu_SPU_OPTIONS,   "SPU Options...")
-		self.editMenu.Append(menu_LAYOUT_NODES,  "Layout Nodes")
-		EVT_MENU(self, menu_DELETE, self.doDeleteNodes)
-		EVT_MENU(self, menu_DELETE_SPU, self.doDeleteSPU)
-		EVT_MENU(self, menu_SELECT_ALL, self.doSelectAll)
+		# Node menu
+		self.nodeMenu = wxMenu()
+		self.nodeMenu.Append(menu_SELECT_ALL_NODES,   "Select All\tCTRL-A")
+		self.nodeMenu.Append(menu_DESELECT_ALL_NODES, "Deselect All")
+		self.nodeMenu.AppendSeparator()
+		self.nodeMenu.Append(menu_DELETE_NODE,        "Delete\tCTRL-D")
+		self.nodeMenu.AppendSeparator()
+		self.nodeMenu.Append(menu_CONNECT,            "Connect")
+		self.nodeMenu.Append(menu_DISCONNECT,         "Disconnect")
+		self.nodeMenu.AppendSeparator()
+		self.nodeMenu.Append(menu_LAYOUT_NODES,       "Re-layout")
+		self.nodeMenu.AppendSeparator()
+		self.nodeMenu.Append(menu_SET_HOST,           "Set Host...")
+		self.nodeMenu.Append(menu_SERVER_OPTIONS,     "Server Options...")
+		EVT_MENU(self, menu_SELECT_ALL_NODES, self.doSelectAllNodes)
+		EVT_MENU(self, menu_DESELECT_ALL_NODES, self.doDeselectAllNodes)
+		EVT_MENU(self, menu_DELETE_NODE, self.doDeleteNodes)
 		EVT_MENU(self, menu_CONNECT, self.doConnect)
 		EVT_MENU(self, menu_DISCONNECT, self.doDisconnect)
-		EVT_MENU(self, menu_SET_HOST, self.doSetHost)
-		EVT_MENU(self, menu_SPU_OPTIONS, self.doSpuOptions)
 		EVT_MENU(self, menu_LAYOUT_NODES, self.doLayoutNodes)
-		menuBar.Append(self.editMenu, "Edit")
+		EVT_MENU(self, menu_SET_HOST, self.doSetHost)
+		EVT_MENU(self, menu_SERVER_OPTIONS, self.doServerOptions)
+		menuBar.Append(self.nodeMenu, "Node")
+
+		# SPU menu
+		self.spuMenu = wxMenu()
+		self.spuMenu.AppendSeparator()
+		self.spuMenu.Append(menu_SELECT_ALL_SPUS,    "Select All ")
+		self.spuMenu.Append(menu_DESELECT_ALL_SPUS,  "Deselect All")
+		self.spuMenu.AppendSeparator()
+		self.spuMenu.Append(menu_DELETE_SPU,         "Delete ")
+		self.spuMenu.AppendSeparator()
+		self.spuMenu.Append(menu_SPU_OPTIONS,        "Options...")
+		EVT_MENU(self, menu_SELECT_ALL_SPUS, self.doSelectAllSPUs)
+		EVT_MENU(self, menu_DESELECT_ALL_SPUS, self.doDeselectAllSPUs)
+		EVT_MENU(self, menu_DELETE_SPU, self.doDeleteSPU)
+		EVT_MENU(self, menu_SPU_OPTIONS, self.doSpuOptions)
+		menuBar.Append(self.spuMenu, "SPU")
 
 		# Help menu
 		self.helpMenu = wxMenu()
@@ -169,7 +216,7 @@ class MainFrame(wxFrame):
 		self.newAppChoice = wxChoice(parent=self.topPanel, id=id_NewAppNode,
 									  choices=appChoices)
 		EVT_CHOICE(self.newAppChoice, id_NewAppNode, self.onNewAppNode)
-		toolSizer.Add(self.newAppChoice, flag=wxEXPAND+wxALL, border=4)
+		toolSizer.Add(self.newAppChoice, flag=wxEXPAND+wxALL, border=2)
 
 		# New server node button
 		serverChoices = ["New Server Node(s)", "1 Server node", "2 Server nodes",
@@ -177,19 +224,19 @@ class MainFrame(wxFrame):
 		self.newServerChoice = wxChoice(parent=self.topPanel, id=id_NewServerNode,
 									  choices=serverChoices)
 		EVT_CHOICE(self.newServerChoice, id_NewServerNode, self.onNewServerNode)
-		toolSizer.Add(self.newServerChoice, flag=wxEXPAND+wxALL, border=4)
+		toolSizer.Add(self.newServerChoice, flag=wxEXPAND+wxALL, border=2)
 
 		# New SPU button
 		self.newSpuChoice = wxChoice(parent=self.topPanel, id=id_NewSpu,
 									 choices=SpuClasses)
 		EVT_CHOICE(self.newSpuChoice, id_NewSpu, self.onNewSpu)
-		toolSizer.Add(self.newSpuChoice, flag=wxEXPAND+wxALL, border=4)
+		toolSizer.Add(self.newSpuChoice, flag=wxEXPAND+wxALL, border=2)
 
 		# New Template button
 		self.newTemplateChoice = wxChoice(parent=self.topPanel, id=id_NewTemplate,
 									 choices=Templates)
 		EVT_CHOICE(self.newTemplateChoice, id_NewTemplate, self.onNewTemplate)
-		toolSizer.Add(self.newTemplateChoice, flag=wxEXPAND+wxALL, border=4)
+		toolSizer.Add(self.newTemplateChoice, flag=wxEXPAND+wxALL, border=2)
 
 		# Setup the main drawing area.
 		self.drawArea = wxScrolledWindow(self.topPanel, -1,
@@ -253,6 +300,14 @@ class MainFrame(wxFrame):
 		n = 0
 		for node in self.Nodes:
 			if node.IsSelected():
+				n += 1
+		return n
+
+	def NumSelectedServers(self):
+		"""Return number of selected server/network nodes."""
+		n = 0
+		for node in self.Nodes:
+			if node.IsServer() and node.IsSelected():
 				n += 1
 		return n
 
@@ -365,7 +420,26 @@ class MainFrame(wxFrame):
 				object.Deselect()
 		else:
 			print "bad mode in UpdateSelection"
-			
+
+	def GetSelectedSPUs(self):
+		"""Return a list of all the selected SPUs"""
+		spuList = []
+		for node in self.Nodes:
+			if node.IsSelected():
+				for spu in node.SPUChain():
+					if spu.IsSelected():
+						spuList.append(spu)
+		return spuList
+
+	def NumSelectedSPUs(self):
+		"""Return number of selected SPUs"""
+		count = 0
+		for node in self.Nodes:
+			if node.IsSelected():
+				for spu in node.SPUChain():
+					if spu.IsSelected():
+						count += 1
+		return count
 
 	#----------------------------------------------------------------------
 	# Template functions
@@ -530,8 +604,6 @@ class MainFrame(wxFrame):
 				# OK, we're all set, add the SPU
 				s = SpuObject( SpuClasses[i] )
 				node.AddSPU(s, pos)
-				# XXX make the new SPU the only one selected
-				
 		self.drawArea.Refresh()
 		self.newSpuChoice.SetSelection(0)
 
@@ -637,8 +709,8 @@ class MainFrame(wxFrame):
 			if anySelected:
 				self.drawArea.Refresh()
 
-	#----------------------------------------------------------------------
-	# Menu callbacks
+	# ----------------------------------------------------------------------
+	# File menu callbacks
 
 	def doNew(self, event):
 		"""File / New callback"""
@@ -745,9 +817,25 @@ class MainFrame(wxFrame):
 
 		_app.ExitMainLoop()
 
+	# ----------------------------------------------------------------------
+	# Node menu callbacks
+
+	def doSelectAllNodes(self, event):
+		"""Node / Select All callback"""
+		for node in self.Nodes:
+			node.Select()
+		self.drawArea.Refresh()
+		self.UpdateMenus()
+
+	def doDeselectAllNodes(self, event):
+		"""Node / Deselect All callback"""
+		for node in self.Nodes:
+			node.Deselect()
+		self.drawArea.Refresh()
+		self.UpdateMenus()
 
 	def doDeleteNodes(self, event):
-		"""Edit / Delete Nodes callback"""
+		"""Node / Delete Nodes callback"""
 		# Ugh, I can't find a Python counterpart to the C++ STL's remove_if()
 		# function.
 		# Have to make a temporary list of the objects to delete so we don't
@@ -767,28 +855,8 @@ class MainFrame(wxFrame):
 		self.drawArea.Refresh()
 		self.UpdateMenus()
 
-	def doDeleteSPU(self, event):
-		"""Edit / Delete SPU callback"""
-		# make list of SPUs to delete
-		for node in self.Nodes:
-			removeList = []
-			for spu in node.SPUChain():
-				if spu.IsSelected():
-					removeList.append(spu)
-			# now remove
-			for spu in removeList:
-				node.RemoveSPU(spu)
-		self.drawArea.Refresh()
-		self.UpdateMenus()
-
-	def doSelectAll(self, event):
-		"""Edit / Select All callback"""
-		for node in self.Nodes:
-			node.Select()
-		self.drawArea.Refresh()
-
 	def doConnect(self, event):
-		"""Edit / Connect callback"""
+		"""Node / Connect callback"""
 		# Make list of packer(app and net) nodes and server nodes
 		netPackerNodes = []
 		appPackerNodes = []
@@ -853,9 +921,10 @@ class MainFrame(wxFrame):
 						serverNodes.remove(server)
 		# Done!
 		self.drawArea.Refresh()
+		self.UpdateMenus()
 
 	def doDisconnect(self, event):
-		"""Edit / Disconnect callback"""
+		"""Node / Disconnect callback"""
 		for node in self.Nodes:
 			if node.IsSelected():
 				servers = node.GetServers()
@@ -868,9 +937,15 @@ class MainFrame(wxFrame):
 				for s in removeList:
 					node.LastSPU().RemoveServer(s)
 		self.drawArea.Refresh()
+		self.UpdateMenus()
+
+	def doLayoutNodes(self, event):
+		"""Node / Layout Nodes callback"""
+		self.LayoutNodes()
+		self.drawArea.Refresh()
 
 	def doSetHost(self, event):
-		"""Edit / Set Host callback"""
+		"""Node / Set Host callback"""
 		dialog = wxTextEntryDialog(self, message="Enter the hostname for the selected nodes")
 		dialog.SetTitle("Chromium host")
 		if dialog.ShowModal() == wxID_OK:
@@ -880,20 +955,71 @@ class MainFrame(wxFrame):
 		dialog.Destroy()
 		self.drawArea.Refresh()
 
+	def doServerOptions(self, event):
+		"""Node / Server Options callback"""
+		# XXX display the server options dialog
+		return
+
+
+	# ----------------------------------------------------------------------
+	# SPU menu callbacks
+
+	def doSelectAllSPUs(self, event):
+		"""SPU / Select All callback"""
+		for node in self.Nodes:
+			if node.IsSelected():
+				for spu in node.SPUChain():
+					spu.Select()
+		self.drawArea.Refresh()
+		self.UpdateMenus()
+
+	def doDeselectAllSPUs(self, event):
+		"""SPU / Deselect All callback"""
+		for node in self.Nodes:
+			if node.IsSelected():
+				for spu in node.SPUChain():
+					spu.Deselect()
+		self.drawArea.Refresh()
+		self.UpdateMenus()
+
+	def doDeleteSPU(self, event):
+		"""Node / Delete SPU callback"""
+		# loop over all nodes, selected or not
+		for node in self.Nodes:
+			# make list of SPUs to delete
+			removeList = []
+			for spu in node.SPUChain():
+				if spu.IsSelected():
+					removeList.append(spu)
+					node.InvalidateLayout()
+			# now remove
+			for spu in removeList:
+				node.RemoveSPU(spu)
+		self.drawArea.Refresh()
+		self.UpdateMenus()
+
 	def doSpuOptions(self, event):
-		"""Edit / SPU Options callback"""
+		"""SPU / SPU Options callback"""
+		# find first selected SPU
+		spuList = self.GetSelectedSPUs()
+		if len(spuList) > 0:
+			name = spuList[0].Name()
+			if name in SPUOptions.keys():
+				spuOpts = SPUOptions[name]
+				dialog = SPUDialog(parent=NULL, id=-1,
+								   title=name + " SPU Options",
+								   options = spuOpts)
+				dialog.ShowModal()
 		return
 		
-	def doLayoutNodes(self, event):
-		"""Edit / Layout Nodes callback"""
-		self.LayoutNodes()
-		self.drawArea.Refresh()
+	# ----------------------------------------------------------------------
+	# Help menu callbacks
 
 	def doShowIntro(self, event):
 		"""Help / Introduction callback"""
 		dialog = wxDialog(self, -1, "Introduction") # ,
 				  #style=wxDIALOG_MODAL | wxSTAY_ON_TOP)
-		dialog.SetBackgroundColour(wxWHITE)
+		#dialog.SetBackgroundColour(wxWHITE)
 
 		panel = wxPanel(dialog, -1)
 		#panel.SetBackgroundColour(wxWHITE)
@@ -933,33 +1059,19 @@ class MainFrame(wxFrame):
 
 	def doShowAbout(self, event):
 		"""Help / About callback"""
-		dialog = wxDialog(self, -1, "About") # ,
-				  #style=wxDIALOG_MODAL | wxSTAY_ON_TOP)
+		dialog = wxDialog(self, -1, "About")
 		dialog.SetBackgroundColour(wxWHITE)
 
 		panel = wxPanel(dialog, -1)
-		panel.SetBackgroundColour(wxWHITE)
-
 		panelSizer = wxBoxSizer(wxVERTICAL)
 
-		boldFont = wxFont(panel.GetFont().GetPointSize(),
-				  panel.GetFont().GetFamily(),
-				  wxNORMAL, wxBOLD)
-
-		logo = wxStaticBitmap(panel, -1, wxBitmap("images/logo.bmp",
-							  wxBITMAP_TYPE_BMP))
-
-		lab1 = wxStaticText(panel, -1, "not done yet")
-		lab1.SetFont(wxFont(12, boldFont.GetFamily(), wxITALIC, wxBOLD))
-		lab1.SetSize(lab1.GetBestSize())
-
-		imageSizer = wxBoxSizer(wxHORIZONTAL)
-		imageSizer.Add(logo, 0, wxALL | wxALIGN_CENTRE_VERTICAL, 5)
-		imageSizer.Add(lab1, 0, wxALL | wxALIGN_CENTRE_VERTICAL, 5)
+		text = wxStaticText(parent=panel, id=-1, label=
+			"Chromium configuration tool\n"
+			"Version 0.0\n")
 
 		btnOK = wxButton(panel, wxID_OK, "OK")
 
-		panelSizer.Add(imageSizer, 0, wxALIGN_CENTRE)
+		panelSizer.Add(text, 0, wxALIGN_CENTRE)
 		panelSizer.Add(10, 10) # Spacer.
 		panelSizer.Add(btnOK, 0, wxALL | wxALIGN_CENTRE, 5)
 
@@ -979,34 +1091,46 @@ class MainFrame(wxFrame):
 		btn = dialog.ShowModal()
 		dialog.Destroy()
 
+
 	# ----------------------------------------------------------------------
 	def UpdateMenus(self):
 		"""Enable/disable menu items as needed."""
 		# XXX the enable/disable state for connect/disconnect is more
-		# complicated than this.
+		# complicated than this.  So is the newSpuChoice widget state.
 		if self.NumSelected() > 0:
-			self.editMenu.Enable(menu_DELETE, 1)
-			self.editMenu.Enable(menu_CONNECT, 1)
-			self.editMenu.Enable(menu_DISCONNECT, 1)
-			self.editMenu.Enable(menu_SET_HOST, 1)
-			self.editMenu.Enable(menu_SPU_OPTIONS, 1)
+			self.nodeMenu.Enable(menu_DELETE_NODE, 1)
+			self.nodeMenu.Enable(menu_CONNECT, 1)
+			self.nodeMenu.Enable(menu_DISCONNECT, 1)
+			self.nodeMenu.Enable(menu_SET_HOST, 1)
 			self.newSpuChoice.Enable(1)
 		else:
-			self.editMenu.Enable(menu_DELETE, 0)
-			self.editMenu.Enable(menu_CONNECT, 0)
-			self.editMenu.Enable(menu_DISCONNECT, 0)
-			self.editMenu.Enable(menu_SET_HOST, 0)
-			self.editMenu.Enable(menu_SPU_OPTIONS, 0)
+			self.nodeMenu.Enable(menu_DELETE_NODE, 0)
+			self.nodeMenu.Enable(menu_CONNECT, 0)
+			self.nodeMenu.Enable(menu_DISCONNECT, 0)
+			self.nodeMenu.Enable(menu_SET_HOST, 0)
 			self.newSpuChoice.Enable(0)
-		if len(self.Nodes) > 0:
-			self.editMenu.Enable(menu_SELECT_ALL, 1)
-			self.editMenu.Enable(menu_LAYOUT_NODES, 1)
+		if self.NumSelectedServers() > 0:
+			self.nodeMenu.Enable(menu_SERVER_OPTIONS, 1)
 		else:
-			self.editMenu.Enable(menu_SELECT_ALL, 0)
-			self.editMenu.Enable(menu_LAYOUT_NODES, 0)
-		# always disabled for now
-		self.editMenu.Enable(menu_UNDO, 0)
-
+			self.nodeMenu.Enable(menu_SERVER_OPTIONS, 0)
+		if len(self.Nodes) > 0:
+			self.nodeMenu.Enable(menu_SELECT_ALL_NODES, 1)
+			self.nodeMenu.Enable(menu_DESELECT_ALL_NODES, 1)
+			self.nodeMenu.Enable(menu_LAYOUT_NODES, 1)
+			self.spuMenu.Enable(menu_SELECT_ALL_SPUS, 1)
+		else:
+			self.nodeMenu.Enable(menu_SELECT_ALL_NODES, 0)
+			self.nodeMenu.Enable(menu_DESELECT_ALL_NODES, 0)
+			self.nodeMenu.Enable(menu_LAYOUT_NODES, 0)
+			self.spuMenu.Enable(menu_SELECT_ALL_SPUS, 0)
+		if self.NumSelectedSPUs() > 0:
+			self.spuMenu.Enable(menu_DESELECT_ALL_SPUS, 1)
+			self.spuMenu.Enable(menu_DELETE_SPU, 1)
+			self.spuMenu.Enable(menu_SPU_OPTIONS, 1)
+		else:
+			self.spuMenu.Enable(menu_DESELECT_ALL_SPUS, 0)
+			self.spuMenu.Enable(menu_DELETE_SPU, 0)
+			self.spuMenu.Enable(menu_SPU_OPTIONS, 0)
 
 	# Display a dialog with a message and OK button.
 	def Notify(self, msg):
