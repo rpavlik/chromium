@@ -342,6 +342,8 @@ static GLboolean UseChromium( Display *dpy, GLXDrawable drawable )
 		if (w >= stub.minChromiumWindowWidth && h >= stub.minChromiumWindowHeight) {
 			return GL_TRUE;
 		}
+		crDebug("Using native GL, app window doesn't meet minimum_window_size");
+		return GL_FALSE;
 	}
 	else if (stub.matchWindowTitle) {
 		/* If the user's specified a window title for Chromium, see if this
@@ -386,6 +388,8 @@ static GLboolean UseChromium( Display *dpy, GLXDrawable drawable )
 			crFree(title);
 		}
 		crFree(titlePattern);
+		crDebug("Using native GL, app window title doesn't match match_window_title string");
+		return GL_FALSE;
 	}
 	else {
 		/* Window title and size don't matter */
