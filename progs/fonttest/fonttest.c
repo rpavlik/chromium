@@ -3,10 +3,10 @@
  *
  * See the file LICENSE.txt for information on redistributing this software.
  */
-#include <GL/glut.h>
+
 #include <string.h>
 #include <stdlib.h>
-
+#include <GL/glut.h>
 
 static void myReshape( int w, int h )
 {
