@@ -34,7 +34,45 @@ Users should examine the sample Chromium configuration files to see how
 some of these SPUs are used.
 </p>
 
+<p>
+Note that brackets must be put around configuration parameters when
+there's more than one value (i.e. use Python's list syntax).
+For example, the hiddenline SPU's fog_color parameter is specified with
+three floating point values.
+They must be contained in brackets:
+</p>
+<code>
+spu = SPU('hiddenline')<br>
+spu.Conf('fog_color', [ 1.0, 0.5, 0.25 ])
+</code>
 
+
+<h3>
+SPU index
+</h3>
+<ul>
+<li><a href="#print">Print</a>
+<li><a href="#render">Render</a>
+<li><a href="#pack">Pack</a>
+<li><a href="#readback">Readback</a>
+<li><a href="#tilesort">Tilesort</a>
+<li><a href="#binaryswap">Binaryswap</a>
+<li><a href="#saveframe">Saveframe</a>
+<li><a href="#motionblur">Motionblur</a>
+<li><a href="#hiddenline">Hiddenline</a>
+<li><a href="#wet">Wet</a>
+<li><a href="#perf">Perf</a>
+<li><a href="#array">Array</a>
+<li><a href="#feedback">Feedback</a>
+<li><a href="#expando">Expando</a>
+<li><a href="#injector">Injector</a>
+<li><a href="#replicate">Replicate</a>
+<li><a href="#simplequery">Simplequery</a>
+<li><a href="#zpix">ZPix</a>
+</ul>
+
+
+<a name="print">
 <h2 class="PageSubHeading">Print SPU </h2>
 <p>
 The Print SPU prints each OpenGL command to stderr or a file.
@@ -62,6 +100,8 @@ issued by applications
   </tr>
 </table>
 
+
+<a name="render">
 <h2 class="PageSubHeading">Render SPU</h2>
 <p>
 The Render SPU renders OpenGL commands into a window.  Virtually every
@@ -239,6 +279,7 @@ Chromium configuration uses this SPU.
 </table>
 
 
+<a name="pack">
 <h2 class="PageSubHeading">Pack SPU</h2>
 <p>
 The Pack SPU simply packs all the OpenGL commands into buffer which are
@@ -246,6 +287,7 @@ sent to the downstream server.  The Pack SPU has no configuration options.
 </p>
 
 
+<a name="readback">
 <h2 class="PageSubHeading">Readback SPU</h2>
 <p>
 The Readback SPU is very similar to the Render SPU.  It's special in
@@ -309,6 +351,8 @@ configuration options that the render SPU accepts, plus a few more:
   </tr>
 </table>
 
+
+<a name="tilesort">
 <h2 class="PageSubHeading">Tilesort SPU</h2>
 <p>
 The Tilesort SPU is used to divide the framebuffer into tiles which are
@@ -522,6 +566,8 @@ one or more downstream servers.
   </tr>
 </table>
 
+
+<a name="binaryswap">
 <h2 class="PageSubHeading">Binaryswap SPU</h2>
 <p>
 The Binaryswap SPU implements the well known <i>binary swap</i> method
@@ -591,6 +637,7 @@ paper</a>.
 </table>
 
 
+<a name="saveframe">
 <h2 class="PageSubHeading">Saveframe SPU</h2>
 <p>
 The Savefame SPU saves the image from the colorbuffer to a file whenever
@@ -687,6 +734,8 @@ SwapBuffers is called.  It's useful for "screengrabs".
   </tr>
 </table>
 
+
+<a name="motionblur">
 <h2 class="PageSubHeading">Motionblur SPU</h2>
 <p>
 The Motionblur SPU uses the accumulation buffer to simulate motion blur of
@@ -709,6 +758,8 @@ moving objects.
   </tr>
 </table>
 
+
+<a name="hiddenline">
 <h2 class="PageSubHeading">Hiddenline SPU</h2>
 <p>
 The Hiddenline SPU draws objects in hidden-line mode.
@@ -776,6 +827,7 @@ The Hiddenline SPU draws objects in hidden-line mode.
 </table>
 
 
+<a name="wet">
 <h2 class="PageSubHeading">Wet SPU</h2>
 <p>
 The Wet SPU causes the image to appear wavy, as if viewed through water.
@@ -842,6 +894,8 @@ The Wet SPU causes the image to appear wavy, as if viewed through water.
   </tr>
 </table>
 
+
+<a name="perf">
 <h2 class="PageSubHeading">Perf SPU</h2>
 <p>
 The Perf SPU is used to collect performance statistics while running
@@ -902,6 +956,8 @@ Chromium.
   </tr>
 </table>
 
+
+<a name="array">
 <h2 class="PageSubHeading">Array SPU</h2>
 <p>
 The Array SPU implement's OpenGL's vertex arrays.  If your application uses
@@ -909,6 +965,8 @@ vertex arrays, the array SPU should be the first one in the SPU chain.
 The Array SPU has no configuration options.
 </p>
 
+
+<a name="feedback">
 <h2 class="PageSubHeading">Feedback SPU</h2>
 <p>
 The Feedback SPU implement's OpenGL's selection and feedback features.
@@ -935,17 +993,23 @@ Feedback SPU in your configuration.
 </table>
 </table>
 
+
+<a name="expando">
 <h2 class="PageSubHeading">Expando SPU</h2>
 <p>
 The Expando SPU records the contents of display lists, then replays the
 commands when glCallList is called.  The Expando SPU has no options.
 </p>
 
+
+<a name="injector">
 <h2 class="PageSubHeading">Injector SPU</h2>
 <p>
 XXX no description?
 </p>
 
+
+<a name="replicate">
 <h2 class="PageSubHeading">Replicate SPU</h2>
 <p>
 The Replicate SPU works in-conjunction with another SourceForge project
@@ -955,6 +1019,7 @@ performance of the local graphics card at the viewer. Contact <a href=http://www
 </p>
 
 
+<a name="simplequery">
 <h2 class="PageSubHeading">Simplequery SPU</h2>
 <p>
 The Simplequery SPU intercepts all OpenGL glGet*() functions and returns
@@ -962,6 +1027,8 @@ simple default values.  This is useful when using <i>file networking</i>
 which records command streams to files.
 </p>
 
+
+<a name="zpix">
 <h2 class="PageSubHeading">ZPix SPU</h2>
 <p>
 The ZPix SPU offers frame differencing and some simple-minded compression 
