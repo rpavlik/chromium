@@ -47,7 +47,20 @@ static void set_no_diff( ZpixSPU *zpix_spu, const char *response )
 
 static void set_ztype( ZpixSPU *zpix_spu, const char *response )
 {
-       zpix_spu->ztype = crStrToInt( response );
+       if (crStrcmp(response, "None") == 0)
+               zpix_spu->ztype = ZNONE;
+       else if (crStrcmp(response, "Zlib") == 0)
+               zpix_spu->ztype = ZLIB;
+       else if (crStrcmp(response, "RLE") == 0)
+               zpix_spu->ztype = ZRLE;
+       else if (crStrcmp(response, "PLE") == 0)
+               zpix_spu->ztype = ZPLE;
+       else
+       {
+               crWarning("Bad value (%s) for ZPix compression ", response);
+               zpix_spu->ztype = ZLIB;
+       }
+
        crDebug("Zpix SPU config: ztype = %d", zpix_spu->ztype);
 }
 
@@ -61,7 +74,7 @@ static void set_ztype_parm( ZpixSPU *zpix_spu, const char *response )
 /* option, type, nr, default, min, max, title, callback
  */
 SPUOptions zpixSPUOptions[] = {
-   { "ztype", CR_INT, 1, "1", NULL, NULL,
+   { "ztype", CR_ENUM, 1, "Zlib", "'None', 'Zlib', 'RLE', 'PLE'", NULL,
       "Compression type from ZTYPE enum", (SPUOptionCB) set_ztype },
    { "ztype_parm", CR_INT, 1, "-1", NULL, NULL,
       "Compression parameter for ZTYPE", (SPUOptionCB) set_ztype_parm },
