@@ -92,6 +92,8 @@ int main(int argc, char *argv[])
 	int swapFlag = 0, clearFlag = 0;
 	const char *dpy = NULL;
 	int visual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
+	int triangles = 15 * 30 * 2;
+	int sides, rings;
 
 	if (argc < 5)
 	{
@@ -135,7 +137,16 @@ int main(int argc, char *argv[])
 		{
 			clearFlag = 1;
 		}
+		else if (!crStrcmp( argv[i], "-t")) {
+			if (i == argc - 1)
+			{
+				crError( "-t (triangles) requires an argument" );
+			}
+			triangles = crStrToInt( argv[i+1] );
+			i++;
+		}
 	} 
+
 	if (rank == -1)
 	{
 		crError( "Rank not specified" );
@@ -150,6 +161,12 @@ int main(int argc, char *argv[])
 	}
 	if (barrierSize < 0)
 		barrierSize = size;
+
+	printf("psubmit: %d triangles/ring\n", triangles);
+
+	/* Note: rings * sides * 2 ~= triangles */
+	rings = (int) sqrt(triangles / 4);
+	sides = rings * 2;
 
 #define LOAD( x ) x##_ptr = (x##Proc) crGetProcAddress( #x )
 
@@ -166,6 +183,7 @@ int main(int argc, char *argv[])
 		crError("glCreateContextCR() call failed!\n");
 		return 0;
 	}
+
 	crMakeCurrent_ptr(window, ctx);
 
 	/* Test getting window size */
@@ -198,7 +216,6 @@ int main(int argc, char *argv[])
 	glLoadIdentity();
 	glTranslatef( 0.0, 0.0, -10.0 );
 
-
 	for (frame = 0; ; frame++)
 	{
 		/*
@@ -220,7 +237,7 @@ int main(int argc, char *argv[])
 		glRotatef(18, 1, 0, 0);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, colors[rank%7]);
 		/*glChromiumParametervCR_ptr(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, boundingBox);*/
-		doughnut((GLfloat).15,(GLfloat)0.7, 15, 30);
+		doughnut((GLfloat).15,(GLfloat)0.7, sides, rings);
 
 		glPopMatrix();
 
