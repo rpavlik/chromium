@@ -20,13 +20,13 @@ static void __setDefaults( void )
 static void set_blur(void *spu, const char *value)
 {
     if (crStrcmp(value, "Little") == 0)
-        motionblur_spu.accumCoef = 0.25;
+        motionblur_spu.accumCoef = 0.25f;
     else if (crStrcmp(value, "Medium") == 0)
-        motionblur_spu.accumCoef = 0.4;
+        motionblur_spu.accumCoef = 0.4f;
     else if (crStrcmp(value, "Lots") == 0)
-        motionblur_spu.accumCoef = 0.7;
+        motionblur_spu.accumCoef = 0.7f;
     else if (crStrcmp(value, "Extreme") == 0)
-        motionblur_spu.accumCoef = 0.9;
+        motionblur_spu.accumCoef = 0.9f;
     else
        printf("Bad value: %s\n", value);
 }

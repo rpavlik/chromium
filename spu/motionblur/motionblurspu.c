@@ -19,7 +19,7 @@ static void MOTIONBLURSPU_APIENTRY motionblurspuSwapBuffers( GLint window, GLint
 	}
 	else {	
 		motionblur_spu.super.Accum( GL_MULT, motionblur_spu.accumCoef );
-		motionblur_spu.super.Accum( GL_ACCUM, 1.0 - motionblur_spu.accumCoef );
+		motionblur_spu.super.Accum( GL_ACCUM, 1.0f - motionblur_spu.accumCoef );
 	}
 	motionblur_spu.super.Accum( GL_RETURN, 1.0 );
 	motionblur_spu.super.SwapBuffers( window, flags );
