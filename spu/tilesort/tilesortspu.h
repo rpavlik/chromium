@@ -28,10 +28,6 @@
 
 #define END_FLUFF 4 /* space for phantom GLEND opcode for splitting */
 
-void tilesortspuCreateFunctions( void );
-void tilesortspuGatherConfiguration( const SPU *child_spu );
-void tilesortspuConnectToServers( void );
-
 typedef struct {
 	int num_extents;
 	int x1[CR_MAX_EXTENTS], y1[CR_MAX_EXTENTS];
@@ -148,12 +144,16 @@ extern CRtsd _ThreadTSD;
 	CRContext *C = thread->currentContext->State
 
 
-
-
 extern TileSortBucketInfo *tilesortspuBucketGeometry(void);
 
 extern TileSortSPU tilesort_spu;
 
+void tilesortspuCreateFunctions( void );
+void tilesortspuGatherConfiguration( const SPU *child_spu );
+void tilesortspuConnectToServers( void );
+void tilesortspuGetTileInformation(CRConnection *conn);
+
+void tilesortspuComputeMaxViewport( void );
 void tilesortspuInitThreadPacking( ThreadInfo *thread );
 void tilesortspuHuge( CROpcode opcode, void *buf );
 void tilesortspuFlush( ThreadInfo *thread );

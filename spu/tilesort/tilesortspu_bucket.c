@@ -8,6 +8,7 @@
 #include "cr_bbox.h"
 #include "cr_glstate.h"
 #include "cr_pack.h"
+#include "cr_packfunctions.h"
 #include "cr_mem.h"
 
 #include "cr_applications.h"
@@ -296,5 +297,76 @@ void tilesortspuBucketingInit( void )
 	if (tilesort_spu.optimizeBucketing)
 	{
 		__fillBucketingHash();
+	}
+}
+
+
+/*
+ * Examine the server tile boundaries to compute the overall max
+ * viewport dims.  Then send those dims to the servers.
+ */
+void tilesortspuComputeMaxViewport(void)
+{
+	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
+	GLint vpdims[2];
+	GLint totalDims[2];
+	int i, j;
+
+	/* 
+	 * With the tilesort configuration we need to reset the 
+	 * maximum viewport size by asking each node what it's
+	 * capabilities are and setting our limits by totalling
+	 * up the results.
+	 */
+	totalDims[0] = totalDims[1] = 0;
+	for (i = 0; i < tilesort_spu.num_servers; i++)
+	{
+		int writeback = tilesort_spu.num_servers ? 1 : 0;
+
+		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
+
+		if (tilesort_spu.swap)
+			crPackGetIntegervSWAP( GL_MAX_VIEWPORT_DIMS, vpdims, &writeback );
+		else
+			crPackGetIntegerv( GL_MAX_VIEWPORT_DIMS, vpdims, &writeback );
+
+		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
+
+		/* Flush buffer (send to server) */
+		tilesortspuSendServerBuffer( i );
+
+		while (writeback) {
+			crNetRecv();
+		}
+
+		for (j=0; j < tilesort_spu.servers[i].num_extents; j++) 
+		{
+			if (tilesort_spu.servers[i].x1[j] == 0)
+				totalDims[1] += vpdims[0];
+			if (tilesort_spu.servers[i].y2[j] == (int)tilesort_spu.muralHeight)
+				totalDims[0] += vpdims[1];
+		}
+	}
+
+	tilesort_spu.limits.maxViewportDims[0] = totalDims[0];
+	tilesort_spu.limits.maxViewportDims[1] = totalDims[1];
+
+	/* 
+	 * Once we've computed the maximum viewport size, we send
+	 * a message to each server with it's new viewport parameters.
+	 */
+	for (i = 0; i < tilesort_spu.num_servers; i++)
+	{
+		crPackSetBuffer( thread0->packer, &(thread0->pack[i]) );
+
+		if (tilesort_spu.swap)
+			crPackChromiumParametervCRSWAP(GL_SET_MAX_VIEWPORT_CR, GL_INT, 2, totalDims);
+		else
+			crPackChromiumParametervCR(GL_SET_MAX_VIEWPORT_CR, GL_INT, 2, totalDims);
+
+		crPackGetBuffer( thread0->packer, &(thread0->pack[i]) );
+
+		/* Flush buffer (send to server) */
+		tilesortspuSendServerBuffer( i );
 	}
 }

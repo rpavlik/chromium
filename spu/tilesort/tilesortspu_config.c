@@ -136,13 +136,6 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 {
 	CRConnection *conn;
 	char response[8096];
-	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
-
-	char **serverchain, **serverlist;
-	int num_servers;
-	int i;
-
-	int optTileWidth = 0, optTileHeight = 0;
 
 	__setDefaults();
 
@@ -159,10 +152,32 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 
 	crMothershipGetMTU( conn, response );
 	sscanf( response, "%d", &tilesort_spu.MTU );
-
 	crDebug( "Got the MTU as %d", tilesort_spu.MTU );
 
+	tilesortspuGetTileInformation(conn);
 
+	crWarning( "Total output dimensions = (%d, %d)", tilesort_spu.muralWidth, tilesort_spu.muralHeight );
+
+	crSPUPropogateGLLimits( conn, tilesort_spu.id, child_spu, &tilesort_spu.limits );
+
+	crMothershipDisconnect( conn );
+}
+
+
+
+/*
+ * Get the tile information (count, extents, etc) from the servers
+ * and build our corresponding data structures.
+ * Input: conn - mothership connection
+ */
+void tilesortspuGetTileInformation(CRConnection *conn)
+{
+	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
+	char response[8096];
+	char **serverchain, **serverlist;
+	int optTileWidth = 0, optTileHeight = 0;
+	int num_servers;
+	int i;
 
 	/* The response to this tells us how many servers and where they are 
 	 *
@@ -216,7 +231,7 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 
 		for (tile = 0; tile < server->num_extents ; tile++)
 		{
-			int w,h;
+			int w, h;
 			sscanf( tilelist[tile], "%d %d %d %d", &(server->x1[tile]), 
 					&(server->y1[tile]), &w, &h );
 
@@ -234,8 +249,10 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 			}
 
 			/* make sure tile is right size for optimizeBucket */
-			if (tilesort_spu.optimizeBucketing) {
-				if (optTileWidth == 0 && optTileHeight == 0) {
+			if (tilesort_spu.optimizeBucketing)
+			{
+				if (optTileWidth == 0 && optTileHeight == 0)
+				{
 					optTileWidth = w;
 					optTileHeight = h;
 				}
@@ -247,18 +264,13 @@ void tilesortspuGatherConfiguration( const SPU *child_spu )
 					tilesort_spu.optimizeBucketing = 0;
 				}
 			}
-
 		}
 
 		crFreeStrings( tilechain );
 		crFreeStrings( tilelist );
 	}
-	crWarning( "Total output dimensions = (%d, %d)", tilesort_spu.muralWidth, tilesort_spu.muralHeight );
-
-	crSPUPropogateGLLimits( conn, tilesort_spu.id, child_spu, &tilesort_spu.limits );
 
 	crFreeStrings( serverchain );
 	crFreeStrings( serverlist );
-
-	crMothershipDisconnect( conn );
 }
+
