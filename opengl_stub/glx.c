@@ -57,6 +57,30 @@ GLXContext glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfig config, int 
 GLXPixmap glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfig config, Pixmap pixmap);
 int glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfig config, int attribute, int *value);
 
+
+/*
+ * GLX 1.3 functions
+ */
+GLXFBConfig *glXChooseFBConfig(Display *dpy, int screen, const int *attrib_list, int *nelements);
+GLXContext glXCreateNewContext(Display *dpy, GLXFBConfig config, int render_type, GLXContext share_list, Bool direct);
+GLXPbuffer glXCreatePbuffer(Display *dpy, GLXFBConfig config, const int *attrib_list);
+GLXPixmap glXCreatePixmap(Display *dpy, GLXFBConfig config, Pixmap pixmap, const int *attrib_list);
+GLXWindow glXCreateWindow(Display *dpy, GLXFBConfig config, Window win, const int *attrib_list);
+void glXDestroyPbuffer(Display *dpy, GLXPbuffer pbuf);
+void glXDestroyPixmap(Display *dpy, GLXPixmap pixmap);
+void glXDestroyWindow(Display *dpy, GLXWindow win);
+GLXDrawable glXGetCurrentReadDrawable(void);
+int glXGetFBConfigAttrib(Display *dpy, GLXFBConfig config, int attribute, int *value);
+GLXFBConfig *glXGetFBConfigs(Display *dpy, int screen, int *nelements);
+void glXGetSelectedEvent(Display *dpy, GLXDrawable draw, unsigned long *event_mask);
+XVisualInfo *glXGetVisualFromFBConfig(Display *dpy, GLXFBConfig config);
+Bool glXMakeContextCurrent(Display *display, GLXDrawable draw, GLXDrawable read, GLXContext ctx);
+int glXQueryContext(Display *dpy, GLXContext ctx, int attribute, int *value);
+void glXQueryDrawable(Display *dpy, GLXDrawable draw, int attribute, unsigned int *value);
+void glXSelectEvent(Display *dpy, GLXDrawable draw, unsigned long event_mask);
+
+ 
+
 #endif /* GLX_EXTRAS */
 
 
@@ -111,9 +135,9 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 	for ( i = 0; i < n; i++ )
 	{
 #if defined(__cplusplus) || defined(c_plusplus)
-        int localclass = visual[i].c_class;  /* C++ */
+	int localclass = visual[i].c_class;  /* C++ */
 #else
-        int localclass = visual[i].class;
+	int localclass = visual[i].class;
 #endif
 
 		if ( localclass == TrueColor || localclass == DirectColor )
@@ -129,9 +153,9 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
 		for ( i = 0; i < n; i++ )
 		{
 #if defined(__cplusplus) || defined(c_plusplus)
-            int localclass = visual[i].c_class;  /* C++ */
+	    int localclass = visual[i].c_class;  /* C++ */
 #else
-            int localclass = visual[i].class;
+	    int localclass = visual[i].class;
 #endif
 			if ( ( localclass == TrueColor ||
 						localclass == DirectColor ) &&
@@ -777,15 +801,6 @@ CR_GLXFuncPtr glXGetProcAddress( const GLubyte *name )
 
 #if GLX_EXTRAS
 
-GLXFBConfig *glXGetFBConfigs(Display *dpy, int screen, int *nelements)
-{
-	(void) dpy;
-	(void) screen;
-	(void) nelements;
-	crWarning("glXGetFBConfigs not implemented by Chromium");
-	return NULL;
-}
-
 #if defined(GLX_GLXEXT_VERSION)
 GLXPbufferSGIX glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
 																			 unsigned int width, unsigned int height,
@@ -910,6 +925,157 @@ GLXFBConfigSGIX glXGetFBConfigFromVisualSGIX(Display *dpy, XVisualInfo *vis)
 	(void) vis;
 	crWarning("glXGetFBConfigFromVisualSGIX not implemented by Chromium");
 	return NULL;
+}
+
+/*
+ * GLX 1.3 functions
+ */
+GLXFBConfig *glXChooseFBConfig(Display *dpy, int screen, const int *attrib_list, int *nelements)
+{
+	(void) dpy;
+	(void) screen;
+	(void) attrib_list;
+	(void) nelements;
+	crWarning("glXChooseFBConfig not implemented by Chromium");
+	return NULL;
+}
+
+GLXContext glXCreateNewContext(Display *dpy, GLXFBConfig config, int render_type, GLXContext share_list, Bool direct)
+{
+	(void) dpy;
+	(void) config;
+	(void) render_type;
+	(void) share_list;
+	(void) direct;
+	crWarning("glXCreateNewContext not implemented by Chromium");
+	return NULL;
+}
+
+GLXPbuffer glXCreatePbuffer(Display *dpy, GLXFBConfig config, const int *attrib_list)
+{
+	(void) dpy;
+	(void) config;
+	(void) attrib_list;
+	crWarning("glXCreatePbuffer not implemented by Chromium");
+	return 0;
+}
+
+GLXPixmap glXCreatePixmap(Display *dpy, GLXFBConfig config, Pixmap pixmap, const int *attrib_list)
+{
+	(void) dpy;
+	(void) config;
+	(void) pixmap;
+	(void) attrib_list;
+	crWarning("glXCreatePixmap not implemented by Chromium");
+	return 0;
+}
+
+GLXWindow glXCreateWindow(Display *dpy, GLXFBConfig config, Window win, const int *attrib_list)
+{
+	(void) dpy;
+	(void) config;
+	(void) win;
+	(void) attrib_list;
+	crWarning("glXCreateWindow not implemented by Chromium");
+	return 0;
+}
+
+void glXDestroyPbuffer(Display *dpy, GLXPbuffer pbuf)
+{
+	(void) dpy;
+	(void) pbuf;
+	crWarning("glXDestroyPbuffer not implemented by Chromium");
+}
+void glXDestroyPixmap(Display *dpy, GLXPixmap pixmap)
+{
+	(void) dpy;
+	(void) pixmap;
+	crWarning("glXDestroyPixmap not implemented by Chromium");
+}
+
+void glXDestroyWindow(Display *dpy, GLXWindow win)
+{
+	(void) dpy;
+	(void) win;
+	crWarning("glXDestroyWindow not implemented by Chromium");
+}
+
+GLXDrawable glXGetCurrentReadDrawable(void)
+{
+	crWarning("glXGetCurrentReadDrawable not implemented by Chromium");
+	return 0;
+}
+
+int glXGetFBConfigAttrib(Display *dpy, GLXFBConfig config, int attribute, int *value)
+{
+	(void) dpy;
+	(void) config;
+	(void) attribute;
+	(void) value;
+	crWarning("glXGetFBConfigAttrib not implemented by Chromium");
+	return 0;
+}
+
+GLXFBConfig *glXGetFBConfigs(Display *dpy, int screen, int *nelements)
+{
+	(void) dpy;
+	(void) screen;
+	(void) nelements;
+	crWarning("glXGetFBConfigs not implemented by Chromium");
+	return NULL;
+}
+
+void glXGetSelectedEvent(Display *dpy, GLXDrawable draw, unsigned long *event_mask)
+{
+	(void) dpy;
+	(void) draw;
+	(void) event_mask;
+	crWarning("glXGetSelectedEvent not implemented by Chromium");
+}
+
+XVisualInfo *glXGetVisualFromFBConfig(Display *dpy, GLXFBConfig config)
+{
+	(void) dpy;
+	(void) config;
+	crWarning("glXGetVisualFromFBConfig not implemented by Chromium");
+	return NULL;
+}
+
+Bool glXMakeContextCurrent(Display *display, GLXDrawable draw, GLXDrawable read, GLXContext ctx)
+{
+	(void) display;
+	(void) draw;
+	(void) read;
+	(void) ctx;
+	crWarning("glXMakeContextCurrent not implemented by Chromium");
+	return 0;
+}
+
+int glXQueryContext(Display *dpy, GLXContext ctx, int attribute, int *value)
+{
+	(void) dpy;
+	(void) ctx;
+	(void) attribute;
+	(void) value;
+	crWarning("glXQueryContext not implemented by Chromium");
+	return 0;
+}
+
+void glXQueryDrawable(Display *dpy, GLXDrawable draw, int attribute, unsigned int *value)
+{
+	(void) dpy;
+	(void) draw;
+	(void) attribute;
+	(void) value;
+	crWarning("glXQueryDrawable not implemented by Chromium");
+}
+
+void glXSelectEvent(Display *dpy, GLXDrawable draw, unsigned long event_mask)
+{
+	(void) dpy;
+	(void) draw;
+	(void) event_mask;
+	crWarning("glXSelectEvent not implemented by Chromium");
 }
 
 
