@@ -20,8 +20,13 @@ FILES = packspu \
 	packspu_swapbuf \
 	packspu_pixel
 
-LIBRARIES = crutil spuload crmothership 
+ifdef WINDOWS
 TRACKS_STATE = 1
+LIBRARIES = crutil spuload crmothership 
+else
+LIBRARIES = crutil spuload crmothership crstate
+endif
+
 PACKS = 1
 
 PRECOMP = packspu.c packspu_get.c packspu_flush.c packspu_pixel.c 

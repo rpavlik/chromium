@@ -11,8 +11,12 @@ FILES = simplequeryspu \
 	simplequeryspu_config \
 	simplequeryspu_init
 
-LIBRARIES = spuload crutil crmothership
+ifdef WINDOWS
 TRACKS_STATE = 1
+LIBRARIES = spuload crutil crmothership
+else
+LIBRARIES = spuload crutil crmothership crstate
+endif
 
 PRECOMP = simplequeryspu.c
 SLOP = $(PRECOMP)

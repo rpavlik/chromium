@@ -11,9 +11,12 @@ FILES = arrayspu \
 	arrayspu_config \
 	arrayspu_init
 
+ifdef WINDOWS
 TRACKS_STATE = 1
-
 LIBRARIES = spuload crutil crmothership
+else
+LIBRARIES = spuload crutil crmothership crstate
+endif
 
 SLOP = $(PRECOMP)
 

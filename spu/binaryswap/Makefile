@@ -10,9 +10,13 @@ LIBRARY = binaryswapspu
 FILES = binaryswapspu \
 	binaryswapspu_config \
 	binaryswapspu_init
-TRACKS_STATE = 1
 
+ifdef WINDOWS
+TRACKS_STATE = 1
 LIBRARIES = spuload crutil crmothership
+else
+LIBRARIES = spuload crutil crmothership crstate
+endif
 
 SLOP = $(PRECOMP)
 

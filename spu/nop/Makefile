@@ -9,8 +9,12 @@ SHARED = 1
 LIBRARY = nopspu
 FILES = nopspu nopspu_init
 
-LIBRARIES = crutil spuload
+ifdef WINDOWS
 TRACKS_STATE = 1
+LIBRARIES = crutil spuload
+else
+LIBRARIES = crutil spuload crstate
+endif
 
 PRECOMP = nopspu.c
 SLOP = $(PRECOMP)

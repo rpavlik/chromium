@@ -10,9 +10,15 @@ LIBRARY = readbackspu
 FILES = readbackspu \
 	readbackspu_config \
 	readbackspu_init
-TRACKS_STATE = 1
 
+ifdef WINDOWS
+TRACKS_STATE = 1
 LIBRARIES = spuload crutil crmothership
+else
+# use static libcrstate.a on everything else
+LIBRARIES = spuload crutil crmothership crstate
+endif
+
 
 SLOP = $(PRECOMP)
 
