@@ -4,9 +4,11 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include "cr_mothership.h"
 #include "cr_packfunctions.h"
 #include "cr_error.h"
 #include "cr_net.h"
+#include "cr_string.h"
 #include "tilesortspu.h"
 
 #include <float.h>
@@ -114,41 +116,11 @@ static void sendTileInfoToServers(void)
 }
 
 
-#if 0
-	/* This is a temporary hack! */
-static void recomputeTiling(int width, int height)
-{
-	CRASSERT(tilesort_spu.num_servers == 2);
-
-	tilesort_spu.muralWidth = width;
-	tilesort_spu.muralHeight = height;
-
-	tilesort_spu.servers[0].num_extents = 1;
-	tilesort_spu.servers[0].extents[0].x1 = 0;
-	tilesort_spu.servers[0].extents[0].y1 = 0;
-	tilesort_spu.servers[0].extents[0].x2 = width / 2;
-	tilesort_spu.servers[0].extents[0].y2 = height;
-
-	tilesort_spu.servers[1].num_extents = 1;
-	tilesort_spu.servers[1].extents[0].x1 = width / 2;
-	tilesort_spu.servers[1].extents[0].y1 = 0;
-	tilesort_spu.servers[1].extents[0].x2 = width;
-	tilesort_spu.servers[1].extents[0].y2 = height;
-
-	tilesortspuBucketingInit();
-#if 0
-	/* this leads to crashes - investigate */
-	tilesortspuComputeMaxViewport();
-#endif
-	sendTileInfoToServers();
-}
-#endif
-
-
 /*
- * This is just one possible algorithm for dynamic reconfiguration...
+ * Default algorithm for tile layout.  We use this when the
+ * user hasn't set a TileLayoutFunction in the config script.
  */
-static void recomputeTiling(int muralWidth, int muralHeight)
+static void defaultNewTiling(int muralWidth, int muralHeight)
 {
 	int tileCols, tileRows, tileWidth, tileHeight, numServers, server;
 	int i, j, tile, t;
@@ -176,7 +148,8 @@ static void recomputeTiling(int muralWidth, int muralHeight)
 
 	/* use raster-order layout */
 	tile = 0;
-	for (i = 0; i < tileRows; i++) {
+	for (i = tileRows - 1; i >= 0; i--)
+	{
 		int height, y;
 		if (i == tileRows - 1)
 			height = muralHeight - tileHeight * (tileRows - 1);
@@ -185,7 +158,8 @@ static void recomputeTiling(int muralWidth, int muralHeight)
 		y = i * tileHeight;
 		CRASSERT(height > 0);
 
-		for (j = 0; j < tileCols; j++) {
+		for (j = 0; j < tileCols; j++)
+		{
 			int width, x;
 			if (j == tileCols - 1)
 				width = muralWidth - tileWidth * (tileCols - 1);
@@ -208,12 +182,6 @@ static void recomputeTiling(int muralWidth, int muralHeight)
 		}
 	}
 
-	crDebug("tilesort SPU: Reconfigured tiling:");
-	crDebug("  Mural size: %d x %d", muralWidth, muralHeight);
-	for (server = 0; server < numServers; server++)
-		crDebug("  Server %d: %d tiles",
-						server, tilesort_spu.servers[server].num_extents);
-
 	tilesortspuBucketingInit();
 #if 0
 	/* this leads to crashes - investigate */
@@ -223,8 +191,65 @@ static void recomputeTiling(int muralWidth, int muralHeight)
 }
 
 
+/*
+ * Ask the mothership for the new tile layout.
+ */
+static GLboolean getNewTiling(int muralWidth, int muralHeight)
+{
+	char response[8000];
+	char **n_tiles;
+	char **tiles;
+	int numTiles, i;
+
+	CRConnection *conn = crMothershipConnect();
+	CRASSERT(conn);
+	crMothershipIdentifySPU(conn, tilesort_spu.id);
+	crMothershipRequestTileLayout(conn, response, muralWidth, muralHeight);
+	crMothershipDisconnect(conn);
+
+	n_tiles = crStrSplitn(response, " ", 1);
+	numTiles = crStrToInt( n_tiles[0] );
+	if (numTiles <= 0)
+		return GL_FALSE;  /* failure */
+
+	/* remove old tile list */
+	for (i = 0; i < tilesort_spu.num_servers; i++)
+		tilesort_spu.servers[i].num_extents = 0;
+
+	/* parse new tile string */
+	CRASSERT(n_tiles[1]);
+	tiles = crStrSplit(n_tiles[1], ",");
+	for (i = 0; i < numTiles; i++)
+	{
+		int server, x1, y1, x2, y2, t;
+		sscanf(tiles[i], "%d %d %d %d %d", &server, &x1, &y1, &x2, &y2);
+		/*crDebug("Tile on %d: %d %d %d %d\n", server, x1, y1, x2, y2);*/
+		t = tilesort_spu.servers[server].num_extents;
+		tilesort_spu.servers[server].extents[t].x1 = x1;
+		tilesort_spu.servers[server].extents[t].y1 = y1;
+		tilesort_spu.servers[server].extents[t].x2 = x2;
+		tilesort_spu.servers[server].extents[t].y2 = y2;
+		tilesort_spu.servers[server].num_extents = t + 1;
+	}
+
+	/* new mural size */
+	tilesort_spu.muralWidth = muralWidth;
+	tilesort_spu.muralHeight = muralHeight;
+
+	tilesortspuBucketingInit();
+#if 0
+	/* this leads to crashes - investigate */
+	tilesortspuComputeMaxViewport();
+#endif
+	sendTileInfoToServers();
+	return GL_TRUE;
+}
+
+
 void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint w, GLint h)
 {
+	int server, i;
+
 	/*
 	 * If we're driving a large mural, we probably don't want to
 	 * resize the mural in response to the app window size changing
@@ -235,9 +260,27 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint w, GLint h)
 	 * the set of tiles matches the app window size.
 	 */
 	if (tilesort_spu.optimizeBucketing)
-		crDebug("Tilesort SPU asked to resize window, but optimize_bucketing is enabled");
-	else
-		recomputeTiling(w, h);
+		crDebug("Tilesort SPU asked to resize window, "
+						"but optimize_bucketing is enabled");
+	else if (!getNewTiling(w, h))
+		defaultNewTiling(w, h);
+
+	crDebug("tilesort SPU: Reconfigured tiling:");
+	crDebug("  Mural size: %d x %d",
+					tilesort_spu.muralWidth, tilesort_spu.muralHeight);
+	for (server = 0; server < tilesort_spu.num_servers; server++)
+	{
+		crDebug("  Server %d: %d tiles",
+						server, tilesort_spu.servers[server].num_extents);
+		for (i = 0; i < tilesort_spu.servers[server].num_extents; i++)
+		{
+			crDebug("    Tile %d: %d, %d .. %d, %d", i,
+							tilesort_spu.servers[server].extents[i].x1,
+							tilesort_spu.servers[server].extents[i].y1,
+							tilesort_spu.servers[server].extents[i].x2,
+							tilesort_spu.servers[server].extents[i].y2);
+		}
+	}
 }
 
 
