@@ -1,0 +1,120 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Benchmarking</h1>
+
+<p>
+This section describes how to measure the performance of Chromium's
+network layer, command packer/unpacker and rendering.
+</p>
+
+<h2 class="PageSubHeading">Network Performance</h2>
+
+<p>
+Network performance can be measured with the <em>npclient</em> and
+<em>npserver</em> programs.
+Here's a simple example:
+</p>
+<ul>
+<li><p>Open two terminal windows.
+    Make sure your command path includes the Chromium binary directory
+    and that your library search path includes the Chromium
+    library directory.
+    If you've run the <a href="helloworld.html">Hello, World demo<a/>,
+    you should be all set.
+    </p>
+<li><p>In the first window, start the npserver:</p>
+<pre>
+    npserver
+</pre>
+<li><p>In the second window, start the npclient:</p>
+<pre>
+    npclient -a localhost
+</pre>
+<li><p>You should see output similar to this:</p>
+<pre>
+    npclient:  MTU=10000  (automatic buffer sizing)
+    npclient:  Connecting to servers
+    npclient:  Connection to localhost OK.
+    npclient:  Testing...
+    npclient:   221.076 MB/s (10000 bytes / buffer, 110538 buffers, 1 servers)
+    npclient:   438.653 MB/s (100000 bytes / buffer, 21933 buffers, 1 servers)
+    npclient:   228.321 MB/s (1000000 bytes / buffer, 1142 buffers, 1 servers)
+    npclient:   222.620 MB/s (10000000 bytes / buffer, 112 buffers, 1 servers)
+    npclient:   206.497 MB/s (100000000 bytes / buffer, 11 buffers, 1 servers)
+    npclient:  done!
+</pre>
+</ul>
+
+<p>
+The npclient and npserver programs mimic Chromium's client/application and
+server/network nodes but are stripped down to just test networking functions.
+</p>
+<p>
+The npserver program simply receives messages sent to it by the npclient
+program.
+</p>
+<p>
+The npclient program takes a variety of command line options to specify
+the number and size of buffers to send to the servers.
+You can test one-to-many network communication by starting several npserver
+instances and specifying the host names to npclient.
+</p>
+<p>
+For example, here's how one might test network performance to two rendering
+nodes in a cluster:
+</p>
+
+<ul>
+<li>On the host <em>cr1</em>, start a npserver:
+<pre>
+    rsh cr1 npserver
+</pre>
+<li>On the host <em>cr2</em>, start another npserver:
+<pre>
+    rsh cr2 npserver
+</pre>
+<li>On the application host, run npclient.  This will send 500
+    100000-byte buffers to both cr1 and cr2:
+<pre>
+    npclient -b 100000 -n 500 cr1 cr2
+</pre>
+<li>Here's the results running on a switched 100Mbit Ethernet network:
+<pre>
+    npclient:  Connection to cr2 OK.
+    npclient:  Testing...
+    npclient:     5.898 MB/s (100000 bytes / buffer, 500 buffers, 2 servers)
+    npclient:  done!
+</pre>
+<li>Note that 5.898 MB/s * 2 servers * 8 bits/byte = 94.3 Mbits/second which
+    is close to the limit for 100Mbit Ethernet.
+</ul>
+
+<p>
+Both npclient and npserver take a few simple command line options.
+To see them, specify the -h option to either program.
+</p>
+
+
+
+<h2 class="PageSubHeading">Packing/unpacking Performance</h2>
+
+
+<h2 class="PageSubHeading">Rendering Performance</h2>
+
+</body>
+</html>
