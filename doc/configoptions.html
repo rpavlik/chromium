@@ -57,6 +57,7 @@ SPU index
 </li><li><a href="#fps">Fps</a>
 </li><li><a href="#hiddenline">Hiddenline</a>
 </li><li><a href="#injector">Injector</a>
+</li><li><a href="#matte">Matte</a>
 </li><li><a href="#motionblur">Motionblur</a>
 </li><li><a href="#nop">Nop</a>
 </li><li><a href="#pack">Pack</a>
@@ -350,6 +351,98 @@ issued by applications
   </tr>
 </tbody></table>
 
+<a name="matte">
+</a><h2 class="PageSubHeading"><a name="matte">Matte SPU</a></h2>
+<p>
+<a name="matte">The Matte SPU forces all rendering to be within
+a subwindow of a render window, initializing the area outside
+of the subwindow to a matte color.
+</a></p>
+<p>
+Beyond simple visual effects (e.g. effectively having a color border around an
+application's rendering area), the Matte SPU can be used to meet constraints
+for some types of hardware tile composition. For example, consider a 
+hardware compositor that will only use a 512x512 pixel subarea of a display, 
+but requires that subarea to be precisely placed on the screen, with the 
+rest of the screen completely black; this can be managed by using
+the <a href="#render">Render SPU</a> configured with a full-screen
+window, in conjunction with the Matte SPU to fill that window with black
+and place the rendering tile in the appropriate position.
+the accumulation buffer to simulate motion blur of
+moving objects.
+</p>
+<table border="1" width="100%" height="149">
+  <tbody><tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="100%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">matte_region</td>
+    <td width="12%" class="ConfigType" height="38">4 Integers</td>
+    <td width="100%" class="ConfigDesc" height="38">
+    This specifies the subarea of a window that will actually be used
+    for rendering, as an array of four integers <code>[x,y,width,height]</code>.
+    The first two specify the lower-left corner of the subarea, 
+    relative to the lower-left corner of the parent window.  The second
+    two specify the width and height of the subarea.
+    <p>
+    The default is <code>[0,0,1024,1024]</code>, a 1024x1024-pixel
+    region with the lower-left corner aligned with the lower-left corner
+    of the parent window.
+    </td>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">use_matte_color</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+    This specifies that the matte area (the area outside the render subarea)
+    will be initialized to a constant color (specified with the 
+    <code>matte_color</code> configuration option, below).
+    The default value is 1, meaning that the matte area will be cleared
+    to the given color.
+    </td>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">matte_color</td>
+    <td width="12%" class="ConfigType" height="38">4 Floats</td>
+    <td width="100%" class="ConfigDesc" height="38">
+    This specifies the color that will be used to initialize the matte
+    area (the area outside the render subarea), as an array of four
+    floats representing <code>[red,green,blue,alpha]</code>.
+    <p>
+    The default value of <code>[0.0,0.0,0.0,0.0]</code> means that the
+    matte area will be painted black.  <code>[1.0,1.0,1.0,0.0]</code>
+    would mean that the matte area would be painted white.
+    </td>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">every_clear</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="100%" class="ConfigDesc" height="38">
+    This specifies whether the matte area (the area outside the
+    render subarea) will be painted every time the application
+    requests that the render subarea be cleared, or only the first time.
+    <p>
+    The default value of <code>0</code> means that the matte area will
+    be painted only the first time the render subarea is cleared; this
+    value is appropriate for windows that will never need to repaint
+    the matte area (e.g., a full-screen window that will never be
+    obscured by other windows).
+    <p>
+    A value of <code>1</code> means that the matte area will be painted
+    every time the render subarea is cleared.  This is appropriate for
+    windows that will have to respond to exposure, or that might
+    for any other reason have to repaint the matte area.
+    require
+    </td>
+  </tr>
+</tbody></table>
+
+<td width="19%" class="ConfigOption" height="74">window_geometry</td><td width="12%" class="ConfigType" height="74">4 Integers</td><td width="100%" class="ConfigDesc" height="74">Geometry of the window to
+      create.&nbsp; This is specified as four floating point numbers.&nbsp; The
+      first two give the (<i>x</i>,<i>y</i>) position of the upper left corner
+      of the window, relative to the upper left corner of the screen.&nbsp; The
+      last two numbers give the width and height of the window,
+      respectively.&nbsp; The default is [0, 0, 256, 256].</td></tr>
+
 <a name="motionblur">
 </a><h2 class="PageSubHeading"><a name="motionblur">Motionblur SPU</a></h2>
 <p>
@@ -563,28 +656,11 @@ Chromium configuration uses this SPU.
     <td width="12%" height="19">Value Types</td>
     <td width="100%" height="19">Description</td>
   </tr>
-  <tr>
-      <td style="vertical-align: top;"><br>
-      </td>
-      <td style="vertical-align: top;"><br>
-      </td>
-      <td style="vertical-align: top;"><br>
-      </td>
-    </tr>
     <tr>
 <td width="19%" class="ConfigOption" height="38">borderless</td><td width="12%" class="ConfigType" height="38">Boolean</td><td width="100%" class="ConfigDesc" height="38">
           If non-zero, remove the window border/decoration.
           Only supported on X at this time.
           Default is 0.</td></tr>
-    <tr>
-      <td style="vertical-align: top;"><br>
-      </td>
-      <td style="vertical-align: top;"><br>
-      </td>
-      <td style="vertical-align: top;"><br>
-      </td>
-    </tr>
-
   <tr>
     <td width="19%" class="ConfigOption" height="38">default_visual</td>
     <td width="12%" class="ConfigType" height="38">String</td>
