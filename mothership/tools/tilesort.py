@@ -411,17 +411,17 @@ class MainFrame(wxFrame):
 		self.recomputeTotalSize()
 		
 		# Make the Tilesort SPU options dialog
-		tilesortInfo = GetSPUOptions("tilesort")
-		assert tilesortInfo
-		(tilesortParams, tilesortOptions) = tilesortInfo
+		self.tilesortInfo = GetSPUOptions("tilesort")
+		assert self.tilesortInfo
+		(tilesortParams, tilesortOptions) = self.tilesortInfo
 		self.TilesortDialog = SPUDialog(parent=NULL, id=-1,
 										title="Tilesort SPU Options",
 										options=tilesortOptions)
 
 		# Make the render SPU options dialog
-		renderInfo = GetSPUOptions("render")
-		assert renderInfo
-		(renderParams, renderOptions) = renderInfo
+		self.renderInfo = GetSPUOptions("render")
+		assert self.renderInfo
+		(renderParams, renderOptions) = self.renderInfo
 		self.RenderDialog = SPUDialog(parent=NULL, id=-1,
 									  title="Render SPU Options",
 									  options=renderOptions)
@@ -830,8 +830,7 @@ class MainFrame(wxFrame):
 
 	def writeOptions(self, file, prefix, options, dialog):
 		"""Helper function for writing config file options"""
-		for name in options.keys():
-			(descrip, type, count, default, mins, maxs) = options[name]
+		for (name, descrip, type, count, default, mins, maxs)  in options:
 			values = dialog.GetValue(name)
 			if len(values) == 1:
 				valueStr = str(values[0])
@@ -858,8 +857,10 @@ class MainFrame(wxFrame):
 			f.write("BOTTOM_TO_TOP = %d\n" % self.vLayoutRadio.GetSelection())
 			f.write("HOSTNAME = \"%s\"\n" % self.HostNamePattern)
 			f.write("FIRSTHOST = %d\n" % self.HostNameStart)
-			self.writeOptions(f, "TILESORT", TilesortOptions, self.TilesortDialog)
-			self.writeOptions(f, "RENDER", RenderOptions, self.RenderDialog)
+			tilesortOptions = self.tilesortInfo[1]
+			self.writeOptions(f, "TILESORT", tilesortOptions, self.TilesortDialog)
+			renderOptions = self.renderInfo[1]
+			self.writeOptions(f, "RENDER", renderOptions, self.RenderDialog)
 			self.writeOptions(f, "SERVER", ServerOptions, self.ServerDialog)
 			self.writeOptions(f, "GLOBAL", GlobalOptions, self.GlobalDialog)
 			f.write("# end of options\n")
