@@ -319,8 +319,13 @@ crFileDoConnect( CRConnection *conn )
 	 * we specify O_CREAT as part of the flags.  The permissions will be
 	 * masked according to the effective user's umask setting.
 	 */
+#ifdef WINDOWS
+	conn->fd = open( conn->filename, O_CREAT | O_WRONLY | O_BINARY |
+									 S_IREAD | S_IWRITE);
+#else
 	conn->fd = open( conn->filename, O_CREAT | O_WRONLY | O_BINARY,
 									 S_IREAD | S_IWRITE | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+#endif
 	if (conn->fd < 0)
 	{
 		crWarning( "Couldn't open %s for writing!", conn->filename );
