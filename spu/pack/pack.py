@@ -22,7 +22,8 @@ print """#include <stdio.h>
 #include "cr_glwrapper.h"
 """
 
-print 'SPUNamedFunctionTable pack_table[%d];' % (len(keys)+1)
+num_funcs = len(keys) - len(stub_common.AllSpecials('pack_unimplemented'))
+print 'SPUNamedFunctionTable pack_table[%d];' % (num_funcs+1)
 
 print """
 static void __fillin( int offset, char *name, SPUGenericFunction func )
@@ -33,6 +34,8 @@ static void __fillin( int offset, char *name, SPUGenericFunction func )
 
 for func_name in keys:
 	(return_type, args, types) = gl_mapping[func_name]
+	if stub_common.FindSpecial( "pack_unimplemented", func_name ):
+		continue
 	if return_type != 'void' or stub_common.FindSpecial( "packspu", func_name ) or stub_common.FindSpecial( "../../packer/packer_get", func_name ):
 		print 'extern %s PACKSPU_APIENTRY packspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 
@@ -41,9 +44,11 @@ print '{'
 for index in range(len(keys)):
 	func_name = keys[index]
 	(return_type, args, types) = gl_mapping[func_name]
+	if stub_common.FindSpecial( "pack_unimplemented", func_name ):
+		continue
 	if return_type != 'void' or stub_common.FindSpecial( "packspu", func_name ) or stub_common.FindSpecial( "../../packer/packer_get", func_name ):
 		print '\t__fillin( %3d, "%s", (SPUGenericFunction) packspu_%s );' % (index, func_name, func_name )
 	else:
 		print '\t__fillin( %3d, "%s", (SPUGenericFunction) crPack%s );' % (index, func_name, func_name )
-print '\t__fillin( %3d, NULL, NULL );' % len(keys)
+print '\t__fillin( %3d, NULL, NULL );' % num_funcs
 print '}'

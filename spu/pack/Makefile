@@ -13,7 +13,7 @@ SLOP = $(PRECOMP)
 LIB_DEFS += pack.def
 include ${TOP}/cr.mk
 
-packspu.c: pack.py packspu_special
+packspu.c: pack.py packspu_special packspu_unimplemented_special
 	@$(ECHO) Building the Pack SPU
 	@$(PYTHON) pack.py > $@
 	
