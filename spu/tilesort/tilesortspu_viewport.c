@@ -133,9 +133,14 @@ void TILESORTSPU_APIENTRY tilesortspu_PopAttrib( void )
 {
 	GET_CONTEXT(ctx);
 	CRViewportState *v = &(ctx->viewport);
+	CRTransformState *t = &(ctx->transform);
 	GLint oldViewportX, oldViewportY, oldViewportW, oldViewportH;
 	GLint oldScissorX, oldScissorY, oldScissorW, oldScissorH;
+	GLenum oldmode;
 
+	/* save current matrix mode */
+	oldmode = t->mode;
+	
 	/* save current viewport dims */
 	oldViewportX = v->viewportX;
 	oldViewportY = v->viewportY;
@@ -167,4 +172,7 @@ void TILESORTSPU_APIENTRY tilesortspu_PopAttrib( void )
 		 tilesortspu_Scissor( v->scissorX, v->scissorY,
 													 v->scissorW, v->scissorH );
 	}
+
+	if (t->mode != oldmode)
+		crStateMatrixMode(t->mode);
 }

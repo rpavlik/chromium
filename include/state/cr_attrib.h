@@ -290,14 +290,6 @@ typedef struct {
 	GLvectord  *clipPlane;
 	GLboolean  *clip;
 	GLboolean normalize;
-	GLint    modelViewDepth;
-	GLint    projectionDepth;
-	GLint    textureDepth[CR_MAX_TEXTURE_UNITS];
-	GLint    colorDepth;
-	GLmatrix  modelView;
-	GLmatrix  projection;
-	GLmatrix  texture[CR_MAX_TEXTURE_UNITS];
-	GLmatrix  color;
 #ifdef CR_OPENGL_VERSION_1_2
 	GLboolean rescaleNormals;
 #endif
