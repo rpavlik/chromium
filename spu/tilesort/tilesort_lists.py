@@ -80,6 +80,15 @@ print """
 
 void TILESORTSPU_APIENTRY tilesortspu_NewList (GLuint list, GLuint mode) 
 {
+	/* Normally, the current packing buffer is for geometry only.
+	 * State-change data is packed into a separate buffer after doing
+	 * state differencing.  However, when we build display lists state
+	 * change commands get put into the main pack buffer.  So, turn off
+	 * this debug/sanity-check flag.  We can turn it back on in EndList().
+	 */
+	CRPackContext *c = crPackGetContext();
+	c->buffer.geometry_only = GL_FALSE;
+
 	/* the state tracker will do error checking and the flush for us. */
 	crStateNewList( list, mode );
 	if (tilesort_spu.swap)
@@ -96,6 +105,8 @@ void TILESORTSPU_APIENTRY tilesortspu_NewList (GLuint list, GLuint mode)
 
 void TILESORTSPU_APIENTRY tilesortspu_EndList (void) 
 {
+	CRPackContext *c = crPackGetContext();
+
 	/* the state tracker will do error checking and the flush for us. */
 	if (tilesort_spu.swap)
 	{
@@ -110,5 +121,9 @@ void TILESORTSPU_APIENTRY tilesortspu_EndList (void)
 	__loadSortAPI( );
 	tilesortspuBroadcastGeom(0);
 
+	/* Turn the geometry_only flag back on.
+	 * See the longer comment above in tilesortspu_NewList().
+	 */
+	c->buffer.geometry_only = GL_TRUE;
 }
 """
