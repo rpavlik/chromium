@@ -69,8 +69,8 @@ void renderspuGatherConfiguration( RenderSPU *render_spu )
 
 	if (crMothershipGetSPUParam( conn, response, "window_geometry" ) )
 	{
-		int x, y, w, h;
-		sscanf( response, "%d %d %d %d", &x, &y, &w, &h );
+		float x, y, w, h;
+		sscanf( response, "%f %f %f %f", &x, &y, &w, &h );
 		if (w < 1 || h < 1) {
 			crWarning("Render SPU window width and height must be at least one");
 			if (w < 1)
@@ -78,10 +78,10 @@ void renderspuGatherConfiguration( RenderSPU *render_spu )
 			if (h < 1)
 				h = 1;
 		}
-		render_spu->defaultX = x;
-		render_spu->defaultY = y;
-		render_spu->defaultWidth = w;
-		render_spu->defaultHeight = h;
+		render_spu->defaultX = (int) x;
+		render_spu->defaultY = (int) y;
+		render_spu->defaultWidth = (int) w;
+		render_spu->defaultHeight = (int) h;
 	}
 
 	if (crMothershipGetSPUParam( conn, response, "fullscreen" ) )
