@@ -328,15 +328,9 @@ static void Init( void )
 
    GenerateBuildings();
 
-   if (UseDisplayLists) {
-      glNewList(GroundList, GL_COMPILE);
-      DrawGround();
-      glEndList();
-
-      glNewList(TeapotList, GL_COMPILE);
-      glutSolidTeapot(1.0);
-      glEndList();
-   }
+   glNewList(GroundList, GL_COMPILE);
+   DrawGround();
+   glEndList();
 }
 
 
