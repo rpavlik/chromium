@@ -633,7 +633,6 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		sb->eval.dirty = g->neg_bitid;
 		sb->transform.dirty = g->neg_bitid;
 		sb->lighting.dirty = g->neg_bitid;
-		sb->polygon.dirty = g->neg_bitid;
 		sb->fog.dirty = g->neg_bitid;
 		sb->line.dirty = g->neg_bitid;
 		sb->polygon.dirty = g->neg_bitid;
@@ -645,7 +644,6 @@ void STATE_APIENTRY crStatePopAttrib(void)
 		sb->eval.enable = g->neg_bitid;
 		sb->transform.enable = g->neg_bitid;
 		sb->lighting.enable = g->neg_bitid;
-		sb->polygon.enable = g->neg_bitid;
 		sb->fog.enable = g->neg_bitid;
 		sb->line.enable = g->neg_bitid;
 		sb->polygon.enable = g->neg_bitid;
