@@ -44,8 +44,12 @@ void PACK_APIENTRY crPackTexImage1DSWAP(GLenum target, GLint level,
 	WRITE_DATA( 28, int, SWAP32(isnull) );
 
 	if (pixels) {
+		CRPixelPackState tmpUnpackState = *unpackstate;
+		/* flip application-requested swapBytes state */
+		tmpUnpackState.swapBytes = unpackstate->swapBytes ? GL_FALSE : GL_TRUE;
+
 		crPixelCopy1D( (void *)(data_ptr + 32), format, type,
-									 pixels, format, type, width, unpackstate );
+									 pixels, format, type, width, &tmpUnpackState );
 	}
 
 	crHugePacket( CR_TEXIMAGE1D_OPCODE, data_ptr );
@@ -90,9 +94,13 @@ void PACK_APIENTRY crPackTexImage2DSWAP(GLenum target, GLint level,
 
 	if (pixels)
 	{
+		CRPixelPackState tmpUnpackState = *unpackstate;
+		/* flip application-requested swapBytes state */
+		tmpUnpackState.swapBytes = unpackstate->swapBytes ? GL_FALSE : GL_TRUE;
+
 		crPixelCopy2D( width, height,
 									 (void *)(data_ptr + 36), format, type, NULL,  /* dst */
-									 pixels, format, type, unpackstate );  /* src */
+									 pixels, format, type, &tmpUnpackState );  /* src */
 	}
 
 	crHugePacket( CR_TEXIMAGE2D_OPCODE, data_ptr );
@@ -160,9 +168,13 @@ void PACK_APIENTRY crPackTexImage3DEXTSWAP(GLenum target, GLint level,
 		}
 		else
 		{
+			CRPixelPackState tmpUnpackState = *unpackstate;
+			/* flip application-requested swapBytes state */
+			tmpUnpackState.swapBytes = unpackstate->swapBytes ? GL_FALSE : GL_TRUE;
+
 			crPixelCopy3D( width, height, depth,
 										 (void *)(data_ptr + 40), format, type, NULL,
-										 pixels, format, type, unpackstate );
+										 pixels, format, type, &tmpUnpackState );
 		}
 	}
 
@@ -233,9 +245,13 @@ void PACK_APIENTRY crPackTexImage3DSWAP(GLenum target, GLint level,
 		}
 		else
 		{
+			CRPixelPackState tmpUnpackState = *unpackstate;
+			/* flip application-requested swapBytes state */
+			tmpUnpackState.swapBytes = unpackstate->swapBytes ? GL_FALSE : GL_TRUE;
+
 			crPixelCopy3D( width, height, depth,
 										 (void *)(data_ptr + 40), format, type, NULL,
-										 pixels, format, type, unpackstate );
+										 pixels, format, type, &tmpUnpackState );
 		}
 	}
 
@@ -254,8 +270,8 @@ void PACK_APIENTRY crPackDeleteTexturesSWAP( GLsizei n, const GLuint *textures )
 		n*sizeof( *textures );
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
-	WRITE_DATA( 0, int, packet_length );
-	WRITE_DATA( sizeof( int ) + 0, GLsizei, n );
+	WRITE_DATA( 0, int, SWAP32(packet_length) );
+	WRITE_DATA( sizeof( int ) + 0, GLsizei, SWAP32(n) );
 	for ( i = 0 ; i < n ; i++)
 	{
 		WRITE_DATA( (i+1)*sizeof( int ) + 4, GLint, SWAP32(textures[i]) );
@@ -335,8 +351,8 @@ void PACK_APIENTRY crPackPrioritizeTexturesSWAP( GLsizei n,
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 
-	WRITE_DATA( 0, GLsizei, packet_length );
-	WRITE_DATA( sizeof( int ) + 0, GLsizei, n );
+	WRITE_DATA( 0, GLsizei, SWAP32(packet_length) );
+	WRITE_DATA( sizeof( int ) + 0, GLsizei, SWAP32(n) );
 	for ( i = 0 ; i < n ; i++)
 	{
 		WRITE_DATA( (i+1)*sizeof( int ) + 4, GLint, SWAP32(textures[i]));
