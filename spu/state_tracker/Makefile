@@ -3,7 +3,8 @@ SHARED = 1
 LIBRARY = crstate
 LIBRARIES = spuload crutil
 
-REGULAR_FILES = state_buffer \
+REGULAR_FILES = state_attrib \
+	state_buffer \
 	state_client \
 	state_current \
 	state_diff \

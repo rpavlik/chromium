@@ -187,3 +187,5 @@ TexCoordPointer
 EdgeFlagPointer
 InterleavedArrays
 GetPointerv
+PushAttrib
+PopAttrib

@@ -5,10 +5,8 @@ InitNames
 IsTexture
 LoadName
 PassThrough
-PopAttrib
 PopClientAttrib
 PopName
-PushAttrib
 PushClientAttrib
 PushName
 SelectBuffer

@@ -2,10 +2,9 @@
 #include "cr_opcodes.h"
 #include "cr_glwrapper.h"
 
-void PACK_APIENTRY crPackArrayElement (GLint index, CRContext *ctx) 
+void PACK_APIENTRY crPackArrayElement (GLint index, CRClientState *c) 
 {
 	unsigned char *p;
-	CRClientState *c = &(ctx->client);
 
 #if 0
 	if (index < 0)
@@ -187,13 +186,9 @@ void PACK_APIENTRY crPackArrayElement (GLint index, CRContext *ctx)
 	}
 }
 
-void PACK_APIENTRY crPackDrawArrays(GLenum mode, GLint first, GLsizei count, CRContext *ctx) 
+void PACK_APIENTRY crPackDrawArrays(GLenum mode, GLint first, GLsizei count, CRClientState *c) 
 {
 	int i;
-	if (ctx->current.inBeginEnd)
-	{
-		crError("crPackDrawArrays called in begin/end");
-	}
 
 	if (count < 0)
 	{
@@ -208,21 +203,16 @@ void PACK_APIENTRY crPackDrawArrays(GLenum mode, GLint first, GLsizei count, CRC
 	crPackBegin (mode);
 	for (i=0; i<count; i++) 
 	{
-		crPackArrayElement(first++, ctx);
+		crPackArrayElement(first++, c);
 	}
 	crPackEnd();
 }
 
 void PACK_APIENTRY crPackDrawElements(GLenum mode, GLsizei count, 
-																			GLenum type, const GLvoid *indices, CRContext *ctx) 
+																			GLenum type, const GLvoid *indices, CRClientState *c) 
 {
 	int i;
 	GLubyte *p = (GLubyte *)indices;
-
-	if (ctx->current.inBeginEnd)
-	{
-		crError("crPackDrawElements called in begin/end");
-	}
 
 	if (count < 0)
 	{
@@ -245,20 +235,20 @@ void PACK_APIENTRY crPackDrawElements(GLenum mode, GLsizei count,
 	case GL_UNSIGNED_BYTE:
 		for (i=0; i<count; i++)
 		{
-			crPackArrayElement((GLint) *p++, ctx);
+			crPackArrayElement((GLint) *p++, c);
 		}
 		break;
 	case GL_UNSIGNED_SHORT:
 		for (i=0; i<count; i++) 
 		{
-			crPackArrayElement((GLint) * (GLushort *) p, ctx);
+			crPackArrayElement((GLint) * (GLushort *) p, c);
 			p+=sizeof (GLushort);
 		}
 		break;
 	case GL_UNSIGNED_INT:
 		for (i=0; i<count; i++) 
 		{
-			crPackArrayElement((GLint) * (GLuint *) p, ctx);
+			crPackArrayElement((GLint) * (GLuint *) p, c);
 			p+=sizeof (GLuint);
 		}
 		break;

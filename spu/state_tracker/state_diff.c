@@ -107,6 +107,11 @@ void crStateSwitchContext( CRContext *from, CRContext *to )
 	GLbitvalue update = to->update;
 	CRStateBits *sb = GetCurrentBits();
 
+	if (update & GLUPDATE_ATTRIB && sb->attrib.dirty & bitID)
+	{
+		crStateAttribSwitch (&(sb->attrib), bitID,
+							 &(from->attrib), &(to->attrib));
+	}
 	if (update & GLUPDATE_TRANS && sb->transform.dirty & bitID)
 	{
 		crStateTransformSwitch (&(sb->transform), bitID,

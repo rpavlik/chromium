@@ -1,6 +1,7 @@
 #ifndef CR_GLSTATE_H
 #define CR_GLSTATE_H
 
+#include "state/cr_attrib.h"
 #include "state/cr_buffer.h"
 #include "state/cr_client.h"
 #include "state/cr_current.h"
@@ -24,6 +25,7 @@
 #define CR_MAX_EXTENTS 256
 
 typedef struct {
+	CRAttribBits    attrib;
 	CRBufferBits    buffer;
 	CRClientBits    client;
 	CRCurrentBits   current;
@@ -51,6 +53,7 @@ typedef struct CRContext {
 	CRStateFlushFunc flush_func;
 	void            *flush_arg;
 
+	CRAttribState    attrib;
 	CRBufferState    buffer;
 	CRClientState    client;
 	CRCurrentState   current;
@@ -85,6 +88,7 @@ typedef struct CRContext {
 #define GLUPDATE_EVAL		0x04000
 #define GLUPDATE_IMAGING	0x08000
 #define GLUPDATE_SELECTION	0x10000
+#define GLUPDATE_ATTRIB     0x20000 
 
 extern CRContext *__currentContext;
 extern CRStateBits *__currentBits;
