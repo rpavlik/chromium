@@ -249,8 +249,8 @@ void crUnpackExtendProgramEnvParameter4fvARB(void)
 void crUnpackExtendDeleteProgramsARB(void)
 {
 	GLsizei n = READ_DATA( 8, GLsizei );
-	crError( "DeleteProgramsARB needs to be special cased!" );
-	cr_unpackDispatch.DeleteProgramsARB( n, NULL );
+	const GLuint *programs = DATA_POINTER( 12, GLuint );
+	cr_unpackDispatch.DeleteProgramsARB( n, programs );
 }
 
 void crUnpackVertexAttrib4NbvARB(void)
