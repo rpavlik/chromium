@@ -10,6 +10,6 @@ TOP = ..
 
 SUBDIRS = loader tester state_tracker
 SUBDIRS += error nop pack passthrough print readback render template tilesort
-SUBDIRS += saveframe comm
+SUBDIRS += saveframe comm array
 
 include ${TOP}/cr.mk
