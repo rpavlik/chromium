@@ -109,6 +109,8 @@ GLXContext stubCreateContext( Display *dpy, XVisualInfo *vis, GLXContext share, 
 		 */
 		if (!stub.desiredVisual)
 			stub.desiredVisual = FindVisualInfo( dpy, vis );
+		else
+			stub.desiredVisual |= FindVisualInfo( dpy, vis );
 
 		stub.spuWindow = crCreateWindow( dpyName, stub.desiredVisual );
 #endif
