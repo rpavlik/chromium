@@ -100,6 +100,7 @@ class SPU:
 		self.config = {}
 		self.clientargs = []
 		self.servers = []
+		self.layoutFunction = None
 
 	def Conf( self, key, *values ):
                 """Conf(key,*values)
@@ -122,6 +123,13 @@ class SPU:
 		else:
 			self.__add_server( node, "%s://%s:%d" % (protocol,node.host,port) )
 		node.AddClient( self, protocol )
+
+	def TileLayoutFunction( self, layoutFunc ):
+		"""Set the tile layout callback function for a tilesort SPU."""
+		# Set the tile layout function for a tilesort SPU
+		assert self.name == "tilesort"
+		self.layoutFunction = layoutFunc
+
 
 class CRNode:
 	"""Base class that defines a node in the SPU graph
@@ -390,6 +398,8 @@ class CR:
 	    do_setparam:        Sets a mothership parameter value
 	    do_getparam:        Returns a mothership parameter value
 	    do_logperf:		Logs Performance Data to a logfile.
+		do_gettilelayout:  Calls the user's LayoutTiles() function and returns
+		                   the list of new tiles.
 	    tileReply: 		Packages up a tile message for socket communication.
 	    ClientDisconnect: 	Disconnects from a client
 	    ClientError:	Sends an error message on the given socket.
@@ -892,6 +902,39 @@ class CR:
 		CROutput("%s" % args)
 		sock.Success( "Dumped" )
 
+	def do_gettilelayout( self, sock, args ):
+		"""Call the user's tile layout function and return the resulting
+		list of tiles."""
+		if sock.SPUid == -1:
+			self.ClientError( sock, SockWrapper.UNKNOWNSPU,
+							  "You can't ask for a new tile layout without "
+							  "telling me what (tilesort) SPU id you are!" )
+			return
+		spu = allSPUs[sock.SPUid]
+		if spu.name != "tilesort":
+			# this is bad
+			sock.Success("0")
+			return
+		argv = string.split(args)
+		assert len(argv) == 2
+		muralWidth = int(argv[0])
+		muralHeight = int(argv[1])
+		fn = getattr(spu, "layoutFunction" )
+		if fn == None:
+			# XXX return failure?
+			sock.Success("0")
+			return
+		tiles = fn(muralWidth, muralHeight)
+		# reformat the tiles list into a string
+		result = str(len(tiles)) + " "
+		for t in tiles:
+			result += "%d %d %d %d %d, " % (t[0], t[1], t[2], t[3], t[4])
+		if result[-2:] == ", ":
+			result = result[:-2]  # remove trailing ", "
+		assert len(result) < 8000  # see limit in getNewTiling in tilesort SPU
+		sock.Success( result )
+		return
+		
 	def do_startdir( self, sock, args ):
 		"""do_startdir(sock, args)
 		Sends the startup directory to a SPU or server."""
