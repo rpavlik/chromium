@@ -22,6 +22,7 @@ void crStateListsInit(CRContext *ctx)
 
 	l->newEnd = GL_FALSE;
 	l->mode = 0;
+	l->currentIndex = 0;
 	l->hash = crAllocHashtable();
 }
 
@@ -57,6 +58,10 @@ void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode)
 	}
 
 	FLUSH();
+
+	/* Need this???
+	crStateCurrentRecover();
+	*/
 
 	l->currentIndex = list;
 	l->mode = mode;
