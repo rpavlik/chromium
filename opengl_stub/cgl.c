@@ -22,7 +22,10 @@
 #define DEBUG_FUNCTION(s)	
 #endif
 
-GLuint FindVisualInfo( CGLPixelFormatObj pix )
+static GLuint desiredVisual = CR_RGB_BIT;
+
+
+static GLuint FindVisualInfo( CGLPixelFormatObj pix )
 {
 	GLuint b = 0;
 	long val = 0;
@@ -98,9 +101,9 @@ CGLCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx
 	CRASSERT(stub.contextTable);
 
 	if( stub.haveNativeOpenGL )
-		stub.desiredVisual |= FindVisualInfo( pix );
+		desiredVisual |= FindVisualInfo( pix );
 
-	context = stubNewContext("", stub.desiredVisual, UNDECIDED);
+	context = stubNewContext("", desiredVisual, UNDECIDED);
 	if (!context)
 		return 0;
 
@@ -174,12 +177,12 @@ CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPix
 		switch( *attrib ) {
 		case kCGLPFADoubleBuffer:
 			crDebug("CGLChoosePixelFormat: kCGLPFADoubleBuffer");
-			stub.desiredVisual |= CR_DOUBLE_BIT;
+			desiredVisual |= CR_DOUBLE_BIT;
 			break;
 
 		case kCGLPFAStereo:
 			crDebug("CGLChoosePixelFormat: kCGLPFAStereo");
-			stub.desiredVisual |= CR_STEREO_BIT;
+			desiredVisual |= CR_STEREO_BIT;
 			break;
 
 		case kCGLPFAAuxBuffers:
@@ -192,35 +195,35 @@ CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPix
 		case kCGLPFAColorSize:
 			crDebug("CGLChoosePixelFormat: kCGLPFAColorSize: %i", attrib[0]);
 			if( attrib[0] > 0 )
-				stub.desiredVisual |= CR_RGB_BIT;
+				desiredVisual |= CR_RGB_BIT;
 			attribCopy[copy++] = *(++attrib);
 			break;
 
 		case kCGLPFAAlphaSize:
 			crDebug("CGLChoosePixelFormat: kCGLPFAAlphaSize: %i", attrib[0]);
 			if( attrib[0] > 0 )
-				stub.desiredVisual |= CR_ALPHA_BIT;
+				desiredVisual |= CR_ALPHA_BIT;
 			attribCopy[copy++] = *(++attrib);
 			break;
 
 		case kCGLPFADepthSize:
 			crDebug("CGLChoosePixelFormat: kCGLPFADepthSize: %i", attrib[0]);
 			if( attrib[0] > 0 )
-				stub.desiredVisual |= CR_DEPTH_BIT;
+				desiredVisual |= CR_DEPTH_BIT;
 			attribCopy[copy++] = *(++attrib);
 			break;
 
 		case kCGLPFAStencilSize:
 			crDebug("CGLChoosePixelFormat: kCGLPFAStencilSize: %i", attrib[0]);
 			if( attrib[0] > 0 )
-				stub.desiredVisual |= CR_STENCIL_BIT;
+				desiredVisual |= CR_STENCIL_BIT;
 			attribCopy[copy++] = *(++attrib);
 			break;
 
 		case kCGLPFAAccumSize:
 			crDebug("CGLChoosePixelFormat: kCGLPFAAccumSize: %i", attrib[0]);
 			if( attrib[0] > 0 )
-				stub.desiredVisual |= CR_ACCUM_BIT;
+				desiredVisual |= CR_ACCUM_BIT;
 			attribCopy[copy++] = *(++attrib);
 			break;
 
@@ -265,7 +268,7 @@ CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPix
 	if( stub.haveNativeOpenGL ) {
 		stub.wsInterface.CGLChoosePixelFormat( attribList, pix, npix );
 		if( *pix )
-			stub.desiredVisual = FindVisualInfo( *pix );
+			desiredVisual = FindVisualInfo( *pix );
 		else
 			crDebug("Couldnt choose pixel format?");
 	}

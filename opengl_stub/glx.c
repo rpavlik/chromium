@@ -19,6 +19,8 @@
 static Display *currentDisplay = NULL;
 static GLXDrawable currentDrawable = 0;
 
+static GLuint desiredVisual = CR_RGB_BIT;
+
 
 /**
  * Set this to 1 if you want to build stub functions for the
@@ -205,7 +207,7 @@ static XVisualInfo *ReasonableVisual( Display *dpy, int screen )
  * Query the GLX attributes for the given visual and return a bitmask of
  * the CR_*_BIT flags which describes the visual's capabilities.
  */
-GLuint
+static GLuint
 FindVisualInfo( Display *dpy, XVisualInfo *vInfo )
 {
 	int visBits = 0;
@@ -270,7 +272,7 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
 
 	stubInit();
 
-	visBits = stub.desiredVisual;
+	visBits = desiredVisual;
 
 	for (attrib = attribList; *attrib != None; attrib++)
 	{
@@ -390,11 +392,11 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
 		}
 	}
 
-	stub.desiredVisual |= visBits;
+	desiredVisual |= visBits;
 
 	attribCopy[copy++] = None;
 
-	if ( !wants_rgb && !(stub.desiredVisual & CR_OVERLAY_BIT) )
+	if ( !wants_rgb && !(desiredVisual & CR_OVERLAY_BIT) )
 	{
 		/* normal layer, color index mode not supported */
 		crWarning( "glXChooseVisual: didn't request RGB visual?" );
@@ -411,9 +413,9 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
 			crDebug("faker native glXChooseVisual returning visual 0x%x",
 							(int) vis->visualid);
 			/* successful glXChooseVisual, so clear ours */
-			stub.desiredVisual = FindVisualInfo(dpy, vis);
+			desiredVisual = FindVisualInfo(dpy, vis);
 		}
-		else if (stub.desiredVisual & CR_STEREO_BIT) {
+		else if (desiredVisual & CR_STEREO_BIT) {
 			/* Try getting a monoscopic visual instead of stereo */
 			int i;
 			/* Replace GLX_STEREO with GLX_USE_GL to turn off stereo.
@@ -524,15 +526,15 @@ glXCreateContext(Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct)
 		if (stub.wsInterface.glXQueryExtension(dpy, &foo, &bar)) {
 			int visBits = FindVisualInfo( dpy, vis );
 			crDebug("FindVisualInfo(0x%x) = 0x%x", (int)vis->visual->visualid, visBits);
-			stub.desiredVisual |= visBits;
+			desiredVisual |= visBits;
 			if (stub.force_pbuffers) {
 				crInfo("App faker: Forcing use of Pbuffers");
-				stub.desiredVisual |= CR_PBUFFER_BIT;
+				desiredVisual |= CR_PBUFFER_BIT;
 			}
 		}
 	}
 
-	context = stubNewContext(dpyName, stub.desiredVisual, UNDECIDED);
+	context = stubNewContext(dpyName, desiredVisual, UNDECIDED);
 	if (!context)
 		return 0;
 
@@ -595,7 +597,7 @@ void glXDestroyGLXPixmap( Display *dpy, GLXPixmap pix )
 
 int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 {
-	int visBits = stub.desiredVisual;
+	int visBits = desiredVisual;
 	(void) dpy;
 	(void) vis;
 
@@ -752,7 +754,7 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 		
 	}
 
-	stub.desiredVisual |= visBits;
+	desiredVisual |= visBits;
 
 	return 0;
 }

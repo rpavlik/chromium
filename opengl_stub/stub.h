@@ -156,9 +156,6 @@ typedef struct {
 
 	CRpid mothershipPID;
 
-	/* visual/context/window management */
-	GLuint desiredVisual;  /* Bitwise-or of CR_*_BIT flags */
-
 	/* contexts */
 	int freeContextNumber;
 	CRHashTable *contextTable;
@@ -179,7 +176,6 @@ extern SPUDispatchTable stubNULLDispatch;
 
 /* WGL versions */
 extern WindowInfo *stubGetWindowInfo( HDC drawable );
-extern GLuint FindVisualInfo( HDC hdc );
 
 #elif defined(DARWIN)
 
@@ -192,13 +188,11 @@ extern void glPointParameteri( GLenum pname, GLint param );
 extern void glPointParameteriv( GLenum pname, const GLint * param );
 
 extern WindowInfo *stubGetWindowInfo( CGSWindowID drawable );
-extern GLuint FindVisualInfo( CGLPixelFormatObj pix );
 
 #elif defined(GLX)
 
 /* GLX versions */
 extern WindowInfo *stubGetWindowInfo( Display *dpy, GLXDrawable drawable );
-extern GLuint FindVisualInfo( Display *dpy, XVisualInfo *vis);
 extern void stubUseXFont( Display *dpy, Font font, int first, int count, int listbase );
 
 #endif

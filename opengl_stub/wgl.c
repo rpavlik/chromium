@@ -16,7 +16,10 @@
 #include <windows.h>
 #include <stdio.h>
 
-GLuint FindVisualInfo( HDC hdc )
+static GLuint desiredVisual = CR_RGB_BIT;
+
+
+static GLuint FindVisualInfo( HDC hdc )
 {
 	PIXELFORMATDESCRIPTOR pfd; 
 	int iPixelFormat;
@@ -90,13 +93,13 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 	}
 
 	if ( pfd->dwFlags & PFD_DOUBLEBUFFER )
-		stub.desiredVisual |= CR_DOUBLE_BIT;
+		desiredVisual |= CR_DOUBLE_BIT;
 
 	if ( pfd->dwFlags & PFD_STEREO )
-		stub.desiredVisual |= CR_STEREO_BIT;
+		desiredVisual |= CR_STEREO_BIT;
 
 	if ( pfd->cColorBits > 8)
-		stub.desiredVisual |= CR_RGB_BIT;
+		desiredVisual |= CR_RGB_BIT;
 
 	if ( pfd->cAccumBits      > 0 ||
 			pfd->cAccumRedBits   > 0 ||
@@ -107,21 +110,21 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 	}
 
 	if ( pfd->cAccumBits > 0 )
-		stub.desiredVisual |= CR_ACCUM_BIT;
+		desiredVisual |= CR_ACCUM_BIT;
 
 	if ( pfd->cDepthBits > 32 ) {
 		crError( "wglChoosePixelFormat; asked for too many depth bits\n" );
 	}
 	
 	if ( pfd->cDepthBits > 0 )
-		stub.desiredVisual |= CR_DEPTH_BIT;
+		desiredVisual |= CR_DEPTH_BIT;
 
 	if ( pfd->cStencilBits > 8 ) {
 		crError( "wglChoosePixelFormat: asked for too many stencil bits\n" );
 	}
 
 	if ( pfd->cStencilBits > 0 )
-		stub.desiredVisual |= CR_STENCIL_BIT;
+		desiredVisual |= CR_STENCIL_BIT;
 
 	if ( pfd->cAuxBuffers > 0 ) {
 		crError( "wglChoosePixelFormat: asked for aux buffers\n" );
@@ -247,9 +250,9 @@ HGLRC WINAPI wglCreateContext_prox( HDC hdc )
 
 	sprintf(dpyName, "%d", hdc);
 	if (stub.haveNativeOpenGL)
-		stub.desiredVisual |= FindVisualInfo( hdc );
+		desiredVisual |= FindVisualInfo( hdc );
 
-	context = stubNewContext(dpyName, stub.desiredVisual, UNDECIDED);
+	context = stubNewContext(dpyName, desiredVisual, UNDECIDED);
 	if (!context)
 		return 0;
 
@@ -379,31 +382,31 @@ BOOL WINAPI wglChoosePixelFormatEXT_prox(HDC hdc, const int *piAttributes, const
 			case WGL_ACCUM_ALPHA_BITS_EXT:
 			case WGL_ALPHA_BITS_EXT:
 				if (pi[1] > 0)
-					stub.desiredVisual |= CR_ALPHA_BIT;
+					desiredVisual |= CR_ALPHA_BIT;
 				pi++;
 				break;
 
 			case WGL_DOUBLE_BUFFER_EXT:
 				if (pi[1] > 0)
-					stub.desiredVisual |= CR_DOUBLE_BIT;
+					desiredVisual |= CR_DOUBLE_BIT;
 				pi++;
 				break;
 
 			case WGL_STEREO_EXT:
 				if (pi[1] > 0)
-					stub.desiredVisual |= CR_STEREO_BIT;
+					desiredVisual |= CR_STEREO_BIT;
 				pi++;
 				break;
 
 			case WGL_DEPTH_BITS_EXT:
 				if (pi[1] > 0)
-					stub.desiredVisual |= CR_DEPTH_BIT;
+					desiredVisual |= CR_DEPTH_BIT;
 				pi++;
 				break;
 
 			case WGL_STENCIL_BITS_EXT:
 				if (pi[1] > 0)
-					stub.desiredVisual |= CR_STENCIL_BIT;
+					desiredVisual |= CR_STENCIL_BIT;
 				pi++;
 				break;
 
@@ -411,14 +414,14 @@ BOOL WINAPI wglChoosePixelFormatEXT_prox(HDC hdc, const int *piAttributes, const
 			case WGL_ACCUM_GREEN_BITS_EXT:
 			case WGL_ACCUM_BLUE_BITS_EXT:
 				if (pi[1] > 0)
-					stub.desiredVisual |= CR_ACCUM_BIT;
+					desiredVisual |= CR_ACCUM_BIT;
 				pi++;
 				break;
 
 			case WGL_SAMPLE_BUFFERS_EXT:
 			case WGL_SAMPLES_EXT:
 				if (pi[1] > 0)
-					stub.desiredVisual |= CR_MULTISAMPLE_BIT;
+					desiredVisual |= CR_MULTISAMPLE_BIT;
 				pi++;
 				break;
 
