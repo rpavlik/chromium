@@ -23,22 +23,32 @@
 #define GL_GLEXT_PROTOTYPES
 #define GLX_GLXEXT_PROTOTYPES
 
-#ifdef WINDOWS
+#if defined(WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #define WGL_APIENTRY __stdcall
 #define CR_APIENTRY __stdcall
 #include <windows.h>
-#else
-#include <GL/glx.h>
+#endif
+
+#ifndef WINDOWS
 #define CR_APIENTRY
 #endif
 
+#ifndef DARWIN
 #include <GL/gl.h>
-#include <GL/glext.h>
+#include <GL/glx.h>
 #include <GL/glu.h>
+#else
+#include <AGL/agl.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#endif
+
 #ifdef USE_OSMESA
 #include <GL/osmesa.h>
 #endif
+
+#include <GL/glext.h>
 
 #ifdef __cplusplus
 extern "C" {

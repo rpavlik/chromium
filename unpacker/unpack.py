@@ -280,7 +280,7 @@ for func_name in keys:
 		print '\t\t\tbreak;'
 
 print """		default:
-			crError( "Unknown extended opcode: %d", extend_opcode );
+			crError( "Unknown extended opcode: %d", (int) extend_opcode );
 			break;
 	}
 	INCR_VAR_PTR();

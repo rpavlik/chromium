@@ -1,6 +1,6 @@
 #ifndef _DLM_CLIENT_H
 
-#include <GL/gl.h>
+#include "chromium.h"
 #include "state/cr_client.h"
 
 extern void crdlmClientInit(CRClientState *c);

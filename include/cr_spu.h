@@ -97,7 +97,7 @@ struct _SPUSTRUCT {
 /*
  * These are the OpenGL / window system interface functions
  */
-#ifdef WINDOWS
+#if defined(WINDOWS)
 typedef HGLRC (WGL_APIENTRY *wglCreateContextFunc_t)(HDC);
 typedef void (WGL_APIENTRY *wglDeleteContextFunc_t)(HGLRC);
 typedef BOOL (WGL_APIENTRY *wglMakeCurrentFunc_t)(HDC,HGLRC);
@@ -112,6 +112,17 @@ typedef BOOL (WGL_APIENTRY *wglGetPixelFormatAttribivEXTFunc_t)(HDC, int, int, U
 typedef BOOL (WGL_APIENTRY *wglGetPixelFormatAttribfvEXTFunc_t)(HDC, int, int, UINT, int *, int *);
 typedef const GLubyte *(WGL_APIENTRY *glGetStringFunc_t)( GLenum );
 typedef const GLubyte *(WGL_APIENTRY *wglGetExtensionsStringEXTFunc_t)( HDC );
+#elif defined(DARWIN)
+typedef AGLPixelFormat (*aglChoosePixelFormatFunc_t) (const AGLDevice *, GLint, const GLint *);
+// typedef const char *(*glXQueryExtensionsStringFunc_t) (Display *, int );
+typedef AGLContext (*aglCreateContextFunc_t)( AGLPixelFormat, AGLContext );
+typedef GLboolean (*aglUseFontFunc_t)(AGLContext, GLint, Style, GLint, GLint, GLint, GLint);
+typedef GLboolean (*aglDestroyContextFunc_t)( AGLContext );
+typedef GLboolean (*aglSetCurrentContextFunc_t)( AGLContext );
+typedef void (*aglSwapBuffersFunc_t)( AGLContext );
+// typedef CR_GLXFuncPtr (*glXGetProcAddressARBFunc_t)( const GLubyte *name );
+// typedef Display *(*glXGetCurrentDisplayFunc_t)( void );
+typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
 #else
 typedef int (*glXGetConfigFunc_t)( Display *, XVisualInfo *, int, int * );
 typedef Bool (*glXQueryExtensionFunc_t) (Display *, int *, int * );
@@ -133,7 +144,7 @@ typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
  * this in a few different places.
  */
 typedef struct {
-#ifdef WINDOWS
+#if defined(WINDOWS)
 	wglGetProcAddressFunc_t wglGetProcAddress;
 	wglCreateContextFunc_t wglCreateContext;
 	wglDeleteContextFunc_t wglDeleteContext;
@@ -147,6 +158,13 @@ typedef struct {
 	wglGetPixelFormatAttribivEXTFunc_t wglGetPixelFormatAttribivEXT;
 	wglGetPixelFormatAttribfvEXTFunc_t wglGetPixelFormatAttribfvEXT;
 	wglGetExtensionsStringEXTFunc_t wglGetExtensionsStringEXT;
+#elif defined(DARWIN)
+	aglChoosePixelFormatFunc_t aglChoosePixelFormat;
+	aglCreateContextFunc_t aglCreateContext;
+	aglUseFontFunc_t aglUseFont;
+	aglDestroyContextFunc_t aglDestroyContext;
+	aglSetCurrentContextFunc_t aglSetCurrentContext;
+	aglSwapBuffersFunc_t aglSwapBuffers;
 #else
 	glXGetConfigFunc_t  glXGetConfig;
 	glXQueryExtensionFunc_t glXQueryExtension;

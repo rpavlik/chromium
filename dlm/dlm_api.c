@@ -51,7 +51,7 @@ crdlm_NewList(GLuint listIdentifier, GLenum mode, SPUDispatchTable * table)
 	{
 		crWarning
 			("DLM error: NewList(%d,%d) called with no current state (%s line %d)\n",
-			 listIdentifier, mode, __FILE__, __LINE__);
+			 (int) listIdentifier, (int) mode, __FILE__, __LINE__);
 		return;
 	}
 
@@ -76,8 +76,8 @@ crdlm_NewList(GLuint listIdentifier, GLenum mode, SPUDispatchTable * table)
 		if (!(listInfo))
 		{
 			char msg[1000];
-			sprintf(msg, "could not allocate %d bytes of memory in NewList",
-									 sizeof(DLMListInfo));
+			sprintf(msg, "could not allocate %u bytes of memory in NewList",
+									 (unsigned) sizeof(DLMListInfo));
 			crdlm_error(__LINE__, __FILE__, GL_OUT_OF_MEMORY, msg);									 
 			return;
 		}
@@ -237,13 +237,13 @@ crdlm_DeleteLists(GLuint firstListIdentifier, GLsizei range)
 	{
 		crWarning
 			("DLM error: DeleteLists(%d,%d) called with no current state (%s line %d)\n",
-			 firstListIdentifier, range, __FILE__, __LINE__);
+			 (int) firstListIdentifier, (int) range, __FILE__, __LINE__);
 		return;
 	}
 	if (range < 0)
 	{
 		char msg[1000];
-		sprintf(msg, "DeleteLists called with range (%d) less than zero", range);
+		sprintf(msg, "DeleteLists called with range (%d) less than zero", (int) range);
 		crdlm_error(__LINE__, __FILE__, GL_INVALID_VALUE, msg);								 
 		return;
 	}
@@ -299,7 +299,7 @@ crdlm_ListBase(GLuint listBase)
 	{
 		crWarning
 			("DLM error: ListBase(%d) called with no current state (%s line %d)\n",
-			 listBase, __FILE__, __LINE__);
+			 (int) listBase, __FILE__, __LINE__);
 		return;
 	}
 
@@ -316,7 +316,7 @@ crdlm_CallList(GLuint listIdentifier, SPUDispatchTable * table)
 	{
 		crWarning
 			("DLM error: CallList(%d) called with no current state (%s line %d)\n",
-			 listIdentifier, __FILE__, __LINE__);
+			 (int) listIdentifier, __FILE__, __LINE__);
 		return;
 	}
 
@@ -401,7 +401,7 @@ crdlm_GenLists(GLsizei range)
 	{
 		crWarning
 			("DLM error: GenLists(%d) called with no current state (%s line %d)\n",
-			 range, __FILE__, __LINE__);
+			 (int) range, __FILE__, __LINE__);
 		return 0;
 	}
 
@@ -434,7 +434,7 @@ crdlm_IsList(GLuint list)
 	{
 		crWarning
 			("DLM error: IsLists(%d) called with no current state (%s line %d)\n",
-			 list, __FILE__, __LINE__);
+			 (int) list, __FILE__, __LINE__);
 		return 0;
 	}
 
