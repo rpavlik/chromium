@@ -176,7 +176,7 @@ static void stubInitVars(void)
 	stub.threadSafe = GL_FALSE;
 	stub.spuWindowWidth = 0;
 	stub.spuWindowHeight = 0;
-	stub.trackWindowSize = 1;
+	stub.trackWindowSize = 0;
 	stub.mothershipPID = 0;
 
 #if 1
