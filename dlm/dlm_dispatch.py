@@ -140,11 +140,11 @@ def wrap_header(functionName):
 			print "	/* Oh no - pointer parameter %s found, but no pointer class specified and can't guess */" % pointername
 		else:
 			if pointersize == 'special':
-				print '	%s %s[0];%s' % (pointertype, pointerarg, pointercomment)
+				print '	%s %s[1];%s' % (pointertype, pointerarg, pointercomment)
 			else:
 				print '	%s %s[%s];%s' % (pointertype, pointerarg, pointersize,pointercomment)
 	elif len(pointers) > 1:
-		print '	%s %s[0];%s' % (pointertype, pointerarg,pointercomment)
+		print '	%s %s[1];%s' % (pointertype, pointerarg,pointercomment)
 
 	print '};'
 
