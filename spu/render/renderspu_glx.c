@@ -639,8 +639,15 @@ void renderspu_SystemDestroyWindow( WindowInfo *window )
 	else
 #endif
 	{
-		XDestroyWindow(window->visual->dpy, window->window);
-		XSync(window->visual->dpy, 0);
+        // The value window->nativeWindow will only be non-NULL if the
+        // render_to_app_window option is set to true.  In this case, we
+        // don't want to do anything, since we're not responsible for this
+        // window.  I know...personal responsibility and all...
+        if (!window->nativeWindow)
+        {
+            XDestroyWindow(window->visual->dpy, window->window);
+            XSync(window->visual->dpy, 0);
+        }
 	}
 	window->visual = NULL;
 	window->window = 0;
