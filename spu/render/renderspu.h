@@ -46,7 +46,7 @@ typedef struct {
 	unsigned int window_width, window_height;
 	unsigned int actual_window_width, actual_window_height;
 	int use_L2;
-	int fullscreen;
+	int fullscreen, ontop;
 	int depth_bits, stencil_bits;
 #ifdef WINDOWS
 	HWND         hWnd;

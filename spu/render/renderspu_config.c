@@ -19,6 +19,7 @@ static void __setDefaults( void )
 	render_spu.stencil_bits = 0;
 #endif 
 	render_spu.fullscreen = 0;
+	render_spu.ontop = 0;
 	render_spu.use_L2 = 0;
 }
 
@@ -53,6 +54,11 @@ void renderspuGatherConfiguration( void )
 	if (crMothershipSPUParam( conn, response, "fullscreen" ) )
 	{
 		sscanf( response, "%d", &(render_spu.fullscreen) );
+	}
+
+	if (crMothershipSPUParam( conn, response, "ontop" ) )
+	{
+		sscanf( response, "%d", &(render_spu.ontop) );
 	}
 
 	if (crMothershipSPUParam( conn, response, "stencil_bits" ) )
