@@ -111,10 +111,27 @@ spu.Conf('window_geometry', 0, 0, 512, 512)<br>
     <td width="19%" class="ConfigOption" height="38">show_cursor</td>
     <td width="12%" class="ConfigType" height="38">Boolean</td>
     <td width="115%" class="ConfigDesc" height="38">
-          If set to 1, render a <em>virtual cursor</em> which tracks the
+          If non-zero, render a <em>virtual cursor</em> which tracks the
           location of the user's mouse pointer in the application window.
           This typically only works well with applications that constantly
           redraw the 3D window's contents.  Default is 0.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">render_to_app_window</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">
+          If non-zero, the render SPU will render back into the original
+          application window, instead of creating a new window.
+          Default is 0.</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">resizable</td>
+    <td width="12%" class="ConfigType" height="38">Boolean</td>
+    <td width="115%" class="ConfigDesc" height="38">
+          If non-zero, the render SPU window will be resizable by the user.
+          The readback SPU also recognizes this flag and will adjust its
+          window size accordingly.
+          Default is 0.</td>
   </tr>
 </table>
 
