@@ -162,28 +162,20 @@ void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 		{
 			case GL_BYTE:
 				array_spu.self.SecondaryColor3bvEXT((GLbyte *)p); break;
-				break;
 			case GL_UNSIGNED_BYTE:
 				array_spu.self.SecondaryColor3ubvEXT((GLubyte *)p); break;
-				break;
 			case GL_SHORT:
 				array_spu.self.SecondaryColor3svEXT((GLshort *)p); break;
-				break;
 			case GL_UNSIGNED_SHORT:
 				array_spu.self.SecondaryColor3usvEXT((GLushort *)p); break;
-				break;
 			case GL_INT:
 				array_spu.self.SecondaryColor3ivEXT((GLint *)p); break;
-				break;
 			case GL_UNSIGNED_INT:
 				array_spu.self.SecondaryColor3uivEXT((GLuint *)p); break;
-				break;
 			case GL_FLOAT:
 				array_spu.self.SecondaryColor3fvEXT((GLfloat *)p); break;
-				break;
 			case GL_DOUBLE:
 				array_spu.self.SecondaryColor3dvEXT((GLdouble *)p); break;
-				break;
 		}
 	}
 #endif
