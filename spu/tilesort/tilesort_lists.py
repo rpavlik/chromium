@@ -30,7 +30,7 @@ print """#include <stdio.h>
 for func_name in keys:
 	(return_type, args, types) = gl_mapping[func_name]
 	if stub_common.FindSpecial( "tilesort_unimplemented", func_name ):
-		continue
+		print 'extern %s TILESORTSPU_APIENTRY tilesortspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 	if stub_common.FindSpecial( "tilesort", func_name ):
 		print 'extern %s TILESORTSPU_APIENTRY tilesortspu_%s%s;' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 
@@ -62,11 +62,11 @@ static void __loadSortAPI( void )
 for index in range(len(keys)):
 	func_name = keys[index]
 	(return_type, args, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "tilesort_unimplemented", func_name ):
-		continue
 	if stub_common.FindSpecial( "tilesort_list", func_name ):
 		continue
 	if stub_common.FindSpecial( "tilesort", func_name ):
+		print '\tCHANGE( %s, tilesortspu_%s );' % (func_name, func_name )
+	elif stub_common.FindSpecial( "tilesort_unimplemented", func_name ):
 		print '\tCHANGE( %s, tilesortspu_%s );' % (func_name, func_name )
 	elif stub_common.FindSpecial( "tilesort_state", func_name ):
 		print '\tCHANGE( %s, crState%s );' % (func_name, func_name )

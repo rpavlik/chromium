@@ -28,6 +28,7 @@ FILES = tilesortspu \
 	tilesortspu_pixels \
 	tilesortspu_rect \
 	tilesortspu_swap \
+	tilesortspu_unimplemented \
 	tilesortspu_viewport
 
 LIBRARIES = crutil crmothership spuload
