@@ -19,7 +19,8 @@ menu_UNDO          = 10001 # Edit menu items.
 menu_SELECT_ALL    = 10002
 menu_DELETE        = 10003
 
-menu_ABOUT         = 10205 # Help menu items.
+menu_HELP          = 2001 # Help menu items.
+menu_ABOUT         = 2002 # Help menu items.
 
 # Widget IDs
 id_MuralWidth  = 3000
@@ -27,9 +28,9 @@ id_MuralHeight = 3001
 id_TileChoice  = 3002
 id_TileWidth   = 3003
 id_TileHeight  = 3004
-id_hLayout     = 3005
-id_vLayout     = 3006
-id_NewNode     = 3008
+id_NewServerNode  = 3008
+id_NewAppNode     = 3009
+id_NewSpu         = 3010
 
 # Size of the drawing page, in pixels.
 PAGE_WIDTH  = 1000
@@ -42,6 +43,18 @@ CommonTileSizes = [ [128, 128],
 					[1280, 1024],
 					[1600, 1200] ]
 
+SpuClasses = [ "New SPU", "Pack", "Render", "Readback", "Tilesort", "Wet", "Hiddenline" ]
+
+# SPUs that pack for a downstream server
+PackingSPUs = [ "Pack", "Tilesort" ]
+
+# SPUs which must be at the end of a chain, other than packers
+TerminalSPUs = [ "Render" ]
+
+
+AppNodeBrush = wxBrush(wxColor(55, 160, 55))
+ServerNodeBrush = wxBrush(wxColor(210, 105, 135))
+BackgroundColor = wxColor(90, 150, 190)
 
 #----------------------------------------------------------------------------
 
@@ -100,7 +113,9 @@ class DrawingFrame(wxFrame):
 
 		# Help menu
 		self.helpMenu = wxMenu()
+		self.helpMenu.Append(menu_HELP,  "Introduction...")
 		self.helpMenu.Append(menu_ABOUT, "About Config tool...")
+		EVT_MENU(self, menu_HELP, self.doShowIntro)
 		EVT_MENU(self, menu_ABOUT, self.doShowAbout)
 		menuBar.Append(self.helpMenu, "Help")
 
@@ -117,93 +132,35 @@ class DrawingFrame(wxFrame):
 
 		self.topPanel = wxPanel(self, id=-1)
 
-		toolSizer = wxBoxSizer(wxVERTICAL)
+		toolSizer = wxBoxSizer(wxHORIZONTAL)
 
-		# Mural width/height (in tiles)
-		box = wxStaticBox(parent=self.topPanel, id=-1, label="Mural Size",
-						  style=wxDOUBLE_BORDER)
-		muralSizer = wxStaticBoxSizer(box, wxVERTICAL)
-		flexSizer = wxFlexGridSizer(rows=2, cols=2, hgap=4, vgap=4)
-		columnsLabel = wxStaticText(parent=self.topPanel, id=-1, label="Columns:")
-		self.widthControl = wxSpinCtrl(parent=self.topPanel, id=id_MuralWidth,
-									   value="4", min=1, max=16, size=wxSize(50,25))
-		rowsLabel = wxStaticText(parent=self.topPanel, id=-1, label="Rows:")
-		self.heightControl = wxSpinCtrl(parent=self.topPanel, id=id_MuralHeight,
-										value="3", min=1, max=16, size=wxSize(50,25))
-		EVT_SPINCTRL(self.widthControl, id_MuralWidth, self.onSizeChange)
-		EVT_SPINCTRL(self.heightControl, id_MuralHeight, self.onSizeChange)
-		flexSizer.Add(columnsLabel)
-		flexSizer.Add(self.widthControl)
-		flexSizer.Add(rowsLabel)
-		flexSizer.Add(self.heightControl)
-		muralSizer.Add(flexSizer)
-		toolSizer.Add(muralSizer, flag=wxEXPAND)
-
-		# Tile size (in pixels)
-		box = wxStaticBox(parent=self.topPanel, id=-1, label="Tile Size",
-						  style=wxDOUBLE_BORDER)
-		tileSizer = wxStaticBoxSizer(box, wxVERTICAL)
-		flexSizer = wxFlexGridSizer(rows=2, cols=2, hgap=4, vgap=4)
-		tileChoices = []
-		for i in CommonTileSizes:
-			tileChoices.append( str("%d x %d" % (i[0], i[1])) )
-		tileChoices.append("Custom")
-		self.tileChoice = wxChoice(parent=self.topPanel, id=id_TileChoice,
-								   choices=tileChoices)
-		flexSizer = wxFlexGridSizer(rows=2, cols=2, hgap=4, vgap=4)
-		self.tileWidthLabel = wxStaticText(parent=self.topPanel, id=-1,
-										   label="Width:")
-		self.tileWidthControl = wxSpinCtrl(parent=self.topPanel, id=id_TileWidth,
-										   value="512", min=128, max=2048,
-										   size=wxSize(80,25))
-		self.tileHeightLabel = wxStaticText(parent=self.topPanel, id=-1,
-											label="Height:")
-		self.tileHeightControl = wxSpinCtrl(parent=self.topPanel, id=id_TileHeight,
-											value="512", min=128, max=2048,
-											size=wxSize(80,25))
-		EVT_SPINCTRL(self.tileWidthControl, id_TileWidth, self.onSizeChange)
-		EVT_SPINCTRL(self.tileHeightControl, id_TileHeight, self.onSizeChange)
-		EVT_CHOICE(self.tileChoice, id_TileChoice, self.onTileChoice)
-		flexSizer.Add(self.tileWidthLabel)
-		flexSizer.Add(self.tileWidthControl)
-		flexSizer.Add(self.tileHeightLabel)
-		flexSizer.Add(self.tileHeightControl)
-		tileSizer.Add(self.tileChoice, flag=wxALIGN_CENTER)
-		tileSizer.Add(flexSizer)
-		toolSizer.Add(tileSizer, flag=wxEXPAND)
-
-		# Total mural size (in pixels)
-		box = wxStaticBox(parent=self.topPanel, id=-1, label="Total Size", style=wxDOUBLE_BORDER)
-		totalSizer = wxStaticBoxSizer(box, wxVERTICAL)
-		self.totalSizeLabel = wxStaticText(parent=self.topPanel, id=-1, label="??")
-		totalSizer.Add(self.totalSizeLabel, flag=wxEXPAND)
-		toolSizer.Add(totalSizer, flag=wxEXPAND)
-
-		hChoices = [ 'Left to right', 'Right to left' ]
-		self.hLayoutRadio = wxRadioBox(parent=self.topPanel, id=id_hLayout,
-									   label="Horizontal Layout", choices=hChoices,
-									   majorDimension=1, style=wxRA_SPECIFY_COLS )
-		toolSizer.Add(self.hLayoutRadio, flag=wxEXPAND)
-		vChoices = [ 'Top to bottom', 'Bottom to top' ]
-		self.vLayoutRadio = wxRadioBox(parent=self.topPanel, id=id_vLayout,
-									   label="Vertical Layout", choices=vChoices,
-									   majorDimension=1, style=wxRA_SPECIFY_COLS )
-		toolSizer.Add(self.vLayoutRadio, flag=wxEXPAND)
-		EVT_RADIOBOX(self.hLayoutRadio, id_hLayout, self.onSizeChange)
-		EVT_RADIOBOX(self.vLayoutRadio, id_vLayout, self.onSizeChange)
-
-		# New node button
-		newNodeButton = wxButton(parent=self.topPanel, id=id_NewNode, label="New Node")
-		EVT_BUTTON(newNodeButton, id_NewNode, self.onNewNode)
-		toolSizer.Add(newNodeButton)
+		# New app node button
+		appChoices = ["New App Node(s)", "1 App node", "2 App nodes", "3 App nodes", "4 App nodes"]
+		self.newAppChoice = wxChoice(parent=self.topPanel, id=id_NewAppNode,
+									  choices=appChoices)
+		EVT_CHOICE(self.newAppChoice, id_NewAppNode, self.onNewAppNode)
+		toolSizer.Add(self.newAppChoice, flag=wxEXPAND+wxALL, border=4)
+		# New server node button
+		serverChoices = ["New Server Node(s)", "1 Server node", "2 Server nodes", "3 Server nodes", "4 Server nodes"]
+		self.newServerChoice = wxChoice(parent=self.topPanel, id=id_NewServerNode,
+									  choices=serverChoices)
+		EVT_CHOICE(self.newServerChoice, id_NewServerNode, self.onNewServerNode)
+		toolSizer.Add(self.newServerChoice, flag=wxEXPAND+wxALL, border=4)
+		# New SPU button
+		self.newSpuChoice = wxChoice(parent=self.topPanel, id=id_NewSpu, choices=SpuClasses)
+		EVT_CHOICE(self.newSpuChoice, id_NewSpu, self.onNewSpu)
+		toolSizer.Add(self.newSpuChoice, flag=wxEXPAND+wxALL, border=4)
+#		newSpuButton = wxButton(parent=self.topPanel, id=id_NewSpu, label="New SPU")
+#		EVT_BUTTON(newSpuButton, id_NewSpu, self.onNewSpu)
+#		toolSizer.Add(newSpuButton)
 
 		# Setup the main drawing area.
-#		self.drawArea = wxScrolledWindow(self.topPanel, -1,
-#										 style=wxSUNKEN_BORDER)
-#		self.drawArea.EnableScrolling(true, true)
-#		self.drawArea.SetScrollbars(20, 20, PAGE_WIDTH / 20, PAGE_HEIGHT / 20)
-		self.drawArea = wxPanel(self.topPanel, id=-1, style=wxSUNKEN_BORDER)
-		self.drawArea.SetBackgroundColour(wxWHITE)
+		self.drawArea = wxScrolledWindow(self.topPanel, -1,
+										 style=wxSUNKEN_BORDER)
+		self.drawArea.EnableScrolling(true, true)
+		self.drawArea.SetScrollbars(20, 20, PAGE_WIDTH / 20, PAGE_HEIGHT / 20)
+#		self.drawArea = wxPanel(self.topPanel, id=-1, style=wxSUNKEN_BORDER)
+		self.drawArea.SetBackgroundColour(BackgroundColor)
 		EVT_PAINT(self.drawArea, self.onPaintEvent)
 
 		EVT_LEFT_DOWN(self.drawArea, self.onMouseEvent)
@@ -211,15 +168,15 @@ class DrawingFrame(wxFrame):
 		EVT_MOTION(self.drawArea, self.onMouseMotion)
 
 		# Position everything in the window.
-		topSizer = wxBoxSizer(wxHORIZONTAL)
+		topSizer = wxBoxSizer(wxVERTICAL)
 		topSizer.Add(toolSizer, 0, wxTOP | wxLEFT | wxRIGHT | wxALIGN_TOP, 5)
 		topSizer.Add(self.drawArea, 1, wxEXPAND)
 
 		self.topPanel.SetAutoLayout(true)
 		self.topPanel.SetSizer(topSizer)
 
-		self.SetSizeHints(minW=250, minH=200)
-		self.SetSize(wxSize(600, 400))
+		self.SetSizeHints(minW=500, minH=200)
+		self.SetSize(wxSize(700, 400))
 
 		self.dirty     = false
 		self.fileName  = fileName
@@ -230,56 +187,27 @@ class DrawingFrame(wxFrame):
 		self.SelectDeltaX = 0
 		self.SelectDeltaY = 0
 
-		self.recomputeTotalSize()
-		
 		if self.fileName != None:
 			self.loadContents()
 
 
-	# This is called whenever the mural width/height or tile width/height changes.
-	# We recompute the total mural size in pixels and update the widgets.
-	def recomputeTotalSize(self):
-		tileW = self.tileWidthControl.GetValue()
-		tileH = self.tileHeightControl.GetValue()
-		totalW = self.widthControl.GetValue() * tileW
-		totalH = self.heightControl.GetValue() * tileH
-		self.totalSizeLabel.SetLabel(str("%d x %d" % (totalW, totalH)))
-		custom = 1
-		for i in range(0, len(CommonTileSizes)):
-			if tileW == CommonTileSizes[i][0] and tileH == CommonTileSizes[i][1]:
-				self.tileChoice.SetSelection(i)
-				return
-		# must be custom size
-		self.tileChoice.SetSelection(len(CommonTileSizes))  # "Custom"
+	def SelectAll(self):
+		for obj in self.Objects:
+			obj.Select()
 
-		
+	def DeselectAll(self):
+		for obj in self.Objects:
+			obj.Deselect()
+
 	# ============================
 	# == Event Handling Methods ==
 	# ============================
-
-	def onSizeChange(self, event):
-		"""Respond to spin control changes"""
-		self.recomputeTotalSize()
-		self.drawArea.Refresh()
-
-	def onTileChoice(self, event):
-		""" Respond to the "Tile Size" choice widget.
-		"""
-		i = self.tileChoice.GetSelection()
-		if i < len(CommonTileSizes):
-			w = CommonTileSizes[i][0]
-			h = CommonTileSizes[i][1]
-			self.tileWidthControl.SetValue(w)
-			self.tileHeightControl.SetValue(h)
-		self.recomputeTotalSize()
-		self.drawArea.Refresh()
-
 
 	def onPaintEvent(self, event):
 		""" Respond to a request to redraw the contents of our drawing panel.
 		"""
 		dc = wxPaintDC(self.drawArea)
-#		self.drawArea.PrepareDC(dc)  # only for scrolled windows
+		self.drawArea.PrepareDC(dc)  # only for scrolled windows
 		dc.BeginDrawing()
 		dc.SetPen(wxBLACK_PEN);
 
@@ -291,45 +219,82 @@ class DrawingFrame(wxFrame):
 
 		dc.EndDrawing()
 
-	# called when New Node button is pressed
-	def onNewNode(self, event):
-		n = NodeObject(50, 50, isServer=1)
-		s1 = SpuObject("Readback")
-		s2 = SpuObject("Pack", 1)
-		n.AddSPU(s1)
-		n.AddSPU(s2)
-		self.Objects.append(n)
+	# called when New App Node button is pressed
+	def onNewAppNode(self, event):
+		self.DeselectAll()
+		n = self.newAppChoice.GetSelection()
+		for i in range(0, n):
+			obj = NodeObject(10, 50+i*65, isServer=0)
+			obj.Select()
+			self.Objects.append(obj)
+		self.newAppChoice.SetSelection(0)
 		self.drawArea.Refresh()
 
+	# called when New Server Node button is pressed
+	def onNewServerNode(self, event):
+		self.DeselectAll()
+		n = self.newServerChoice.GetSelection()
+		for i in range(0, n):
+			obj = NodeObject(250, 50+i*65, isServer=1)
+			obj.Select()
+			self.Objects.append(obj)
+		self.newServerChoice.SetSelection(0)
+		self.drawArea.Refresh()
+
+	# called when New SPU button is pressed
+	def onNewSpu(self, event):
+		# add a new SPU to all selected nodes
+		i = self.newSpuChoice.GetSelection()
+		if i > 0:
+			for obj in self.Objects:
+				if obj.IsSelected():
+					if obj.NumSPUs() > 0 and (obj.LastSPU().Name() in PackingSPUs or obj.LastSPU().Name() in TerminalSPUs):
+						self.Notify("You can't chain a %s SPU after a %s SPU." % (SpuClasses[i], obj.LastSPU().Name()))
+						break
+					else:
+						p = (SpuClasses[i] in PackingSPUs)
+						s = SpuObject( SpuClasses[i], packer=p )
+						obj.AddSPU(s)
+			self.drawArea.Refresh()
+			self.newSpuChoice.SetSelection(0)
+
+	# Called when the left mouse button is pressed or released.
 	def onMouseEvent(self, event):
-		hitNode = 0
-		x = event.GetX()
-		y = event.GetY()
+		(x,y) = self.drawArea.CalcUnscrolledPosition(event.GetX(), event.GetY())
+		# First, determine if we're clicking on an object
 		# iterate backward through the object list so we get the topmost one
+		hitObj = 0
 		for i in range(len(self.Objects) - 1, -1, -1):
-			node = self.Objects[i]
-			if node.PickTest(x,y):
-				hitNode = node
+			obj = self.Objects[i]
+			if obj.PickTest(x,y):
+				hitObj = obj
 				break
 		
 		self.LeftDown = event.LeftDown()
 
+		# Now handle selection/deselection
 		if self.LeftDown:
 			# mouse down
-			if hitNode:
+			if hitObj:
 				self.DragStartX = x
 				self.DragStartY = y
 				self.SelectDeltaX = 0
 				self.SelectDeltaY = 0
-				if not hitNode.IsSelected():
+				if event.ControlDown():
+					# toggle selection status of one object
+					if hitObj.IsSelected():
+						hitObj.Deselect()
+					else:
+						hitObj.Select()
+				elif not hitObj.IsSelected():
 					if not event.ShiftDown():
 						for obj in self.Objects:
 							obj.Deselect()
-					hitNode.Select()
+					hitObj.Select()
 			else:
 				# deselect all
-				for node in self.Objects:
-					node.Deselect()
+				for obj in self.Objects:
+					obj.Deselect()
 		else:
 			# mouse up
 			for obj in self.Objects:
@@ -345,11 +310,18 @@ class DrawingFrame(wxFrame):
 
 		self.drawArea.Refresh()
 
+	# Called when the mouse moves.  We only really need to call this when a
+	# mouse button is also pressed, but I don't see a way to specify that with
+	# wxWindows as you can do with X.
 	def onMouseMotion(self, event):
-#		if self.LeftDown:
 		if event.LeftIsDown():
-			self.SelectDeltaX = event.GetX() - self.DragStartX
-			self.SelectDeltaY = event.GetY() - self.DragStartY
+			# SelectDeltaX/Y is added to the position of selected objects
+			(x,y) = self.drawArea.CalcUnscrolledPosition(event.GetX(), event.GetY())
+			self.SelectDeltaX = x - self.DragStartX
+			self.SelectDeltaY = y - self.DragStartY
+
+			#self.SelectDeltaX = event.GetX() - self.DragStartX
+			#self.SelectDeltaY = event.GetY() - self.DragStartY
 			# 5-pixel threshold before starting movement
 			if abs(self.SelectDeltaX) < 5 and abs(self.SelectDeltaY) < 5:
 				self.SelectDeltaX = 0
@@ -474,9 +446,17 @@ class DrawingFrame(wxFrame):
 
 	# Called by Delete menu item
 	def doDelete(self, event):
+		# Ugh, I can't find a Python counterpart to the C++ STL's remove_if()
+		# function.
+		# Have to make a temporary list of the objects to delete so we don't
+		# screw-up the iteration as we remove things
+		deleteList = []
 		for obj in self.Objects:
 			if obj.IsSelected():
-				self.Objects.remove(obj)
+				deleteList.append(obj)
+		# now delete the objects in the deleteList
+		for obj in deleteList:
+			 self.Objects.remove(obj)
 		self.drawArea.Refresh()
 
 	# Called by Select All menu item
@@ -484,6 +464,49 @@ class DrawingFrame(wxFrame):
 		for obj in self.Objects:
 			obj.Select()
 		self.drawArea.Refresh()
+
+
+	def doShowIntro(self, event):
+		""" Respond to the "Introduction" menu command.
+		"""
+		dialog = wxDialog(self, -1, "Introduction") # ,
+				  #style=wxDIALOG_MODAL | wxSTAY_ON_TOP)
+		dialog.SetBackgroundColour(wxWHITE)
+
+		panel = wxPanel(dialog, -1)
+		#panel.SetBackgroundColour(wxWHITE)
+
+		panelSizer = wxBoxSizer(wxVERTICAL)
+
+		text = wxStaticText(parent=panel, id=-1, label=
+			"Use the New App Node(s) button to create new application nodes.\n"
+			"Use the New Server Node(s) button to create new server nodes.\n"
+			"Use the New SPU button to add an SPU to the selected nodes.\n"
+			"Use the mouse to select and move nodes.\n"
+			"Shift-click extends the selection.\n"
+			"Control-click toggles the selection.\n")
+
+		btnOK = wxButton(panel, wxID_OK, "OK")
+
+		panelSizer.Add(text, 0, wxALIGN_CENTRE)
+		panelSizer.Add(10, 10) # Spacer.
+		panelSizer.Add(btnOK, 0, wxALL | wxALIGN_CENTRE, 5)
+
+		panel.SetAutoLayout(true)
+		panel.SetSizer(panelSizer)
+		panelSizer.Fit(panel)
+
+		topSizer = wxBoxSizer(wxHORIZONTAL)
+		topSizer.Add(panel, 0, wxALL, 10)
+
+		dialog.SetAutoLayout(true)
+		dialog.SetSizer(topSizer)
+		topSizer.Fit(dialog)
+
+		dialog.Centre()
+
+		btn = dialog.ShowModal()
+		dialog.Destroy()
 
 
 	def doShowAbout(self, event):
@@ -534,6 +557,12 @@ class DrawingFrame(wxFrame):
 
 		btn = dialog.ShowModal()
 		dialog.Destroy()
+
+	# Display a dialog with a message and OK button.
+	def Notify(self, msg):
+		dialog = wxMessageDialog(parent=self, message=msg, caption="Hey!", style=wxOK)
+		dialog.ShowModal()
+
 
 	# ======================
 	# == File I/O Methods ==
@@ -650,8 +679,8 @@ class SpuObject:
 	def __init__(self, name, packer=0):
 		self.X = 0
 		self.Y = 0
-		self.Name = name
-		self.Width = 75
+		self._Name = name
+		self.Width = 0
 		self.Height = 30
 		self.HasPacker = packer
 		self._IsSelected = 0
@@ -681,12 +710,19 @@ class SpuObject:
 		if self._IsSelected:
 			p.SetWidth(3)
 		dc.SetPen(p)
+		# if width is zero, compute it now based on the text width
+		if self.Width == 0:
+			(self.Width, unused) = dc.GetTextExtent(self._Name)
+			self.Width += 10
+		# draw the SPU as rectangle with text label
 		dc.DrawRectangle(self.X, self.Y, self.Width, self.Height)
-		dc.DrawText(self.Name, self.X + 3, self.Y + 3)
+		dc.DrawText(self._Name, self.X + 3, self.Y + 3)
 		if self.HasPacker:
 			dc.SetBrush(wxBLACK_BRUSH)
-			dc.DrawRectangle(self.X + self.Width - 2, self.Y + self.Height/2 - 4, 4, 8)
+			dc.DrawRectangle(self.X + self.Width, self.Y + self.Height/2 - 4, 4, 8)
 
+	def Name(self):
+		return self._Name
 	def GetWidth(self):
 		return self.Width
 
@@ -701,7 +737,7 @@ class NodeObject:
 		self.X = x
 		self.Y = y
 		self.Width = 200
-		self.Height = 100
+		self.Height = 60
 		self.SpuChain = []
 		self._IsServer = isServer
 		self._IsSelected = 0
@@ -718,6 +754,12 @@ class NodeObject:
 	def AddSPU(self, s):
 		self.SpuChain.append(s)
 
+	def NumSPUs(self):
+		return len(self.SpuChain)
+
+	def LastSPU(self):
+		return self.SpuChain[-1]
+
 	def GetPosition(self):
 		return (self.X, self.Y)
 
@@ -727,7 +769,10 @@ class NodeObject:
 
 	def Draw(self, dc, dx=0, dy=0):
 		# setup the brush and pen
-		dc.SetBrush(wxGREEN_BRUSH);
+		if self._IsServer:
+			dc.SetBrush(ServerNodeBrush);
+		else:
+			dc.SetBrush(AppNodeBrush);
 		p = wxPen(wxColor(0,0,0), width=1, style=0)
 		if self._IsSelected:
 			p.SetWidth(3)
@@ -736,11 +781,14 @@ class NodeObject:
 		y = self.Y + dy
 		# draw the node's box
 		dc.DrawRectangle(x, y, self.Width, self.Height)
-		dc.DrawText("crServer host=cr1", x + 3, y + 3)
 		# draw the unpacker plug
 		if self._IsServer:
+			dc.DrawText("crServer node host=cr1", x + 3, y + 3)
 			dc.SetBrush(wxBLACK_BRUSH)
-			dc.DrawRectangle(x - 2, y + self.Height / 2 - 4, 4, 8)
+			dc.DrawRectangle(x - 4, y + self.Height / 2 - 4, 4, 8)
+		else:
+			dc.DrawText("crApp node host=cr1", x + 3, y + 3)
+
 		# draw the SPUs
 		x = x + 5
 		y = y + 20
