@@ -37,6 +37,10 @@ typedef struct {
 #endif
 } CRClientBits;
 
+/*
+ * NOTE!!!! If you change this structure, search through the code for
+ * occurances of 'defaultPacking' and fix the static initializations!!!!
+ */
 typedef struct {
 	GLint		rowLength;
 	GLint		skipRows;
