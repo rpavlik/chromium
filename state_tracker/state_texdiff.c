@@ -727,7 +727,7 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 				break;
 #ifdef CR_OPENGL_VERSION_1_2
 			case GL_TEXTURE_3D:
-				for (lvl = 0; lvl <= from->maxLevel; lvl++) 
+				for (lvl = 0; lvl <= from->max3DLevel; lvl++) 
 				{
 					CRTextureLevel *tl = &(tobj->level[lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID)) 
