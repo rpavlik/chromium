@@ -66,6 +66,7 @@ readbackSPUInit( int id, SPU *child, SPU *self,
 	window->index = 0;
 	window->renderWindow = 0; /* default render SPU window */
 	window->childWindow = 0;  /* default child SPU window */
+	window->visBits = readback_spu.default_visual;
 	crHashtableAdd(readback_spu.windowTable, 0, window);
 
 	/*crStateInit();*/

@@ -62,6 +62,7 @@ typedef struct {
 	int readSizeX, readSizeY;
 	int drawOffsetX, drawOffsetY;
 	int drawBboxOutlines;
+  int default_visual;
 	/*@}*/
 
 	CRConnection *gather_conn;

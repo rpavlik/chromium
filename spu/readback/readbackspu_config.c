@@ -126,6 +126,34 @@ SPUOptions readbackSPUOptions[] = {
 };
 
 
+static int
+ParseVisString( const char *visString )
+{
+	int mask = 0;
+	if (crStrlen(visString) > 0) {
+		if (crStrstr(visString, "rgb"))
+			mask |= CR_RGB_BIT;
+		if (crStrstr(visString, "alpha"))
+			mask |= CR_ALPHA_BIT;
+		if (crStrstr(visString, "z") || crStrstr(visString, "depth"))
+			mask |= CR_DEPTH_BIT;
+		if (crStrstr(visString, "stencil"))
+			mask |= CR_STENCIL_BIT;
+		if (crStrstr(visString, "accum"))
+			mask |= CR_ACCUM_BIT;
+		if (crStrstr(visString, "stereo"))
+			mask |= CR_STEREO_BIT;
+		if (crStrstr(visString, "multisample"))
+			mask |= CR_MULTISAMPLE_BIT;
+		if (crStrstr(visString, "double"))
+			mask |= CR_DOUBLE_BIT;
+		if (crStrstr(visString, "pbuffer"))
+			mask |= CR_PBUFFER_BIT;
+	}
+	return mask;
+}
+
+
 void readbackspuGatherConfiguration( ReadbackSPU *readback_spu )
 {
 	CRConnection *conn;
@@ -165,6 +193,14 @@ void readbackspuGatherConfiguration( ReadbackSPU *readback_spu )
 			sscanf(response, "%d", &renderToAppWindow);
 			readback_spu->renderToAppWindow = renderToAppWindow;
 		}
+		if (crMothershipGetSPUParam( conn, response, "default_visual" )) {
+			readback_spu->default_visual = ParseVisString(response);
+		}
+		else {
+			/* This *MUST* match the default in the Render SPU */
+			readback_spu->default_visual = CR_RGB_BIT | CR_DOUBLE_BIT | CR_DEPTH_BIT;
+		}
+
 	}
 
 	crMothershipDisconnect( conn );
