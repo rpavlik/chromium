@@ -33,7 +33,7 @@ static void set_window_geometry( RenderSPU *render_spu, const char *response )
 
 static void set_display_string( RenderSPU *render_spu, const char *response )
 {
-   	strncpy(render_spu->display_string, response, sizeof(render_spu->display_string));
+   	crStrncpy(render_spu->display_string, response, sizeof(render_spu->display_string));
 }
 
 static void set_fullscreen( RenderSPU *render_spu, const char *response )
@@ -120,7 +120,7 @@ static void set_lut8( RenderSPU *render_spu, const char *response )
 	render_spu->use_lut8 = 1;
 }
 
-void set_master_url ( RenderSPU *render_spu, char *response )
+static void set_master_url ( RenderSPU *render_spu, char *response )
 {
 	if (response[0])
 		render_spu->swap_master_url = crStrdup( response );
@@ -128,12 +128,12 @@ void set_master_url ( RenderSPU *render_spu, char *response )
 		render_spu->swap_master_url = NULL;
 }
 
-void set_is_master ( RenderSPU *render_spu, char *response )
+static void set_is_master ( RenderSPU *render_spu, char *response )
 {
 	render_spu->is_swap_master = crStrToInt( response );
 }
 
-void set_num_clients ( RenderSPU *render_spu, char *response )
+static void set_num_clients ( RenderSPU *render_spu, char *response )
 {
 	render_spu->num_swap_clients = crStrToInt( response );
 }
@@ -214,6 +214,8 @@ void renderspuGatherConfiguration( RenderSPU *render_spu )
 
 	conn = crMothershipConnect( );
 	
+	render_spu->drawCursor = GL_FALSE;
+
 	if (conn) {
 		crMothershipIdentifySPU( conn, render_spu->id );
 		
@@ -226,11 +228,10 @@ void renderspuGatherConfiguration( RenderSPU *render_spu )
 		/* Additional configuration not expressed in the 
 		 * SPUOptions array:
 		 */
-		if (crMothershipGetParam( conn, "show_cursor", response ) ) {
-			int show_cursor;
+		if (crMothershipGetParam( conn, "show_cursor", response ) && crStrlen(response) > 0) {
+			int show_cursor = 0;
 			sscanf( response, "%d", &show_cursor );
-			render_spu->drawCursor = show_cursor 
-				? GL_TRUE : GL_FALSE;
+			render_spu->drawCursor = show_cursor ? GL_TRUE : GL_FALSE;
 		}
 
 		crMothershipDisconnect( conn );
