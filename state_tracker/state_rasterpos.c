@@ -61,9 +61,9 @@ void crStateRasterPosUpdate(CRContext *g,
 
 void STATE_APIENTRY crStateRasterPos2d(GLdouble x, GLdouble y)
 {
-  CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRContext *g = GetCurrentContext();
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -81,9 +81,9 @@ void STATE_APIENTRY crStateRasterPos2d(GLdouble x, GLdouble y)
 
 void STATE_APIENTRY crStateRasterPos2f(GLfloat x, GLfloat y)
 {
-  CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRContext *g = GetCurrentContext();
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -101,9 +101,9 @@ void STATE_APIENTRY crStateRasterPos2f(GLfloat x, GLfloat y)
 
 void STATE_APIENTRY crStateRasterPos2i(GLint x, GLint y)
 {
-  CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRContext *g = GetCurrentContext();
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -121,9 +121,9 @@ void STATE_APIENTRY crStateRasterPos2i(GLint x, GLint y)
 
 void STATE_APIENTRY crStateRasterPos2s(GLshort x, GLshort y)
 {
-  CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRContext *g = GetCurrentContext();
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -141,9 +141,9 @@ void STATE_APIENTRY crStateRasterPos2s(GLshort x, GLshort y)
 
 void STATE_APIENTRY crStateRasterPos3d(GLdouble x, GLdouble y, GLdouble z)
 {
-  CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRContext *g = GetCurrentContext();
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -161,9 +161,9 @@ void STATE_APIENTRY crStateRasterPos3d(GLdouble x, GLdouble y, GLdouble z)
 
 void STATE_APIENTRY crStateRasterPos3f(GLfloat x, GLfloat y, GLfloat z)
 {
-  CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRContext *g = GetCurrentContext();
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -181,9 +181,9 @@ void STATE_APIENTRY crStateRasterPos3f(GLfloat x, GLfloat y, GLfloat z)
 
 void STATE_APIENTRY crStateRasterPos3i(GLint x, GLint y, GLint z)
 {
-  CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRContext *g = GetCurrentContext();
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -202,8 +202,8 @@ void STATE_APIENTRY crStateRasterPos3i(GLint x, GLint y, GLint z)
 void STATE_APIENTRY crStateRasterPos3s(GLshort x, GLshort y, GLshort z)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -222,8 +222,8 @@ void STATE_APIENTRY crStateRasterPos3s(GLshort x, GLshort y, GLshort z)
 void STATE_APIENTRY crStateRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -242,8 +242,8 @@ void STATE_APIENTRY crStateRasterPos4d(GLdouble x, GLdouble y, GLdouble z, GLdou
 void STATE_APIENTRY crStateRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -262,8 +262,8 @@ void STATE_APIENTRY crStateRasterPos4f(GLfloat x, GLfloat y, GLfloat z, GLfloat 
 void STATE_APIENTRY crStateRasterPos4i(GLint x, GLint y, GLint z, GLint w)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -282,8 +282,8 @@ void STATE_APIENTRY crStateRasterPos4i(GLint x, GLint y, GLint z, GLint w)
 void STATE_APIENTRY crStateRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort w)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -302,8 +302,8 @@ void STATE_APIENTRY crStateRasterPos4s(GLshort x, GLshort y, GLshort z, GLshort 
 void STATE_APIENTRY crStateRasterPos2dv(const GLdouble *v)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -321,9 +321,9 @@ void STATE_APIENTRY crStateRasterPos2dv(const GLdouble *v)
 
 void STATE_APIENTRY crStateRasterPos2fv(const GLfloat *v)
 {
-  CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRContext *g = GetCurrentContext();
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -342,8 +342,8 @@ void STATE_APIENTRY crStateRasterPos2fv(const GLfloat *v)
 void STATE_APIENTRY crStateRasterPos2iv(const GLint *v)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -362,8 +362,8 @@ void STATE_APIENTRY crStateRasterPos2iv(const GLint *v)
 void STATE_APIENTRY crStateRasterPos2sv(const GLshort *v)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -382,8 +382,8 @@ void STATE_APIENTRY crStateRasterPos2sv(const GLshort *v)
 void STATE_APIENTRY crStateRasterPos3dv(const GLdouble *v)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -402,8 +402,8 @@ void STATE_APIENTRY crStateRasterPos3dv(const GLdouble *v)
 void STATE_APIENTRY crStateRasterPos3fv(const GLfloat *v)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -422,8 +422,8 @@ void STATE_APIENTRY crStateRasterPos3fv(const GLfloat *v)
 void STATE_APIENTRY crStateRasterPos3iv(const GLint *v)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -442,8 +442,8 @@ void STATE_APIENTRY crStateRasterPos3iv(const GLint *v)
 void STATE_APIENTRY crStateRasterPos3sv(const GLshort *v)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -462,8 +462,8 @@ void STATE_APIENTRY crStateRasterPos3sv(const GLshort *v)
 void STATE_APIENTRY crStateRasterPos4dv(const GLdouble *v)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -482,8 +482,8 @@ void STATE_APIENTRY crStateRasterPos4dv(const GLdouble *v)
 void STATE_APIENTRY crStateRasterPos4fv(const GLfloat *v)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -502,8 +502,8 @@ void STATE_APIENTRY crStateRasterPos4fv(const GLfloat *v)
 void STATE_APIENTRY crStateRasterPos4iv(const GLint *v)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
@@ -522,8 +522,8 @@ void STATE_APIENTRY crStateRasterPos4iv(const GLint *v)
 void STATE_APIENTRY crStateRasterPos4sv(const GLshort *v)
 {
 	CRContext *g = GetCurrentContext();
-  CRStateBits *sb = GetCurrentBits();
-  CRCurrentBits *cb = &(sb->current);
+  	CRStateBits *sb = GetCurrentBits();
+  	CRCurrentBits *cb = &(sb->current);
 
 	if (g->current.inBeginEnd)
 	{
