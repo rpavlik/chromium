@@ -53,6 +53,7 @@ crStateClientInit
 crStateGetCurrent
 crStateLimitsInit
 crStateMergeExtensions
+crStateTextureCheckDirtyImages
 __currentBits
 __stateChromiumExtensions
 __stateExtensionString
