@@ -700,7 +700,7 @@ GLboolean stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 			if (window->spuWindow == -1) 
 				window->spuWindow = stub.spu->dispatch_table.WindowCreate( window->dpyName, context->visBits );
 
-			if (window->type == NATIVE)
+			if (window->spuWindow != window->drawable)
 				 stub.spu->dispatch_table.MakeCurrent( window->spuWindow,
 																							 (GLint) window->drawable,
 																							 context->spuContext );
