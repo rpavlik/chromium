@@ -17,14 +17,12 @@ ifdef WINDOWS
 TRACKS_STATE = 0
 LIBRARIES = spuload crutil crmothership
 else
-# use static libcrstate.a on everything else
-LIBRARIES = spuload crutil crmothership #crstate
+LIBRARIES = spuload crutil crmothership
 endif
 
 
 ifdef BINUTIL_LINK_HACK
 TRACKS_STATE = 0
-LIBRARIES -= #crstate
 endif
 
 SLOP = $(PRECOMP)
