@@ -14,7 +14,7 @@ Rules for alpha compositing:
 The required arguments to the spu, they are order dependent!
 
 	'peers' : the list of nodes in the compositing network
-	'node#' : the number of this particular node
+	'node_number' : the number of this particular node
 	'type'  : either 'depth' or 'alpha'
 
 Here is an example file for use with depth compositing:
@@ -37,13 +37,13 @@ server_spu.Conf( 'window_geometry', 0, 50, 256, 256 )
 client_spu1 = SPU( 'binaryswap' )
 client_spu1.Conf( 'peers', NODES )
 client_spu1.Conf( 'window_geometry', 0, 256, 256, 256 )
-client_spu1.Conf( 'node#', '0' )
+client_spu1.Conf( 'node_number', '0' )
 client_spu1.Conf( 'type', 'depth' )
 
 client_spu2 = SPU( 'binaryswap' )
 client_spu2.Conf( 'peers', NODES )
 client_spu2.Conf( 'window_geometry', 0, 256, 256, 256 )
-client_spu2.Conf( 'node#', '1' )
+client_spu2.Conf( 'node_number', '1' )
 client_spu2.Conf( 'type', 'depth' )
 
 server_node = CRNetworkNode( 'fifo' )
