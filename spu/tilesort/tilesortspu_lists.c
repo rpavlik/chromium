@@ -69,20 +69,18 @@ tilesortspu_EndList(void)
 	/* restore normal/default dispatch table */
 	crdlm_RestoreDispatch();  /* companion to crdlm_EndList() */
 
-	if (mode == GL_COMPILE_AND_EXECUTE) {
-		/* we really used GL_COMPILE mode.  Now, replay/execute the list */
-		crdlm_CallList(list, &tilesort_spu.self);
-	}
-
-
 	tilesortspuBroadcastGeom(0);
 
 	/* Turn the geometry_only flag back on.
 	 * See the longer comment above in tilesortspu_NewList().
 	 */
 	c->buffer.geometry_only = GL_TRUE;
-}
 
+	if (mode == GL_COMPILE_AND_EXECUTE) {
+		/* we really used GL_COMPILE mode.  Now, replay/execute the list */
+		tilesortspu_CallList(list);
+	}
+}
 
 
 /*
@@ -156,7 +154,11 @@ tilesortspuStateCallLists(GLsizei n, GLenum type, const GLvoid *lists)
 void TILESORTSPU_APIENTRY
 tilesortspu_CallList(GLuint list)
 {
+#if 0
+	GET_CONTEXT(ctx);
+#else
 	GET_THREAD(thread);
+#endif
 	GLboolean resetBBox = GL_FALSE;
 
 	if (thread->currentContext->State->lists.mode == 0) {
@@ -178,12 +180,14 @@ tilesortspu_CallList(GLuint list)
 				bbox[3] = bounds.xmax;
 				bbox[4] = bounds.ymax;
 				bbox[5] = bounds.zmax;
+
 				/*
-				printf("Autobox:\n");
+				printf("Autobox for list %d:\n", list);
 				printf(" %f .. %f\n", bounds.xmin, bounds.xmax);
 			  printf(" %f .. %f\n", bounds.ymin, bounds.ymax);
 				printf(" %f .. %f\n", bounds.zmin, bounds.zmax);
 				*/
+
 				/* set the bounding box */
 				tilesortspu_ChromiumParametervCR(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bbox);
 				resetBBox = GL_TRUE;
@@ -198,6 +202,26 @@ tilesortspu_CallList(GLuint list)
 		/* we're compiling a glCallList into another display list */
 		crdlm_compile_CallList( list );
 	}
+
+	/* This is experimental code to fix some issues with glBindTexture
+	 * inside display lists.  Basically, if a BindTexture is called in
+	 * a display list, we need to have flushed any changes to the texture
+	 * object before calling the list.
+	 */
+#if 0
+	{
+		 int i;
+		 crPackReleaseBuffer( thread->packer );
+		 for ( i = 0 ; i < tilesort_spu.num_servers; i++ ) {
+				CRContext *serverState = thread->currentContext->server[i].State;
+				crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
+				crStateDiffAllTextureObjects(ctx, serverState->bitid);
+				crPackReleaseBuffer( thread->packer );
+		 }
+		 crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
+	}
+#endif
+
 
 	/* Always pack CallList.  It'll get sent to servers based on the usual
 	 * bucketing routine.
