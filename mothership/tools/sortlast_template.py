@@ -490,7 +490,7 @@ def Create_Sortlast(parentWindow, mothership):
 	readbackSPU = crutils.NewSPU("readback")
 	readbackSPU.SetOption("title", ["Chromium Readback SPU"])
 	readbackSPU.SetOption("window_geometry", [0, 0, width, height])
-	readbackSPU.SetOption("extract_depth", 1)
+	readbackSPU.SetOption("extract_depth", [1])
 	appNode.AddSPU(readbackSPU)
 	packSPU = crutils.NewSPU("pack")
 	appNode.AddSPU(packSPU)
