@@ -21,14 +21,16 @@ void   crStrcpy( char *dst, const char *src );
 void   crStrncpy( char *dst, const char *src, unsigned int len );
 void   crStrcat( char *dst, const char *src );
 char  *crStrjoin( const char *src1, const char *src2 );
+char  *crStrjoin3( const char *src1, const char *src2, const char *src3 );
 char  *crStrstr( const char *str, const char *pat );
 char  *crStrchr( const char *str, char c );
 char  *crStrrchr( const char *str, char c );
 int    crStrToInt( const char *str );
-float crStrToFloat( const char *str );
+float  crStrToFloat( const char *str );
 char **crStrSplit( const char *str, const char *splitstr );
 char **crStrSplitn( const char *str, const char *splitstr, int n );
 void   crFreeStrings( char **strings );
+char  *crStrIntersect( const char *s1, const char *s2 );
 
 void   crBytesToString( char *string, int nstring, void *data, int ndata );
 void   crWordsToString( char *string, int nstring, void *data, int ndata );

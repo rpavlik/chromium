@@ -155,6 +155,20 @@ char *crStrjoin( const char *str1, const char *str2 )
 	return s;
 }
 
+char *crStrjoin3( const char *str1, const char *str2, const char *str3 )
+{
+	const int len1 = crStrlen(str1), len2 = crStrlen(str2), len3 = crStrlen(str3);
+	char *s = crAlloc(len1 + len2 + len3 + 1);
+	if (s)
+	{
+		memcpy( s, str1, len1 );
+		memcpy( s + len1, str2, len2 );
+		memcpy( s + len1 + len2, str3, len3 );
+		s[len1 + len2 + len3] = '\0';
+	}
+	return s;
+}
+
 char *crStrstr( const char *str, const char *pat )
 {
 	int pat_len = crStrlen( pat );
@@ -317,3 +331,57 @@ void crFreeStrings( char **strings )
 	}
 	crFree(strings);
 }
+
+
+/* Intersect two strings on a word-by-word basis (separated by spaces).
+ * We typically use this to intersect OpenGL extension strings.
+ * Example: if s1 = "apple banana plum pear"
+ *         and s2 = "plum banana orange"
+ *      then return "banana plum" (or "plum banana").
+ */
+char *crStrIntersect( const char *s1, const char *s2 )
+{
+	const int len1 = crStrlen(s1);
+	const int len2 = crStrlen(s2);
+	int resultLen;
+	char *result;
+	char **exten1, **exten2;
+	int i, j;
+
+	/* allocate storage for result (a conservative estimate) */
+	resultLen = ((len1 > len2) ? len1 : len2) + 2;
+	result = (char *) crAlloc(resultLen);
+	if (!result)
+	{
+		return NULL;
+	}
+	result[0] = 0;
+
+	/* split s1 and s2 at space chars */
+	exten1 = crStrSplit(s1, " ");
+	exten2 = crStrSplit(s2, " ");
+
+	for (i = 0; exten1[i]; i++)
+	{
+		for (j = 0; exten2[j]; j++)
+		{
+			if (crStrcmp(exten1[i], exten2[j]) == 0)
+			{
+				/* found an intersection, append to result */
+				crStrcat(result, exten1[i]);
+				crStrcat(result, " ");
+				break;
+			}
+		}
+	}
+
+	/* free split strings */
+	crFreeStrings( exten1 );
+	crFreeStrings( exten2 );
+
+	/*CRASSERT(crStrlen(result) < resultLen);*/
+
+	/* all done! */
+	return result;
+}
+

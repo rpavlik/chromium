@@ -32,8 +32,10 @@ crStrcpy
 crStrncpy
 crStrcat
 crStrjoin
+crStrjoin3
 crStrToInt
 crStrToFloat
+crStrIntersect
 crBytesToString
 crWordsToString
 crGetHostname
