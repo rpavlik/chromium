@@ -67,14 +67,21 @@ CRDLLFunc crDLLGet( CRDLL *dll, const char *symname )
 
 void crDLLClose( CRDLL *dll )
 {
+	int dll_err = 0;
+
+	if (!dll) return;
+
 #if defined(WINDOWS)
 	FreeLibrary( dll->hinstLib );
 #elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined (DARWIN) || defined(SunOS) || defined(OSF1)
-
-	dlclose( dll->hinstLib );
+	dll_err = dlclose( dll->hinstLib );
 #else
 #error DSO
 #endif
+
+	if (dll_err)
+		crWarning("Error closing DLL %s\n",dll->name);
+
 	crFree( dll->name );
 	crFree( dll );
 }

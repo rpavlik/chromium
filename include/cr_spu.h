@@ -184,6 +184,7 @@ void crSPUInitDispatch( SPUDispatchTable *dispatch, const SPUNamedFunctionTable 
 void crSPUInitDispatchNops(SPUDispatchTable *table);
 
 int crLoadOpenGL( crOpenGLInterface *crInterface, SPUNamedFunctionTable table[] );
+void crUnloadOpenGL( void );
 int crLoadOpenGLExtensions( const crOpenGLInterface *crInterface, SPUNamedFunctionTable table[] );
 
 #ifdef __cplusplus

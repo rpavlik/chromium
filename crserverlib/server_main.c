@@ -32,6 +32,7 @@ static void DeleteBarrierCallback( void *data )
 static void crServerTearDown( void )
 {
 	SPU *the_spu = cr_server.head_spu;
+	SPU *next_spu;
 	unsigned int i;
 
 	/* avoid a race condition */
@@ -72,8 +73,14 @@ static void crServerTearDown( void )
 			the_spu->cleanup();
 		} else 
 			break;
-		the_spu = the_spu->superSPU;
+		next_spu = the_spu->superSPU;
+		crDLLClose(the_spu->dll);
+		crFree(the_spu);
+		the_spu = next_spu;
 	}
+	cr_server.head_spu = NULL;
+
+	crUnloadOpenGL();
 }
 
 static void crServerClose( unsigned int id )

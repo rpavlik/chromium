@@ -149,6 +149,7 @@ static void stubInitSPUDispatch(SPU *spu)
 static void stubSPUTearDown(void)
 {
 	SPU *the_spu = stub.spu;
+	SPU *next_spu;
 
 	while (1) {
 		if (the_spu && the_spu->cleanup) {
@@ -157,9 +158,13 @@ static void stubSPUTearDown(void)
 		} else 
 			break;
 		the_spu = the_spu->superSPU;
+		crDLLClose(the_spu->dll);
+		crFree(the_spu);
+		the_spu = next_spu;
 	}
-
 	stub.spu = NULL;
+
+	crUnloadOpenGL();
 }
 
 static void stubExitHandler(void)

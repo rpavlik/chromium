@@ -163,6 +163,13 @@ for func_name in stub_common.AllSpecials( "glloader_extensions" ):
 # Generate the crLoadOpenGL() function
 #
 print """
+void
+crUnloadOpenGL( void )
+{
+	crDLLClose( glDll );
+	glDll = NULL;
+}
+
 /*
  * Initialize the 'interface' structure with the WGL or GLX window system
  * interface functions.
@@ -174,15 +181,17 @@ int
 crLoadOpenGL( crOpenGLInterface *interface, SPUNamedFunctionTable table[] )
 {
 	SPUNamedFunctionTable *entry = table;
+	char *env_syspath = crGetenv( "CR_SYSTEM_GL_PATH" );
 	
 	crDebug( "Looking for the system's OpenGL library..." );
-	glDll = __findSystemGL( crGetenv( "CR_SYSTEM_GL_PATH" ) );
+	glDll = __findSystemGL( env_syspath );
 	if (!glDll)
 	{
 		crError("Unable to find system OpenGL!");
 		return 0;
 	}
-	crDebug( "Found it in %s.", !crGetenv("CR_SYSTEM_GL_PATH") ? "default path" : crGetenv("CR_SYSTEM_GL_PATH") );
+
+	crDebug( "Found it in %s.", !env_syspath ? "default path" : env_syspath );
 """
 
 useful_wgl_functions = [
