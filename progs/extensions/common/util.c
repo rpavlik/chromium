@@ -39,22 +39,23 @@ RenderString(float x, float y, char *string)
 }
 
 
+/* Searches through the OpenGL extensions string for extension.
+ *  Returns true if found, otherwise returns false.
+ */
 int
 CheckForExtension(const char *extension)
-//  Searches through the OpenGL extensions string for extension.
-//  Returns true if found, otherwise returns false.
 {
 	const GLubyte *extensions = NULL, *start;
 	GLubyte *where, *terminator;
 
-	//  Extension names should not have spaces.
+	/* Extension names should not have spaces. */
 	where = (GLubyte *) strchr(extension, ' ');
 	if (where || *extension == '\0')
 		return 0;
 	extensions = glGetString(GL_EXTENSIONS);
-	//  It takes a bit of care to be fool-proof about parsing the
-	//  OpenGL extensions string. Don't be fooled by sub-strings,
-	//  etc.
+	/* It takes a bit of care to be fool-proof about parsing the
+         *  OpenGL extensions string. Don't be fooled by sub-strings, etc.
+         */
 	start = extensions;
 	for (;;)
 	{

@@ -51,11 +51,11 @@ Display(void)
 {
 	static double theta = 0.0;
 
-	// begin temp
+	/* begin temp */
 	static GLfloat texDetail = 2.0;
 	static GLint size = 30;
 	static GLint x, y;
-	// end temp
+	/* end temp */
 
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -67,7 +67,7 @@ Display(void)
 	glRotated(theta, 0.0, 1.0, 0.0);
 
 #ifdef MULTIPLE_VIEWPORTS
-	// Left Viewport
+	/* Left Viewport */
 	glViewport(0, 0, currentWidth >> 1, currentHeight);
 	glFogi((GLenum) GL_FOG_DISTANCE_MODE_NV, defaultFogDistanceMode);
 #ifdef DISPLAY_LIST
@@ -97,7 +97,7 @@ Display(void)
 	RenderString(-1.08, .85, "(implementation specific default)");
 	glEnable(GL_FOG);
 
-	// Right Viewport
+	/* Right Viewport */
 	glViewport(currentWidth >> 1, 0, currentWidth >> 1, currentHeight);
 #endif /* MULTIPLE_VIEWPORTS */
 	glFogi((GLenum) GL_FOG_DISTANCE_MODE_NV, GL_EYE_RADIAL_NV);
@@ -250,7 +250,7 @@ InitSpecial(void)
 
 	GLubyte textureData[32 * 32];
 
-	// Create a noise texture (Grass).
+	/* Create a noise texture (Grass). */
 	srand(2);
 	for (x = 0; x < 32; x++)
 	{
@@ -283,9 +283,9 @@ InitSpecial(void)
 		break;
 	}
 
-	// Create the tile texture.
+	/* Create the tile texture. */
 	glGenTextures(1, texture);
-	// Create Trillenar MipMapped Texture
+	/* Create Trillenar MipMapped Texture */
 	glBindTexture(GL_TEXTURE_2D, texture[0]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
@@ -294,7 +294,7 @@ InitSpecial(void)
 			  GL_UNSIGNED_BYTE, textureData);
 
 #ifdef DISPLAY_LIST
-	// Make the display list for the grass.
+	/* Make the display list for the grass. */
 	glNewList(1, GL_COMPILE);
 	glEnable(GL_TEXTURE_2D);
 	glColor3f(0.6, 1.0, 0.2);
