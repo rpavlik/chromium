@@ -307,6 +307,17 @@ void crPackAppendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bounds )
 	pc->buffer.holds_List |= src->holds_List;
 }
 
+
+#ifndef CHROMIUM_THREADSAFE
+static unsigned char *sanityCheckPointer = NULL;
+#endif
+
+
+/*
+ * Allocate space for a command that might be very large, such as
+ * glTexImage2D or glBufferDataARB call.
+ * The command buffer _MUST_ then be transmitted by calling crHugePacket.
+ */
 void *crPackAlloc( unsigned int size )
 {
 	GET_PACKER_CONTEXT(pc);
@@ -350,16 +361,28 @@ void *crPackAlloc( unsigned int size )
 	{
 		*((unsigned int *) data_ptr) = size;
 	}
-	return ( data_ptr + 4 );
+#ifndef CHROMIUM_THREADSAFE
+	sanityCheckPointer = data_ptr + 4;
+#endif
+	return data_ptr + 4;
 }
 
 #define IS_BUFFERED( packet ) \
     ((unsigned char *) (packet) >= pc->buffer.data_start && \
 	 (unsigned char *) (packet) < pc->buffer.data_end)
 
+
+/*
+ * Transmit a packet which was allocated with crPackAlloc.
+ */
 void crHugePacket( CROpcode opcode, void *packet )
 {
 	GET_PACKER_CONTEXT(pc);
+#ifndef CHROMIUM_THREADSAFE
+	CRASSERT(sanityCheckPointer == packet);
+	sanityCheckPointer = NULL;
+#endif
+
 	if ( IS_BUFFERED( packet ) )
 		WRITE_OPCODE( pc, opcode );
 	else

@@ -205,8 +205,6 @@ void crServerSerializeRemoteStreams(void)
 
 		for( ;; )
 		{
-			CRMessageOpcodes *msg_opcodes;
-			char *data_ptr;
 			unsigned int len;
 
 			/* Check the current clients connection status, as
@@ -283,16 +281,26 @@ void crServerSerializeRemoteStreams(void)
 			 */
 			cr_server.currentSerialNo = 0;
 
-			msg_opcodes = (CRMessageOpcodes *) msg;
-			data_ptr = (char *) msg_opcodes + 
-				sizeof( *msg_opcodes) + 
-				((msg_opcodes->numOpcodes + 3 ) & ~0x03);
-			crUnpack( data_ptr, 
-					data_ptr-1, 
-					msg_opcodes->numOpcodes, 
-					&(cr_server.dispatch) );
+			/* OK, dispatch this buffer full of GL commands here */
+			{
+				const CRMessageOpcodes *msg_opcodes;
+				int opcodeBytes;
+				const char *data_ptr;
+
+				CRASSERT(msg->header.type == CR_MESSAGE_OPCODES);
+
+				msg_opcodes = (const CRMessageOpcodes *) msg;
+				opcodeBytes = (msg_opcodes->numOpcodes + 3) & ~0x03;
+
+				data_ptr = (const char *) msg_opcodes + sizeof(CRMessageOpcodes) + opcodeBytes;
+				crUnpack(data_ptr,                 /* first command's operands */
+								 data_ptr - 1,             /* first command's opcode */
+								 msg_opcodes->numOpcodes,  /* how many opcodes */
+								 &(cr_server.dispatch));  /* the CR dispatch table */
+			}
 
 			crNetFree( cr_server.curClient->conn, msg );
+
 			if (q->blocked)
 			{
 				break;

@@ -173,6 +173,15 @@ void tilesortspuShipBuffers( void )
 	}
 }
 
+
+/*
+ * This function is called by the packer when it's got to pack a command
+ * that's too large to fit in a normal buffer (such as a big glTexImage2D
+ * call).
+ * 'buf' will point to the first byte of the GL command parameters (such
+ * as glTexImage2D's 'target' parameter.
+ * 'opcode' should be the CR opcode, like CR_TEXIMAGE2D_OPCODE.
+ */
 void tilesortspuHuge( CROpcode opcode, void *buf )
 {
 	GET_THREAD(thread);
@@ -198,15 +207,25 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 	   a header */
 	len = ((unsigned int *) buf)[-1] + 4 + sizeof(CRMessageOpcodes);
 
-	/* write the opcode in just before the length */
+	/* Write the opcode in just before the length.
+	 * Recall that operands get stored upward through memory while
+	 * opcodes go downward.  This next instruction puts the single
+	 * opcode just below the first operand data.
+	 * With huge buffers, the first 4-byte word of operand data is
+	 * always the total command length.
+	 */
 	((unsigned char *) buf)[-5] = (unsigned char) opcode;
 
-	/* fix up the pointer to the packet to include the length & opcode
-       & header */
+	/* The start of the buffer we're going to send really starts
+	 * before the 'buf' pointer.  We skip (downward) the 4-byte space
+	 * for opcodes, the 4-byte command size word, and the
+	 * sizeof(CRMessageOpcodes).
+	 */
 	src = (unsigned char *) buf - 8 - sizeof(CRMessageOpcodes);
 
 	msg = (CRMessageOpcodes *) src;
 
+	/* we only transmit one GL command per huge buffer, actually */
 	if (tilesort_spu.swap)
 	{
 		msg->header.type = (CRMessageType) SWAP32(CR_MESSAGE_OPCODES);
