@@ -387,8 +387,6 @@ void tilesortspuPinch (void)
 	 */
 	tilesort_spu.pinchState.numRestore = numRestore;
 	tilesort_spu.pinchState.wind = wind;
-
-	crFree(texCoord_ptr);
 }
 
 void __pinchIssueParams (CRVertex *vtx) 
