@@ -1,309 +1,329 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <!-- Copyright (c) 2001, Stanford University
      All rights reserved.
 
-	 See the file LICENSE.txt for information on redistributing this software.  -->
+         See the file LICENSE.txt for information on redistributing this software.  -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
-<title>New Page 1</title>
-<base target="_self">
-<link rel="stylesheet" type="text/css" href="chromium.css">
-</head>
-
-<body bgcolor="#FFFFFF">
-
-<h1 class="PageHeading">Automatic Start-up and Configuration</h1>
-<p>
-Normally, running a Chromium configuration involves starting the
-mothership then one or more server nodes (crserver) and application nodes
-(crappfaker).
-With the auto-start / auto-config feature you can simply run an OpenGL
-program normally and have it run on Chromium.
-</p>
-
-
-
-<h2 class="PageSubHeading">Auto-Start</h2>
-
-
-
-<p>The node.AutoStart() function allows you to execute an arbitrary shell
-command in order to spawn the Chromium crserver and crappfaker programs.
-This saves you from having to manually starting the programs yourself.
-</p>
-
-<p>
-To start, let's define two strings with some environment variables and
-the name of the program to run:
-</p>
-
-<pre class="GrayCodeListing2">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+    <title>
+      Automatic Start-up and Configuration
+    </title>
+    <base target="_self">
+    <link rel="stylesheet" type="text/css" href="chromium.css">
+  </head>
+  <body>
+    <h1 class="PageHeading">
+      Automatic Start-up and Configuration
+    </h1>
+    <p>
+      Normally, running a Chromium configuration involves starting the
+      mothership then one or more server nodes (<span class=
+      "CrApp">crserver</span>) and application nodes (<span class=
+      "CrApp">crappfaker</span>). With the auto-start / auto-config feature you
+      can simply run an OpenGL program normally and have it run on Chromium.
+    </p>
+    <h2 class="PageSubHeading">
+      Auto-Start
+    </h2>
+    <p>
+      The <code class="Function">node.AutoStart()</code> function allows you to
+      execute an arbitrary shell command in order to spawn the Chromium
+      crserver and <span class="CrApp">crappfaker</span> programs. This saves
+      you from having to manually starting the programs yourself.
+    </p>
+    <p>
+      To start, let's define two strings with some environment variables and
+      the name of the program to run:
+    </p>
+    <pre class="GrayCodeListing2">
 env = "LD_LIBRARY_PATH=" + crlibdir
 prog = crbindir + "/crserver"
 </pre>
-
-<p>
-Now, here's an example of how to autmatically start a crserver on a remote
-host named "mars" using rsh:
-</p>
-
-<pre class="GrayCodeListing2">
+    <p>
+      Now, here's an example of how to autmatically start a crserver on a
+      remote host named "mars" using rsh:
+    </p>
+    <pre class="GrayCodeListing2">
 node.AutoStart( [ "/usr/bin/rsh", "mars",
-		  "/bin/sh -c '" + env + " " + prog + "'" ] )
+                  "/bin/sh -c '" + env + " " + prog + "'" ] )
 </pre>
-
-<p>
-Here's an example of how to autmatically start a crserver on the local host
-just using sh:
-</p>
-
-<pre class="GrayCodeListing2">
+    <p>
+      Here's an example of how to autmatically start a crserver on the local
+      host just using sh:
+    </p>
+    <pre class="GrayCodeListing2">
 node.AutoStart( ["/bin/sh", "-c", env + " " + prog] )
 </pre>
-
-<p>
-To start the crappfaker instead of crserver, just change the <code>prog</code>
-assignment above.
-</p>
-
-
-<p>
-Basically, the AutoStart() function takes a list of command line arguments
-which are passed to the Python os.spawnv() function.
-</p>
-
-<p>
-We use /bin/sh (the Bourne shell) to be sure that the
-environment variables will be interpreted correctly.
-You may have to do some tinkering to make things work correctly on your
-system.  Some things to check:
-</p>
-<ul>
-<li>Manually check that rsh or sh works without having to type in a password.
-<li>Check where sh and rsh live in your filesystem and set the paths
-    accordingly.
-<li>Add extra environment vars as needed, such as CRMOTHERSHIP, if they're not
-    set in your .bashrc file.
-<li>To debug things, try typing the rsh or sh commands in a terminal window
-    and see what happens (instead of using AutoStart right away).
-</ul>
-
-
-<h2 class="PageSubHeading">Auto-Config</h2>
-
-<p>
-Auto-Config is a feature that automatically starts the mothership when
-you run an OpenGL program.  In turn, the mothership can automatically
-start all the crappfaker and crserver processes (as described above).
-The end result is that
-users can run their OpenGL programs in the normal manner and automatically
-use Chromium.
-</p>
-
-<p>
-This example assumes that Chromium is located in /usr/local/Chromium-x.y/.
-Adjust these instructions accordingly if you have Chromium installed
-elsewhere.
-</P>
-<P>
-The following steps need to be taken:
-</p>
-
-<p><b>1. (For Unix/Linux) Use libcrfaker.so instead of libGL.so</b></p>
-<p>
-We have to trick the OpenGL application into using the crfaker library
-instead of the normal OpenGL library.
-One solution is to create symbolic links from libcrfaker.so to libGL.so
-and libGL.so.1 and then use LD_LIBRARY_PATH to tell the application
-where to find the library.
-For example:
-
-<pre>
+    <p>
+      To start the <span class="CrApp">crappfaker</span> instead of
+      <span class="CrApp">crserver</span>, just change the <code>prog</code>
+      assignment above.
+    </p>
+    <p>
+      Basically, the <span class="Function">AutoStart()</span> function takes a
+      list of command line arguments which are passed to the Python
+      <span class="Function">os.spawnv()</span> function.
+    </p>
+    <p>
+      We use /bin/sh (the Bourne shell) to be sure that the environment
+      variables will be interpreted correctly. You may have to do some
+      tinkering to make things work correctly on your system. Some things to
+      check:
+    </p>
+    <ul>
+      <li>Manually check that <span class="App">rsh</span> or <span class=
+      "App">sh</span> works without having to type in a password.
+      </li>
+      <li>Check where <span class="App">sh</span> and <span class=
+      "App">rsh</span> live in your filesystem and set the paths accordingly.
+      </li>
+      <li>Add extra environment vars as needed, such as <span class=
+      "EnvVar">CRMOTHERSHIP</span>, if they're not set in your <span class=
+      "File">.bashrc</span> file.
+      </li>
+      <li>To debug things, try typing the <span class="App">rsh</span> or
+      <span class="App">sh</span> commands in a terminal window and see what
+      happens (instead of using AutoStart right away).
+      </li>
+    </ul>
+    <h2 class="PageSubHeading">
+      Auto-Config
+    </h2>
+    <p>
+      Auto-Config is a feature that automatically starts the mothership when
+      you run an OpenGL program. In turn, the mothership can automatically
+      start all the <span class="CrApp">crappfaker</span> and <span class=
+      "CrApp">crserver</span> processes (as described above). The end result is
+      that users can run their OpenGL programs in the normal manner and
+      automatically use Chromium.
+    </p>
+    <p>
+      This example assumes that Chromium is located in <span class=
+      "Directory">/usr/local/Chromium-x.y</span>. Adjust these instructions
+      accordingly if you have Chromium installed elsewhere.
+    </p>
+    <p>
+      The following steps need to be taken:
+    </p>
+    <p class="StepList">
+      1. (For Unix/Linux) Use libcrfaker.so instead of libGL.so
+    </p>
+    <p class="Indent">
+      We have to trick the OpenGL application into using the crfaker library
+      instead of the normal OpenGL library. One solution is to create symbolic
+      links from libcrfaker.so to libGL.so and libGL.so.1 and then use
+      LD_LIBRARY_PATH to tell the application where to find the library. For
+      example:
+    </p>
+    <pre>
    cd /usr/local/Chromium-x.y/cr/lib/Linux
    ln -s libcrfaker.so libGL.so
    ln -s libcrfaker.so libGL.so.1
    setenv LD_LIBRARY_PATH /usr/local/Chromium-x.y/cr/lib/Linux
 </pre>
-
-<p><b>1. (For Microsoft Windows) Use libcrfaker.dll instead of opengl32.dll</b></p>
-<p>
-We have to trick the OpenGL application into using the crfaker library
-instead of the normal OpenGL library.
-One solution is to copy the libcrfaker.dll to opengl32.dll and then
-use the PATH environment variable to tell the application where to
-find the library. This will ensure that the new opengl32.dll will
-be picked up before the system's version.
-
-<pre>
+    <p class="StepList">
+      1. (For Microsoft Windows) Use <span class="File">libcrfaker.dll</span>
+      instead of <span class="File">opengl32.dll</span>
+    </p>
+    <p class="Indent">
+      We have to trick the OpenGL application into using the crfaker library
+      instead of the normal OpenGL library. One solution is to copy the
+      libcrfaker.dll to opengl32.dll and then use the PATH environment variable
+      to tell the application where to find the library. This will ensure that
+      the new opengl32.dll will be picked up before the system's version.
+    </p>
+    <pre>
    cd c:\Chromium-x.y\cr\bin\WIN_NT
    copy libcrfaker.dll opengl32.dll
    set PATH=c:\Chromium-x.y\cr\bin\WIN_NT;....
 </pre>
-
-<p><b>2. Make a configuration file</b></p>
-<p>
-A good way to make a configuration file is with the graphical configuration
-tool.
-You might make, for example, a tilesort configuration.
-</p>
-<p>
-Make sure your configuration:
-</p>
-<ul>
-  <li>Sets the <em>Automatically Start Servers</em> option (from
-      the Mothership / Options menu).
-  <li>Sets the <em>System GL Path</em> option for the render SPUs so that
-      the real OpenGL library is found.
-  <li>Do not set the <em>Command</em> option for the application node
-      (from the Node / App Node Options menu).
-</ul>
-
-<p>
-Save your configuration to a file such as
-<code>/usr/local/Chromium-x.y/cr/mothership/configs/myconfig.conf</code>
-</p>
-
-<p><b>XXX -temporary</b></p>
-<p>
-For the time being, you may have to edit your configuration file and
-specify the full path to the Chromium server's python directory:
-<pre>
-sys.path.append( "/usr/local/Chromium-x.y/cr/mothership/server" )
+    <p class="StepList">
+      2. Make a configuration file
+    </p>
+    <p class="Indent">
+      A good way to make a configuration file is with the graphical
+      configuration tool. You might make, for example, a tilesort
+      configuration.
+    </p>
+    <p class="Indent">
+      Make sure your configuration:
+    </p>
+    <ul>
+      <li>Sets the <em>Automatically Start Servers</em> option (from the
+      Mothership / Options menu).
+      </li>
+      <li>Sets the <em>System GL Path</em> option for the <span class=
+      "SPU">render</span> SPUs so that the real OpenGL library is found.
+      </li>
+      <li>Do not set the <em>Command</em> option for the application node (from
+      the Node / App Node Options menu).
+      </li>
+    </ul>
+    <p class="Indent">
+      Save your configuration to a file such as <span class=
+      "File">/usr/local/Chromium-x.y/cr/mothership/configs/myconfig.conf</span>
+    </p>
+    <p class="StepList">
+      XXX -temporary
+    </p>
+    <p class="Indent">
+      For the time being, you may have to edit your configuration file and
+      specify the full path to the Chromium server's python directory:
+    </p>
+    <pre class="GrayCodeListing2">
+   sys.path.append( "/usr/local/Chromium-x.y/cr/mothership/server" )
 </pre>
-<p>
-Otherwise, the configuration script may not be able to find the mothership.py
-file.
-</p>
-
-
-<p><b>3. Set up the .crconfigs file</b></p>
-<p>
-The <b>.crconfigs</b> file is expected to be in your home directory (i.e. at
-<code>/home/joe/.crconfigs</code>).
-If it's not found there, Chromium will look in the current directory when
-you start your application.
-</p>
-<p>
-The <b>.crconfigs</b> file maps program names to configuration names.
-Each line of the file is of the format:
-</p>
-<pre>
-<em>program</em>  <em>configuration</em>
+    <p class="Indent">
+      Otherwise, the configuration script may not be able to find the
+      mothership.py file.
+    </p>
+    <p class="StepList">
+      3. Set up the .crconfigs file
+    </p>
+    <p class="Indent">
+      The <span class="File">.crconfigs</span> file is expected to be in your
+      home directory (i.e. at <span class="File">/home/joe/.crconfigs</span>).
+      If it's not found there, Chromium will look in the current directory when
+      you start your application.
+    </p>
+    <p class="Indent">
+      The <span class="File">.crconfigs</span> file maps program names to
+      configuration names. Each line of the file is of the format:
+    </p>
+    <p class="Command">
+      <em>program</em> <em>configuration</em>
+    </p>
+    <p>
+      Here's an example:
+    </p>
+    <pre>
+   atlantis  /usr/local/Chromium-x.y/cr/mothership/configs/myconfig.conf
+   city      /usr/local/Chromium-x.y/cr/mothership/configs/tilecity.conf -r1 -c2
+   *         /usr/local/Chromium-x.y/cr/mothership/configs/default.conf %p
 </pre>
-<p>
-Here's an example:
-</p>
-
-<pre>
-atlantis  /usr/local/Chromium-x.y/cr/mothership/configs/myconfig.conf
-city      /usr/local/Chromium-x.y/cr/mothership/configs/tilecity.conf -r1 -c2
-*         /usr/local/Chromium-x.y/cr/mothership/configs/default.conf %p
-</pre>
-
-<p>
-This example specifies configuration files for the atlantis and city
-programs.
-</p>
-<p>
-In the case of the city configuration, two optional command line arguments
-are given to the tilecity script to set the mural rows and columns.
-</p>
-<p>
-The * (asterisk) entry denotes a default to use when there is
-no other match.
-</p>
-<p>
-The %p sequence will be replaced by the program name.
-If %d is present, it will be replaced by the current working directory.
-</p>
-
-
-<p><b>4. The CR_CONFIG_PATH and CR_CONFIG environment variables</b></p>
-<p>
-If the <b>CR_CONFIG_PATH</B> environment variable is set, it will provide an
-alternate file to look in for configuration.  The file contents are
-identical to that in <code>.crconfigs</code>.  It is merely an alternate way
-of specifying the location.  Here's an example:
-</p>
-<pre>
-   setenv CR_CONFIG_PATH "/tmp/autostart.conf"
-</pre>
-<p>
-If the <b>CR_CONFIG</B> environment variable is set, the
-<code>.crconfigs</code> file is not processed and no matching for program
-names is done.  Instead, the contents of the
-<b>CR_CONFIG</b> variable are used instead to identify which mothership
-configuration file is to be used.  The same syntax is used as for
-the <em>configuration</em> section of a line in the <code>.crconfigs</code> file.
-Here's an example:
-</p>
-<pre>
-   setenv CR_CONFIG "/usr/local/Chromium-x.y/cr/mothership/configs/tilecity.conf -r1 -c2"
-</pre>
-
-
-<h2 class="PageSubHeading">Run it!</h2>
-
-
-<p>
-At this point running a program, such as city, should cause everything to
-start automatically.
-Here's what happens:
-</p>
-<ul>
-<li>The application (effectively linked to libcrfaker.so instead of libGL.so)
-will make a GLX call which initialized the faker library.
-<li>The faker library will try to contact the mothership, and fail (since
-it's not running).
-<li>The faker library will look for the CR_CONFIG environment variable or
-lookup the program name in the .crconfigs file.
-<li>The faker will now have the name of a configuration (possibly with
-command line arguments).
-<li>The faker will try to spawn (fork/exec) the mothership, specifying the
-configuration and command line arguments.
-<li>The mothership will start and create a thread that will spawn the crserver nodes.  The servers
-will load their SPUs.
-<li>The faker will contact the mothership and load its SPUs.
-<li>Chromium will now be running.
-</ul>
-
-
-<h2 class="PageSubHeading">Trouble shooting</h2>
-
-<p>
-Here are some things to check if this doesn't work:
-</p>
-<ul>
-<li>(Unix/Linux only) Run <code>ldd programname</code> and verify that you're linked against
-the faker library.  You should see something like this:
-<pre>
-    libGL.so => /usr/local/Chromium-x.y/cr/lib/Linux/libGL.so (0x4010b000)
-</pre>
-/usr/local/Chromium-x.y/cr/lib/Linux/libGL.so should be a symlink to
-libcrfaker.so
-<li>(Microsoft Windows only) Check that the 'python.exe' application is within the system PATH if crSpawn fails. The easiest way to check this is open a 'cmd' prompt and type 'python' and hit return. If Python doesn't start - check your setup.
-<li>Examine the output of the crfaker to see if your configuration is
-being found:
-<pre>
+    <p class="Indent">
+      This example specifies configuration files for the atlantis and city
+      programs.
+    </p>
+    <p class="Indent">
+      In the case of the city configuration, two optional command line
+      arguments are given to the tilecity script to set the mural rows and
+      columns.
+    </p>
+    <p class="Indent">
+      The * (asterisk) entry denotes a default to use when there is no other
+      match.
+    </p>
+    <p class="Indent">
+      The %p sequence will be replaced by the program name. If %d is present,
+      it will be replaced by the current working directory.
+    </p>
+    <p class="StepList">
+      4. The CR_CONFIG_PATH and CR_CONFIG environment variables
+    </p>
+    <p class="Indent">
+      If the <span class="EnvVar">CR_CONFIG_PATH</span> environment variable is
+      set, it will provide an alternate file to look in for configuration. The
+      file contents are identical to that in <span class=
+      "File">.crconfigs</span>. It is merely an alternate way of specifying the
+      location. Here's an example:
+    </p>
+    <p class="Command">
+      setenv CR_CONFIG_PATH "/tmp/autostart.conf"
+    </p>
+    <p class="Indent">
+      If the <span class="EnvVar">CR_CONFIG</span> environment variable is set,
+      the <span class="File">.crconfigs</span> file is not processed and no
+      matching for program names is done. Instead, the contents of the
+      <span class="EnvVar">CR_CONFIG</span> variable are used instead to
+      identify which mothership configuration file is to be used. The same
+      syntax is used as for the <em>configuration</em> section of a line in the
+      <span class="File">.crconfigs</span> file. Here's an example:
+    </p>
+    <p class="Command">
+      setenv CR_CONFIG<br>
+      "/usr/local/Chromium-x.y/cr/mothership/configs/tilecity.conf -r1 -c2"
+    </p>
+    <h2 class="PageSubHeading">
+      Run it!
+    </h2>
+    <p>
+      At this point running a program, such as city, should cause everything to
+      start automatically. Here's what happens:
+    </p>
+    <ul>
+      <li>The application (effectively linked to <span class=
+      "File">libcrfaker.so</span> instead of <span class=
+      "File">libGL.so</span>) will make a GLX call which initialized the faker
+      library.
+      </li>
+      <li>The faker library will try to contact the mothership, and fail (since
+      it's not running).
+      </li>
+      <li>The faker library will look for the <span class=
+      "EnvVar">CR_CONFIG</span> environment variable or lookup the program name
+      in the <span class="File">.crconfigs</span> file.
+      </li>
+      <li>The faker will now have the name of a configuration (possibly with
+      command line arguments).
+      </li>
+      <li>The faker will try to spawn (fork/exec) the mothership, specifying
+      the configuration and command line arguments.
+      </li>
+      <li>The mothership will start and create a thread that will spawn the
+      crserver nodes. The servers will load their SPUs.
+      </li>
+      <li>The faker will contact the mothership and load its SPUs.
+      </li>
+      <li>Chromium will now be running.
+      </li>
+    </ul>
+    <h2 class="PageSubHeading">
+      Trouble shooting
+    </h2>
+    <p>
+      Here are some things to check if this doesn't work:
+    </p>
+    <ul>
+      <li>(Unix/Linux only) Run <span class="Command">ldd programname</span>
+      and verify that you're linked against the faker library. You should see
+      something like this:
+        <p class="Indent">
+          <span class="Output">libGL.so =&gt;
+          /usr/local/Chromium-x.y/cr/lib/Linux/libGL.so (0x4010b000)</span>
+        </p><span class=
+        "File">/usr/local/Chromium-x.y/cr/lib/Linux/libGL.so</span> should be a
+        symlink to <span class="File">libcrfaker.so</span>
+      </li>
+      <li>(Microsoft Windows only) Check that the '<span class=
+      "App">python.exe</span>' application is within the system <span class=
+      "EnvVar">PATH</span> if crSpawn fails. The easiest way to check this is
+      open a '<span class="App">cmd</span>' prompt and type '<span class=
+      "Command">python</span>' and hit return. If Python doesn't start - check
+      your setup.
+      </li>
+      <li>Examine the output of the crfaker to see if your configuration is
+      being found:
+        <pre>
     CR Debug(foo:26248): Spawning mothership with argv:
     CR Debug(foo:26248): argv[0] = 'python'
     CR Debug(foo:26248): argv[1] = '/usr/local/Chromium-x.y/cr/mothership/tools/tilecity.conf'
     CR Debug(foo:26248): argv[2] = '-r1'
     CR Debug(foo:26248): argv[3] = '-c2'
 </pre>
-<li>Check that your configuration file is able to find the mothership.py file;
-look for sys.path.append() lines.
-<li>If the render servers aren't starting, make sure the
-<code>auto_start</code> option is set.
-<li>Make sure there aren't any other mothership instances already running by checking the output of running <code>ps -a</code> or <code>ps -e</code>.
-</ul>
-
-
-
-</body>
-
+      </li>
+      <li>Check that your configuration file is able to find the <span class=
+      "File">mothership.py</span> file; look for <code class=
+      "Function">sys.path.append()</code> lines.
+      </li>
+      <li>If the render servers aren't starting, make sure the
+      <code>auto_start</code> option is set.
+      </li>
+      <li>Make sure there aren't any other mothership instances already running
+      by checking the output of running <span class="Command">ps -a</span> or
+      <span class="Command">ps -e</span>.
+      </li>
+    </ul>
+  </body>
 </html>

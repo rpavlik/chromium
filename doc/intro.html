@@ -1,533 +1,767 @@
 <!-- Copyright (c) 2001, Stanford University
      All rights reserved.
 
-	 See the file LICENSE.txt for information on redistributing this software.  -->
+         See the file LICENSE.txt for information on redistributing this software.  -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
-<title>New Page 1</title>
-<base target="new_window">
-<link rel="stylesheet" type="text/css" href="chromium.css">
-</head>
-
-<body bgcolor="#FFFFFF">
-
-<h1 class="PageHeading">Chromium Introduction</h1>
-<p>Chromium is a system for interactive rendering on clusters of
-workstations.&nbsp; It is a completely extensible architecture, so that parallel
-rendering algorithms can be implemented on clusters with ease.&nbsp;
-</p>
-
-<p>Among Chromium's features are</p>
-<ul>
-  <li>Sort-first (tiled) rendering - the frame buffer is subdivided
-      into rectangular tiles which may be rendered in parallel by the
-      hosts of a rendering cluster.</li>
-  <li>Sort-last (Z-compositing) rendering - the 3D dataset is broken
-      into N parts which are rendered in parallel by N processors.
-      The resulting images are composited together according to their
-      Z buffers to form the final image.</li>
-  <li>Hybrid parallel rendering - sort-first and sort-last rendering
-      may be combined into a hybrid configuration.</li>
-  <li>OpenGL command stream filtering - OpenGL command streams may
-      be intercepted and modified by a stream processing unit (SPU)
-      to implement non-photorealistic rendering (NPR) effects, etc.
-      Here's an <a href="http://graphics.stanford.edu/papers/archsplit/"
-      target="_parent">interesting example</a>.</li>
-
-
-  <li>Many OpenGL programs can be used with Chromium without
-      modification.</li>
-  <li>One can write Chromium-specific applications which perform parallel
-      rendering with the aid of special synchronization primitives.</li>
-  <li>Chromium runs on Linux, IRIX, AIX, SunOS and Windows-based systems.</li>
-  <li>Chromium is an open-source project.</li>
-</ul>
-
-<p>Chromium is derived from the
-<a href="http://graphics.stanford.edu/software/wiregl" target="_parent">
-WireGL</a> project.
-Even if you're completely happy with your WireGL setup, we recommend
-replacing it with Chromium for several reasons:</p>
-<ul>
-  <li>Numerous bugs have been found and fixed since the last WireGL release.</li>
-  <li>The new configuration system will make setting up and reconfiguring your
-    tiled display much simpler.</li>
-  <li>Chromium has many, many more features.</li>
-</ul>
-
-<p>This documentation serves as both a reference guide and tutorial for
-using and extending Chromium.
-See the the <a href="help.html" target="main">Where to
-get help</a> link for other resources.
-</p>
-
-<h2 class="PageSubHeading">Credits</h2>
-
-
-<p>Chromium is mainly the product of
-<a href="http://www.cs.virginia.edu/~humper/" target="_parent">Greg
-Humphreys</a>.&nbsp; However, a few other individuals deserve special
-mention.&nbsp; <a href="http://graphics.stanford.edu/~ianbuck/"
-target="_parent">Ian Buck</a>
-wrote the original state tracking and bucketing system for WireGL, which the
-Chromium &quot;tilesort&quot; SPU and &quot;state_tracker&quot; library are
-loosely based on.&nbsp; Ian has also been in charge of the WireGL release
-process and maintenance for its 80+ users.&nbsp;
-<a href="http://graphics.stanford.edu/~eldridge/" target="_parent">Matthew
-Eldridge</a> made significant improvements to WireGL's networking libraries and
-the overall system design, and his design philosophy (if not his code) lives on
-in Chromium.&nbsp;
-<a href="http://www.ccntech.com/" target="_parent">Chris Niederauer</a> did
-most of the implementation of the OpenGL extensions, including all of the
-NVIDIA-specific ones.&nbsp; He also designed the Chromium logo and did a lot of
-really useful slave labor for us last summer when we were building our
-cluster. </p>
-
-<p>For the beta and 1.0 through 1.4 releases
-<a href="mailto:brian.paul-no-spam@tungstengraphics.com" target="_parent">
-Brian Paul</a> and
-<a href="mailto:alanh@tungstengraphics.com" target="_parent">
-Alan Hourihane</a> of Tungsten
-Graphics, Inc. contributed much of the development.
-Brian and <a href="mailto:alanm@redhat.com" target="_parent">Alan Matsuoka (of Red Hat)</a> made many contributions to the
-Chromium 1.4 through 1.7 releases. 
-</p>
-
-
-<h2 class="PageSubHeading">Version History</h2>
-
-<p>Alpha Release:  July 2001</p>
-
-<ul>
-<li>This was the initial public release of Chromium.
-</ul>
-
-
-<p>Beta Release:  April 5, 2002</p>
-
-<ul>
-  <li>Multi-context/window support
-      This allows OpenGL applications to create more than one 3D window
-      or GL rendering context to work with Chromium.  See the
-      'minimum_window_size' and 'match_window_title' config options.
-      Some windows can be rendered by Chromium, others by the native OpenGL.
-
-  <li>Improved OpenGL conformance.
-      The OpenGL conformance and coverage tests identified a lot of
-      problems, many of which have been fixed.
-      See the doc/conformance.html file.
-
-  <li>Support for more than 32 clients and rendering contexts.
-      The limit may be specified in include/cr_bits.h
-
-  <li>glRead/DrawPixels support
-
-  <li>New Chromium extensions to OpenGL (see include/chromium.h)
-      Among these is an extension that allows client programs to get
-      the tilesort configuration parameters.
-
-  <li>Tilesort SPU validation test program.  See cr/progs/tiletest/
-
-  <li>Specification of visual attributes to crCreateContext().
-
-  <li>addes stub functions for OpenGL 1.2 entrypoints and some extensions
-    to fix link problems.
-
-  <li>Improved GL error handling - don't just abort when we detect
-      user's GL errors.
-
-  <li>Evaluators support 
-
-  <li>GL_EXT_texture_object support (for Performer)
-
-  <li>crCreateContext() now takes a bitmask of desired visual properties
-      and returns a context value which is passed to crMakeCurrent.  See
-      the psubmit.d program for details.
-
-  <li>Linux Alpha AXP support
-
-  <li>Numerous bug fixes from application testing
-
-  <li>Fully functional readback SPU with support for Z-compositing and tile
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+    <title>
+      Chromium Introduction
+    </title>
+    <base target="_self">
+    <link rel="stylesheet" type="text/css" href="chromium.css">
+  </head>
+  <body>
+    <h1 class="PageHeading">
+      Chromium Introduction
+    </h1>
+    <p>
+      Chromium is a system for interactive rendering on clusters of
+      workstations.&nbsp; It is a completely extensible architecture, so that
+      parallel rendering algorithms can be implemented on clusters with
+      ease.&nbsp;
+    </p>
+    <p>
+      Among Chromium's features are
+    </p>
+    <ul>
+      <li>Sort-first (tiled) rendering - the frame buffer is subdivided into
+      rectangular tiles which may be rendered in parallel by the hosts of a
+      rendering cluster.
+      </li>
+      <li>Sort-last (Z-compositing) rendering - the 3D dataset is broken into N
+      parts which are rendered in parallel by N processors. The resulting
+      images are composited together according to their Z buffers to form the
+      final image.
+      </li>
+      <li>Hybrid parallel rendering - sort-first and sort-last rendering may be
+      combined into a hybrid configuration.
+      </li>
+      <li>OpenGL command stream filtering - OpenGL command streams may be
+      intercepted and modified by a stream processing unit (SPU) to implement
+      non-photorealistic rendering (NPR) effects, etc. Here's an <a href=
+      "http://graphics.stanford.edu/papers/archsplit/" target=
+      "_parent">interesting example</a>.
+      </li>
+      <li>Many OpenGL programs can be used with Chromium without modification.
+      </li>
+      <li>One can write Chromium-specific applications which perform parallel
+      rendering with the aid of special synchronization primitives.
+      </li>
+      <li>Chromium runs on Linux, IRIX, AIX, SunOS and Windows-based systems.
+      </li>
+      <li>Chromium is an open-source project.
+      </li>
+    </ul>
+    <p>
+      Chromium is derived from the <a href=
+      "http://graphics.stanford.edu/software/wiregl" target=
+      "_parent">WireGL</a> project. Even if you're completely happy with your
+      WireGL setup, we recommend replacing it with Chromium for several
+      reasons:
+    </p>
+    <ul>
+      <li>Numerous bugs have been found and fixed since the last WireGL
+      release.
+      </li>
+      <li>The new configuration system will make setting up and reconfiguring
+      your tiled display much simpler.
+      </li>
+      <li>Chromium has many, many more features.
+      </li>
+    </ul>
+    <p>
+      This documentation serves as both a reference guide and tutorial for
+      using and extending Chromium. See the the <a href="help.html">Where to
+      get help</a> link for other resources.
+    </p>
+    <h2 class="PageSubHeading">
+      Credits
+    </h2>
+    <p>
+      Chromium is mainly the product of <a href=
+      "http://www.cs.virginia.edu/~humper/" target="_parent">Greg
+      Humphreys</a>.&nbsp; However, a few other individuals deserve special
+      mention.&nbsp; <a href="http://graphics.stanford.edu/~ianbuck/" target=
+      "_parent">Ian Buck</a> wrote the original state tracking and bucketing
+      system for WireGL, which the Chromium "tilesort" SPU and "state_tracker"
+      library are loosely based on.&nbsp; Ian has also been in charge of the
+      WireGL release process and maintenance for its 80+ users.&nbsp; <a href=
+      "http://graphics.stanford.edu/~eldridge/" target="_parent">Matthew
+      Eldridge</a> made significant improvements to WireGL's networking
+      libraries and the overall system design, and his design philosophy (if
+      not his code) lives on in Chromium.&nbsp; <a href=
+      "http://www.ccntech.com/" target="_parent">Chris Niederauer</a> did most
+      of the implementation of the OpenGL extensions, including all of the
+      NVIDIA-specific ones.&nbsp; He also designed the Chromium logo and did a
+      lot of really useful slave labor for us last summer when we were building
+      our cluster.
+    </p>
+    <p>
+      For the beta and 1.0 through 1.4 releases <a href=
+      "mailto:brian.paul-no-spam@tungstengraphics.com" target="_parent">Brian
+      Paul</a> and <a href="mailto:alanh@tungstengraphics.com" target=
+      "_parent">Alan Hourihane</a> of Tungsten Graphics, Inc. contributed much
+      of the development. Brian and <a href="mailto:alanm@redhat.com" target=
+      "_parent">Alan Matsuoka (of Red Hat)</a> made many contributions to the
+      Chromium 1.4 through 1.7 releases.
+    </p>
+    <h2 class="PageSubHeading">
+      Version History
+    </h2>
+    <p>
+      Alpha Release: July 2001
+    </p>
+    <ul>
+      <li>This was the initial public release of Chromium.
+      </li>
+    </ul>
+    <p>
+      Beta Release: April 5, 2002
+    </p>
+    <ul>
+      <li>Multi-context/window support This allows OpenGL applications to
+      create more than one 3D window or GL rendering context to work with
+      Chromium. See the 'minimum_window_size' and 'match_window_title' config
+      options. Some windows can be rendered by Chromium, others by the native
+      OpenGL.
+      </li>
+      <li>Improved OpenGL conformance. The OpenGL conformance and coverage
+      tests identified a lot of problems, many of which have been fixed. See
+      the doc/conformance.html file.
+      </li>
+      <li>Support for more than 32 clients and rendering contexts. The limit
+      may be specified in include/cr_bits.h
+      </li>
+      <li>glRead/DrawPixels support
+      </li>
+      <li>New Chromium extensions to OpenGL (see include/chromium.h) Among
+      these is an extension that allows client programs to get the tilesort
+      configuration parameters.
+      </li>
+      <li>Tilesort SPU validation test program. See cr/progs/tiletest/
+      </li>
+      <li>Specification of visual attributes to crCreateContext().
+      </li>
+      <li>addes stub functions for OpenGL 1.2 entrypoints and some extensions
+      to fix link problems.
+      </li>
+      <li>Improved GL error handling - don't just abort when we detect user's
+      GL errors.
+      </li>
+      <li>Evaluators support
+      </li>
+      <li>GL_EXT_texture_object support (for Performer)
+      </li>
+      <li>crCreateContext() now takes a bitmask of desired visual properties
+      and returns a context value which is passed to crMakeCurrent. See the
+      psubmit.d program for details.
+      </li>
+      <li>Linux Alpha AXP support
+      </li>
+      <li>Numerous bug fixes from application testing
+      </li>
+      <li>Fully functional readback SPU with support for Z-compositing and tile
       reassembly.
-
-  <li>Thread safety.  Programs can issue Chromium rendering commands
-      from several threads in parallel.
-
-  <li>Updated documentation
-</ul>
-
-
-<p>1.0 Release:  September 30, 2002</p>
-
-<ul>
-  <li>New Features
-  <ul>
-    <li>Graphical configuration tool
-    <li>New SPUs:
+      </li>
+      <li>Thread safety. Programs can issue Chromium rendering commands from
+      several threads in parallel.
+      </li>
+      <li>Updated documentation
+      </li>
+    </ul>
+    <p>
+      1.0 Release: September 30, 2002
+    </p>
     <ul>
-      <li>Feedback (OpenGL feedback & selection support)
-      <li>Perf (performance SPU) for collecting performance statistics
-      <li>Wet
-      <li>Motion blur
+      <li>New Features
+        <ul>
+          <li>Graphical configuration tool
+          </li>
+          <li>New SPUs:
+            <ul>
+              <li>Feedback (OpenGL feedback &amp; selection support)
+              </li>
+              <li>Perf (performance SPU) for collecting performance statistics
+              </li>
+              <li>Wet
+              </li>
+              <li>Motion blur
+              </li>
+            </ul>
+          </li>
+          <li>New configuration options and features:
+            <ul>
+              <li>Render SPU: render_to_app_window, resizable, display_string,
+              lut8
+              </li>
+              <li>Tilesort SPU: bucket_mode, dynamic tile configuration (tile
+              layout changable at runtime), warped tile support
+              </li>
+              <li>Readback SPU: tile/image reassembly
+              </li>
+              <li>Saveframe SPU: many new options
+              </li>
+              <li>Hiddenline SPU: added silhouette mode and fog color options
+              </li>
+              <li>New network (server) node options: only_swap_once, spu_dir
+              </li>
+              <li>New application node option: track_window_size, application,
+              start_dir, client_dll, spu_dir
+              </li>
+            </ul>
+          </li>
+          <li>SunOS support (Jorge Luis Williams)
+          </li>
+          <li>OpenGL 1.2 support (but not ARB_imaging)
+          </li>
+          <li>New OpenGL extensions:
+            <ul>
+              <li>GL_EXT_fog_coord support
+              </li>
+              <li>GL_ARB_point_parameters
+              </li>
+              <li>GL_NV_vertex_program (on app nodes only)
+              </li>
+              <li>GL_NV_fence (on app nodes only)
+              </li>
+              <li>GL_NV_vertex_array_range (on app nodes only)
+              </li>
+            </ul>
+          </li>
+          <li>IPv6 support
+          </li>
+          <li>Quadrics network support
+          </li>
+          <li>OpenGL limits computed per context, not just once during start-up
+          </li>
+          <li>Header file clean-up (client apps should include chromium.h)
+          </li>
+          <li>Namespace cleanup (ex: BoundsInfo() is now BoundsInfoCR(),
+          similarly for semaphore and barrier functions)
+          </li>
+          <li>Thread safety clean-ups and fixes
+          </li>
+          <li>Improved OpenGL error handling
+          </li>
+          <li>city demo
+          </li>
+        </ul>
+      </li>
+      <li>Bug Fixes
+        <ul>
+          <li>Fixed GM memory leak (Michael Brodeur)
+          </li>
+          <li>Cygwin 5.1 patches (Sebastien Barre)
+          </li>
+          <li>Fixed sort-last rendering synchronization problems
+          </li>
+          <li>Fixed glRasterPos/glBitmap/display list bug in tilesort SPU
+          </li>
+          <li>Working binaryswap SPU
+          </li>
+          <li>Fixed tilesort bounding box / state broadcast bug
+          </li>
+          <li>Fixed overlapping tile bug in tilesort SPU / server
+          </li>
+          <li>glAreTexturesResident() fixed
+          </li>
+          <li>glGenTextures() fixed
+          </li>
+          <li>Fixed state tracker link bug (use static state tracker lib on
+          Unix)
+          </li>
+          <li>Fixed GM, teac, tcscomm glitches in mothership (David Thompson
+          and Joel Welling)
+          </li>
+          <li>Lots of other bug fixes
+          </li>
+        </ul>
+      </li>
     </ul>
-    <li>New configuration options and features:
+    <p>
+      1.0.1 Release: November 7, 2002
+    </p>
     <ul>
-      <li>Render SPU: render_to_app_window, resizable, display_string, lut8
-      <li>Tilesort SPU: bucket_mode, dynamic tile configuration (tile layout
-	  changable at runtime), warped tile support
-      <li>Readback SPU: tile/image reassembly
-      <li>Saveframe SPU: many new options
-      <li>Hiddenline SPU: added silhouette mode and fog color options
-      <li>New network (server) node options: only_swap_once, spu_dir
-      <li>New application node option: track_window_size, application,
-         start_dir, client_dll, spu_dir
+      <li>New Features
+        <ul>
+          <li>Added ChromiumParameter*() functions to simplequery spu (David
+          Thompson)
+          </li>
+          <li>Added overlap_blending option to crserver (Karl Rasche)
+          </li>
+          <li>Render SPU swapbuffers synchronization (Karl Rasche)
+          </li>
+          <li>Added default_viewport option to feedbackSPU
+          </li>
+        </ul>
+      </li>
+      <li>Bug Fixes
+        <ul>
+          <li>Fixed bug in binaryswap SPU when using 32 nodes (Mike Houston)
+          </li>
+          <li>Fixed X display string bug when mixing Linux/Windows (Alan
+          Hourihane)
+          </li>
+          <li>Fixed a few minor SunOS compilation bugs (Jorge Luis Williams)
+          </li>
+          <li>Fixed divide by zero error in bounding box code (Brian Paul)
+          </li>
+          <li>Fixed a few problems in the feedback SPU (Brian Paul)
+          </li>
+          <li>glIsList() with tilesort didn't work.
+          </li>
+          <li>glDeleteLists() with a non-list index no longer causes an exit.
+          </li>
+          <li>Fixed RasterPos calculation of transformed Z component.
+          </li>
+          <li>Fixed FP exceptions caused by a bug in crPackMultiTexCoord
+          functions
+          </li>
+          <li>glPush/PopAttrib() didn't handle texture state correctly.
+          </li>
+          <li>Fixed parallel app state tracking bug that caused sporadic
+          lighting, among other symptoms (David Thompson)
+          </li>
+          <li>Fixed GLUquadric bug in EXT_separate_specular_color test program
+          </li>
+        </ul>
+      </li>
     </ul>
-    <li>SunOS support (Jorge Luis Williams)
-    <li>OpenGL 1.2 support (but not ARB_imaging)
-    <li>New OpenGL extensions:
+    <p>
+      1.1 Release: January 17, 2003
+    </p>
     <ul>
-      <li>GL_EXT_fog_coord support
-      <li>GL_ARB_point_parameters
-      <li>GL_NV_vertex_program  (on app nodes only)
-      <li>GL_NV_fence  (on app nodes only)
-      <li>GL_NV_vertex_array_range  (on app nodes only)
+      <li>New Features
+        <ul>
+          <li>OpenGL 1.3 and 1.4 support, which includes...
+          </li>
+          <li>GL_ARB_multisample
+          </li>
+          <li>GL_ARB_multitexture
+          </li>
+          <li>GL_ARB_texture_border_clamp
+          </li>
+          <li>GL_ARB_texture_compression
+          </li>
+          <li>GL_ARB_texture_cube_map
+          </li>
+          <li>GL_ARB_texture_env_add
+          </li>
+          <li>GL_ARB_texture_env_combine
+          </li>
+          <li>GL_ARB_texture_env_dot3
+          </li>
+          <li>GL_ARB_transpose_matrix
+          </li>
+          <li>GL_ARB_depth_texture
+          </li>
+          <li>GL_ARB_shadow
+          </li>
+          <li>GL_ARB_point_parameters
+          </li>
+          <li>GL_ARB_texture_env_crossbar
+          </li>
+          <li>GL_ARB_texture_mirrored_repeat
+          </li>
+          <li>GL_ARB_window_pos
+          </li>
+          <li>GL_EXT_blend_color
+          </li>
+          <li>GL_EXT_blend_func_separate
+          </li>
+          <li>GL_EXT_blend_logic_op
+          </li>
+          <li>GL_EXT_blend_minmax
+          </li>
+          <li>GL_EXT_blend_subtract
+          </li>
+          <li>GL_EXT_fog_coord
+          </li>
+          <li>GL_EXT_multi_draw_arrays
+          </li>
+          <li>GL_EXT_secondary_color
+          </li>
+          <li>GL_EXT_stencil_wrap
+          </li>
+          <li>GL_SGIS_generate_mipmap
+          </li>
+          <li>GL_ARB_shadow_ambient
+          </li>
+          <li>GL_EXT_texture_lod_bias
+          </li>
+          <li>Added support for WGL_EXT_pixel_format (not tested and disabled
+          fow now) for enhanced Windows visual selection, like multisampling
+          </li>
+        </ul>
+      </li>
+      <li>
+        <a href="crut.html">CRUT</a> - Chromium Utility Toolkit for parallel
+        applications (beta release)
+      </li>
+      <li>CRUT demonstration program: psubmit_crut
+      </li>
+      <li>New crserver configuration options: unique_display_lists,
+      unique_texture_objects
+      </li>
+      <li>Bug Fixes
+        <ul>
+          <li>More GLX visual handling tweaks
+          </li>
+        </ul>
+      </li>
     </ul>
-    <li>IPv6 support
-    <li>Quadrics network support
-    <li>OpenGL limits computed per context, not just once during start-up
-    <li>Header file clean-up (client apps should include chromium.h)
-    <li>Namespace cleanup (ex: BoundsInfo() is now BoundsInfoCR(), similarly
-	for semaphore and barrier functions)
-    <li>Thread safety clean-ups and fixes
-    <li>Improved OpenGL error handling
-    <li>city demo
-  </ul>
-  <li>Bug Fixes
-  <ul>
-    <li>Fixed GM memory leak (Michael Brodeur)
-    <li>Cygwin 5.1 patches (Sebastien Barre)
-    <li>Fixed sort-last rendering synchronization problems
-    <li>Fixed glRasterPos/glBitmap/display list bug in tilesort SPU
-    <li>Working binaryswap SPU
-    <li>Fixed tilesort bounding box / state broadcast bug
-    <li>Fixed overlapping tile bug in tilesort SPU / server
-    <li>glAreTexturesResident() fixed
-    <li>glGenTextures() fixed
-    <li>Fixed state tracker link bug (use static state tracker lib on Unix)
-    <li>Fixed GM, teac, tcscomm glitches in mothership (David Thompson and
-        Joel Welling)
-    <li>Lots of other bug fixes
-  </ul>
-</ul>
-
-
-
-<p>1.0.1 Release:  November 7, 2002</p>
-
-<ul>
-  <li>New Features
-  <ul>
-    <li>Added ChromiumParameter*() functions to simplequery spu
-        (David Thompson)
-    <li>Added overlap_blending option to crserver (Karl Rasche)
-    <li>Render SPU swapbuffers synchronization (Karl Rasche)
-    <li>Added default_viewport option to feedbackSPU
-  </ul>
-  <li>Bug Fixes
-  <ul>
-    <li>Fixed bug in binaryswap SPU when using 32 nodes (Mike Houston)
-    <li>Fixed X display string bug when mixing Linux/Windows (Alan Hourihane)
-    <li>Fixed a few minor SunOS compilation bugs (Jorge Luis Williams)
-    <li>Fixed divide by zero error in bounding box code (Brian Paul)
-    <li>Fixed a few problems in the feedback SPU (Brian Paul)
-    <li>glIsList() with tilesort didn't work.
-    <li>glDeleteLists() with a non-list index no longer causes an exit.
-    <li>Fixed RasterPos calculation of transformed Z component.
-    <li>Fixed FP exceptions caused by a bug in crPackMultiTexCoord functions
-    <li>glPush/PopAttrib() didn't handle texture state correctly.
-    <li>Fixed parallel app state tracking bug that caused sporadic lighting,
-        among other symptoms (David Thompson)
-    <li>Fixed GLUquadric bug in EXT_separate_specular_color test program
-  </ul>
-</ul>
-
-
-<p>1.1 Release:  January 17, 2003</p>
-
-<ul>
-  <li>New Features
-  <ul>
-    <li>OpenGL 1.3 and 1.4 support, which includes...
-    <li>GL_ARB_multisample
-    <li>GL_ARB_multitexture
-    <li>GL_ARB_texture_border_clamp
-    <li>GL_ARB_texture_compression
-    <li>GL_ARB_texture_cube_map
-    <li>GL_ARB_texture_env_add
-    <li>GL_ARB_texture_env_combine
-    <li>GL_ARB_texture_env_dot3
-    <li>GL_ARB_transpose_matrix
-    <li>GL_ARB_depth_texture
-    <li>GL_ARB_shadow
-    <li>GL_ARB_point_parameters
-    <li>GL_ARB_texture_env_crossbar
-    <li>GL_ARB_texture_mirrored_repeat
-    <li>GL_ARB_window_pos
-    <li>GL_EXT_blend_color
-    <li>GL_EXT_blend_func_separate
-    <li>GL_EXT_blend_logic_op
-    <li>GL_EXT_blend_minmax
-    <li>GL_EXT_blend_subtract
-    <li>GL_EXT_fog_coord
-    <li>GL_EXT_multi_draw_arrays
-    <li>GL_EXT_secondary_color
-    <li>GL_EXT_stencil_wrap
-    <li>GL_SGIS_generate_mipmap
-    <li>GL_ARB_shadow_ambient
-    <li>GL_EXT_texture_lod_bias
-    <li>Added support for WGL_EXT_pixel_format (not tested and disabled fow now)
-          for enhanced Windows visual selection, like multisampling
-  </ul>
-  <li><A HREF="crut.html" target="_parent">CRUT</A> - Chromium Utility Toolkit for parallel applications (beta release)
-  <li>CRUT demonstration program: psubmit_crut
-  <li>New crserver configuration options: unique_display_lists, unique_texture_objects
-  <li>Bug Fixes
-  <ul>
-    <li>More GLX visual handling tweaks
-  </ul>
-</ul>
-
-
-<p>1.2 Release:  April 4, 2003</p>
-
-<ul>
-<li>New Features
-  <ul>
-  <li>DMX integration - Chromium can now be used on a
-      <A HREF="http://dmx.sf.net/" target="_parent">DMX display</A> to
-      provide OpenGL rendering on a multi-screen desktop
-  <li>Optimizations to the crserver and state_tracker
-  <li>Added retile_on_resize option to tilesort SPU
-  <li>Added maximum_window_size and match_window_count options for app nodes
-  <li>GL_IBM_raster_pos_clip extension support
-  <li>Improved support for multiple OpenGL windows
-  <li>Perf SPU now records glTexImage statistics
-  <li>Updated CRUT (Dale Beermann)
-  </ul>
-  <li>Bug Fixes
-  <ul>
-  <li>Updated Quadrics support (Joel Welling)
-  <li>glGetInteger/Float/etc queries of fog coord and secondary color state didn't work
-  <li>The track_window_size option was mistakenly turned on by default
-  <li>Fixed a number of problems with user-specified bounding boxes in the tilesort SPU.
-  <li>Don't abort if app requests a stereo visual
-  <li>Colormaterial fix
-  <li>Fixed split_begin_end problem in tilesort SPU
-  <li>Fixed some display list issues and bugs related to bounding boxes
-  <li>Fixed some glTexImage and pixel transfer bugs (Karl Rasche)
-  <li>glViewport didn't always work as expected on tiled displays
-  <li>Lots of other minor fixes
-  </ul>
-</ul>
-
-
-<p>1.3 Release:  July 4, 2003</p>
-
-<ul>
-<li>New Features
-  <ul>
-  <li>Added borderless option to render SPU
-  <li>Added track_window_position option for application nodes
-  <li>New OpenGL extensions support:
+    <p>
+      1.2 Release: April 4, 2003
+    </p>
     <ul>
-    <li>GL_ARB_fragment_program
-    <li>GL_ARB_vertex_program
-    <li>GL_NV_fragment_program
-    <li>GL_NV_vertex_program
-    <li>GL_NV_vertex_program1_1
-    <li>GL_NV_vertex_program2
-    <ul>NOTE: During development we've found that some graphics card/driver
-       combinations have bugs in the vertex (and fragment?) program extensions
-       that cause some demo programs to fail.  For more info, ask on the
-       Chromium mailing lists.
+      <li>New Features
+        <ul>
+          <li>DMX integration - Chromium can now be used on a <a href=
+          "http://dmx.sf.net/" target="_parent">DMX display</a> to provide
+          OpenGL rendering on a multi-screen desktop
+          </li>
+          <li>Optimizations to the crserver and state_tracker
+          </li>
+          <li>Added retile_on_resize option to tilesort SPU
+          </li>
+          <li>Added maximum_window_size and match_window_count options for app
+          nodes
+          </li>
+          <li>GL_IBM_raster_pos_clip extension support
+          </li>
+          <li>Improved support for multiple OpenGL windows
+          </li>
+          <li>Perf SPU now records glTexImage statistics
+          </li>
+          <li>Updated CRUT (Dale Beermann)
+          </li>
+        </ul>
+      </li>
+      <li>Bug Fixes
+        <ul>
+          <li>Updated Quadrics support (Joel Welling)
+          </li>
+          <li>glGetInteger/Float/etc queries of fog coord and secondary color
+          state didn't work
+          </li>
+          <li>The track_window_size option was mistakenly turned on by default
+          </li>
+          <li>Fixed a number of problems with user-specified bounding boxes in
+          the tilesort SPU.
+          </li>
+          <li>Don't abort if app requests a stereo visual
+          </li>
+          <li>Colormaterial fix
+          </li>
+          <li>Fixed split_begin_end problem in tilesort SPU
+          </li>
+          <li>Fixed some display list issues and bugs related to bounding boxes
+          </li>
+          <li>Fixed some glTexImage and pixel transfer bugs (Karl Rasche)
+          </li>
+          <li>glViewport didn't always work as expected on tiled displays
+          </li>
+          <li>Lots of other minor fixes
+          </li>
+        </ul>
+      </li>
     </ul>
-    <li>GL_NV_texture_rectangle
-    <li>GL_EXT_shadow_funcs
-    <li>GL_EXT_texture_rectangle
-    </ul>
-  </ul>
-  <li>vertprog_projection_parameter config option for crserver.
-      This is useful for running Cg demos on tilesort displays, for example.
-  <li>bbox_scale config option for tilesort SPU.  This is useful when
+    <p>
+      1.3 Release: July 4, 2003
+    </p>
+    <ul>
+      <li>New Features
+        <ul>
+          <li>Added borderless option to render SPU
+          </li>
+          <li>Added track_window_position option for application nodes
+          </li>
+          <li>New OpenGL extensions support:
+            <ul>
+              <li>GL_ARB_fragment_program
+              </li>
+              <li>GL_ARB_vertex_program
+              </li>
+              <li>GL_NV_fragment_program
+              </li>
+              <li>GL_NV_vertex_program
+              </li>
+              <li>GL_NV_vertex_program1_1
+              </li>
+              <li>GL_NV_vertex_program2
+                <div class="IndentMore">
+                  NOTE: During development we've found that some graphics
+                  card/driver combinations have bugs in the vertex (and
+                  fragment?) program extensions that cause some demo programs
+                  to fail. For more info, ask on the Chromium mailing lists.
+                </div>
+              </li>
+              <li>GL_NV_texture_rectangle
+              </li>
+              <li>GL_EXT_shadow_funcs
+              </li>
+              <li>GL_EXT_texture_rectangle
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>vertprog_projection_parameter config option for crserver. This is
+      useful for running Cg demos on tilesort displays, for example.
+      </li>
+      <li>bbox_scale config option for tilesort SPU. This is useful when
       computing bounding boxes for geometry perturbed/warped by vertex
       programs.
-<li>Bug Fixes
-  <ul>
-  <li>Fixed Alpha compilation problem
-  <li>The show_cursor option didn't work (must be set in both the render SPU
-      and the application node)
-  </ul>
-</ul>
-
-
-<p>1.4 Release:  August 29, 2003</p>
-
-<ul>
-<li>New Features
-  <ul>
-  <li>Improved display list support in tilesort SPU
-  <li>New <i>expando</i> SPU (saves and plays back display lists)
-  <li>New <i>replicate</i> SPU (allows direct rendered OpenGL with VNC)
-      <ul>
-       See http://xf4vnc.sf.net for more information on this enhancement.
-      </ul>
-  </ul>
-<li>Bug Fixes
-  <ul>
-  <li>Fix glRasterPos bugs accidently introduced by a bad CVS merge.
-  <li>Fixed a few bugs in GL_SELECT mode.
-  <li>Fixed some demo compilation problems (GetProcAddress stuff).
-  <li>Fixed memory-usage bugs in ARB_multitexture2 demo.
-  <li>glIsList() and glIsTexture() didn't always work.
-  <li>Fixed ParaView / tilesort bug (David Thompson).
-  <li>Fixed some network buffer size issues that could cause random failures.
-  <li>Update teac networking code (Joel Welling)
-  <li>Lots of other assorted fixes.
-  </ul>
-</ul>
-
-
-<p>1.5 Release:  December 17, 2003</p>
-
-<ul>
-<li>New Features
-  <ul>
-  <li>OpenGL 1.5 support
-  <li>GL_ARB_vertex_buffer_object extension
-  <li>GL_ARB_point_sprite extension
-  <li>GL_ARB_texture_non_power_of_two extension
-  <li>GL_ARB_occlusion_query extension
-  <li>New scale_images option for tilesort SPU controls scaling of
-      glDrawPixels, glCopyPixels and glBitmap images.
-  <li>Off-screen rendering with OSMesa (sac at pobox.com)
-  <li>ZPix SPU for image compression in conjunction with Readback SPU
-  <li>Further display list improvements in tilesort SPU (only send lists
-      to servers when really needed)
-  </ul>
-<li>Bug Fixes
-  <ul>
-  <li>Hiddenline SPU wasn't always working correctly
-  <li>Assorted minor bug fixes since previous release
-  </ul>
-<li>Changes
-  <ul>
-  <li>New Python code generation system
-  <li>The readback and binaryswap SPUs no longer mask out the
-      CR_SUPPRESS_SWAP_BIT flag passed to crSwapBuffers.
-      See the progs/psubmit.c demo for details/comments.
-  </ul>
-</ul>
-
-
-<p>1.6 Release:  February 18, 2004</p>
-
-<ul>
-<li>New Features
-  <ul>
-  <li><a href="nonplanar.html" target="_self">Non-planar tilesort</a>
-  <li><a href="stereo.html" target="_self">Stereo</a> rendering
-  <li>More robust auto-start support in mothership
-  <li>statusms program to query mothership status (John McPherson)
-  </ul>
-<li>Bug Fixes
-  <ul>
-  <li>Fixed problems compiling with older versions of gcc
-  <li>Fixed a few compilation issues on Windows
-  <li>Fixed intermittent tilesort bug when using multiple app nodes
-  <li>Tilesort SPU had some thread safety bugs
-  <li>Using non-default port for mothership didn't work
-  <li>Calls to glTexGeni() could blow up in the tilesort SPU
-  <li>The render SPU's fake/virtual cursor was polluting the current
-      raster position
-  </ul>
-<li>Changes
-  <ul>
-  <li>resetms now respawns auto-start nodes (Wes Bethel bug)
-  <li>state tracking for display lists is now disabled by default in the
-      tilesort SPU (see 'dlist_state_tracking' option).
-  </ul>
-<li>Known Problems
-  <ul>
-  <li>The display list manager code used for state tracking in the tilesort
-      SPU doesn't work on Windows.  This will occur when the tilesort SPU's
-      dlist_state_tracking option is enabled.
-  </ul>
-</ul>
-
-
-<p>1.7 Release:  April 15, 2004</p>
-
-<ul>
-<li>New Features
-  <ul>
-  <li>npclient/npserver programs for measuring network performance
-  <li>spheres program for measuring triangle rendering rates
-  <li><a href="packertest.html" target="_self">packertest</a> for validating Chromium's pack/unpack modules
-  <li>dlistest test for exercising display list support
-  <li>updated documentation
-  </ul>
-<li>Bug Fixes
-  <ul>
-  <li>Fixed some issues with non-planar tilesort and stereo
-  <li>Packing/unpacking of glDeleteBuffersARB was broken
-  <li>Tilesort SPU used incorrect pixel store parameters for state differencing
-  <li>glDeleteTextures and glDeleteProgramsARB didn't work properly
-  <li>Fixed additional bugs in the tilesort SPU related to display lists
-  <li>Fixed many assorted pack/unpack bugs found with the <a href="packertest.html" target="_self">packertest</a> program
-  </ul>
-<li>Known Problems
-</ul>
-
-
-
-<p>1.x Release:  Month day, 2004</p>
-
-<ul>
-<li>New Features
-  <ul>
-  <li>Documented the dist_texture SPU
-  <li>quitms program to tell a running mothership to quit.
-  <li>Improved Darwin support
-  </ul>
-<li>Changes
-  <ul>
-  <li>Increased max 2D/cube/rectangle texture size to 4096
-  <li>Print SPU's GLenum value-to-string look-up table is auto-generated now
-  </ul>
-<li>Bug Fixes
-  <ul>
-  <li>glIsList() was broken in crserver
-  <li>Fixed dist_texture SPU problem in state tracker
-  <li>Fixed glColorMaterial bug in tilesort SPU
-  <li>Fixed segfault when building maximum mipmapped textures
-  <li>Tilesort SPU's pincher code was broken in 1.7
-  <li>glxgears on DMX display demonstrated a tile update bug - fixed now.
-  <li>Fixed a display list / glMaterial bug in tilesort SPU
-  <li>Work around glXChooseVisual bug when using ATI OpenGL drivers.
-  <li>Added ignore_freeglut_menus option for application nodes
-  <li>Binary swap and Readback SPUs didn't properly handle user-specified bounding boxes
-  </ul>
-<li>Known Problems
-</ul>
-
-
-
-
-</body>
-
+      </li>
+      <li>Bug Fixes
+        <ul>
+          <li>Fixed Alpha compilation problem
+          </li>
+          <li>The show_cursor option didn't work (must be set in both the
+          render SPU and the application node)
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <p>
+      1.4 Release: August 29, 2003
+    </p>
+    <ul>
+      <li>New Features
+        <ul>
+          <li>Improved display list support in tilesort SPU
+          </li>
+          <li>New <i>expando</i> SPU (saves and plays back display lists)
+          </li>
+          <li>New <i>replicate</i> SPU (allows direct rendered OpenGL with VNC)
+            <div class="IndentMore">
+              See http://xf4vnc.sf.net for more information on this
+              enhancement.
+            </div>
+          </li>
+        </ul>
+      </li>
+      <li>Bug Fixes
+        <ul>
+          <li>Fix glRasterPos bugs accidently introduced by a bad CVS merge.
+          </li>
+          <li>Fixed a few bugs in GL_SELECT mode.
+          </li>
+          <li>Fixed some demo compilation problems (GetProcAddress stuff).
+          </li>
+          <li>Fixed memory-usage bugs in ARB_multitexture2 demo.
+          </li>
+          <li>glIsList() and glIsTexture() didn't always work.
+          </li>
+          <li>Fixed ParaView / tilesort bug (David Thompson).
+          </li>
+          <li>Fixed some network buffer size issues that could cause random
+          failures.
+          </li>
+          <li>Update teac networking code (Joel Welling)
+          </li>
+          <li>Lots of other assorted fixes.
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <p>
+      1.5 Release: December 17, 2003
+    </p>
+    <ul>
+      <li>New Features
+        <ul>
+          <li>OpenGL 1.5 support
+          </li>
+          <li>GL_ARB_vertex_buffer_object extension
+          </li>
+          <li>GL_ARB_point_sprite extension
+          </li>
+          <li>GL_ARB_texture_non_power_of_two extension
+          </li>
+          <li>GL_ARB_occlusion_query extension
+          </li>
+          <li>New scale_images option for tilesort SPU controls scaling of
+          glDrawPixels, glCopyPixels and glBitmap images.
+          </li>
+          <li>Off-screen rendering with OSMesa (sac at pobox.com)
+          </li>
+          <li>ZPix SPU for image compression in conjunction with Readback SPU
+          </li>
+          <li>Further display list improvements in tilesort SPU (only send
+          lists to servers when really needed)
+          </li>
+        </ul>
+      </li>
+      <li>Bug Fixes
+        <ul>
+          <li>Hiddenline SPU wasn't always working correctly
+          </li>
+          <li>Assorted minor bug fixes since previous release
+          </li>
+        </ul>
+      </li>
+      <li>Changes
+        <ul>
+          <li>New Python code generation system
+          </li>
+          <li>The readback and binaryswap SPUs no longer mask out the
+          CR_SUPPRESS_SWAP_BIT flag passed to crSwapBuffers. See the
+          progs/psubmit.c demo for details/comments.
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <p>
+      1.6 Release: February 18, 2004
+    </p>
+    <ul>
+      <li>New Features
+        <ul>
+          <li>
+            <a href="nonplanar.html">Non-planar tilesort</a>
+          </li>
+          <li>
+            <a href="stereo.html">Stereo</a> rendering
+          </li>
+          <li>More robust auto-start support in mothership
+          </li>
+          <li>statusms program to query mothership status (John McPherson)
+          </li>
+        </ul>
+      </li>
+      <li>Bug Fixes
+        <ul>
+          <li>Fixed problems compiling with older versions of gcc
+          </li>
+          <li>Fixed a few compilation issues on Windows
+          </li>
+          <li>Fixed intermittent tilesort bug when using multiple app nodes
+          </li>
+          <li>Tilesort SPU had some thread safety bugs
+          </li>
+          <li>Using non-default port for mothership didn't work
+          </li>
+          <li>Calls to glTexGeni() could blow up in the tilesort SPU
+          </li>
+          <li>The render SPU's fake/virtual cursor was polluting the current
+          raster position
+          </li>
+        </ul>
+      </li>
+      <li>Changes
+        <ul>
+          <li>resetms now respawns auto-start nodes (Wes Bethel bug)
+          </li>
+          <li>state tracking for display lists is now disabled by default in
+          the tilesort SPU (see 'dlist_state_tracking' option).
+          </li>
+        </ul>
+      </li>
+      <li>Known Problems
+        <ul>
+          <li>The display list manager code used for state tracking in the
+          tilesort SPU doesn't work on Windows. This will occur when the
+          tilesort SPU's dlist_state_tracking option is enabled.
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <p>
+      1.7 Release: April 15, 2004
+    </p>
+    <ul>
+      <li>New Features
+        <ul>
+          <li>npclient/npserver programs for measuring network performance
+          </li>
+          <li>spheres program for measuring triangle rendering rates
+          </li>
+          <li>
+            <a href="packertest.html">packertest</a> for validating Chromium's
+            pack/unpack modules
+          </li>
+          <li>dlistest test for exercising display list support
+          </li>
+          <li>updated documentation
+          </li>
+        </ul>
+      </li>
+      <li>Bug Fixes
+        <ul>
+          <li>Fixed some issues with non-planar tilesort and stereo
+          </li>
+          <li>Packing/unpacking of glDeleteBuffersARB was broken
+          </li>
+          <li>Tilesort SPU used incorrect pixel store parameters for state
+          differencing
+          </li>
+          <li>glDeleteTextures and glDeleteProgramsARB didn't work properly
+          </li>
+          <li>Fixed additional bugs in the tilesort SPU related to display
+          lists
+          </li>
+          <li>Fixed many assorted pack/unpack bugs found with the <a href=
+          "packertest.html">packertest</a> program
+          </li>
+        </ul>
+      </li>
+      <li>Known Problems
+      </li>
+    </ul>
+    <p>
+      1.x Release: Month day, 2004
+    </p>
+    <ul>
+      <li>New Features
+        <ul>
+          <li>Documented the dist_texture SPU
+          </li>
+          <li>quitms program to tell a running mothership to quit.
+          </li>
+          <li>Improved Darwin support
+          </li>
+        </ul>
+      </li>
+      <li>Changes
+        <ul>
+          <li>Increased max 2D/cube/rectangle texture size to 4096
+          </li>
+          <li>Print SPU's GLenum value-to-string look-up table is
+          auto-generated now
+          </li>
+        </ul>
+      </li>
+      <li>Bug Fixes
+        <ul>
+          <li>glIsList() was broken in crserver
+          </li>
+          <li>Fixed dist_texture SPU problem in state tracker
+          </li>
+          <li>Fixed glColorMaterial bug in tilesort SPU
+          </li>
+          <li>Fixed segfault when building maximum mipmapped textures
+          </li>
+          <li>Tilesort SPU's pincher code was broken in 1.7
+          </li>
+          <li>glxgears on DMX display demonstrated a tile update bug - fixed
+          now.
+          </li>
+          <li>Fixed a display list / glMaterial bug in tilesort SPU
+          </li>
+          <li>Work around glXChooseVisual bug when using ATI OpenGL drivers.
+          </li>
+          <li>Added ignore_freeglut_menus option for application nodes
+          </li>
+          <li>Binary swap and Readback SPUs didn't properly handle
+          user-specified bounding boxes
+          </li>
+        </ul>
+      </li>
+      <li>Known Problems
+      </li>
+    </ul>
+  </body>
 </html>

@@ -1,305 +1,346 @@
 <!-- Copyright (c) 2001, Stanford University
      All rights reserved.
 
-	 See the file LICENSE.txt for information on redistributing this software.  -->
+     See the file LICENSE.txt for information on redistributing this software.  -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
-<title>New Page 2</title>
-<base target="_self">
-<link rel="stylesheet" type="text/css" href="chromium.css">
-</head>
-
-<body bgcolor="#FFFFFF">
-
-<h1 class="PageHeading">Configuration Scripts</h1>
-<p>Unlike many distributed systems, Chromium is configured in only
-one place.&nbsp; The <i>configuration mothership</i> is a network service that
-responds to configuration queries from Chromium nodes, so all configuration for
-an entire cluster run can be managed in one place.&nbsp; In addition, Chromium
-configuration is not specified in static files, but rather it is specified
-programmatically using the <a href="http://www.python.org" target="new_window">Python</a>
-programming language.&nbsp; If you're not familiar with Python, don't worry, you
-can almost always create a new configuration script from an existing one without
-really understanding the semantics of the language.&nbsp; In WireGL, we were
-always writing homegrown parameterized scripts to generate configuration files;
-in Chromium, the script <i>is</i> the configuration file.</p>
-
-<p>A Chromium configuration script basically builds a graph which describes
-how OpenGL commands flow from the application node(s) to the server node(s).
-Application and server nodes host SPUs which process and filter the OpenGL
-command steram.  The graph is a DAG (directed acyclic graph).
-To get a better feel for the layout of configuration graphs, take a look
-at the figures shown in the <a href="configtool.html">graphical configuration
-tool section</a>.
-</p>
-
-
-
-<p>Let's look at the <code><a href="crdemo.conf" target="new_window">crdemo.conf</a> </code>script that drove the
-<a href="helloworld.html">Hello, World</a>  demo.&nbsp; You should be viewing
-this configuration script while reading the description below. </p>
-
-<table border="0" width="100%" class="CodeFrame">
-  <tr>
-    <td width="7%" class="LineNumbers">
-      6:<br>
-      7:<br>
-      8:</td>
-    <td width="93%" class="CodeListing">
-      import sys<br>
-      sys.path.append( '../server' )<br>
-      from mothership import *
-      </td>
-  </tr>
-</table>
-<p>These three lines will appear at the top of every configuration script.&nbsp;
-Lines 1 and 2 are Python jargon that allow the interpreter to search another
-directory for imported modules.&nbsp; In this case, the module &quot;<code>mothership</code>&quot;
-loaded in line 3 is located in the <code>cr/mothership/server </code>directory.&nbsp;
-Line 3 imports all of the symbols from the &quot;<code>mothership</code>&quot;
-Python module.&nbsp; We say &quot;<code>from mothership import *</code>&quot;
-instead of &quot;<code>import mothership</code>&quot; so that we can refer to
-elements of the mothership module without explicitly qualifying their
-names.&nbsp; For example, later we will see references to &quot;<code>SPU</code>&quot;
-objects, which would be &quot;<code>mothership.SPU</code>&quot; objects had we
-not done our import this way.</p>
-
-<table border="0" width="100%" class="CodeFrame">
-  <tr>
-    <td width="7%" class="LineNumbers">
-	10:<br>
-	11:<br>
-	12:</td>
-    <td width="93%" class="CodeListing">
-	  if len(sys.argv) &gt; 3 or len(sys.argv) &lt; 2:<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print 'Usage: %s <demo>   [spu]' % sys.argv[0]<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sys.exit(-1)</td>
-  </tr>
-</table>
-
-<p>Thise lines make sure that the arguments to the script are correct.&nbsp;
-Recall that this script determines which program to run by its first argument, so
-&quot;<code>sys.argv</code>&quot; (analogous to the &quot;<code>argv</code>&quot;
-parameter to &quot;<code>main</code>&quot; in C/C++) must have at least two
-elements (including the name of the script).&nbsp; This script can take an
-optional third argument specifying the SPU to be loaded by the client
-node.&nbsp; Notice, by the way, that Python delimits blocks by indentation only;
-there are no curly braces or &quot;<code>endif</code>&quot;s to mark the end of
-things.&nbsp; Be extremely careful about mixing tabs and spaces (i.e., don't do
-it).</p>
-
-<table border="0" width="100%" class="CodeFrame">
-  <tr>
-    <td width="7%" class="LineNumbers">
-	14:</td>
-    <td width="93%" class="CodeListing">
-        demo = sys.argv[1]</td>
-  </tr>
-</table>
-
-<p>Line 14 assigns "demo" the first script argument, or the name of
-the program to be run.&nbsp; This,
-for example, would hold the value &quot;fonttest&quot; in the <a href="helloworld.html">Hello,
-World</a> example.</p>
-
-<table border="0" width="100%" class="CodeFrame">
-  <tr>
-    <td width="7%" class="LineNumbers">
-	16:<br>
-	17:<br>
-	18:<br>
-	19:</td>
-    <td width="93%" class="CodeListing">
-	  if len(sys.argv) == 3:<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clientspuname = sys.argv[2]<br>
-      else:<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clientspuname = 'pack'</td>
-  </tr>
-</table>
-<p>Lines 16-19 figure out which SPU will be loaded by the application.&nbsp; If
-the user has specified three arguments to the script, then the third one will be
-the name of the spu.&nbsp; Otherwise, it defaults to &quot;<code>pack</code>&quot;.</p>
-
-<table border="0" width="100%" class="CodeFrame">
-  <tr>
-    <td width="7%" class="LineNumbers">
-	  21:<br>
-	  22:</td>
-    <td width="93%" class="CodeListing">
-	  server_spu = SPU( 'render' )<br>
-      client_spu = SPU( clientspuname )</td>
-  </tr>
-</table>
-<p>Lines 21-22 create &quot;<code>SPU</code>&quot; objects.&nbsp; These are the
-plug-in modules that implement the OpenGL API.&nbsp; In the <a href="helloworld.html">Hello,
-World</a> example, we created two SPU's: a &quot;render&quot; spu that
-dispatches OpenGL calls to the system's implementation, and a &quot;pack&quot;
-SPU that encodes its commands and sends them over the network verbatim (i.e.,
-with [almost] no analysis).&nbsp; Each SPU in a system needs to have a separate
-&quot;<code>SPU</code>&quot; object created for it in the configuration
-script.&nbsp; Notice that we are using the client SPU name that was computed in
-lines 16-19.
-</p>
-
-<table border="0" width="100%" class="CodeFrame">
-  <tr>
-    <td width="7%" class="LineNumbers">24:</td>
-    <td width="93%" class="CodeListing">
-	  server_spu.Conf( 'window_geometry', [100, 100, 500, 500] )</td>
-  </tr>
-</table>
-<p>Once the SPU's are created, they can be configured.&nbsp; In this case, the
-&quot;render&quot; SPU needs to know what kind of window to create.&nbsp; This
-directive tells the &quot;render&quot; SPU to create a window that is 500 pixels
-wide and 500 pixels high, and is shown at an offset of (100,100) from the
-upper-left corner of the screen.&nbsp; This is all the SPU configuration that
-happens in this script, because the client SPU needs no configuration.&nbsp; A
-complete list of all available configuration parameters for all provided SPU's
-is given in the &quot;<a href="configoptions.html">Configuration options for
-Provided SPU's</a>&quot; section.</p>
-
-<table border="0" width="100%" class="CodeFrame">
-  <tr>
-    <td width="7%" class="LineNumbers">
-	  27:<br>
-	  28:</td>
-    <td width="93%" class="CodeListing">
-	  server_node = CRNetworkNode( )<br>
-      server_node.AddSPU( server_spu )</td>
-  </tr>
-</table>
-
-<p>Once all the SPU's have been defined and configured, it's now time to
-describe the graph of nodes itself.&nbsp; The server node is created as an
-instance of a &quot;<code>CRNetworkNode</code>&quot; object.&nbsp; Notice that
-no parameters are given to the constructor for this object.&nbsp; There are
-two optional parameters that can be passed to the constructor: a
-&quot;hostname&quot; parameter indicating the name of the computer on which this
-node will be running, and a &quot;port&quot; parameter indicating what port it
-should listen on for clients.&nbsp; If no hostname is provided, the default is 'localhost'.&nbsp;
-The default port is 7000.</p>
-<p>Each node can have a <i>chain</i> of SPU's attached to it.&nbsp; The order of
-the chain is determined by the order of calls to the &quot;<code>AddSPU</code>&quot;
-method.&nbsp; Here, the server node only has one SPU, so order is irrelevant.</p>
-
-<table border="0" width="100%" class="CodeFrame">
-  <tr>
-    <td width="7%" class="LineNumbers">
-	  30:<br>
-	  31:</td>
-    <td width="93%" class="CodeListing">
-	  if (clientspuname == 'tilesort' ):<br>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; server_node.AddTile( 0, 0, 500, 500 )</td>
-  </tr>
-</table>
-<p>If the client SPU is the &quot;tilesort&quot; SPU (used for rendering to
-tiled displays), the tiling of the logical output space must be provided.&nbsp;
-This information is mandatory even if there is only one tile, since the absence
-of such a tile will make the server behave in slightly different ways (in
-particular, with respect to the <code>glViewport</code> and <code>glScissor</code>
-calls).&nbsp; Notice that the tiling information is associated with the <i>server</i>
-node, not the &quot;render&quot; SPU.</p>
-
-<table border="0" width="100%" class="CodeFrame">
-  <tr>
-    <td width="7%" class="LineNumbers">
-	  33:<br>
-	  34:<br>
-	  35:</td>
-    <td width="93%" class="CodeListing">
-	  client_node = CRApplicationNode( )<br>
-      client_node.AddSPU( client_spu )<br>
-      client_spu.AddServer( server_node, 'tcpip' )</td>
-  </tr>
-</table>
-<p>Now that the server node has been completely defined, we define the client
-node.&nbsp; Notice that lines 33 and 34 are almost identical to lines 27 and 28,
-except the client node is defined as an instance of a &quot;<code>CRApplicationNode</code>&quot;
-object.&nbsp; Line 30 adds the server node (defined on line 22) to the client
-SPU.&nbsp; Recall that the client SPU defaults to the &quot;pack&quot;
-SPU, or the &quot;tilesort&quot; SPU could be used instead.&nbsp; In fact, it is possible to make the client SPU the &quot;render&quot;
-SPU, in which case the server is not needed.&nbsp; In such a case, calling
-&quot;<code>AddServer</code>&quot; won't hurt anything, so we always create a
-client-server relationship, regardless of the client SPU being used.&nbsp; This is in contrast to lines 30 and 31, where
-we don't want to define a tiling if we're not using a tiling-aware client SPU.</p>
-
-<table border="0" width="100%" class="CodeFrame">
-  <tr>
-    <td width="7%" class="LineNumbers">
-	  37:<br>
-	  38:</td>
-    <td width="93%" class="CodeListing">
-	  client_node.SetApplication( '%s/%s' % (crbindir, demo) )<br>
-      client_node.StartDir( crbindir )</td>
-  </tr>
-</table>
-<p>So far, the node graph and SPU collection have been completely generic.&nbsp;
-Lines 37 and 38 bind a specific application to the client node.&nbsp; Line 37
-tells the application faker running on the client node which application to
-run.&nbsp; Line 38 tells the application faker to change directories to &quot;<code>crbindir</code>&quot;
-before launching the application.&nbsp; This is an optional step, but it is
-useful for applications that need to find certain input files, such as textures
-or application configuration information.&nbsp; If this line is omitted, the
-specified application will run in whatever directory &quot;<code>crappfaker</code>&quot;
-was run from.</p>
-
-<table border="0" width="100%" class="CodeFrame">
-  <tr>
-    <td width="7%" class="LineNumbers">
-	  40:<br>
-	  41:<br>
-	  42:<br>
-	  43:<br>
-	  44:</td>
-    <td width="93%" class="CodeListing">
-	  cr = CR()<br>
-      cr.MTU( 32*1024 );<br>
-      cr.AddNode( client_node )<br>
-      cr.AddNode( server_node )<br>
-      cr.Go()</td>
-  </tr>
-</table>
-<p>The final 5 lines of the configuration script set everything in motion.&nbsp;
-Line 40 creates a &quot;<code>CR</code>&quot; object, which is the network-aware
-mothership that will respond to queries about the nodes it manages.&nbsp;
-On line 41 the &quot;<code>MTU</code>&quot; function sets the
-largest buffer size that is allowed to pass
-between a client and a server (in future versions of Chromium, this
-parameter may be specified in a different way).&nbsp; Lines 43 and 44 add the two
-nodes we have created to the mothership.&nbsp; Finally, the &quot;<code>Go</code>&quot;
-method is called, which will loop forever, answering configuration queries over
-the network.</p>
-<p>Although this configuration script is quite simple, it exercises all of the
-features of the mothership scripting environment.&nbsp; An augmented version of
-this configuration file is available as <code><a href="crdemo_full.conf" target="new_window">crdemo_full.conf</a></code>.&nbsp;
-This version adds two more SPU's, one at each node.&nbsp; These SPU's, called
-&quot;print&quot; SPU's, generate human-readable dumps of the OpenGL stream to
-log files for debugging or analysis.&nbsp; The reader should look at 
-both <code>crdemo_full.conf</code> and <code>crdemo.conf</code>
-and make sure that the differences are clear.</p>
-
-
-<h2 class="PageHeading">Graphical Configuration</h2>
-
-<p>
-An alternative to writing configuration scripts by hand is to generated
-them with the <a href="configtool.html">graphical configuration tool</a>
-which is documented separately.
-</p>
-
-
-<h2 class="PageHeading">Advanced Features</h2>
-
-<p>
-Also see the <a href="autostart.html">autostart</a> section for information about
-automatically starting application and crserver processes.
-</p>
-
-
-</body>
-
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+    <title>
+      Configuration Scripts
+    </title>
+    <base target="_self">
+    <link rel="stylesheet" type="text/css" href="chromium.css">
+  </head>
+  <body>
+    <h1 class="PageHeading">
+      Configuration Scripts
+    </h1>
+    <p>
+      Unlike many distributed systems, Chromium is configured in only one
+      place. The <em>configuration mothership</em> is a network service that
+      responds to configuration queries from Chromium nodes, so all
+      configuration for an entire cluster run can be managed in one place. In
+      addition, Chromium configuration is not specified in static files, but
+      rather it is specified programmatically using the <a href=
+      "http://www.python.org/" target="_parent">Python</a> programming
+      language. If you're not familiar with Python, don't worry, you can almost
+      always create a new configuration script from an existing one without
+      really understanding the semantics of the language. In WireGL, we were
+      always writing homegrown parameterized scripts to generate configuration
+      files; in Chromium, the script <em>is</em> the configuration file.
+    </p>
+    <p>
+      A Chromium configuration script basically builds a graph which describes
+      how OpenGL commands flow from the application node(s) to the server
+      node(s). Application and server nodes host SPUs which process and filter
+      the OpenGL command steram. The graph is a DAG (directed acyclic graph).
+      To get a better feel for the layout of configuration graphs, take a look
+      at the figures shown in the <a href="configtool.html">graphical
+      configuration tool section</a>.
+    </p>
+    <p>
+      Let's look at the <a href="crdemo.conf" target="_parent" class=
+      "File">crdemo.conf</a> script that drove the <a href=
+      "helloworld.html">Hello, World</a> demo. You should be viewing this
+      configuration script while reading the description below.
+    </p>
+    <table border="0" width="100%" class="CodeFrame">
+      <tr>
+        <td width="7%" class="LineNumbers">
+          6:<br>
+          7:<br>
+          8:
+        </td>
+        <td width="93%" class="CodeListing">
+          import sys<br>
+          sys.path.append( '../server' )<br>
+          from mothership import *
+        </td>
+      </tr>
+    </table>
+    <p>
+      These three lines will appear at the top of every configuration script.
+      Lines 1 and 2 are Python jargon that allow the interpreter to search
+      another directory for imported modules. In this case, the module
+      <code class="Class">mothership</code> loaded in line 3 is located in the
+      <span class="Directory">cr/mothership/server</span> directory. Line 3
+      imports all of the symbols from the <code class="Class">mothership</code>
+      Python module. We say "<code>from mothership import *</code>" instead of
+      "<code>import mothership</code>" so that we can refer to elements of the
+      mothership module without explicitly qualifying their names. For example,
+      later we will see references to <code class="Class">SPU</code> objects,
+      which would be <code class="Class">mothership.SPU</code> objects had we
+      not done our import this way.
+    </p>
+    <table border="0" width="100%" class="CodeFrame">
+      <tr>
+        <td width="7%" class="LineNumbers">
+          10:<br>
+          11:<br>
+          12:
+        </td>
+        <td width="93%" class="CodeListing">
+          if len(sys.argv) &gt; 3 or len(sys.argv) &lt; 2:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;print 'Usage: %s [spu]' % sys.argv[0]<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;sys.exit(-1)
+        </td>
+      </tr>
+    </table>
+    <p>
+      Thise lines make sure that the arguments to the script are correct.
+      Recall that this script determines which program to run by its first
+      argument, so "<code>sys.argv</code>" (analogous to the
+      "<code>argv</code>" parameter to "<code class="Function">main</code>" in
+      C/C++) must have at least two elements (including the name of the
+      script). This script can take an optional third argument specifying the
+      SPU to be loaded by the client node. Notice, by the way, that Python
+      delimits blocks by indentation only; there are no curly braces or
+      "<code>endif</code>"s to mark the end of things. Be extremely careful
+      about mixing tabs and spaces (i.e., don't do it).
+    </p>
+    <table border="0" width="100%" class="CodeFrame">
+      <tr>
+        <td width="7%" class="LineNumbers">
+          14:
+        </td>
+        <td width="93%" class="CodeListing">
+          demo = sys.argv[1]
+        </td>
+      </tr>
+    </table>
+    <p>
+      Line 14 assigns "demo" the first script argument, or the name of the
+      program to be run. This, for example, would hold the value "fonttest" in
+      the <a href="helloworld.html">Hello, World</a> example.
+    </p>
+    <table border="0" width="100%" class="CodeFrame">
+      <tr>
+        <td width="7%" class="LineNumbers">
+          16:<br>
+          17:<br>
+          18:<br>
+          19:
+        </td>
+        <td width="93%" class="CodeListing">
+          if len(sys.argv) == 3:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;clientspuname = sys.argv[2]<br>
+          else:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;clientspuname = 'pack'
+        </td>
+      </tr>
+    </table>
+    <p>
+      Lines 16-19 figure out which SPU will be loaded by the application. If
+      the user has specified three arguments to the script, then the third one
+      will be the name of the spu. Otherwise, it defaults to "<span class=
+      "SPU">pack</span>".
+    </p>
+    <table border="0" width="100%" class="CodeFrame">
+      <tr>
+        <td width="7%" class="LineNumbers">
+          21:<br>
+          22:
+        </td>
+        <td width="93%" class="CodeListing">
+          server_spu = SPU( 'render' )<br>
+          client_spu = SPU( clientspuname )
+        </td>
+      </tr>
+    </table>
+    <p>
+      Lines 21-22 create <code class="Class">SPU</code> objects. These are the
+      plug-in modules that implement the OpenGL API. In the <a href=
+      "helloworld.html">Hello, World</a> example, we created two SPUs: a
+      <span class="SPU">render</span> SPU that dispatches OpenGL calls to the
+      system's implementation, and a <span class="SPU">pack</span> SPU that
+      encodes its commands and sends them over the network verbatim (i.e., with
+      [almost] no analysis). Each SPU in a system needs to have a separate
+      <code class="Class">SPU</code> object created for it in the configuration
+      script. Notice that we are using the client SPU name that was computed in
+      lines 16-19.
+    </p>
+    <table border="0" width="100%" class="CodeFrame">
+      <tr>
+        <td width="7%" class="LineNumbers">
+          24:
+        </td>
+        <td width="93%" class="CodeListing">
+          server_spu.Conf( 'window_geometry', [100, 100, 500, 500] )
+        </td>
+      </tr>
+    </table>
+    <p>
+      Once the SPUs are created, they can be configured. In this case, the
+      <span class="SPU">render</span> SPU needs to know what kind of window to
+      create. This directive tells the <span class="SPU">render</span> SPU to
+      create a window that is 500 pixels wide and 500 pixels high, and is shown
+      at an offset of (100,100) from the upper-left corner of the screen. This
+      is all the SPU configuration that happens in this script, because the
+      client SPU needs no configuration. A complete list of all available
+      configuration parameters for all provided SPUs is given in the "<a href=
+      "configoptions.html">Configuration options for Provided SPUs</a>"
+      section.
+    </p>
+    <table border="0" width="100%" class="CodeFrame">
+      <tr>
+        <td width="7%" class="LineNumbers">
+          27:<br>
+          28:
+        </td>
+        <td width="93%" class="CodeListing">
+          server_node = CRNetworkNode( )<br>
+          server_node.AddSPU( server_spu )
+        </td>
+      </tr>
+    </table>
+    <p>
+      Once all the SPUs have been defined and configured, it's now time to
+      describe the graph of nodes itself. The server node is created as an
+      instance of a <code class="Class">CRNetworkNode</code> object. Notice
+      that no parameters are given to the constructor for this object. There
+      are two optional parameters that can be passed to the constructor: a
+      "hostname" parameter indicating the name of the computer on which this
+      node will be running, and a "port" parameter indicating what port it
+      should listen on for clients. If no hostname is provided, the default is
+      'localhost'. The default port is 7000.
+    </p>
+    <p>
+      Each node can have a <em>chain</em> of SPUs attached to it. The order of
+      the chain is determined by the order of calls to the
+      "<code>AddSPU</code>" method. Here, the server node only has one SPU, so
+      order is irrelevant.
+    </p>
+    <table border="0" width="100%" class="CodeFrame">
+      <tr>
+        <td width="7%" class="LineNumbers">
+          30:<br>
+          31:
+        </td>
+        <td width="93%" class="CodeListing">
+          if (clientspuname == 'tilesort' ):<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;server_node.AddTile( 0, 0, 500, 500 )
+        </td>
+      </tr>
+    </table>
+    <p>
+      If the client SPU is the <span class="SPU">tilesort</span> SPU (used for
+      rendering to tiled displays), the tiling of the logical output space must
+      be provided. This information is mandatory even if there is only one
+      tile, since the absence of such a tile will make the server behave in
+      slightly different ways (in particular, with respect to the <code class=
+      "Function">glViewport</code> and <code class="Function">glScissor</code>
+      calls). Notice that the tiling information is associated with the
+      <em>server</em> node, not the <span class="SPU">render</span> SPU.
+    </p>
+    <table border="0" width="100%" class="CodeFrame">
+      <tr>
+        <td width="7%" class="LineNumbers">
+          33:<br>
+          34:<br>
+          35:
+        </td>
+        <td width="93%" class="CodeListing">
+          client_node = CRApplicationNode( )<br>
+          client_node.AddSPU( client_spu )<br>
+          client_spu.AddServer( server_node, 'tcpip' )
+        </td>
+      </tr>
+    </table>
+    <p>
+      Now that the server node has been completely defined, we define the
+      client node. Notice that lines 33 and 34 are almost identical to lines 27
+      and 28, except the client node is defined as an instance of a
+      <code class="Class">CRApplicationNode</code> object. Line 30 adds the
+      server node (defined on line 22) to the client SPU. Recall that the
+      client SPU defaults to the <span class="SPU">pack</span> SPU, or the
+      <span class="SPU">tilesort</span> SPU could be used instead. In fact, it
+      is possible to make the client SPU the <span class="SPU">render</span>
+      SPU, in which case the server is not needed. In such a case, calling
+      <code class="Class">AddServer</code> won't hurt anything, so we always
+      create a client-server relationship, regardless of the client SPU being
+      used. This is in contrast to lines 30 and 31, where we don't want to
+      define a tiling if we're not using a tiling-aware client SPU.
+    </p>
+    <table border="0" width="100%" class="CodeFrame">
+      <tr>
+        <td width="7%" class="LineNumbers">
+          37:<br>
+          38:
+        </td>
+        <td width="93%" class="CodeListing">
+          client_node.SetApplication( '%s/%s' % (crbindir, demo) )<br>
+          client_node.StartDir( crbindir )
+        </td>
+      </tr>
+    </table>
+    <p>
+      So far, the node graph and SPU collection have been completely generic.
+      Lines 37 and 38 bind a specific application to the client node. Line 37
+      tells the application faker running on the client node which application
+      to run. Line 38 tells the application faker to change directories to
+      "<code>crbindir</code>" before launching the application. This is an
+      optional step, but it is useful for applications that need to find
+      certain input files, such as textures or application configuration
+      information. If this line is omitted, the specified application will run
+      in whatever directory <span class="CrApp">crappfaker</span> was run from.
+    </p>
+    <table border="0" width="100%" class="CodeFrame">
+      <tr>
+        <td width="7%" class="LineNumbers">
+          40:<br>
+          41:<br>
+          42:<br>
+          43:<br>
+          44:
+        </td>
+        <td width="93%" class="CodeListing">
+          cr = CR()<br>
+          cr.MTU( 32*1024 );<br>
+          cr.AddNode( client_node )<br>
+          cr.AddNode( server_node )<br>
+          cr.Go()
+        </td>
+      </tr>
+    </table>
+    <p>
+      The final 5 lines of the configuration script set everything in motion.
+      Line 40 creates a <code class="Class">CR</code> object, which is the
+      network-aware mothership that will respond to queries about the nodes it
+      manages. On line 41 the <code class="Function">MTU</code> function
+      sets the largest buffer size that is allowed to pass between a client and
+      a server (in future versions of Chromium, this parameter may be specified
+      in a different way). Lines 43 and 44 add the two nodes we have created to
+      the mothership. Finally, the <code class="Function">Go</code> method is
+      called, which will loop forever, answering configuration queries over the
+      network.
+    </p>
+    <p>
+      Although this configuration script is quite simple, it exercises all of
+      the features of the mothership scripting environment. An augmented
+      version of this configuration file is available as <a href=
+      "crdemo_full.conf" class="File">crdemo_full.conf</a>. This version adds
+      two more SPUs, one at each node. These SPUs, called <span class=
+      "SPU">print</span> SPUs, generate human-readable dumps of the OpenGL
+      stream to log files for debugging or analysis. The reader should look at
+      both <span class="File">crdemo_full.conf</span> and <span class=
+      "File">crdemo.conf</span> and make sure that the differences are clear.
+    </p>
+    <h2 class="PageHeading">
+      Graphical Configuration
+    </h2>
+    <p>
+      An alternative to writing configuration scripts by hand is to generate
+      them with the <a href="configtool.html">graphical configuration tool</a>,
+      which is documented separately.
+    </p>
+    <h2 class="PageHeading">
+      Advanced Features
+    </h2>
+    <p>
+      Also see the <a href="autostart.html">autostart</a> section for
+      information about automatically starting application and crserver
+      processes.
+    </p>
+  </body>
 </html>
