@@ -367,6 +367,7 @@ static GLboolean UseChromium( Display *dpy, GLXDrawable drawable )
 {
 	unsigned int w, h;
 	int i;
+	GLboolean retval = GL_FALSE;
 
 	/* Can only have one chromium window at this time */
 	for (i = 0; i < CR_MAX_CONTEXTS; i++) {
@@ -462,10 +463,11 @@ static GLboolean UseChromium( Display *dpy, GLXDrawable drawable )
 			}
 
 		}
-		return GL_TRUE;  /* use Chromium! */
+		retval = GL_TRUE;  /* use Chromium! */
 	}
 
-	return GL_FALSE; /* never get here, silence warning */
+	/* gaaah -- stupid windows compiler */
+	return retval;
 }
 
 
