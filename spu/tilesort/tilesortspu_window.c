@@ -365,7 +365,7 @@ void tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 #ifdef USE_DMX
 	if (winInfo->isDMXWindow &&
 			(winInfo->lastX != x || winInfo->lastY != y ||
-			 winInfo->lastWidth != width || winInfo->lastHeight != height)) {
+			 winInfo->lastWidth != (int)width || winInfo->lastHeight != (int)height)) {
 		tilesortspuGetBackendWindowInfo(winInfo);
 	}
 #endif
