@@ -45,7 +45,7 @@ static int validate_float( const char *response,
 	return 1;
 }
 
-static int validate_one_option( SPUOptions *opt, 
+static int validate_one_option( const SPUOptions *opt, 
 				const char *response,
 				const char *min,
 				const char *max )
@@ -61,11 +61,11 @@ static int validate_one_option( SPUOptions *opt,
 		/* Make sure response string is present in the min string.
 		 * For enums, the min string is a comma-separted list of valid values.
 		 */
-		CRASSERT(opt->numValues = 1); /* an enum limitation for now */
+		CRASSERT(opt->numValues == 1); /* an enum limitation for now */
 		{
 			const char *p = crStrstr(min, response);
 			if (!p)
-				return 0;  /* invalide value! */
+				return 0;  /* invalid value! */
 			if (p[-1] != '\'')
 				return 0;  /* right substring */
 			if (p[crStrlen(response)] != '\'')
@@ -77,7 +77,7 @@ static int validate_one_option( SPUOptions *opt,
 	}
 }
 
-static int validate_option( SPUOptions *opt, const char *response )
+static int validate_option( const SPUOptions *opt, const char *response )
 {
 	const char *min = opt->min;
 	const char *max = opt->max;
