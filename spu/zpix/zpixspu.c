@@ -15,6 +15,14 @@
 
 void ZPIXSPU_APIENTRY zpixRasterPos2i( GLint x,  GLint y );
 
+void ZPIXSPU_APIENTRY zpixBitmap( GLsizei width, 
+				  GLsizei height,
+				  GLfloat xorig,
+				  GLfloat yorig,
+				  GLfloat xmove,
+				  GLfloat ymove,
+				  const GLubyte *bitmap );
+
 void ZPIXSPU_APIENTRY zpixDrawPixels( GLsizei  width, 
                                           GLsizei height, 
                                           GLenum format, 
@@ -99,6 +107,27 @@ void ZPIXSPU_APIENTRY zpixRasterPos2i( GLint x, GLint y)
         zpix_spu.rXnew = x;
         zpix_spu.rYnew = y;
 	zpix_spu.child.RasterPos2i( x, y );
+}
+
+/*----------------------------------------------------------
+  MCH:
+  Bitmap:   Record xmove, ymove from Bitmap
+  This is do deal with the hacks in which we set
+  the raster position with glBitmap instead of glRasterPos2i.
+  This makes me a little ill...
+----------------------------------------------------------*/
+void ZPIXSPU_APIENTRY zpixBitmap( GLsizei width, 
+				  GLsizei height,
+				  GLfloat xorig,
+				  GLfloat yorig,
+				  GLfloat xmove,
+				  GLfloat ymove,
+				  const GLubyte *bitmap )
+{
+     /*XXX remember and pass it through for now */
+     zpix_spu.rXnew = xmove;
+     zpix_spu.rYnew = ymove;
+     zpix_spu.child.Bitmap( width, height, xorig, yorig, xmove, ymove, bitmap );
 }
 
 /*----------------------------------------------------------
@@ -801,6 +830,7 @@ void ZPIXSPU_APIENTRY zpixZPix( GLsizei width,
 SPUNamedFunctionTable _cr_zpix_table[] = {
   { "RasterPos2i",    (SPUGenericFunction) zpixRasterPos2i },
   { "DrawPixels", (SPUGenericFunction) zpixDrawPixels },
+  { "Bitmap", (SPUGenericFunction) zpixBitmap },
   { "ZPix", (SPUGenericFunction) zpixZPix },
   { NULL, NULL }
 }; 
