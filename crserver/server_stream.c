@@ -289,7 +289,7 @@ int crServerRecv( CRConnection *conn, void *buf, unsigned int len )
 			crServerAddNewClient();
 			break;
 		default:
-			/*crWarning( "Why is the crserverr getting a message of type 0x%x?", msg->header.type ); */
+			/*crWarning( "Why is the crserver getting a message of type 0x%x?", msg->header.type ); */
 			return 0; /* NOT HANDLED */
 	}
 	(void) len;	
