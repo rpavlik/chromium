@@ -7,11 +7,11 @@ G++-INCLUDE-DIR = /usr/include/g++
 CXX = c++ -fno-common
 CC = cc -fno-common
 
-CXXFLAGS          += -DDARWIN -Wall -Werror
+CXXFLAGS          += -DDARWIN -Wall -Werror -Wno-format
 CXX_RELEASE_FLAGS += -O3 -DNDEBUG
 CXX_DEBUG_FLAGS   += -g
 
-CFLAGS            += -DDARWIN -Wall -Werror
+CFLAGS            += -DDARWIN -Wall -Werror -Wno-format
 C_RELEASE_FLAGS   += -O3 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 

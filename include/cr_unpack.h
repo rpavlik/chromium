@@ -39,7 +39,7 @@ extern CRNetworkPointer *return_ptr, *writeback_ptr;
 #else
 #undef CR_UNALIGNED_ACCESS_OKAY
 #endif
-double crReadUnalignedDouble( void *buffer );
+double crReadUnalignedDouble( const void *buffer );
 
 #define READ_DATA( offset, type ) \
 	*( (const type *) (cr_unpackData + (offset)))

@@ -27,9 +27,9 @@ void crWriteSwappedDouble( void *buffer, double d )
 	ui[1] = SWAP32(((unsigned int *) &d)[0]);
 }
 
-double crReadUnalignedDouble( void *buffer )
+double crReadUnalignedDouble( const void *buffer )
 {
-	unsigned int *ui = (unsigned int *) buffer;
+	const unsigned int *ui = (unsigned int *) buffer;
 	double d;
 	((unsigned int *) &d)[0] = ui[0];
 	((unsigned int *) &d)[1] = ui[1];
