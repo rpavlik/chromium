@@ -34,7 +34,7 @@ static void replicatespuReadback( CRMessageReadback *rb, unsigned int len )
 	void *dest_ptr; 
 	crMemcpy( &writeback, &(rb->writeback_ptr), sizeof( writeback ) );
 	crMemcpy( &dest_ptr, &(rb->readback_ptr), sizeof( dest_ptr ) );
-
+	CRASSERT(writeback);
 	*writeback = 0;
 	crMemcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
 }
