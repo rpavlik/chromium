@@ -21,6 +21,7 @@ print """#include <stdio.h>
 
 for func_name in keys:
 	(return_type, args, types) = gl_mapping[func_name]
+	if stub_common.FindSpecial( "packspu", func_name ): continue
 	if return_type != 'void' or stub_common.FindSpecial( "../../packer/packer_get", func_name):
 		print '%s PACKSPU_APIENTRY packspu_%s%s' % ( return_type, func_name, stub_common.ArgumentString( args, types ) )
 		print '{'
@@ -30,7 +31,7 @@ for func_name in keys:
 			# sucks, because I don't know how big the string is going to be.
 			# Let's just make a stab at it for now.
 			if string.find( return_type, '*' ) != -1:
-				print '\tstatic %s return_val[8096]; // GROSS HACK' % string.replace( return_type, '*', '' )
+				print '\t%s return_val[8096]; // GROSS HACK' % string.replace( return_type, '*', '' )
 				args.append( "&return_val[0]" )
 			else:
 				print '\t%s return_val;' % return_type
@@ -43,3 +44,21 @@ for func_name in keys:
 		if return_type != 'void':
 			print '\treturn return_val;'
 		print '}\n'
+
+print """
+
+// How come if I make this variable static the system explodes
+// later in memcpy when it's trying to write the result from the
+// network?
+const GLubyte  GetStringReturn[8096]; // GROSS HACK
+const GLubyte * PACKSPU_APIENTRY packspu_GetString( GLenum name )
+{
+	int writeback = 1;
+	crPackGetString( name, &GetStringReturn[0], &writeback );
+	packspuFlush();
+	while (writeback)
+		crNetRecv();
+	return &(GetStringReturn[0]);
+}
+"""
+

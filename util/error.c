@@ -43,7 +43,7 @@ void crError( char *format, ... )
 	#ifdef WINDOWS
 	if ((err = GetLastError()) != 0)
 	{
-		static char buf[512], *temp;
+		static char buf[8092], *temp;
 
 		SetLastError(0);
 		sprintf( buf, "err=%d", err );
@@ -115,7 +115,7 @@ void crDebug( char *format, ... )
 #ifdef WINDOWS
 	if ((err = GetLastError()) != 0)
 	{
-		static char buf[512], *temp;
+		static char buf[8092], *temp;
 
 		SetLastError(0);
 		sprintf( buf, "err=%d", err );

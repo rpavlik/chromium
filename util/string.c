@@ -114,7 +114,11 @@ void crStrcpy( char *dest, const char *src )
 
 void crStrncpy( char *dest, const char *src, unsigned int len )
 {
-	memcpy( dest, src, len );
+	unsigned int str_len = crStrlen(src);
+	unsigned int copy_len = str_len;
+	if (copy_len > len - 1)
+		copy_len = len;
+	memcpy( dest, src, copy_len );
 	dest[len] = '\0';
 }
 
@@ -126,7 +130,7 @@ void crStrcat( char *dest, const char *src )
 char *crStrstr( const char *str, const char *pat )
 {
 	int pat_len = crStrlen( pat );
-	const char *end = str + strlen(str) - pat_len;
+	const char *end = str + crStrlen(str) - pat_len;
 	char first_char = *pat;
 	for (; str < end ; str++)
 	{
@@ -220,7 +224,7 @@ static int __numOccurrences( const char *str, const char *substr )
 	char *temp = (char *) str;
 	while ((temp = crStrstr( temp, substr )) != NULL )
 	{
-		temp += strlen(substr);
+		temp += crStrlen(substr);
 		ret++;
 	}
 	return ret;
@@ -240,7 +244,7 @@ char **crStrSplit( const char *str, const char *splitstr )
 		if (!end)
 			end = temp + crStrlen( temp );
 		faked_argv[i] = crStrndup( temp, end-temp );
-		temp = end + strlen(splitstr);
+		temp = end + crStrlen(splitstr);
 	}
 	faked_argv[num_args] = NULL;
 	return faked_argv;
@@ -265,7 +269,7 @@ char **crStrSplitn( const char *str, const char *splitstr, int n )
 		if (!end || i == num_args - 1 )
 			end = temp + crStrlen( temp );
 		faked_argv[i] = crStrndup( temp, end-temp );
-		temp = end + strlen(splitstr);
+		temp = end + crStrlen(splitstr);
 	}
 	faked_argv[num_args] = NULL;
 	return faked_argv;

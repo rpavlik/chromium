@@ -24,7 +24,8 @@ void packspuReadback( CRMessageReadback *rb, unsigned int len )
 	memcpy( &dest_ptr, &(rb->readback_ptr), sizeof( dest_ptr ) );
 
 	*writeback = 0;
-	memcpy( dest_ptr, rb+1, payload_len );
+	temp = dest_ptr;
+	memcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
 }
 
 void packspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
