@@ -49,8 +49,7 @@ SPU *LoadSPU( SPU *child, int id, char *name )
 
 	if (!the_spu->entry_point( &(the_spu->name), &(the_spu->super_name), 
 				&(the_spu->init), &(the_spu->self), 
-				&(the_spu->cleanup), &(the_spu->nargs), 
-				&(the_spu->args) ) )
+				&(the_spu->cleanup) ) )
 	{
 		crError( "I found the SPU \"%s\", but loading it failed!", name );
 	}
@@ -66,9 +65,7 @@ SPU *LoadSPU( SPU *child, int id, char *name )
 	{
 		the_spu->superSPU = NULL;
 	}
-	the_spu->function_table = the_spu->init( id, child, 
-			the_spu->superSPU, child ? 1 : 0, 
-			0, 1, 0, NULL, NULL );
+	the_spu->function_table = the_spu->init( id, child, the_spu->superSPU, 0, 1 );
 	__buildDispatch( the_spu );
 	the_spu->self( &(the_spu->dispatch_table) );
 

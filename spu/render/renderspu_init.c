@@ -14,16 +14,14 @@ SPUFunctions the_functions = {
 
 RenderSPU render_spu;
 
-SPUFunctions *SPUInit( int id, SPU *child,
-		SPU *super,
-		unsigned int num_children,
-		unsigned int context_id,
-		unsigned int num_contexts,
-		unsigned int num_args,
-		SPUArgs *args,
-		void *data)
+SPUFunctions *SPUInit( int id, SPU *child, SPU *super,
+		unsigned int context_id, unsigned int num_contexts )
 {
-	printf ("Render SPU %d being initialized: %d %d %d %d!\n", id, num_children, context_id, num_contexts, num_args);
+	(void) child;
+	(void) super;
+	(void) context_id;
+	(void) num_contexts;
+
 	LoadSystemGL( render_table );
 	render_spu.id = id;
 	render_spu.dispatch = NULL;
@@ -34,28 +32,22 @@ SPUFunctions *SPUInit( int id, SPU *child,
 
 void SPUSelfDispatch(SPUDispatchTable *self)
 {
-	printf ("render SPU getting its dispatch information!\n");
 	render_spu.dispatch = self;
 }
 
 int SPUCleanup(void)
 {
-	printf ("render SPU being cleaned up!\n");
 	return 1;
 }
 
 int SPULoad( char **name, char **super, SPUInitFuncPtr *init,
-	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup, 
-	int *nargs, SPUArgs **args )
+	SPUSelfDispatchFuncPtr *self, SPUCleanupFuncPtr *cleanup )
 {
 	*name = "render";
 	*super = NULL;
 	*init = SPUInit;
 	*self = SPUSelfDispatch;
 	*cleanup = SPUCleanup;
-	*nargs = 0;
-	*args = NULL;
 	
-	printf ("render SPU being loaded!\n");
 	return 1;
 }
