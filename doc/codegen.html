@@ -703,7 +703,23 @@ header file at the top of <code>seethroughspu.h</code>:</p>
 
 <table width="100%"><tr><td class="GrayCodeListing">		#include &quot;cr_glstate.h&quot;</td></tr></table>
 
-<p>To get the function declarations for all the state_tracking functions.</p>
+<p>To get the function declarations for all the state_tracking functions.&nbsp;
+Now, we need to add these functions to the named function table at the end of <code>seethroughspu.c</code>.&nbsp;
+First of all, this will make our named function table <i>bigger</i>.&nbsp; Let's
+update the line in <code>seethroughspu.py</code> where the named function table
+declaration is printed.&nbsp; The new line should read:</p>
+
+<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		print 'SPUNamedFunctionTable seethrough_table[%d];' % ( len(stub_common.AllSpecials( "seethrough_state" )) + len(stub_common.AllSpecials( "seethrough" )) + 1 )</td></tr></table>
+
+<p>This will allow enough space for all the functions from <i>both</i> <code>_special</code>
+files.&nbsp; Now, just add a second loop to add functions to the table.&nbsp;
+This should come immediately after the final loop in the script, before the NULL
+terminator is printed:</p>
+
+<table width="100%" height="35"><tr><td class="GrayCodeListing" height="31">		for func_name in stub_common.AllSpecials( "seethrough_state" ):<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print '\t__fillin( %d, "%s", (SPUGenericFunction) seethrough%s );' % (offset, func_name, func_name )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; offset += 1</td></tr></table>
+
 <h2 class="PageSubHeading">Step 14: Initialize the state tracker</h2>
 <p>The state tracker needs a &quot;context&quot; into which to track all of the
 OpenGL state (or in our case, the subset we care about).&nbsp; Let's add a
