@@ -15,7 +15,17 @@ print """#include "cr_spu.h"
 #include "tilesortspu.h"
 
 #include <stdio.h>
+"""
 
+for func_name in stub_common.AllSpecials( "../../packer/packer_pixel" ):
+	(return_type, names, types) = gl_mapping[func_name]
+	print '%s TILESORTSPU_APIENTRY tilesortspuDiff%s%s' % (return_type, func_name, stub_common.ArgumentString( names, types ) )
+	print '{'
+	names.append( '&(tilesort_spu.ctx->pixel.unpack)' )
+	print '\tcrPack%s%s;' % (func_name, stub_common.CallString( names ) )
+	print '}'
+
+print """
 void tilesortspuCreateDiffAPI( void )
 {
 	SPUDispatchTable table;
@@ -26,6 +36,9 @@ keys.sort();
 
 for func_name in keys:
 	(return_type, names, types) = gl_mapping[func_name]
-	print '\ttable.%s = (%sFunc_t) crPack%s;' % (func_name,func_name,func_name)
+	if stub_common.FindSpecial( "../../packer/packer_pixel", func_name ):
+		print '\ttable.%s = (%sFunc_t) tilesortspuDiff%s;' % (func_name,func_name,func_name)
+	else:
+		print '\ttable.%s = (%sFunc_t) crPack%s;' % (func_name,func_name,func_name)
 print '\tcrStateDiffAPI( &table );'
 print '}'
