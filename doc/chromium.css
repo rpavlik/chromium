@@ -23,6 +23,7 @@ table.CodeFrame td.CodeListing { white-space: nowrap; color: #DD0000; width: 93%
 .Footer { font-size: 80%; margin-top: 0.3in; text-align: center }
 .GrayCodeListing { white-space: nowrap; font-family: Courier New; background-color: #E6E6E6; color: #DD0000; font-size: 12pt }
 .GrayCodeListing2 { font-family: Courier New; background-color: #E6E6E6; color: #DD0000; font-size: 12pt }
+.GrayCodeListingPre { font-family: Courier New; background-color: #E6E6E6; color: #DD0000; font-size: 12pt; white-space: pre }
 .GrayBackground { background-color: #E6E6E6 }
 .PageSubHeading { font-weight: normal; text-align: Center; font-size: 24pt }
 .ProvidedThing { font-style: italic }

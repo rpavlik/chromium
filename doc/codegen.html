@@ -1,1328 +1,1460 @@
 <!-- Copyright (c) 2001, Stanford University
      All rights reserved.
 
-	 See the file LICENSE.txt for information on redistributing this software.  -->
+     See the file LICENSE.txt for information on redistributing this software.  -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
-<title>New Page 1</title>
-<base target="_self">
-<link rel="stylesheet" type="text/css" href="chromium.css">
-</head>
-
-<body bgcolor="#FFFFFF">
-
-<h1 class="PageHeading">Automatically generating code for a new SPU</h1>
-<p>This page will describe the creation of a more complicated SPU -- the &quot;seethrough&quot;
-SPU.  This SPU will force everything to draw transparently.
-The alpha setting for every color will be configurable, along with the 
-blend mode.  Unlike the <a href="newspu.html">invert SPU</a>, this SPU
-will not omit any of the relevant functions.  Instead, it will use a 
-<a href="http://www.python.org/" target="new_window">Python</a> script to
-automatically generate the code.</p>
-
-<h2 class="PageSubHeading">Step 1: Creating the SPU directory</h2>
-<p>This step is the same as the first step in the <a href="newspu.html">
-invert SPU</a> walkthrough.  Simply create a copy of the template SPU and run
-the provided script:</p>
-<ol>
-  <li><code>cp -r template seethrough</code></li>
-  <li><code>cd seethrough</code></li>
-  <li><code>python gen_template.py seethrough</code></li>
-</ol>
-
-<h2 class="PageSubHeading">Step 2: List the functions you will be implementing</h2>
-
-<p>The provided helper libraries for auto-generating OpenGL code have efficient
-routines for accessing lists of functions in external files that end in
-&quot;<code>_special&quot;</code> (note the underscore).  For this example, we'll
-create a file called <code>seethrough_special</code> that will list every
-function we plan to implement.</p>
-
-<p>Create a new file <code>cr/spu/seethrough/seethrough_special</code>.&nbsp;
-We're going to need to override <i>all</i> of the <code>glColor</code>
-functions, as well as the <code>glMaterialfv</code> and <code>glMaterialiv</code>
-functions. In addition, we will need our own implementation of <code>glDisable</code>
-(to prevent the user from turning off blending), <code>glEnable</code> (to
-prevent the user from enabling the depth test), and <code>glBlendFunc</code>
-(to prevent the user from messing with our chosen blend function).&nbsp;
-<code>MakeCurrent</code> is needed in order to override default OpenGL state.
-Therefore, add
-the following lines to the new &quot;special&quot; file (they don't need to be
-in alphabetical order):</p>
-
-<pre class="GrayCodeListing2">
-BlendFunc
-Color3b
-Color3bv
-Color3d
-Color3dv
-Color3f
-Color3fv
-Color3i
-Color3iv
-Color3s
-Color3sv
-color3ub
-Color3ubv
-Color3ui
-Color3uiv
-Color3us
-Color3usv
-Color4b
-Color4bv
-Color4d
-Color4dv
-Color4f
-Color4fv
-Color4i
-Color4iv
-Color4s
-Color4sv
-Color4ub
-Color4ubv
-Color4ui
-Color4uiv
-Color4us
-Color4usv
-Disable
-Enable
-Materialfv
-Materialiv
-MakeCurrent
-</pre>
-
-
-<h2 class="PageSubHeading">Step 3: Auto-generate seethroughspu.c</h2>
-<p>This step is fairly involved.&nbsp; If you're having trouble following along,
-you can always check out <a href="seethrough.tar.gz">the completed SeeThrough
-SPU</a> (although see step 13 for one required edit to a file outside the <code>cr/spu/seethrough</code>
-directory).</p>
-
-<p>For this example, we're going to automatically generate the named
-dispatch table contained in <code>seethroughspu.c</code>.  Create
-a file called <code>seethrough.py</code> that will be used to
-generate the code.</p>
-
-<p>At the top of the file, put the lines:</p>
-
-<pre class="GrayCodeListing2">
-import sys, os, cPickle, string, re
-sys.path.append( "../../glapi_parser" )
-import apiutil
-</pre>
-
-
-<p>
-The apiutil module provides functions for getting information about all
-the OpenGL API functions, as well as related utilities.</p>
-
-<p>Although we won't need to in this example, we can easily get a list
-of all OpenGL functions in a sorted list with the command:</p>
-
-<pre class="GrayCodeListing2">
-keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
-</pre>
-
-<p>Many of the code generating scripts throughout Chromium will iterate over
-this list of keys.</p>
-
-<p>Now we print out the header code of <code>seethroughspu.c</code>.
-in our case, this will be identical to the existing
-<code>seethroughspu.c</code> (created in step 1), so just pull the
-first 6 lines of that file into our script, wrapped in a Python
-<code>print</code> statement:</p>
-
-<pre class="GrayCodeListing2">
-print """
-#include <stdio.h>&lt;stdio.h&gt;
-#include &quot;cr_spu.h&quot;
-#include &quot;chromium.h&quot;
-#include &quot;cr_string.h&quot;
-#include &quot;seethroughspu.h&quot;
-
-SeethroughSPU seethrough_spu;
-"""
-</pre>
-
-<p>In Python, strings enclosed in triple quotes
-(<code>"""<!--"""></code>) can have embedded newlines in them.&nbsp;
-Notice the include of &quot;<code>chromium.h</code>&quot; -- this is a
-wrapper for the system's OpenGL header, required on Windows (since
-<code>&lt;windows.h&gt;</code> has to be included before
-<code>&lt;GL/gl.h&gt;</code> will work on Windows).&nbsp; Also, we've
-added &quot;<code>cr_string.h</code>&quot;, which will be used when
-building the named function table.
-</p>
-
-<p>
-Because there are so many <code>glColor</code> calls, we'll auto-generate the
-code for those, and hand-code the few remaining functions.&nbsp; We're going to
-want a typical color function to look like:</p>
-
-<pre class="GrayCodeListing2">
-void SEETHROUGHSPU_APIENTRY seethroughColor3f( GLfloat r, GLfloat g, GLfloat b )
-{
-  seethrough_spu.super.Color4f( r, g, b, seethrough_spu.opacityf );
-}
-</pre>
-
-<p>Notice the variable &quot;seethrough_spu.opacityf&quot; -- we'll assume that
-the configuration routine has pre-computed the user-specified opacity in all the
-various types that we will need -- float, byte, short, double, and their
-unsigned variants.&nbsp; To generate the 32 <code>glColor</code> calls, we will
-loop over the legal types and legal component numbers (in this case, 3 and 4).</p>
-<p>Add the following code to the python script:</p>
-
-<pre class="GrayCodeListing2">
-for type in ['b', 'd', 'f', 'i', 's', 'ub', 'ui', 'us']:
-    for components in [3, 4]:
-        func_name = 'Color%d%s' % (components, type)
-        return_type = apiutil.ReturnType(func_name)
-        params = apiutil.Parameters(func_name)
-        print 'void SEETHROUGHSPU_APIENTRY seethrough%s(%s)' % (func_name,
-                        apiutil.MakeDeclarationString(params) )
-        print '{'
-        print '}'
-        print ''
-
-        func_name = 'Color%d%sv' % (components, type)
-        return_type = apiutil.ReturnType(func_name)
-        params = apiutil.Parameters(func_name)
-        print 'void SEETHROUGHSPU_APIENTRY seethrough%s(%s)' % (func_name,
-        apiutil.MakeDeclarationString(params) )
-        print '{'
-        print '}'
-        print ''
-</pre>
-
-
-<p>This code will generate empty function bodies for all the <code>glColor</code>
-functions that we want to implement, alternating between the parameter-passing
-(e.g., <code>glColor3f</code>) and vector (e.g., <code>glColor3fv</code>)
-varieties.&nbsp; Notice that the <code>apiutil</code> module has given us the
-return type of our function, as well as a list of argument names and argument
-types.&nbsp; The <code>apiutil</code> library uses this information to build
-the argument list for the function definition.</p>
-<p>The easiest way to implement these functions is to have the <code>apiutil</code>
-library build the SuperSPU call string for you, just like it built the argument
-declarations.&nbsp; To do this, all we need to have is a Python array that
-contains the names of the arguments we want to pass.&nbsp; For the
-parameter-passing <code>glColor</code> functions, we either append the name of
-the opacity variable to the <code>arg_names</code> array (if there are three
-components), or we modify the fourth parameter name (if there are four
-components).</p>
-<p>So, for the parameter-passing code (i.e., between the first printed pair of
-curly braces), add the following code, taking extra care to make sure that the
-indentation matches with the surrounding code (i.e., this code should be
-indented two block levels):</p>
-
-<pre class="GrayCodeListing2">
-# Modify params list to add/change the fourth parameter so it is the opacity
-if components == 3:
-    tuple = (('seethrough_spu.opacity%s' % type), "notype", "0")
-    params.append( tuple )
-else:
-    print '\t(void) %s;' % params[3][0]
-    tuple = ( ('seethrough_spu.opacity%s' % type), params[3][1], params[3][2])
-    params[3] = tuple
-
-new_func_name = 'Color4%s' % type
-print '\tseethrough_spu.super.%s(%s);' % (new_func_name, apiutil.MakeCallString( params ) )
-</pre>
-
-<p>Now we have half of our glColor functions working.&nbsp; The implementation
-for the vector passing functions is even easier.&nbsp; Just add this code:</p>
-
-<pre class="GrayCodeListing2">
-      new_func_name = 'Color4%s' % type
-      print '\tseethrough_spu.super.%s(v[0], v[1], v[2], seethrough_spu.opacity%s);' % (new_func_name, type)
-</pre>
-
-<p>Notice that in both cases, we have dispatched to the 4-parameter version of
-the <code>glColor</code> functions.&nbsp; Also note that if we are implementing
-a <code>glColor</code> that itself has four parameters, we need to insert a
-bogus reference to the fourth (alpha) parameter to avoid &quot;unused
-variable&quot; warnings from the compiler.&nbsp;</p>
-<p>Now that all of our color&nbsp; functions are implemented, let's
-generate the named
-function table.&nbsp; To do this, we're going to use a method of <code>apiutil</code>
-called &quot;<code>AllSpecials</code>&quot;, which returns an the array of
-function names in a given &quot;<code>_special</code>&quot; file.&nbsp; There is
-also a &quot;<code>FindSpecial</code>&quot; predicate function that tells
-whether a given function is contained in a &quot;<code>_special</code>&quot;
-file or not.</p>
-
-<p>Finally, let's make the named function table.&nbsp; Unfortunately, since
-we're not implementing all of our functions in <code>seethroughspu.c</code>, we
-can't just create a statically initialized table (since the four <code>extern</code>'ed
-function pointers aren't compile-time constants).&nbsp; So we have to build the
-function programmatically, which is just slightly harder.&nbsp; First, let's
-declare the table.&nbsp; Since we're going to fill it ourselves, we know how big
-it is.&nbsp; Don't forget to leave space at the end for the NULL terminator!</p>
-
-<pre class="GrayCodeListing2">
-print 'SPUNamedFunctionTable _cr_seethrough_table[%d];' % ( len(apiutil.AllSpecials( &quot;seethrough&quot; )) + 1 )
-</pre>
-
-<p>I like to use a helper function called &quot;<code>__fillin</code>&quot; for
-this table-building task.&nbsp; We'll need to print it out at the bottom of this
-file:</p>
-
-<pre class="GrayCodeListing2">
-print """
-static void __fillin( int offset, char *name, SPUGenericFunction func )
-{
-  _cr_seethrough_table[offset].name = crStrdup( name );
-  _cr_seethrough_table[offset].fn = func;
-}
-"""
-</pre>
-
-<p>Now, we're <i>finally</i> ready to build our named function table.</p>
-
-<pre class="GrayCodeListing2">
-print 'void seethroughspuBuildFunctionTable( void )'
-print '{'
-offset = 0
-for func_name in apiutil.AllSpecials( &quot;seethrough&quot; ):
-    print '\t__fillin( %d, "%s", (SPUGenericFunction) seethrough%s );' % (offset, func_name, func_name )
-    offset += 1
-print '\t__fillin( %d, NULL, (SPUGenericFunction) NULL );' % offset
-print '}'
-</pre>
-
-<p>So that we can call this function from <code>seethroughSPUInit</code>, add a
-declaration for it to <code>seethroughspu.h</code>:</p>
-
-<pre class="GrayCodeListing2">
-void seethroughspuBuildFunctionTable( void );
-</pre>
-
-<p>You need to now run that python script to generate the file <code>seethroughspu.c.
-</code>Type the following command &quot;<code>python seethrough.py &gt;
-seethroughspu.c&quot;.</code></p>
-
-<h1 class="PageSubHeading">Step 4: Take a break</h1>
-<p>That was brutal.&nbsp; Go have a good glass of wine.&nbsp; When you get back,
-let's make sure that the initialization step for the SPU actually builds the
-function table before we return it.&nbsp; Add a call to the function defined in
-step 3 at the bottom of the <code>seethroughSPUInit</code> function:</p>
-
-<pre class="GrayCodeListing2">
-seethroughspuBuildFunctionTable();
-</pre>
-
-
-
-<h2 class="PageSubHeading">Step 5: Declare and initialize the opacity variables</h2>
-<p>Let's stop implementing functions for a moment and go deal with all of these
-opacity variables that are floating around.</p>
-<p>Add the following declarations to the <code>SeethroughSPU</code> structure in
-<code>seethroughspu.h</code>:</p>
-
-<pre class="GrayCodeListing2">
-	GLbyte opacityb;
-	GLdouble opacityd;
-	GLfloat opacityf;
-	GLint opacityi;
-	GLshort opacitys;
-	GLubyte opacityub;
-	GLuint opacityui;
-	GLushort opacityus;
-</pre>
-
-<p>Once you do this, the project should compile without warnings, although it
-won't link because we still haven't implemented all the functions.</p>
-<p>In order to initialize these variables, we need to get some configuration
-information, so we need to talk to the mothership!</p>
-<p>Open the file <code>seethroughspu_config.c</code>.&nbsp; You should see a
-comment near the bottom that says &quot;<code>CONFIGURATION STUFF HERE</code>&quot;.&nbsp;
-This is where we will be asking the mothership questions.&nbsp; If you read the
-code in this file, you'll see that the template SPU doesn't consider inability
-to contact the mothership fatal.&nbsp; Some SPU's (such as the tilesort SPU)
-need to talk to the mothership, and can't run if they don't.&nbsp; In our case,
-the template SPU's behavior is correct.</p>
-<p>We'll make the design decision that opacity will be specified to the
-mothership as a floating point value between 0.0 and 1.0.&nbsp; Let's add a
-function to convert such a floating point value to all the desired types.&nbsp;
-Add the following function to the top of <code>seethroughspu_config.c</code>:</p>
-
-<pre class="GrayCodeListing2">
-static void setOpacity( GLfloat o )
-{
-  if (o &lt; 0.0) o = 0.0;
-  if (0 > 1.0) o = 1.0;
-  seethrough_spu.opacityb  = (GLbyte) (o * CR_MAXBYTE);
-  seethrough_spu.opacityd  = (GLdouble) (o);
-  seethrough_spu.opacityf  = (GLfloat) (o);
-  seethrough_spu.opacityi  = (GLint) (o * CR_MAXINT);
-  seethrough_spu.opacitys  = (GLshort) (o * CR_MAXSHORT);
-  seethrough_spu.opacityub = (GLubyte) (o * CR_MAXUBYTE);
-  seethrough_spu.opacityui = (GLuint) (o * CR_MAXUINT);
-  seethrough_spu.opacityus = (GLushort) (o * CR_MAXUSHORT);
-}
-</pre>
-
-<p>The <code>GL_MAX*</code> constants are defined in <code>cr/include/state/cr_statetypes.h</code>,
-so let's add an include line to the top of the file:</p>
-
-<pre class="GrayCodeListing2">
-#include "state/cr_statetypes.h"
-</pre>
-
-<p>Before we go asking the mothership anything, let's set up some reasonable
-defaults.&nbsp; In the &quot;<code>setDefaults</code>&quot; function at the
-top of this file, add the following initialization code:</p>
-
-<pre width="100%"><tr><td class="GrayCodeListing2">
-setOpacity( 0.5 );
-</pre>
-
-<p>Now, we're ready to query the mothership.&nbsp; There's almost
-nothing to it!&nbsp; Add the following line to the table<code>
-seethroughSPUOptions[]</code> leaving the existing line (with the NULL
-values) as the last line:</p>
-
-<pre class="GrayCodeListing2">
-  { "opacity", CR_FLOAT, 1, ".5", ".0", "1.0", "Opacity", (SPUOptionCB)setOpacityCB },
-</pre>
-
-<p>and just above that table add the following function which we just registered in as a callback :</p>
-
-<pre class="GrayCodeListing2">
-static void setOpacityCB( void *foo, const char *response )
-{
-  float o;
-  sscanf( response, "%f", &(o) );
-  setOpacity(o);
-}
-</pre>
-
-
-<p>We're done with this for now, although we will return to configuration in a
-few steps to get the user-specified blend mode.</p>
-<h2 class="PageSubHeading">Step 6: Implement the remaining functions</h2>
-<p>Okay, back to seeing through things.&nbsp; There are four functions left to
-do: <code>glMaterialfv</code>, <code>glMaterialiv</code>, <code>glBlendFunc</code>,
-and <code>glDisable</code>.&nbsp; We'll present the material functions
-first.&nbsp; They're totally straightforward, so they're presented without
-comment.&nbsp; Add these functions to a new file called <code>seethrough_misc.c</code>:</p>
-
-<pre class="GrayCodeListing2">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+    <title>
+      Automatically generating code for a new SPU
+    </title>
+    <base target="_self">
+    <link rel="stylesheet" type="text/css" href="chromium.css">
+  </head>
+  <body>
+    <h1 class="PageHeading">
+      Automatically generating code for a new SPU
+    </h1>
+    <p>
+      This page will describe the creation of a more complicated SPU -- the
+      "seethrough" SPU. This SPU will force everything to draw transparently.
+      The alpha setting for every color will be configurable, along with the
+      blend mode. Unlike the <a href="newspu.html">invert SPU</a>, this SPU
+      will not omit any of the relevant functions. Instead, it will use a
+      <a href="http://www.python.org/" target="_parent">Python</a> script to
+      automatically generate the code.
+    </p>
+    <h2 class="PageSubHeading">
+      Step 1: Creating the SPU directory
+    </h2>
+    <p>
+      This step is the same as the first step in the <a href=
+      "newspu.html">invert SPU</a> walkthrough. Simply create a copy of the
+      template SPU and run the provided script:
+    </p>
+    <p class="Command">
+      cp -r template seethrough<br>
+      cd seethrough<br>
+      python gen_template.py seethrough
+    </p>
+    <h2 class="PageSubHeading">
+      Step 2: List the functions you will be implementing
+    </h2>
+    <p>
+      The provided helper libraries for auto-generating OpenGL code have
+      efficient routines for accessing lists of functions in external files
+      that end in "<code>_special"</code> (note the underscore). For this
+      example, we'll create a file called <span class=
+      "File">seethrough_special</span> that will list every function we plan to
+      implement.
+    </p>
+    <p>
+      Create a new file <span class=
+      "File">spu/seethrough/seethrough_special</span>.&nbsp; We're going to
+      need to override <em>all</em> of the <code class=
+      "Function">glColor</code> functions, as well as the <code class=
+      "Function">glMaterialfv</code> and <code class=
+      "Function">glMaterialiv</code> functions. In addition, we will need our
+      own implementation of <code class="Function">glDisable</code> (to prevent
+      the user from turning off blending), <code class=
+      "Function">glEnable</code> (to prevent the user from enabling the depth
+      test), and <code class="Function">glBlendFunc</code> (to prevent the user
+      from messing with our chosen blend function).&nbsp; <code class=
+      "Function">MakeCurrent</code> is needed in order to override default
+      OpenGL state. Therefore, add the following lines to the new "special"
+      file (they don't need to be in alphabetical order):
+    </p>
+    <p class="GrayCodeListing2">
+      BlendFunc<br>
+      Color3b<br>
+      Color3bv<br>
+      Color3d<br>
+      Color3dv<br>
+      Color3f<br>
+      Color3fv<br>
+      Color3i<br>
+      Color3iv<br>
+      Color3s<br>
+      Color3sv<br>
+      color3ub<br>
+      Color3ubv<br>
+      Color3ui<br>
+      Color3uiv<br>
+      Color3us<br>
+      Color3usv<br>
+      Color4b<br>
+      Color4bv<br>
+      Color4d<br>
+      Color4dv<br>
+      Color4f<br>
+      Color4fv<br>
+      Color4i<br>
+      Color4iv<br>
+      Color4s<br>
+      Color4sv<br>
+      Color4ub<br>
+      Color4ubv<br>
+      Color4ui<br>
+      Color4uiv<br>
+      Color4us<br>
+      Color4usv<br>
+      Disable<br>
+      Enable<br>
+      Materialfv<br>
+      Materialiv<br>
+      MakeCurrent
+    </p>
+    <h2 class="PageSubHeading">
+      Step 3: Auto-generate seethroughspu.c
+    </h2>
+    <p>
+      This step is fairly involved.&nbsp; If you're having trouble following
+      along, you can always check out <a href="seethrough.tar.gz">the completed
+      SeeThrough SPU</a> (although see step 13 for one required edit to a file
+      outside the <span class="Directory">spu/seethrough/</span> directory).
+    </p>
+    <p>
+      For this example, we're going to automatically generate the named
+      dispatch table contained in <span class="File">seethroughspu.c</span>.
+      Create a file called <span class="File">seethrough.py</span> that will be
+      used to generate the code.
+    </p>
+    <p>
+      At the top of the file, put the lines:
+    </p>
+    <p class="GrayCodeListing2">
+      import sys, os, cPickle, string, re<br>
+      sys.path.append( "../../glapi_parser" )<br>
+      import apiutil
+    </p>
+    <p>
+      The apiutil module provides functions for getting information about all
+      the OpenGL API functions, as well as related utilities.
+    </p>
+    <p>
+      Although we won't need to in this example, we can easily get a list of
+      all OpenGL functions in a sorted list with the command:
+    </p>
+    <p class="GrayCodeListing2">
+      keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
+    </p>
+    <p>
+      Many of the code generating scripts throughout Chromium will iterate over
+      this list of keys.
+    </p>
+    <p>
+      Now we print out the header code of <span class=
+      "File">seethroughspu.c</span>. in our case, this will be identical to the
+      existing <span class="File">seethroughspu.c</span> (created in step 1),
+      so just pull the first 6 lines of that file into our script, wrapped in a
+      Python <code>print</code> statement:
+    </p>
+    <p class="GrayCodeListing2">
+      print """<br>
+      #include &lt;stdio.h&gt;<br>
+      #include "cr_spu.h"<br>
+      #include "chromium.h"<br>
+      #include "cr_string.h"<br>
+      #include "seethroughspu.h"<br>
+      <br>
+      SeethroughSPU seethrough_spu;<br>
+      """
+    </p>
+    <p>
+      In Python, strings enclosed in triple quotes (<code>""""""</code>) can
+      have embedded newlines in them. Notice the include of <span class=
+      "File">"chromium.h"</span> -- this is a wrapper for the system's OpenGL
+      header, required on Windows (since <span class=
+      "File">&lt;windows.h&gt;</span> has to be included before <span class=
+      "File">&lt;GL/gl.h&gt;</span> will work on Windows). Also, we've added
+      <span class="File">"cr_string.h"</span>, which will be used when building
+      the named function table.
+    </p>
+    <p>
+      Because there are so many <code class="Function">glColor</code> calls,
+      we'll auto-generate the code for those, and hand-code the few remaining
+      functions. We're going to want a typical color function to look like:
+    </p>
+    <p class="GrayCodeListing2">
+      void SEETHROUGHSPU_APIENTRY seethroughColor3f( GLfloat r, GLfloat g,
+      GLfloat b )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.Color4f( r, g, b,
+      seethrough_spu.opacityf );<br>
+      }<br>
+    </p>
+    <p>
+      Notice the variable "seethrough_spu.opacityf" -- we'll assume that the
+      configuration routine has pre-computed the user-specified opacity in all
+      the various types that we will need -- float, byte, short, double, and
+      their unsigned variants. To generate the 32 <code class=
+      "Function">glColor</code> calls, we will loop over the legal types and
+      legal component numbers (in this case, 3 and 4).
+    </p>
+    <p>
+      Add the following code to the python script:
+    </p>
+    <p class="GrayCodeListing2">
+      for type in ['b', 'd', 'f', 'i', 's', 'ub', 'ui', 'us']:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;for components in [3, 4]:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;func_name = 'Color%d%s' %
+      (components, type)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return_type =
+      apiutil.ReturnType(func_name)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;params =
+      apiutil.Parameters(func_name)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print 'void
+      SEETHROUGHSPU_APIENTRY seethrough%s(%s)' % (func_name,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apiutil.MakeDeclarationString(params)
+      )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print '{'<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print '}'<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print ''<br>
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;func_name = 'Color%d%sv'
+      % (components, type)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return_type =
+      apiutil.ReturnType(func_name)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;params =
+      apiutil.Parameters(func_name)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print 'void
+      SEETHROUGHSPU_APIENTRY seethrough%s(%s)' % (func_name,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apiutil.MakeDeclarationString(params)
+      )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print '{'<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print '}'<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print ''
+    </p>
+    <p>
+      This code will generate empty function bodies for all the <code class=
+      "Function">glColor</code> functions that we want to implement,
+      alternating between the parameter-passing (e.g., <code class=
+      "Function">glColor3f</code>) and vector (e.g., <code class=
+      "Function">glColor3fv</code>) varieties. Notice that the
+      <code>apiutil</code> module has given us the return type of our function,
+      as well as a list of argument names and argument types. The
+      <code>apiutil</code> library uses this information to build the argument
+      list for the function definition.
+    </p>
+    <p>
+      The easiest way to implement these functions is to have the
+      <code>apiutil</code> library build the SuperSPU call string for you, just
+      like it built the argument declarations. To do this, all we need to have
+      is a Python array that contains the names of the arguments we want to
+      pass. For the parameter-passing <code class="Function">glColor</code>
+      functions, we either append the name of the opacity variable to the
+      <code>arg_names</code> array (if there are three components), or we
+      modify the fourth parameter name (if there are four components).
+    </p>
+    <p>
+      So, for the parameter-passing code (i.e., between the first printed pair
+      of curly braces), add the following code, taking extra care to make sure
+      that the indentation matches with the surrounding code (i.e., this code
+      should be indented two block levels):
+    </p>
+    <p class="GrayCodeListing2">
+      # Modify params list to add/change the fourth parameter so it is the
+      opacity<br>
+      if components == 3:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;tuple = (('seethrough_spu.opacity%s' % type),
+      "notype", "0")<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;params.append( tuple )<br>
+      else:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;print '\t(void) %s;' % params[3][0]<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;tuple = ( ('seethrough_spu.opacity%s' % type),
+      params[3][1], params[3][2])<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;params[3] = tuple<br>
+      <br>
+      new_func_name = 'Color4%s' % type<br>
+      print '\tseethrough_spu.super.%s(%s);' % (new_func_name,
+      apiutil.MakeCallString( params ) )
+    </p>
+    <p>
+      Now we have half of our glColor functions working. The implementation for
+      the vector passing functions is even easier. Just add this code:
+    </p>
+    <p class="GrayCodeListing2">
+      &nbsp;&nbsp;&nbsp;&nbsp;new_func_name = 'Color4%s' % type<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;print '\tseethrough_spu.super.%s(v[0], v[1],
+      v[2], seethrough_spu.opacity%s);' % (new_func_name, type)
+    </p>
+    <p>
+      Notice that in both cases, we have dispatched to the 4-parameter version
+      of the <code class="Function">glColor</code> functions. Also note that if
+      we are implementing a <code class="Function">glColor</code> that itself
+      has four parameters, we need to insert a bogus reference to the fourth
+      (alpha) parameter to avoid "unused variable" warnings from the compiler.
+    </p>
+    <p>
+      Now that all of our color functions are implemented, let's generate the
+      named function table. To do this, we're going to use a method of
+      <code>apiutil</code> called "<code class="Function">AllSpecials</code>",
+      which returns an the array of function names in a given "<span class=
+      "File">_special</span>" file. There is also a "<code class=
+      "Function">FindSpecial</code>" predicate function that tells whether a
+      given function is contained in a "<span class="File">_special</span>"
+      file or not.
+    </p>
+    <p>
+      Finally, let's make the named function table. Unfortunately, since we're
+      not implementing all of our functions in <span class=
+      "File">seethroughspu.c</span>, we can't just create a statically
+      initialized table (since the four <code>extern</code>'ed function
+      pointers aren't compile-time constants). So we have to build the function
+      programmatically, which is just slightly harder. First, let's declare the
+      table. Since we're going to fill it ourselves, we know how big it is.
+      Don't forget to leave space at the end for the NULL terminator!
+    </p>
+    <p class="GrayCodeListing2">
+      print 'SPUNamedFunctionTable _cr_seethrough_table[%d];' % (
+      len(apiutil.AllSpecials( "seethrough" )) + 1 )
+    </p>
+    <p>
+      I like to use a helper function called "<code class=
+      "Function">__fillin</code>" for this table-building task. We'll need to
+      print it out at the bottom of this file:
+    </p>
+    <p class="GrayCodeListing2">
+      print """<br>
+      static void __fillin( int offset, char *name, SPUGenericFunction func
+      )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;_cr_seethrough_table[offset].name = crStrdup(
+      name );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;_cr_seethrough_table[offset].fn = func;<br>
+      }<br>
+      """
+    </p>
+    <p>
+      Now, we're <em>finally</em> ready to build our named function table.
+    </p>
+    <p class="GrayCodeListing2">
+      print 'void seethroughspuBuildFunctionTable( void )'<br>
+      print '{'<br>
+      offset = 0<br>
+      for func_name in apiutil.AllSpecials( "seethrough" ):<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;print '\t__fillin( %d, "%s", (SPUGenericFunction)
+      seethrough%s );' % (offset, func_name, func_name )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;offset += 1<br>
+      print '\t__fillin( %d, NULL, (SPUGenericFunction) NULL );' % offset<br>
+      print '}'
+    </p>
+    <p>
+      So that we can call this function from <code class=
+      "Function">seethroughSPUInit</code>, add a declaration for it to
+      <span class="File">seethroughspu.h</span>:
+    </p>
+    <p class="GrayCodeListing2">
+      void seethroughspuBuildFunctionTable( void );
+    </p>
+    <p>
+      You need to now run that python script to generate the file <span class=
+      "File">seethroughspu.c</span>. Type the following command "<span class=
+      "Command">python seethrough.py &gt; seethroughspu.c</span>".
+    </p>
+    <h1 class="PageSubHeading">
+      Step 4: Take a break
+    </h1>
+    <p>
+      That was brutal. Go have a good glass of wine. When you get back, let's
+      make sure that the initialization step for the SPU actually builds the
+      function table before we return it. Add a call to the function defined in
+      step 3 at the bottom of the <code class=
+      "Function">seethroughSPUInit</code> function:
+    </p>
+    <p class="GrayCodeListing2">
+      seethroughspuBuildFunctionTable();
+    </p>
+    <h2 class="PageSubHeading">
+      Step 5: Declare and initialize the opacity variables
+    </h2>
+    <p>
+      Let's stop implementing functions for a moment and go deal with all of
+      these opacity variables that are floating around.
+    </p>
+    <p>
+      Add the following declarations to the <code class=
+      "Class">SeethroughSPU</code> structure in <span class=
+      "File">seethroughspu.h</span>:
+    </p>
+    <p class="GrayCodeListing2">
+      &nbsp;&nbsp;&nbsp;&nbsp;GLbyte opacityb;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;GLdouble opacityd;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;GLfloat opacityf;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;GLint opacityi;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;GLshort opacitys;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;GLubyte opacityub;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;GLuint opacityui;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;GLushort opacityus;
+    </p>
+    <p>
+      Once you do this, the project should compile without warnings, although
+      it won't link because we still haven't implemented all the functions.
+    </p>
+    <p>
+      In order to initialize these variables, we need to get some configuration
+      information, so we need to talk to the mothership!
+    </p>
+    <p>
+      Open the file <span class="File">seethroughspu_config.c</span>. You
+      should see a comment near the bottom that says "<code>CONFIGURATION STUFF
+      HERE</code>". This is where we will be asking the mothership questions.
+      If you read the code in this file, you'll see that the template SPU
+      doesn't consider inability to contact the mothership fatal. Some SPU's
+      (such as the <span class="SPU">tilesort</span> SPU) need to talk to the
+      mothership, and can't run if they don't. In our case, the template SPU's
+      behavior is correct.
+    </p>
+    <p>
+      We'll make the design decision that opacity will be specified to the
+      mothership as a floating point value between 0.0 and 1.0. Let's add a
+      function to convert such a floating point value to all the desired types.
+      Add the following function to the top of <span class=
+      "File">seethroughspu_config.c</span>:
+    </p>
+    <p class="GrayCodeListing2">
+      static void setOpacity( GLfloat o )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;if (o &lt; 0.0) o = 0.0;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;if (0 &gt; 1.0) o = 1.0;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.opacityb = (GLbyte) (o *
+      CR_MAXBYTE);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.opacityd = (GLdouble) (o);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.opacityf = (GLfloat) (o);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.opacityi = (GLint) (o *
+      CR_MAXINT);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.opacitys = (GLshort) (o *
+      CR_MAXSHORT);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.opacityub = (GLubyte) (o *
+      CR_MAXUBYTE);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.opacityui = (GLuint) (o *
+      CR_MAXUINT);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.opacityus = (GLushort) (o *
+      CR_MAXUSHORT);<br>
+      }
+    </p>
+    <p>
+      The <code>GL_MAX*</code> constants are defined in <span class=
+      "File">include/state/cr_statetypes.h</span>, so let's add an include line
+      to the top of the file:
+    </p>
+    <p class="GrayCodeListing2">
+      #include "state/cr_statetypes.h"
+    </p>
+    <p>
+      Before we go asking the mothership anything, let's set up some reasonable
+      defaults. In the "<code class="Function">setDefaults</code>" function at
+      the top of this file, add the following initialization code:
+    </p>
+    <p class="GrayCodeListing2">
+      setOpacity( 0.5 );
+    </p>
+    <p>
+      Now, we're ready to query the mothership. There's almost nothing to it!
+      Add the following line to the table <code>seethroughSPUOptions[]</code>
+      leaving the existing line (with the NULL values) as the last line:
+    </p>
+    <p class="GrayCodeListing2">
+      &nbsp;&nbsp;&nbsp;&nbsp;{ "opacity", CR_FLOAT, 1, ".5", ".0", "1.0",
+      "Opacity", (SPUOptionCB)setOpacityCB },
+    </p>
+    <p>
+      and just above that table add the following function which we just
+      registered in as a callback :
+    </p>
+    <p class="GrayCodeListing2">
+      static void setOpacityCB( void *foo, const char *response )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;float o;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;sscanf( response, "%f", &amp;(o) );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;setOpacity(o);<br>
+      }
+    </p>
+    <p>
+      We're done with this for now, although we will return to configuration in
+      a few steps to get the user-specified blend mode.
+    </p>
+    <h2 class="PageSubHeading">
+      Step 6: Implement the remaining functions
+    </h2>
+    <p>
+      Okay, back to seeing through things. There are four functions left to do:
+      <code class="Function">glMaterialfv</code>, <code class=
+      "Function">glMaterialiv</code>, <code class=
+      "Function">glBlendFunc</code>, and <code class=
+      "Function">glDisable</code>. We'll present the material functions first.
+      They're totally straightforward, so they're presented without comment.
+      Add these functions to a new file called <span class=
+      "File">seethrough_misc.c</span>:
+    </p>
+    <p class="GrayCodeListing2">
+      #include "seethroughspu.h"<br>
+      #include "chromium.h"<br>
+      #include "cr_error.h"<br>
+      <br>
+      void SEETHROUGHSPU_APIENTRY seethroughMaterialfv( GLenum face, GLenum
+      mode, const GLfloat *param )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;GLfloat local_param[4];<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;if (mode == GL_SHININESS)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/* nothing to do */<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.Materialfv(
+      face, mode, param );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;else<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local_param[0] =
+      param[0];<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local_param[1] =
+      param[1];<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local_param[2] =
+      param[2];<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local_param[3] =
+      seethrough_spu.opacityf;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.Materialfv(
+      face, mode, local_param );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      }<br>
+      <br>
+      void SEETHROUGHSPU_APIENTRY seethroughMaterialiv( GLenum face, GLenum
+      mode, const GLint *param )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;GLint local_param[4];<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;if (mode == GL_SHININESS)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.Materialiv(
+      face, mode, param );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;else<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local_param[0] =
+      param[0];<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local_param[1] =
+      param[1];<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local_param[2] =
+      param[2];<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local_param[3] =
+      seethrough_spu.opacityi;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.Materialiv(
+      face, mode, local_param );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      }
+    </p>
+    <p>
+      Let's do <code class="Function">glDisable</code> next. The idea here is
+      to prevent the user from ever turning off blending. We just look at the
+      enum, and if it's <code>GL_BLEND</code>, we drop the command on the
+      floor. To be polite about it, we'll print a warning to the screen when
+      this happens.
+    </p>
+    <p class="GrayCodeListing2">
+      void SEETHROUGHSPU_APIENTRY seethroughDisable( GLenum cap )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;if (cap == GL_BLEND)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;crWarning(
+      "SeeThroughSPU: Ignoring disable of blending!" );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;else<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.Disable(
+      cap );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      }
+    </p>
+    <p>
+      glEnable (for preventing the depth test from getting turned on) is almost
+      identical:
+    </p>
+    <p class="GrayCodeListing2">
+      void SEETHROUGHSPU_APIENTRY seethroughEnable( GLenum cap )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;if (cap == GL_DEPTH_TEST)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;crWarning(
+      "SeeThroughSPU: Ignoring enable of depth!" );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;else<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.Enable(
+      cap );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      }
+    </p>
+    <p>
+      Finally, the simplest one of them all: <code class=
+      "Function">glBlendFunc</code>. If the user tries to change the blend
+      function, he's out of luck -- our SPU is in charge of blending. We just
+      ignore all <code class="Function">glBlendFunc</code> calls, making sure
+      not to get compiler warnings from unused variables. Note that if you're
+      following along in the <a href="seethrough.tar.gz">completed
+      implementation</a>, this function actually doesn't exist, as explained in
+      step 12.
+    </p>
+    <p class="GrayCodeListing2">
+      void SEETHROUGHSPU_APIENTRY seethroughBlendFunc( GLenum sfactor, GLenum
+      dfactor )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;crWarning( "SeeThroughSPU: Ignoring setting of
+      blend function!" );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;(void) sfactor;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;(void) dfactor;<br>
+      }
+    </p>
+    <p>
+      Finally, add <span class="File">seethroughspu_misc.c</span> add to
+      <span class="File">Makefile</span>. Add <code>seethroughspu_misc</code>
+      to the list <code>FILES</code>.
+    </p>
+    <h2 class="PageSubHeading">
+      Step 7: Configure and initialize the blend function
+    </h2>
+    <p>
+      We're almost there. We want to allow the user to set the blend function
+      to be used. Declare the following two variables in the <code class=
+      "Class">SeethroughSPU</code> structure in <span class=
+      "File">seethroughspu.h</span>:
+    </p>
+    <p class="GrayCodeListing2">
+      GLenum sfactor, dfactor;
+    </p>
+    <p>
+      Now, let's return to <span class="File">seethroughspu_config.c</span> and
+      set a defaultv alue. In <code class="Function">setDefaults</code>, add
+      the code:
+    </p>
+    <p class="GrayCodeListing2">
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.sfactor = GL_SRC_ALPHA;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.dfactor = GL_ONE_MINUS_SRC_ALPHA;
+    </p>
+    <p>
+      Now that everything has reasonable defaults, let's get values from the
+      mothership. Add the following two lines to the array
+      <code>seethroughSPUOptions[]</code>:
+    </p>
+    <p class="GrayCodeListing2">
+      &nbsp;&nbsp;&nbsp;&nbsp;{ "sfactor", CR_STRING, 1, "GL_SRC_ALPHA", NULL,
+      NULL,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"sFactor", (SPUOptionCB)setSFactorCB
+      },<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{ "dfactor", CR_STRING, 1,
+      "GL_ONE_MINUS_SRC_ALPHA", NULL, NULL,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"dFactor", (SPUOptionCB)setDFactorCB
+      },<br>
+    </p>
+    <p>
+      and add the following two callback functions above the table
+    </p>
+    <p class="GrayCodeListing2">
+      static void setSFactorCB( void *foo, const char *response )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;(void) foo;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;setBlendFuncFactor( response,
+      &amp;seethrough_spu.sfactor );<br>
+      }<br>
+      <br>
+      static void setDFactorCB( void *foo, const char *response )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;(void) foo;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;setBlendFuncFactor( response,
+      &amp;seethrough_spu.dfactor );<br>
+      }
+    </p>
+    <p>
+      Since the mothership is going to return us a string, we need to turn it
+      back into a <code>GLenum</code> type, so implement the <code class=
+      "Function">setBlendFuncFactor</code> function at the top of this file:
+    </p>
+    <p class="GrayCodeListing2">
+      static void setBlendFuncFactor( const char *str, GLenum *factor )<br>
+      {<br>
+      #define BLEND_FUNC_COMPARE( s ) if (!crStrcmp( str, #s )) *factor = s<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;BLEND_FUNC_COMPARE( GL_ZERO );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;BLEND_FUNC_COMPARE( GL_ONE );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;BLEND_FUNC_COMPARE( GL_DST_COLOR );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;BLEND_FUNC_COMPARE( GL_ONE_MINUS_DST_COLOR );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;BLEND_FUNC_COMPARE( GL_SRC_ALPHA );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;BLEND_FUNC_COMPARE( GL_ONE_MINUS_SRC_ALPHA );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;BLEND_FUNC_COMPARE( GL_DST_ALPHA );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;BLEND_FUNC_COMPARE( GL_ONE_MINUS_DST_ALPHA );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;BLEND_FUNC_COMPARE( GL_SRC_ALPHA_SATURATE );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;BLEND_FUNC_COMPARE( GL_SRC_COLOR );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;BLEND_FUNC_COMPARE( GL_ONE_MINUS_SRC_COLOR );<br>
+      #undef BLEND_FUNC_COMPARE<br>
+      }
+    </p>
+    <p>
+      There is a small robustness problem here -- the legal values for source
+      and destination blending factors are slightly different, but no
+      distinction is made between them here.
+    </p>
+    <h2 class="PageSubHeading">
+      Step 8: Set up and turn on blending before rendering
+    </h2>
+    <p>
+      Before any rendering, we need to enable blending and set the blend
+      function. This is analogous to setting the default color in the <a href=
+      "newspu.html">Invert SPU</a>. To do this we'll override the <code class=
+      "Function">MakeCurrent</code> function. Add the following to <span class=
+      "File">seethroughspu_misc.c</span>:
+    </p>
+    <p class="GrayCodeListing2">
+      void SEETHROUGHSPU_APIENTRY seethroughMakeCurrent(GLint crWindow, GLint
+      nativeWindow, GLint ctx)<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.Enable( GL_BLEND );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;sethrough_spu.super.BlendFunc(
+      seethrough_spu.sfactor, seethrough_spu.dfactor );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.MakeCurrent( crWindow,
+      nativeWindow, ctx);<br>
+      }
+    </p>
+    <p>
+      Note that we do not have to disable the depth test at this point, as it
+      is off by default, and our implementaton of glEnable will prevent it from
+      ever getting turned on.
+    </p>
+    <h2 class="PageSubHeading">
+      Step 9: Claim our inheritance
+    </h2>
+    <p>
+      Don't forget, this SPU is a SubSPU of the PassThrough SPU. Change the
+      second line in SPULoad in <code>seethroughspu_init.c</code> to:
+    </p>
+    <p class="GrayCodeListing2">
+      *super = "passthrough";
+    </p>
+    <h2 class="PageSubHeading">
+      Step 9.5: Prototype generation
+    </h2>
+    <p>
+      To avoid compilation warnings, all non-static functions must be
+      prototyped. The following python script is used to generate the
+      seethroughspu_proto.h file:
+    </p>
+    <p class="GrayCodeListing2">
+      # This is seethrough_proto.py<br>
+      import sys<br>
+      sys.path.append( "../../glapi_parser" )<br>
+      import apiutil<br>
+      <br>
+      apiutil.CopyrightC()<br>
+      <br>
+      print """<br>
+      /* DO NOT EDIT - THIS FILE AUTOMATICALLY GENERATED BY seethrough_proto.py
+      SCRIPT */<br>
+      <br>
+      #ifndef SEETHROUGHSPU_FUNCTIONS_H<br>
+      #define SEETHROUGHSPU_FUNCTIONS_H 1<br>
+      """<br>
+      <br>
+      # make apiutil load the GL function info<br>
+      d = apiutil.GetFunctionDict("../../glapi_parser/APIspec.txt")<br>
+      <br>
+      # Emit a C prototype for each special function<br>
+      functions = apiutil.AllSpecials("seethrough") +
+      apiutil.AllSpecials("seethrough_state")<br>
+      for func_name in functions:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;return_type = apiutil.ReturnType(func_name)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;params = apiutil.Parameters(func_name)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;print 'extern %s SEETHROUGHSPU_APIENTRY
+      seethrough%s( %s );' % ( return_type, func_name,
+      apiutil.MakeDeclarationString(params) )<br>
+      <br>
+      print "#endif"
+    </p>
+    <p>
+      At this point, our <span class="File">Makefile</span> should look like
+      this:
+    </p>
+    <p class="GrayCodeListing2">
+      # This is spu/seethrough/Makefile<br>
+      TOP = ../..<br>
+      <br>
+      SPU = 1<br>
+      SHARED = 1<br>
+      LIBRARY = seethroughspu<br>
+      FILES = seethroughspu \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethroughspu_arrays
+      \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethroughspu_config
+      \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethroughspu_init \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethroughspu_misc<br>
+      <br>
+      LIBRARIES = spuload crutil crmothership<br>
+      <br>
+      PRECOMP = seethroughspu_proto.h<br>
+      SLOP = $(PRECOMP)<br>
+      <br>
+      LIB_DEFS += seethroughspu.def<br>
+      include ${TOP}/cr.mk<br>
+      <br>
+      seethroughspu_proto.h: seethrough_proto.py seethrough_special<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;@$(ECHO) Building the Seethrough SPU prototypes
+      header<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;@$(PYTHON) seethrough_proto.py &gt; $@
+    </p>
+    <p>
+      Edit the <span class="File">seethroughspu.h</span> header file and add
+      this line:
+    </p>
+    <p class="GrayCodeListing2">
+      #include "seethroughspu_proto.h"
+    </p>
+    <h2 class="PageSubHeading">
+      Step 10: Write a configuration file
+    </h2>
+    <p>
+      It's hard to believe, but we're done coding! Now all we need to do is
+      update the <a href="crdemo.conf" target="new_window">crdemo.conf</a> file
+      described in the "<a href="configscript.html">Configuration scripts</a>"
+      section. Add the creation of a new SPU to the SPU creation section:
+    </p>
+    <p class="GrayCodeListing2">
+      seethrough_spu = SPU( 'seethrough' )
+    </p>
+    <p>
+      In the SPU configuration section, configure this SPU any way you like:
+    </p>
+    <p class="GrayCodeListing2">
+      seethrough_spu.Conf('opacity', 0.25 )<br>
+      seethrough_spu.Conf( 'sfactor', 'GL_SRC_ALPHA' ) # the default<br>
+      seethrough_spu.Conf( 'dfactor', 'GL_ONE_MINUS_SRC_ALPHA' ) # the default
+    </p>
+    <p>
+      And finally, add it <em>before</em> the client SPU:
+    </p>
+    <p class="GrayCodeListing2">
+      client_node.AddSPU( seethrough_spu )
+    </p>
+    <h2 class="PageSubHeading">
+      Step 11: Enjoy
+    </h2>
+    <p class="Center">
+      <img src="seethrough_bluepony.jpg" class="noborder">
+    </p>
+    <h2 class="PageSubHeading">
+      Step 12: Think about what you've done
+    </h2>
+    <p>
+      Will this SPU work reasonably all the time? A little thought reveals that
+      it will not. Although the "bluepony" demo works OK, Quake III doesn't
+      look right at all, for two reasons:
+    </p>
+    <ol>
+      <li>Quake III uses vertex arrays to specify its colors, and our SPU
+      doesn't handle vertex arrays. So we've turned on blending, but we haven't
+      tweaked the alpha of the colors
+      </li>
+      <li>Quake III has its own transparency in many places, and a single blend
+      function doesn't work.
+      </li>
+    </ol>
+    <p>
+      The solution to problem #2 is easy. We <em>will</em> allow the user to
+      change the blend function to whatever they want. If they ever try to
+      disable blending, we will instead reset the blend function to our
+      configured defaults. This should have the effect of only modifying
+      geometry that was intended to be opaque.
+    </p>
+    <p>
+      To do this, we just add one line immediately after our warning in
+      <code class="Function">seethroughDisable</code> in <span class=
+      "File">seethroughspu_misc.c</span>:
+    </p>
+    <p class="GrayCodeListing2">
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.BlendFunc(
+      seethrough_spu.sfactor, seethrough_spu.dfactor );
+    </p>
+    <p>
+      With this modification, we don't need to implement <code class=
+      "Function">seethroughBlendFunc</code> <em>at all</em>! So simply remove
+      it from the <span class="File">seethrough_special</span> file and delete
+      its implementation.
+    </p>
+    <p>
+      If you run Quake III now, the user interfaces will work again, and the
+      game is playable. Some things are transparent, and some things aren't,
+      mainly because Quake III doesn't change any alpha values if it thinks
+      that blending is turned off. So if a wall is drawn after a transparent
+      water surface, the wall will have the same transparency as the water.
+      Also, Quake III does extremely agressive visibility culling, so you can
+      see elements appearing and disappearing all the time.
+    </p>
+    <p>
+      One other thing that seems wrong is that backface culling could be turned
+      on. We certainly don't want that, so we'll add it to the list of things
+      that's prohibited in <code class="Function">seethroughEnable</code> in
+      <span class="File">seethroughspu_misc.c</span>:
+    </p>
+    <p class="GrayCodeListing2">
+      &nbsp;&nbsp;&nbsp;&nbsp;else if (cap == GL_CULL_FACE)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;crWarning(
+      "SeeThroughSPU: Ignoring enable of face culling!" );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;}
+    </p>
+    <p>
+      And we disable it in <code class="Function">seethroughSPUInit</code> in
+      <span class="File">seethroughspu_init.c</span>:
+    </p>
+    <p class="GrayCodeListing2">
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.Disable( GL_CULL_FACE );
+    </p>
+    <p>
+      In order to actually play what I call "GlassQuake", we still need to
+      implement vertex arrays in our SPU.
+    </p>
+    <h2 class="PageSubHeading">
+      Step 13: Bring in the state tracker
+    </h2>
+    <p>
+      To get vertex arrays to work, we will need the assistance of the state
+      tracker. The state tracker will keep track of the location of all of the
+      vertex array pointers, which ones are enabled, and what format they're
+      in.
+    </p>
+    <p>
+      First, let's make sure that we are linking against the state tracker.
+      Because the state tracker has global state, we link against it in a
+      special way to avoid sharing global variables with other SPU's that also
+      track state. To link against the state tracker, do the following.
+    </p>
+    <p>
+      Edit the file <span class="File">state_tracker/Makefile</span> and add
+      the string "seethroughspu" to both occurances of the variable
+      "LIB_COPIES". The new setting should look something like:
+    </p>
+    <p class="GrayCodeListing2">
+      LIB_COPIES = crserverlib \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;packspu
+      \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tilesortspu
+      \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;arrayspu
+      \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hiddenlinespu
+      \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;feedbackspu
+      \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nopspu
+      \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simplequeryspu
+      \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pixelsortspu
+      \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;statecopytest
+      \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethrough
+    </p>
+    <p>
+      Once you've done this, type '<span class="Command">make</span>' in the
+      <span class="Directory">state_tracker/</span> directory to get a
+      personalized copy of the state tracker built for the SeeThrough SPU.
+    </p>
+    <p>
+      <em>NOTE: This step won't have been done for you if you're just using the
+      completed implementation, so you have to do it!</em>
+    </p>
+    <p>
+      Now go back to <span class="File">spu/seethrough/Makefile</span> and
+      delete the line
+    </p>
+    <p class="GrayCodeListing2">
+      LIBRARIES = spuload crutil crmothership
+    </p>
+    <p>
+      and replace it with
+    </p>
+    <p class="GrayCodeListing2">
+      ifdef WINDOWS<br>
+      TRACKS_STATE=1<br>
+      LIBRARIES = spuload crutil crmothership<br>
+      else<br>
+      LIBRARIES = spuload crutil crmothership crstate<br>
+      endif<br>
+      <br>
+      ifdef BINUTIL_LINK_HACK<br>
+      TRACKS_STATE = 1<br>
+      LIBRARIES -= crstate<br>
+      endif
+    </p>
+    <p>
+      While we're in the <span class="File">Makefile</span>, let's create a new
+      file for our array implementations. Add a file called "<span class=
+      "File">seethroughspu_arrays</span>" to the FILES variable. The resulting
+      list should look like:
+    </p>
+    <p class="GrayCodeListing2">
+      FILES = seethroughspu \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethroughspu_arrays
+      \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethroughspu_config
+      \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethroughspu_init \<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seethroughspu_misc
+    </p>
+    <p>
+      Before we start implementing functions, let's figure out what it is we
+      want to do. We will need to use the state tracker's implementation of
+      <code class="Function">glEnableClientState</code>, <code class=
+      "Function">glDisableClientState</code>, <code class=
+      "Function">glVertexPointer</code>, <code class=
+      "Function">glColorPointer</code>, <code class=
+      "Function">glIndexPointer</code>, <code class=
+      "Function">glNormalPointer</code>, <code class=
+      "Function">glTexCoordPointer</code>, <code class=
+      "Function">glEdgeFlagPointer</code>, and <code class=
+      "Function">glInterleavedArrays</code>. For each of these functions, we
+      will want to call the state tracker's implementation, and then also
+      dispatch to our SuperSPU. Because this is a very simple task and highly
+      repetitive, we'll add it to the auto-generating code in <span class=
+      "File">seethrough.py</span>.
+    </p>
+    <p>
+      First, let's add the 9 functions listed above to a new file called
+      <span class="File">seethrough_state_special</span>. We'll update the
+      auto-generating code so that anything found in this file will
+      automatically dispatch to the state tracker as well as our SuperSPU. The
+      file should look like:
+    </p>
+    <p class="GrayCodeListing2">
+      EnableClientState<br>
+      DisableClientState<br>
+      VertexPointer<br>
+      ColorPointer<br>
+      IndexPointer<br>
+      NormalPointer<br>
+      TexCoordPointer<br>
+      EdgeFlagPointer<br>
+      InterleavedArrays
+    </p>
+    <p>
+      Now, let's go back to the <span class="File">seethrough.py</span> script.
+      Right after the code for generating the <code class=
+      "Function">seethroughColor</code> functions, add the following code:
+    </p>
+    <p class="GrayCodeListing2">
+      for func_name in apiutil.AllSpecials( "seethrough_state" ):<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;params = apiutil.Parameters(func_name)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;print 'void SEETHROUGHSPU_APIENTRY
+      seethrough%s(%s)' % (func_name, apiutil.MakeDeclarationString( params )
+      )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;print '{'<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;print '\tcrState%s(%s);' % (func_name,
+      apiutil.MakeCallString( params ) )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;print '\tseethrough_spu.super.%s(%s);' %
+      (func_name, apiutil.MakeCallString( params ) )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;print '}'
+    </p>
+    <p>
+      This will generate functions that look like:
+    </p>
+    <p class="GrayCodeListing2">
+      void SEETHROUGH_APIENTRY seethroughEdgeFlagPointer( GLsizei stride, const
+      GLvoid *pointer )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;crStateEdgeFlagPointer( stride, pointer );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;seethrough_spu.super.EdgeFlagPointer( stride,
+      pointer );<br>
+      }
+    </p>
+    <p>
+      Which is exactly what we want. Because we're going to be using state
+      tracking functions or data in multiple files, let's include the state
+      tracker's header file at the top of <code>seethroughspu.h</code>:
+    </p>
+    <p class="GrayCodeListing2">
+      #include "cr_glstate.h"
+    </p>
+    <p>
+      To get the function declarations for all the state_tracking functions.
+      Now, we need to add these functions to the named function table at the
+      end of <span class="File">seethroughspu.c</span>. First of all, this will
+      make our named function table <em>bigger</em>. Let's update the line in
+      <span class="File">seethroughspu.py</span> where the named function table
+      declaration is printed. The new line should read:
+    </p>
+    <p class="GrayCodeListing2">
+      print 'SPUNamedFunctionTable _cr_seethrough_table[%d];' % (
+      len(apiutil.AllSpecials( "seethrough_state" )) + len(apiutil.AllSpecials(
+      "seethrough" )) + 1 )
+    </p>
+    <p>
+      This will allow enough space for all the functions from <i>both</i>
+      <code>_special</code> files. Now, just add a second loop to add functions
+      to the table. This should come immediately after the final loop in the
+      script, before the NULL terminator is printed:
+    </p>
+    <p class="GrayCodeListing2">
+      for func_name in apiutil.AllSpecials( "seethrough_state" ):<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;print '\t__fillin( %d, "%s", (SPUGenericFunction)
+      seethrough%s );' % (offset, func_name, func_name )<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;offset += 1
+    </p>
+    <p>
+      You will of course need to re-run the python script!
+    </p>
+    <h2 class="PageSubHeading">
+      Step 14: Initialize the state tracker
+    </h2>
+    <p>
+      The state tracker needs a "context" into which to track all of the OpenGL
+      state (or in our case, the subset we care about). Let's add a
+      "<code class="Class">CRContext</code>" structure to the <code class=
+      "Class">SeethroughSPU</code> structure in <span class=
+      "File">seethroughspu.h</span>:
+    </p>
+    <p class="GrayCodeListing2">
+      CRContext *ctx;
+    </p>
+    <p>
+      Now that the variable exists, we can initialize it in <code class=
+      "Function">seethroughSPUInit</code> in <span class=
+      "File">seethroughspu_init.c</span>:
+    </p>
+    <p class="GrayCodeListing2">
+      crStateInit();<br>
+      seethrough_spu.ctx = crStateCreateContext(NULL, 0);<br>
+      crStateMakeCurrent( seethrough_spu.ctx );
+    </p>
+    <p>
+      That's it! You're tracking state!
+    </p>
+    <h2 class="PageSubHeading">
+      Step 15: Handle vertex array drawing calls
+    </h2>
+    <p>
+      This is by far the most complex part of this SPU. What we're going to do
+      is take calls to <code class="Function">glArrayElement</code>,
+      <code class="Function">glDrawArrays</code>, and <code class=
+      "Function">glDrawElements</code>, and pull them apart into individual
+      calls to the non-vertex array equivalents, based on which arrays are
+      enabled. Although this is a complicated thing to get right, the logic to
+      do it already exists in the Chromium packer! We're going to copy
+      functions out of <span class="File">packer/pack_client.c</span> and
+      rework them for our own needs.
+    </p>
+    <p>
+      Go ahead and add those three functions to the file <span class=
+      "File">seethrough_special</span>. (<em><b>RESULTS NOT SHOWN</b></em>)
+    </p>
+    <p>
+      Before we tackle <code class="Function">seethroughArrayElement</code> (by
+      far the most complex function), let's write the other two functions in
+      terms of it. Create the file <span class=
+      "File">seethroughspu_arrays.c</span> (remember, this was added to the
+      <span class="File">Makefile</span> back in step 13), and write the
+      following two functions. They are shown here without much comment, except
+      to point out that they do a bit of error checking. Chromium tends to
+      consider OpenGL errors to be fatal, rather than setting a flag to be
+      checked later. This is a design decision, and one of the ways in which
+      using Chromium can be slightly different from using vanilla OpenGL.
+    </p>
+    <pre class="GrayCodeListing2">
 #include "seethroughspu.h"
 #include "chromium.h"
 #include "cr_error.h"
 
-void SEETHROUGHSPU_APIENTRY seethroughMaterialfv( GLenum face, GLenum mode, const GLfloat *param )
+void SEETHROUGHSPU_APIENTRY seethroughDrawArrays( GLenum mode, GLint first, GLsizei count )
 {
-	GLfloat local_param[4];
-	if (mode == GL_SHININESS)
-	{
-		/* nothing to do */
-		seethrough_spu.super.Materialfv( face, mode, param );
-	}
-	else
-	{
-		local_param[0] = param[0];
-		local_param[1] = param[1];
-		local_param[2] = param[2];
-		local_param[3] = seethrough_spu.opacityf;
-		seethrough_spu.super.Materialfv( face, mode, local_param );
-	}
-}
-      
-void SEETHROUGHSPU_APIENTRY seethroughMaterialiv( GLenum face, GLenum mode, const GLint *param )
-{
-	GLint local_param[4];
-	if (mode == GL_SHININESS)
-	{
-		seethrough_spu.super.Materialiv( face, mode, param );
-	}
-	else
-	{
-		local_param[0] = param[0];
-		local_param[1] = param[1];
-		local_param[2] = param[2];
-		local_param[3] = seethrough_spu.opacityi;
-		seethrough_spu.super.Materialiv( face, mode, local_param );
-	}
-}
-</pre>
+    int i;
 
-<p>Let's do <code>glDisable</code> next.&nbsp; The idea here is to prevent the
-user from ever turning off blending.&nbsp; We just look at the enum, and if it's
-<code>GL_BLEND</code>, we drop the command on the floor.&nbsp; To be polite
-about it, we'll print a warning to the screen when this happens.</p>
-
-<pre class="GrayCodeListing2">
-void SEETHROUGHSPU_APIENTRY seethroughDisable( GLenum cap )
-{
-	if (cap == GL_BLEND)
-	{
-		crWarning( &quot;SeeThroughSPU: Ignoring disable of blending!&quot );
-	}
-	else
-	{
-		seethrough_spu.super.Disable( cap );<br>
-	}
-}
-</pre>
-
-
-<p>glEnable (for preventing the depth test from getting turned on) is almost
-identical:</p>
-
-<pre class="GrayCodeListing2">
-void SEETHROUGHSPU_APIENTRY seethroughEnable( GLenum cap )
-{
-	if (cap == GL_DEPTH_TEST)
-	{
-		crWarning( "SeeThroughSPU: Ignoring enable of depth!" );
-	}
-	else
-	{
-		seethrough_spu.super.Enable( cap );
-	}
-}
-</pre>
-
-<p>Finally, the simplest one of them all: <code>glBlendFunc</code>.&nbsp; If the
-user tries to change the blend function, he's out of luck -- our SPU is in
-charge of blending.&nbsp; We just ignore all <code>glBlendFunc</code> calls,
-making sure not to get compiler warnings from unused variables.&nbsp; Note that
-if you're following along in the <a href="seethrough.tar.gz">completed
-implementation</a>, this function actually doesn't exist, as explained in step
-12.</p>
-
-<pre class="GrayCodeListing2">
-void SEETHROUGHSPU_APIENTRY seethroughBlendFunc( GLenum sfactor, GLenum dfactor )
-{
-	crWarning( &quot;SeeThroughSPU: Ignoring setting of blend function!&quot; );
-	(void) sfactor;
-	(void) dfactor;
-}
-</pre>
-
-<p>Finally, add <code>seethroughspu_misc.c </code>add to <code>Makefile</code>. Add&nbsp;
-<code>seethroughspu_misc </code>to the list <code>FILES</code>.</p>
-
-<h2 class="PageSubHeading">Step 7: Configure and initialize the blend function</h2>
-<p>We're almost there.&nbsp; We want to allow the user to set the blend function
-to be used.&nbsp; Declare the following two variables in the <code>SeethroughSPU</code>
-structure in <code>seethroughspu.h</code>:</p>
-
-<pre class="GrayCodeListing2">
-GLenum sfactor, dfactor;
-</pre>
-
-<p>Now, let's return to <code>seethroughspu_config.c</code> and set a defaultv
-alue.&nbsp; In <code>setDefaults</code>, add the code:</p>
-
-<pre class="GrayCodeListing2">
-	seethrough_spu.sfactor = GL_SRC_ALPHA;
-	seethrough_spu.dfactor = GL_ONE_MINUS_SRC_ALPHA;
-</pre>
-
-<p>Now that everything has reasonable defaults, let's get values from the
-mothership.&nbsp; Add the following two lines to the array <code>seethroughSPUOptions[]</code>:</p>
-
-<pre class="GrayCodeListing2">
-	{ "sfactor", CR_STRING, 1, "GL_SRC_ALPHA", NULL, NULL,
-	      "sFactor", (SPUOptionCB)setSFactorCB },
-	{ "dfactor", CR_STRING, 1, "GL_ONE_MINUS_SRC_ALPHA", NULL, NULL,&nbsp;
-	      "dFactor", (SPUOptionCB)setDFactorCB },
-</pre>
-
-<p> and add the following two callback functions above the table</p>
-
-<pre class="GrayCodeListing2">
-static void setSFactorCB( void *foo, const char *response )<br>
-{
-	(void) foo;
-	setBlendFuncFactor(response, &amp;seethrough_spu.sfactor);
-}
-
-static void setDFactorCB( void *foo, const char *response )
-{
-	(void) foo;
-	setBlendFuncFactor(response, &amp;seethrough_spu.dfactor);
-}
-</pre>
-
-
-<p>Since the mothership is going to return us a string, we need to turn it back
-into a <code>GLenum</code> type, so implement the <code>setBlendFuncFactor</code>
-function at the top of this file:</p>
-
-<pre class="GrayCodeListing2">
-static void setBlendFuncFactor( const char *str, GLenum *factor )
-{
-#define BLEND_FUNC_COMPARE( s ) if (!crStrcmp( str, #s )) *factor = s
-	BLEND_FUNC_COMPARE( GL_ZERO );
-	BLEND_FUNC_COMPARE( GL_ONE );
-	BLEND_FUNC_COMPARE( GL_DST_COLOR );
-	BLEND_FUNC_COMPARE( GL_ONE_MINUS_DST_COLOR );
-	BLEND_FUNC_COMPARE( GL_SRC_ALPHA );
-	BLEND_FUNC_COMPARE( GL_ONE_MINUS_SRC_ALPHA );
-	BLEND_FUNC_COMPARE( GL_DST_ALPHA );
-	BLEND_FUNC_COMPARE( GL_ONE_MINUS_DST_ALPHA );
-	BLEND_FUNC_COMPARE( GL_SRC_ALPHA_SATURATE );
-	BLEND_FUNC_COMPARE( GL_SRC_COLOR );
-	BLEND_FUNC_COMPARE( GL_ONE_MINUS_SRC_COLOR );
-#undef BLEND_FUNC_COMPARE
-}
-</pre>
-
-<p>There is a small robustness problem here -- the legal values for source and
-destination blending factors are slightly different, but no distinction is made
-between them here.</p>
-<h2 class="PageSubHeading">Step 8:&nbsp; Set up and turn on blending before rendering</h2>
-<p>Before any rendering, we need to enable blending and set the blend
-function.&nbsp; This is analogous to setting the default color in the <a href="newspu.html">Invert
-SPU</a>.&nbsp;
-To do this we'll override the <code>MakeCurrent</code> function. Add the following to <code>seethroughspu_misc.c</code>:</p>
-
-<pre class="GrayCodeListing2">
-void SEETHROUGHSPU_APIENTRY seethroughMakeCurrent(GLint crWindow, GLint nativeWindow, GLint ctx)
-{
-	seethrough_spu.super.Enable( GL_BLEND );
-	sethrough_spu.super.BlendFunc( seethrough_spu.sfactor, seethrough_spu.dfactor );
-	seethrough_spu.super.MakeCurrent( crWindow, nativeWindow, ctx);
-}
-</pre>
-
-<p>Note that we do not have to disable the depth test at this point, as it is
-off by default, and our implementaton of glEnable will prevent it from ever
-getting turned on.</p>
-
-
-
-<h2 class="PageSubHeading">Step 9: Claim our inheritance</h2>
-
-<p>Don't forget, this SPU is a SubSPU of the PassThrough SPU.&nbsp; Change the
-second line in SPULoad in <code>seethroughspu_init.c</code> to:</p>
-
-<pre class="GrayCodeListing2">
-*super = "passthrough";
-</pre>
-
-
-<h2 class="PageSubHeading">Step 9.5: Prototype generation</h2>
-
-<p>
-To avoid compilation warnings, all non-static functions must be prototyped.
-The following python script is used to generate the seethroughspu_proto.h
-file:
-
-</p>
-<pre class="GrayCodeListing2">
-# This is seethrough_proto.py
-import sys
-sys.path.append( "../../glapi_parser" )
-import apiutil
-
-apiutil.CopyrightC()
-
-print """
-/* DO NOT EDIT - THIS FILE AUTOMATICALLY GENERATED BY seethrough_proto.py SCRIPT */
-
-#ifndef SEETHROUGHSPU_FUNCTIONS_H
-#define SEETHROUGHSPU_FUNCTIONS_H 1
-"""
-
-# make apiutil load the GL function info
-d = apiutil.GetFunctionDict("../../glapi_parser/APIspec.txt")
-
-# Emit a C prototype for each special function
-functions = apiutil.AllSpecials("seethrough") + apiutil.AllSpecials("seethrough_state")
-for func_name in functions:
-	return_type = apiutil.ReturnType(func_name)
-	params = apiutil.Parameters(func_name)
-	print 'extern %s SEETHROUGHSPU_APIENTRY seethrough%s( %s );' % ( return_type, func_name, apiutil.MakeDeclarationString(params) )
-
-print "#endif"
-</pre>
-
-<p>
-At this point, our Makefile should look like this:
-</p>
-<pre class="GrayCodeListing2">
-# This is spu/seethrough/Makefile
-TOP = ../..
-
-SPU = 1
-SHARED = 1
-LIBRARY = seethroughspu
-FILES = seethroughspu \
-	seethroughspu_arrays \
-	seethroughspu_config \
-	seethroughspu_init \
-	seethroughspu_misc
-
-LIBRARIES = spuload crutil crmothership
-
-PRECOMP = seethroughspu_proto.h
-SLOP = $(PRECOMP)
-
-LIB_DEFS += seethroughspu.def
-include ${TOP}/cr.mk
-
-seethroughspu_proto.h: seethrough_proto.py seethrough_special
-	@$(ECHO) Building the Seethrough SPU prototypes header
-	@$(PYTHON) seethrough_proto.py > $@
-</pre>
-
-<p>
-Edit the seethroughspu.h header file and add this line:
-</p>
-
-<pre class="GrayCodeListing2">
-#include "seethroughspu_proto.h"
-</pre>
-
-
-
-<h2 class="PageSubHeading">Step 10: Write a configuration file</h2>
-
-<p>It's hard to believe, but we're done coding!&nbsp; Now all we need to do is
-update the <a href="crdemo.conf" target="new_window">crdemo.conf</a> file
-described in the &quot;<a href="configscript.html">Configuration scripts</a>&quot;
-section.&nbsp; Add the creation of a new SPU to the SPU creation section:</p>
-
-<pre class="GrayCodeListing2">
-seethrough_spu = SPU( 'seethrough' )
-</pre>
-
-<p>In the SPU configuration section, configure this SPU any way you like:</p>
-
-<pre class="GrayCodeListing2">
-seethrough_spu.Conf('opacity', 0.25 )
-seethrough_spu.Conf( 'sfactor', 'GL_SRC_ALPHA' ) # the default
-seethrough_spu.Conf( 'dfactor', 'GL_ONE_MINUS_SRC_ALPHA' ) # the default
-</pre>
-
-<p>And finally, add it <i>before</i> the client SPU:</p>
-
-<pre class="GrayCodeListing2">
-client_node.AddSPU( seethrough_spu )
-</pre>
-
-
-<h2 class="PageSubHeading">Step 11: Enjoy</h2>
-
-<p align="center"><img border="0" src="seethrough_bluepony.jpg"></p>
-<h2 align="center" class="PageSubHeading">Step 12: Think about what you've done</h2>
-<p>Will this SPU work reasonably all the time?&nbsp; A little thought reveals
-that it will not.&nbsp; Although the &quot;bluepony&quot; demo works OK, Quake
-III doesn't look right at all, for two reasons:</p>
-<ol>
-  <li>Quake III uses vertex arrays to specify its colors, and our SPU doesn't
-    handle vertex arrays.&nbsp; So we've turned on blending, but we haven't
-    tweaked the alpha of the colors</li>
-  <li>Quake III has its own transparency in many places, and a single blend
-    function doesn't work.</li>
-</ol>
-<p>The solution to problem #2 is easy.&nbsp; We <i>will</i> allow the user to
-change the blend function to whatever they want.&nbsp; If they ever try to
-disable blending, we will instead reset the blend function to our configured
-defaults.&nbsp; This should have the effect of only modifying geometry that was
-intended to be opaque.</p>
-<p>To do this, we just add one line immediately after our warning in <code>seethroughDisable</code>
-in <code>seethroughspu_misc.c</code>:</p>
-
-<pre class="GrayCodeListing2">
-	seethrough_spu.super.BlendFunc( seethrough_spu.sfactor, seethrough_spu.dfactor );
-</pre>
-
-<p>With this modification, we don't need to implement <code>seethroughBlendFunc</code>
-<i>at all</i>!&nbsp; So simply remove it from the <code>seethrough_special</code>
-file and delete its implementation.</p>
-<p>If you run Quake III now, the user interfaces will work again, and the game
-is playable.&nbsp; Some things are transparent, and some things aren't, mainly
-because Quake III doesn't change any alpha values if it thinks that blending is
-turned off.&nbsp; So if a wall is drawn after a transparent water surface, the
-wall will have the same transparency as the water.&nbsp; Also, Quake III does
-extremely agressive visibility culling, so you can see elements appearing and
-disappearing all the time.</p>
-<p>One other thing that seems wrong is that backface culling could be turned
-on.&nbsp; We certainly don't want that, so we'll add it to the list of things
-that's prohibited in <code>seethroughEnable</code> in <code>seethroughspu_misc.c</code>:</p>
-
-<pre class="GrayCodeListing2">
-		else if (cap == GL_CULL_FACE)
-		{
-			crWarning( &quot;SeeThroughSPU: Ignoring enable of face culling!&quot );
-		}
-</pre>
-
-<p>And we disable it in <code>seethroughSPUInit</code> in <code>seethroughspu_init.c</code>:</p>
-
-<pre class="GrayCodeListing2">
-		seethrough_spu.super.Disable( GL_CULL_FACE );
-</pre>
-
-<p>In order to actually play what I call &quot;GlassQuake&quot;, we still need to
-implement vertex arrays in our SPU.</p>
-
-
-
-
-<h2 class="PageSubHeading">Step 13: Bring in the state tracker</h2>
-
-<p>To get vertex arrays to work, we will need the assistance of the state
-tracker.&nbsp; The state tracker will keep track of the location of all of the
-vertex array pointers, which ones are enabled, and what format they're in.</p>
-<p>First, let's make sure that we are linking against the state tracker.&nbsp;
-Because the state tracker has global state, we link against it in a special way
-to avoid sharing global variables with other SPU's that also track state.&nbsp;
-To link against the state tracker, do the following.</p>
-
-<p>Edit the file <code>cr/state_tracker/Makefile</code> and add the
-string &quot;seethroughspu&quot; to both occurances of the variable
-&quot;LIB_COPIES&quot;.&nbsp; The new setting should look something like:</p>
-
-<pre class="GrayCodeListing2">
-LIB_COPIES = crserverlib \
-	packspu \
-	tilesortspu \
-	arrayspu \
-	hiddenlinespu \
-	feedbackspu \
-	nopspu \
-	simplequeryspu \
-	pixelsortspu \
-	statecopytest \
-        seethrough
-</pre>
-
-<p>Once you've done this, type '<code>make</code>' in the <code>state_tracker</code>
-directory to get a personalized copy of the state tracker built for the
-SeeThrough SPU.&nbsp;</p>
-
-<p><b>NOTE: This step won't have been done for you if you're just using the
-completed implementation, so you have to do it!</b></p>
-
-<p>Now go back to cr/spu/seethrough/Makefile and delete the line
-
-<pre class="GrayCodeListing2">
-LIBRARIES = spuload crutil crmothership
-</pre>
-
-and replace it with
-
-<pre class="GrayCodeListing2">
-ifdef WINDOWS
-TRACKS_STATE=1
-LIBRARIES = spuload crutil crmothership
-else
-LIBRARIES = spuload crutil crmothership crstate
-endif
-
-ifdef BINUTIL_LINK_HACK
-TRACKS_STATE = 1
-LIBRARIES -= crstate
-endif
-</pre>
-
- </p>
-
-<p>While we're in the Makefile, let's create a new file for our array
-implementations.&nbsp; Add a file called &quot;seethroughspu_arrays&quot; to the
-FILES variable.&nbsp; The resulting list should look like:</p>
-
-<pre class="GrayCodeListing2">
-FILES = seethroughspu \
-	seethroughspu_arrays \
-	seethroughspu_config \
-	seethroughspu_init \
-	seethroughspu_misc
-</pre>
-
-<p>Before we start implementing functions, let's figure out what it is we want
-to do.&nbsp; We will need to use the state tracker's implementation of <code>glEnableClientState</code>,
-<code>glDisableClientState</code>, <code>glVertexPointer</code>, <code>glColorPointer</code>,
-<code>glIndexPointer</code>, <code>glNormalPointer</code>, <code>glTexCoordPointer</code>,
-<code>glEdgeFlagPointer</code>, and <code>glInterleavedArrays</code>.&nbsp; For each of these functions, we will want to call the
-state tracker's implementation, and then also dispatch to our SuperSPU.&nbsp;
-Because this is a very simple task and highly repetitive, we'll add it to the
-auto-generating code in <code> seethrough.py</code>.</p>
-<p>First, let's add the 9 functions listed above to a new file called <code>seethrough_state_special</code>.&nbsp;
-We'll update the auto-generating code so that anything found in this file will
-automatically dispatch to the state tracker as well as our SuperSPU.&nbsp; The
-file should look like:</p>
-
-<pre class="GrayCodeListing2">
-EnableClientState
-DisableClientState
-VertexPointer
-ColorPointer
-IndexPointer
-NormalPointer
-TexCoordPointer
-EdgeFlagPointer
-InterleavedArrays
-</pre>
-
-<p>Now, let's go back to the <code>seethrough.py</code> script.&nbsp; Right
-after the code for generating the <code>seethroughColor</code> functions, add
-the following code:</p>
-
-<pre class="GrayCodeListing2">
-for func_name in apiutil.AllSpecials( &quot;seethrough_state&quot; ):
-	params = apiutil.Parameters(func_name)
-	print 'void SEETHROUGHSPU_APIENTRY seethrough%s(%s)' % (func_name, apiutil.MakeDeclarationString( params ) )
-	print '{'
-	print '\tcrState%s(%s);' % (func_name, apiutil.MakeCallString( params ) )
-	print '\tseethrough_spu.super.%s(%s);' % (func_name, apiutil.MakeCallString( params ) )
-	print '}'
-</pre>
-
-
-<p>This will generate functions that look like:</p>
-
-<pre class="GrayCodeListing2">
-void SEETHROUGH_APIENTRY seethroughEdgeFlagPointer( GLsizei stride, const GLvoid *pointer )
-{
-	crStateEdgeFlagPointer( stride, pointer );
-	seethrough_spu.super.EdgeFlagPointer( stride, pointer );
-}
-</pre>
-
-<p>Which is exactly what we want.&nbsp; Because we're going to be using state
-tracking functions or data in multiple files, let's include the state tracker's
-header file at the top of <code>seethroughspu.h</code>:</p>
-
-<pre class="GrayCodeListing2">
-#include "cr_glstate.h"
-</pre>
-
-<p>To get the function declarations for all the state_tracking functions.&nbsp;
-Now, we need to add these functions to the named function table at the end of
-<code>seethroughspu.c</code>.&nbsp;
-First of all, this will make our named function table <i>bigger</i>.&nbsp; Let's
-update the line in <code>seethroughspu.py</code> where the named function table
-declaration is printed.&nbsp; The new line should read:</p>
-
-<pre class="GrayCodeListing2">
-print 'SPUNamedFunctionTable _cr_seethrough_table[%d];' % ( len(apiutil.AllSpecials( "seethrough_state" )) + len(apiutil.AllSpecials( "seethrough" )) + 1 )
-</pre>
-
-
-<p>This will allow enough space for all the functions from <i>both</i> <code>_special</code>
-files.&nbsp; Now, just add a second loop to add functions to the table.&nbsp;
-This should come immediately after the final loop in the script, before the NULL
-terminator is printed:</p>
-
-<pre class="GrayCodeListing2">
-for func_name in apiutil.AllSpecials( "seethrough_state" ):
-	print '\t__fillin( %d, "%s", (SPUGenericFunction) seethrough%s );' % (offset, func_name, func_name )
-	offset += 1
-</pre>
-
-<p>You will of course need to re-run the python script!<p>
-
-
-
-<h2 class="PageSubHeading">Step 14: Initialize the state tracker</h2>
-
-<p>The state tracker needs a &quot;context&quot; into which to track all of the
-OpenGL state (or in our case, the subset we care about).&nbsp; Let's add a
-&quot;<code>CRContext</code>&quot; structure to the <code>SeethroughSPU</code>
-structure in <code>seethroughspu.h</code>:</p>
-
-<pre class="GrayCodeListing2">
-CRContext *ctx;
-</pre>
-
-<p>Now that the variable exists, we can initialize it in <code>seethroughSPUInit</code> in
-<code>seethroughspu_init.c</code>:</p>
-
-<pre class="GrayCodeListing2">
-crStateInit();
-seethrough_spu.ctx = crStateCreateContext(NULL, 0);
-crStateMakeCurrent( seethrough_spu.ctx );
-</pre>
-
-
-<p>That's it!&nbsp; You're tracking state!</p>
-<h2 class="PageSubHeading">Step 15:&nbsp; Handle vertex array drawing calls</h2>
-<p>This is by far the most complex part of this SPU.&nbsp; What we're going to
-do is take calls to <code>glArrayElement</code>, <code>glDrawArrays</code>, and <code>glDrawElements</code>,
-and pull them apart into individual calls to the non-vertex array equivalents,
-based on which arrays are enabled.&nbsp; Although this is a complicated thing to
-get right, the logic to do it already exists in the Chromium packer!&nbsp; We're
-going to copy functions out of <code>cr/packer/pack_client.c</code> and rework
-them for our own needs.&nbsp;&nbsp;</p>
-<p>Go ahead and add those three functions to the file <code>seethrough_special</code>.
-(<i><b>RESULTS NOT SHOWN</b>)</i></p>
-<p>Before we tackle <code>seethroughArrayElement</code> (by far the most complex
-function), let's write the other two functions in terms of it.&nbsp; Create the
-file <code>seethroughspu_arrays.c</code> (remember, this was added to the
-Makefile back in step 13), and write the following two functions.&nbsp; They are
-shown here without much comment, except to point out that they do a bit of error
-checking.&nbsp; Chromium tends to consider OpenGL errors to be fatal, rather
-than setting a flag to be checked later.&nbsp; This is a design decision, and
-one of the ways in which using Chromium can be slightly different from using
-vanilla OpenGL.</p>
-
-<pre class="GrayCodeListing2">
-#include "seethroughspu.h"
-#include "chromium.h"
-#include "cr_error.h"
-
-void SEETHROUGHSPU_APIENTRY seethroughDrawArrays(GLenum mode, GLint first, GLsizei count) 
-{
-	int i;
-
-	if (count &lt; 0)
-	{
-		crError("seethroughDrawArrays passed negative count: %d", count);
-	}
-
-	if (mode &gt; GL_POLYGON)
-	{
-		crError("seethroughDrawArrays called with invalid mode: %d", mode);
-	}
-
-	seethrough_spu.super.Begin (mode);
-	for (i=0; i&lt;count; i++) 
-	{
-		seethroughArrayElement(first++);
-	}
-	seethrough_spu.super.End();
-}
-</pre>
-
-
-<p>The implementation of <code>glDrawElements</code> is similar:</p>
-
-<pre class="GrayCodeListing2">
-void SEETHROUGHSPU_APIENTRY seethroughDrawElements(GLenum mode, GLsizei count, 
-                                                   GLenum type, const GLvoid *indices) 
-{
-	int i;
-	GLubyte *p = (GLubyte *)indices;
-
-	if (count &lt; 0)
-	{
-		crError("seethroughDrawElements passed negative count: %d", count);
-	}
-
-	if (mode &gt; GL_POLYGON)
-	{
-		crError("seethroughDrawElements called with invalid mode: %d", mode);
-	}
-
-	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT && type != GL_UNSIGNED_INT)
-	{
-		crError("seethroughDrawElements called with invalid type: %d", type);
-	}
-
-	seethrough_spu.super.Begin (mode);
-	switch (type) 
-	{
-	case GL_UNSIGNED_BYTE:
-		for (i=0; i&lt;count; i++)
-		{
-			seethroughArrayElement((GLint) *p++);
-		}
-		break;
-	case GL_UNSIGNED_SHORT:
-		for (i=0; i&lt;count; i++) 
-		{
-			seethroughArrayElement((GLint) * (GLushort *) p);
-			p+=sizeof (GLushort);
-		}
-		break;
-	case GL_UNSIGNED_INT:
-		for (i=0; i&lt;count; i++) 
-		{
-			seethroughArrayElement((GLint) * (GLuint *) p);
-			p+=sizeof (GLuint);
-		}
-		break;
-	default:
-		crError( "this can't happen!" );
-		break;
-	}
-	seethrough_spu.super.End();
-}
-</pre>
-
-<pre class="GrayCodeListing2">
-void SEETHROUGHSPU_APIENTRY seethroughDrawElements(GLenum mode, GLsizei count, 
-                                                   GLenum type, const GLvoid *indices) 
-{
-	int i;
-	GLubyte *p = (GLubyte *)indices;
-
-	if (count &lt; 0)
-	{
-		crError("seethroughDrawElements passed negative count: %d", count);
-	}
-
-	if (mode &gt; GL_POLYGON)
-	{
-		crError("seethroughDrawElements called with invalid mode: %d", mode);
-	}
-
-	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT && type != GL_UNSIGNED_INT)
-	{
-		crError("seethroughDrawElements called with invalid type: %d", type);
-	}
-
-	seethrough_spu.super.Begin (mode);
-	switch (type) 
-	{
-	case GL_UNSIGNED_BYTE:
-		for (i=0; i&lt;count; i++)
-		{
-			seethroughArrayElement((GLint) *p++);
-		}
-		break;
-	case GL_UNSIGNED_SHORT:
-		for (i=0; i&lt;count; i++) 
-		{
-			seethroughArrayElement((GLint) * (GLushort *) p);
-			p+=sizeof (GLushort);
-		}
-		break;
-	case GL_UNSIGNED_INT:
-		for (i=0; i&lt;count; i++) 
-		{
-			seethroughArrayElement((GLint) * (GLuint *) p);
-			p+=sizeof (GLuint);
-		}
-		break;
-	default:
-		crError( "this can't happen!" );
-		break;
-	}
-	seethrough_spu.super.End();
-}
-
-</pre>
-
-
-
-<p>Okay, now we're down to the <i>final</i> function: <code>glArrayElement</code>.&nbsp;
-Basically what this function is going to do is use the <code>CRClientState</code>
-structure to figure out which arrays are enabled, and for each enabled array,
-generate the appropriate function calls corresponding to that array ( <code>glColor</code>,
-<code>glTexCoord</code>, etc).&nbsp; This function is <i>big</i>, but it's not
-complicated.&nbsp; Notice that we call <code>seethroughColor</code> instead of
-<code>seethrough_spu.super.Color</code>,
-because that's where the transparency transformation happens.&nbsp;
-</p>
-
-<pre class="GrayCodeListing2">
-void SEETHROUGHSPU_APIENTRY seethroughArrayElement (GLint index)
-{
-  CRClientState *c = &(seethrough_spu.ctx->client);
-  CRVertexArrays *ca = &(seethrough_spu.ctx->client.array);
-  unsigned char *p;
-
-  if (index &lt; 0) {
-    crError( "seethroughArrayElement called with a negative index: %d", index );
-  }
-
-  if (ca-&gt;e.enabled) {
-    seethrough_spu.super.EdgeFlagv(ca-&gt;e.p + index*ca-&gt;e.stride);
-  }
-
-  if (ca-&gt;t[c-&gt;curClientTextureUnit].enabled) {
-    p = ca-&gt;t[c-&gt;curClientTextureUnit].p + index*ca-&gt;t[c-&gt;curClientTextureUnit].stride;
-    switch (ca-&gt;t[c-&gt;curClientTextureUnit].type)
+    if( count &lt; 0 )
     {
-    case GL_SHORT:
-      switch (ca-&gt;t[c-&gt;curClientTextureUnit].size)
-      {
-        case 1: seethrough_spu.super.TexCoord1sv((GLshort *)p); break;
-        case 2: seethrough_spu.super.TexCoord2sv((GLshort *)p); break;
-        case 3: seethrough_spu.super.TexCoord3sv((GLshort *)p); break;
-        case 4: seethrough_spu.super.TexCoord4sv((GLshort *)p); break;
-      }
-      break;
-    case GL_INT:
-      switch (ca-&gt;t[c-&gt;curClientTextureUnit].size)
-      {
-        case 1: seethrough_spu.super.TexCoord1iv((GLint *)p); break;
-        case 2: seethrough_spu.super.TexCoord2iv((GLint *)p); break;
-        case 3: seethrough_spu.super.TexCoord3iv((GLint *)p); break;
-        case 4: seethrough_spu.super.TexCoord4iv((GLint *)p); break;
-      }
-      break;
-    case GL_FLOAT:
-      switch (ca-&gt;t[c-&gt;curClientTextureUnit].size)
-      {
-        case 1: seethrough_spu.super.TexCoord1fv((GLfloat *)p); break;
-        case 2: seethrough_spu.super.TexCoord2fv((GLfloat *)p); break;
-        case 3: seethrough_spu.super.TexCoord3fv((GLfloat *)p); break;
-        case 4: seethrough_spu.super.TexCoord4fv((GLfloat *)p); break;
-      }
-      break;
-    case GL_DOUBLE:
-      switch (ca-&gt;t[c-&gt;curClientTextureUnit].size)
-      {
-        case 1: seethrough_spu.super.TexCoord1dv((GLdouble *)p); break;
-        case 2: seethrough_spu.super.TexCoord2dv((GLdouble *)p); break;
-        case 3: seethrough_spu.super.TexCoord3dv((GLdouble *)p); break;
-        case 4: seethrough_spu.super.TexCoord4dv((GLdouble *)p); break;
-      }
-      break;
+        crError( "seethroughDrawArrays passed negative count: %d", count );
     }
-  }
 
-  if (ca-&gt;i.enabled)
-  {
-    p = ca-&gt;i.p + index*ca-&gt;i.stride;
-    switch (ca-&gt;i.type)
+    if( mode &gt; GL_POLYGON )
     {
-      case GL_SHORT: seethrough_spu.super.Indexsv((GLshort *)p); break;
-      case GL_INT: seethrough_spu.super.Indexiv((GLint *)p); break;
-      case GL_FLOAT: seethrough_spu.super.Indexfv((GLfloat *)p); break;
-      case GL_DOUBLE: seethrough_spu.super.Indexdv((GLdouble *)p); break;
+        crError( "seethroughDrawArrays called with invalid mode: %d", mode );
     }
-  }
-  if (ca-&gt;c.enabled)
-  {
-    p = ca-&gt;c.p + index*ca-&gt;c.stride;
-    switch (ca-&gt;c.type)
+
+    seethrough_spu.super.Begin( mode );
+    for( i=0; i&lt;count; i++ )
     {
-      case GL_BYTE:
-        switch (ca-&gt;c.size)
+        seethroughArrayElement( first++ );
+    }
+    seethrough_spu.super.End();
+}
+</pre>
+    <p>
+      The implementation of <code>glDrawElements</code> is similar:
+    </p>
+    <pre class="GrayCodeListing2">
+void SEETHROUGHSPU_APIENTRY seethroughDrawElements( GLenum mode, GLsizei count,
+                                                    GLenum type, const GLvoid *indices )
+{
+    int i;
+    GLubyte *p = (GLubyte *)indices;
+
+    if( count &lt; 0 )
+    {
+        crError( "seethroughDrawElements passed negative count: %d", count );
+    }
+
+    if( mode &gt; GL_POLYGON )
+    {
+        crError( "seethroughDrawElements called with invalid mode: %d", mode );
+    }
+
+    if ( type != GL_UNSIGNED_BYTE &amp;&amp; type != GL_UNSIGNED_SHORT &amp;&amp; type != GL_UNSIGNED_INT )
+    {
+        crError( "seethroughDrawElements called with invalid type: %d", type );
+    }
+
+    seethrough_spu.super.Begin (mode);
+    switch (type)
+    {
+    case GL_UNSIGNED_BYTE:
+        for (i=0; i&lt;count; i++)
         {
-          case 3: seethroughColor3bv((GLbyte *)p); break;
-          case 4: seethroughColor4bv((GLbyte *)p); break;
+            seethroughArrayElement( (GLint) *p++ );
         }
         break;
-      case GL_UNSIGNED_BYTE:
-        switch (ca-&gt;c.size)
+    case GL_UNSIGNED_SHORT:
+        for (i=0; i&lt;count; i++)
         {
-          case 3: seethroughColor3ubv((GLubyte *)p); break;
-          case 4: seethroughColor4ubv((GLubyte *)p); break;
+            seethroughArrayElement( (GLint) * (GLushort *) p );
+            p += sizeof (GLushort);
         }
         break;
-      case GL_SHORT:
-        switch (ca-&gt;c.size)
+    case GL_UNSIGNED_INT:
+        for (i=0; i&lt;count; i++)
         {
-          case 3: seethroughColor3sv((GLshort *)p); break;
-          case 4: seethroughColor4sv((GLshort *)p); break;
+            seethroughArrayElement( (GLint) * (GLuint *) p );
+            p += sizeof( GLuint );
         }
         break;
-      case GL_UNSIGNED_SHORT:
-        switch (ca-&gt;c.size)
-        {
-          case 3: seethroughColor3usv((GLushort *)p); break;
-          case 4: seethroughColor4usv((GLushort *)p); break;
-        }
-        break;
-      case GL_INT:
-        switch (ca-&gt;c.size)
-        {
-          case 3: seethroughColor3iv((GLint *)p); break;
-          case 4: seethroughColor4iv((GLint *)p); break;
-        }
-        break;
-      case GL_UNSIGNED_INT:
-        switch (ca-&gt;c.size)
-        {
-          case 3: seethroughColor3uiv((GLuint *)p); break;
-          case 4: seethroughColor4uiv((GLuint *)p); break;
-        }
-        break;
-      case GL_FLOAT:
-        switch (ca-&gt;c.size)
-        {
-          case 3: seethroughColor3fv((GLfloat *)p); break;
-          case 4: seethroughColor4fv((GLfloat *)p); break;
-        }
-        break;
-      case GL_DOUBLE:
-        switch (ca-&gt;c.size)
-        {
-          case 3: seethroughColor3dv((GLdouble *)p); break;
-          case 4: seethroughColor4dv((GLdouble *)p); break;
-        }
+    default:
+        crError( "this can't happen!" );
         break;
     }
-  }
-
-  if (ca-&gt;n.enabled)
-  {
-    p = ca-&gt;n.p + index*ca-&gt;n.stride;
-    switch (ca-&gt;n.type)
-    {
-      case GL_BYTE: seethrough_spu.super.Normal3bv((GLbyte *)p); break;
-      case GL_SHORT: seethrough_spu.super.Normal3sv((GLshort *)p); break;
-      case GL_INT: seethrough_spu.super.Normal3iv((GLint *)p); break;
-      case GL_FLOAT: seethrough_spu.super.Normal3fv((GLfloat *)p); break;
-      case GL_DOUBLE: seethrough_spu.super.Normal3dv((GLdouble *)p); break;
-    }
-  }
-
-  if (ca-&gt;v.enabled)
-  {
-    p = ca-&gt;v.p + (index*ca-&gt;v.stride);
-
-    switch (ca-&gt;v.type)
-    {
-      case GL_SHORT:
-        switch (ca-&gt;v.size)
-        {
-          case 2: seethrough_spu.super.Vertex2sv((GLshort *)p); break;
-          case 3: seethrough_spu.super.Vertex3sv((GLshort *)p); break;
-          case 4: seethrough_spu.super.Vertex4sv((GLshort *)p); break;
-        }
-        break;
-      case GL_INT:
-        switch (ca-&gt;v.size)
-        {
-          case 2: seethrough_spu.super.Vertex2iv((GLint *)p); break;
-          case 3: seethrough_spu.super.Vertex3iv((GLint *)p); break;
-          case 4: seethrough_spu.super.Vertex4iv((GLint *)p); break;
-        }
-        break;
-      case GL_FLOAT:
-        switch (ca-&gt;v.size)
-        {
-          case 2: seethrough_spu.super.Vertex2fv((GLfloat *)p); break;
-          case 3: seethrough_spu.super.Vertex3fv((GLfloat *)p); break;
-          case 4: seethrough_spu.super.Vertex4fv((GLfloat *)p); break;
-        }
-        break;
-      case GL_DOUBLE:
-        switch (ca-&gt;v.size)
-        {
-          case 2: seethrough_spu.super.Vertex2dv((GLdouble *)p); break;
-          case 3: seethrough_spu.super.Vertex3dv((GLdouble *)p); break;
-          case 4: seethrough_spu.super.Vertex4dv((GLdouble *)p); break;
-        }
-        break;
-    }
-  }
+    seethrough_spu.super.End();
 }
-
 </pre>
+    <p>
+      Okay, now we're down to the <em>final</em> function: <code class=
+      "Function">glArrayElement</code>. Basically what this function is going
+      to do is use the <code class="Class">CRClientState</code> structure to
+      figure out which arrays are enabled, and for each enabled array, generate
+      the appropriate function calls corresponding to that array ( <code class=
+      "Function">glColor</code>, <code class="Function">glTexCoord</code>,
+      etc). This function is <em>big</em>, but it's not complicated. Notice
+      that we call <code class="Function">seethroughColor</code> instead of
+      <code class="Function">seethrough_spu.super.Color</code>, because that's
+      where the transparency transformation happens.
+    </p>
+    <pre class="GrayCodeListing2">
+void SEETHROUGHSPU_APIENTRY seethroughArrayElement( GLint index )
+{
+    CRClientState *c = &amp;(seethrough_spu.ctx-&gt;client);
+    CRVertexArrays *ca = &amp;(seethrough_spu.ctx-&gt;client.array);
+    unsigned char *p;
 
+    if (index &lt; 0) {
+        crError( "seethroughArrayElement called with a negative index: %d", index );
+    }
 
-<h2 class="PageSubHeading">Step 16: Enjoy even more</h2>
+    if (ca-&gt;e.enabled) {
+        seethrough_spu.super.EdgeFlagv(ca-&gt;e.p + index*ca-&gt;e.stride);
+    }
 
-<table border="1" width="100%">
-	<tr>
-		<td align="center">
-			<img src="glassquake.jpg">
-		</td>
-	</tr>
-	<tr>
-		<td align="center">
-			GlassQuake, with <code> BlendFunc( GL_SRC_ALPHA, GL_ONE )</code>
-		</td>
-	</tr>
-</table>
-<p><a href="glassquake.html">Here are a few more screenshots of GlassQuake in
-various blending modes</a>.</p>
+    if( ca-&gt;t[c-&gt;curClientTextureUnit].enabled ) {
+        p = ca-&gt;t[c-&gt;curClientTextureUnit].p + index * ca-&gt;t[c-&gt;curClientTextureUnit].stride;
+        switch( ca-&gt;t[c-&gt;curClientTextureUnit].type )
+        {
+        case GL_SHORT:
+            switch( ca-&gt;t[c-&gt;curClientTextureUnit].size )
+            {
+            case 1: seethrough_spu.super.TexCoord1sv( (GLshort *)p ); break;
+            case 2: seethrough_spu.super.TexCoord2sv( (GLshort *)p ); break;
+            case 3: seethrough_spu.super.TexCoord3sv( (GLshort *)p ); break;
+            case 4: seethrough_spu.super.TexCoord4sv( (GLshort *)p ); break;
+            }
+            break;
+        case GL_INT:
+            switch( ca-&gt;t[c-&gt;curClientTextureUnit].size )
+            {
+            case 1: seethrough_spu.super.TexCoord1iv( (GLint *)p ); break;
+            case 2: seethrough_spu.super.TexCoord2iv( (GLint *)p ); break;
+            case 3: seethrough_spu.super.TexCoord3iv( (GLint *)p ); break;
+            case 4: seethrough_spu.super.TexCoord4iv( (GLint *)p ); break;
+            }
+            break;
+        case GL_FLOAT:
+            switch (ca-&gt;t[c-&gt;curClientTextureUnit].size )
+            {
+            case 1: seethrough_spu.super.TexCoord1fv( (GLfloat *)p ); break;
+            case 2: seethrough_spu.super.TexCoord2fv( (GLfloat *)p ); break;
+            case 3: seethrough_spu.super.TexCoord3fv( (GLfloat *)p ); break;
+            case 4: seethrough_spu.super.TexCoord4fv( (GLfloat *)p ); break;
+            }
+            break;
+        case GL_DOUBLE:
+            switch (ca-&gt;t[c-&gt;curClientTextureUnit].size )
+            {
+            case 1: seethrough_spu.super.TexCoord1dv( (GLdouble *)p ); break;
+            case 2: seethrough_spu.super.TexCoord2dv( (GLdouble *)p ); break;
+            case 3: seethrough_spu.super.TexCoord3dv( (GLdouble *)p ); break;
+            case 4: seethrough_spu.super.TexCoord4dv( (GLdouble *)p ); break;
+            }
+            break;
+        }
+    }
+
+    if( ca-&gt;i.enabled )
+    {
+        p = ca-&gt;i.p + index * ca-&gt;i.stride;
+        switch( ca-&gt;i.type )
+        {
+        case GL_SHORT: seethrough_spu.super.Indexsv( (GLshort *)p ); break;
+        case GL_INT: seethrough_spu.super.Indexiv( (GLint *)p ); break;
+        case GL_FLOAT: seethrough_spu.super.Indexfv( (GLfloat *)p ); break;
+        case GL_DOUBLE: seethrough_spu.super.Indexdv( (GLdouble *)p ); break;
+        }
+    }
+
+    if( ca-&gt;c.enabled )
+    { 
+        p = ca-&gt;c.p + index * ca-&gt;c.stride;
+        switch( ca-&gt;c.type )
+        {
+        case GL_BYTE:
+            switch( ca-&gt;c.size )
+            {
+            case 3: seethroughColor3bv( (GLbyte *)p ); break;
+            case 4: seethroughColor4bv( (GLbyte *)p ); break;
+            }
+            break;
+        case GL_UNSIGNED_BYTE:
+            switch( ca-&gt;c.size )
+            {
+            case 3: seethroughColor3ubv( (GLubyte *)p ); break;
+            case 4: seethroughColor4ubv( (GLubyte *)p ); break;
+            }
+            break;
+        case GL_SHORT:
+            switch( ca-&gt;c.size )
+            {
+            case 3: seethroughColor3sv( (GLshort *)p ); break;
+            case 4: seethroughColor4sv( (GLshort *)p ); break;
+            }
+            break;
+        case GL_UNSIGNED_SHORT:
+            switch( ca-&gt;c.size )
+            {
+            case 3: seethroughColor3usv( (GLushort *)p ); break;
+            case 4: seethroughColor4usv( (GLushort *)p ); break;
+            }
+            break;
+        case GL_INT:
+            switch( ca-&gt;c.size )
+            {
+            case 3: seethroughColor3iv( (GLint *)p ); break;
+            case 4: seethroughColor4iv( (GLint *)p ); break;
+            }
+            break;
+        case GL_UNSIGNED_INT:
+            switch( ca-&gt;c.size )
+            {
+            case 3: seethroughColor3uiv( (GLuint *)p ); break;
+            case 4: seethroughColor4uiv( (GLuint *)p ); break;
+            }
+            break;
+        case GL_FLOAT:
+            switch( ca-&gt;c.size )
+            {
+            case 3: seethroughColor3fv( (GLfloat *)p ); break;
+            case 4: seethroughColor4fv( (GLfloat *)p ); break;
+            }
+            break;
+        case GL_DOUBLE:
+            switch( ca-&gt;c.size )
+            {
+            case 3: seethroughColor3dv( (GLdouble *)p ); break;
+            case 4: seethroughColor4dv( (GLdouble *)p ); break;
+            }
+            break;
+        }
+    }
+
+    if( ca-&gt;n.enabled )
+    {
+        p = ca-&gt;n.p + index * ca-&gt;n.stride;
+        switch( ca-&gt;n.type )
+        {
+        case GL_BYTE: seethrough_spu.super.Normal3bv( (GLbyte *)p ); break;
+        case GL_SHORT: seethrough_spu.super.Normal3sv( (GLshort *)p ); break;
+        case GL_INT: seethrough_spu.super.Normal3iv( (GLint *)p ); break;
+        case GL_FLOAT: seethrough_spu.super.Normal3fv( (GLfloat *)p ); break;
+        case GL_DOUBLE: seethrough_spu.super.Normal3dv( (GLdouble *)p ); break;
+        }
+    }
+
+    if( ca-&gt;v.enabled )
+    {
+        p = ca-&gt;v.p + index * ca-&gt;v.stride;
+
+        switch( ca-&gt;v.type )
+        {
+        case GL_SHORT:
+            switch( ca-&gt;v.size )
+            {
+            case 2: seethrough_spu.super.Vertex2sv( (GLshort *)p ); break;
+            case 3: seethrough_spu.super.Vertex3sv( (GLshort *)p ); break;
+            case 4: seethrough_spu.super.Vertex4sv( (GLshort *)p ); break;
+            }
+            break;
+        case GL_INT:
+            switch( ca-&gt;v.size )
+            {
+            case 2: seethrough_spu.super.Vertex2iv( (GLint *)p ); break;
+            case 3: seethrough_spu.super.Vertex3iv( (GLint *)p ); break;
+            case 4: seethrough_spu.super.Vertex4iv( (GLint *)p ); break;
+            }
+            break;
+        case GL_FLOAT:
+            switch( ca-&gt;v.size )
+            {
+            case 2: seethrough_spu.super.Vertex2fv( (GLfloat *)p ); break;
+            case 3: seethrough_spu.super.Vertex3fv( (GLfloat *)p ); break;
+            case 4: seethrough_spu.super.Vertex4fv( (GLfloat *)p ); break;
+            }
+            break;
+        case GL_DOUBLE:
+            switch( ca-&gt;v.size )
+            {
+            case 2: seethrough_spu.super.Vertex2dv( (GLdouble *)p ); break;
+            case 3: seethrough_spu.super.Vertex3dv( (GLdouble *)p ); break;
+            case 4: seethrough_spu.super.Vertex4dv( (GLdouble *)p ); break;
+            }
+            break;
+        }
+    }
+}
+</pre>
+    <h2 class="PageSubHeading">
+      Step 16: Enjoy even more
+    </h2>
+    <table border="0" width="100%">
+      <tr class="Center">
+        <td>
+          <img src="glassquake.jpg" class="noborder">
+        </td>
+      </tr>
+      <tr class="Center">
+        <td>
+          GlassQuake, with <code>BlendFunc( GL_SRC_ALPHA, GL_ONE )</code>
+        </td>
+      </tr>
+    </table>
+    <p>
+      <a href="glassquake.html">Here are a few more screenshots of GlassQuake
+      in various blending modes</a>.
+    </p>
+  </body>
+</html>

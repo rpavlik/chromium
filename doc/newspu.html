@@ -1,331 +1,488 @@
 <!-- Copyright (c) 2001, Stanford University
      All rights reserved.
 
-	 See the file LICENSE.txt for information on redistributing this software.  -->
+     See the file LICENSE.txt for information on redistributing this software.  -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
-<title>New Page 1</title>
-<base target="_self">
-<link rel="stylesheet" type="text/css" href="chromium.css">
-</head>
-
-<body bgcolor="#FFFFFF">
-
-<h1 class="PageHeading">Writing a new SPU</h1>
-<p>This web page will step you through the creation of the &quot;invert&quot;
-SPU.&nbsp; This SPU will modify the OpenGL stream so that all of the colors are
-inverted.&nbsp; Although this is a toy example, it shows the power of Chromium's
-modularity, and can be used as a starting point for more complex SPU's.</p>
-<h2 class="PageSubHeading">Step 1: Creating the SPU directory</h2>
-<p>This step is very simple.&nbsp; Change to the <code>cr/spu</code> directory,
-and type the following commands:</p>
-<ol>
-  <li><code>cp -r template invert</code></li>
-  <li><code>cd invert</code></li>
-  <li><code>python gen_template.py invert</code></li>
-</ol>
-<p>The first command will make a copy of the &quot;template&quot; SPU in a directory <code>cr/spu/invert</code>.&nbsp;
-The <code>gen_template.py</code> script will rename all of the template files to
-be consistent with your chosen SPU name (in this case, &quot;invert&quot;), and
-it will also change all of the variable names and other identifiers in the C
-code and header files to be consistent with the new SPU name.</p>
-<p>This process will leave you with seven files:</p>
-<ul>
-  <li><code>Makefile</code>: A properly formed Makefile for Chromium's build
-    system.</li>
-  <li><code>gen_template.py</code>: The script you just ran.&nbsp; You can
-    delete it now; it will no longer be needed.</li>
-  <li><code>invertspu.c</code>: This file contains the list of functions that
-    the Invert SPU will implement.&nbsp; Currently that list is empty.</li>
-  <li><code>invertspu.def</code>: A list of exported symbols for Windows.&nbsp;
-    SPU's only ever export one function, and it's already listed in this file,
-    so you should never have to change this.&nbsp; If you're not building on
-    Windows, you <i>really</i> don't care about this file.</li>
-  <li><code>invertspu.h</code>: A header file containing a global structure to
-    represent the state of this SPU, as well as a couple of pre-defined function
-    declarations.</li>
-  <li><code>invertspu_config.c</code>: Code to communicate with the mothership
-    to gather configuration.&nbsp; Currently the code in this file just connects
-    to the mothership and immediately quits.&nbsp;</li>
-  <li><code>invertspu_init.c</code>: Startup and initialization code for this
-    SPU.&nbsp; These entry points will be called by the SPU loader before any
-    application code is run, so they are the best place to contact the
-    mothership (already implemented in the template), initialize any external
-    resources or libraries that need initializing, etc.</li>
-</ul>
-<p>Assuming that the rest of the Chromium system has been built already, you
-should be able to type &quot;make&quot; at this point, and the SPU should
-compile without warnings.&nbsp; If it doesn't, something is horribly wrong.</p>
-<h2 class="PageSubHeading">Step 2: Initialize the SPU</h2>
-<p>For the most part, this SPU initializes itself.&nbsp; However, there are two
-small changes to be made to the initialization routine.</p>
-<p>First, we must introduce the notion of <i>SPU inheritance</i>.&nbsp; A SPU
-need not implement the full OpenGL API.&nbsp; In fact, most SPU's will
-not.&nbsp; Instead, a SPU can implement a subset of the OpenGL API, and the
-remainder of the API can be obtained from a &quot;SuperSPU&quot;.&nbsp; For
-example, a SPU that is designed to only accept calls to <code>glDrawPixels</code>
-could get the rest of its API from the &quot;error&quot; SPU, which will print
-an error message on any OpenGL function call.&nbsp; The &quot;error&quot; SPU is
-in fact the default SuperSPU.</p>
-<p>In the case of the Invert SPU, we will inherit from the &quot;passthrough&quot;
-SPU, since we want to modify an OpenGL stream as it is made.&nbsp; To do this,
-edit the file <code>invertspu_init.c</code>.&nbsp; In the function &quot;<code>SPULoad</code>&quot;,
-you will see the line:</p>
-<table width="100%"><tr><td class="GrayCodeListing">super = NULL;</td></tr></table>
-<p>Change this line to:</p>
-<table width="100%"><tr><td class="GrayCodeListing">super = &quot;passthrough&quot;;</td></tr></table>
-<p>That's all there is to it.&nbsp; If you've been paying really close
-attention, you might think that we need to check to make sure this SPU is loaded
-with a child (i.e., it does not appear at the end of a SPU chain).&nbsp; This
-check is actually performed by the &quot;passthrough&quot; SPU when <i>it</i> is
-loaded, so another check would be redundant.</p>
-<p>Notice two other things about this initialization file, and in particular the
-function <code>SPUInit</code>:</p>
-<ol>
-  <li>There is a global variable called &quot;<code>invert_spu</code>&quot; that
-    holds all information pertaining to this instance of this SPU.</li>
-  <li>A copy of the dispatch tables for the SPU's SuperSPU, and this SPU's child
-    (i.e., the SPU following it in the chain) are stored in the <code>invert_spu</code>
-    global variable.&nbsp; This is how we will pass functions through once we
-    have modified their arguments.</li>
-</ol>
-<p>You should still be able to compile the invert SPU after this step.</p>
-<h2 class="PageSubHeading">Step 3: Tell the SPU which functions you're going to
-implement</h2>
-<p>Open the file invertspu.c.&nbsp; You will see the following code at the
-bottom of the file:</p>
-<table width="100%"><tr><td class="GrayCodeListing">SPUNamedFunctionTable _cr_invert_table[] = {<br>
-&nbsp; { NULL, NULL }<br>
-};</td></tr></table>
-<p>This table is a NULL-terminated list of&nbsp; <code>{ name, function }&nbsp;</code>
-pairs that will be parsed by the SPU loader to build a SPU dispatch table.&nbsp;
-Therefore, order does not matter.&nbsp; For this SPU, we will want to implement
-those functions that affect the color.&nbsp; There are actually a lot of them,
-so for the purposes of this example, we'll only implement a few: <code>glColor3f</code>,
-<code>glClearColor</code>, and <code>glMaterialfv</code>.&nbsp; For
-this step, all we have to do is add these function names and pointers to our
-implementation in this list.&nbsp; Change the above code to:</p>
-<table width="100%"><tr><td class="GrayCodeListing">SPUNamedFunctionTable _cr_invert_table[] = {<br>
-&nbsp; { &quot;Color3f&quot;,&nbsp;&nbsp;&nbsp; (SPUGenericFunction)
-invertColor3f },<br>
-&nbsp; { &quot;ClearColor&quot;, (SPUGenericFunction) invertClearColor },<br>
-&nbsp; { &quot;Materialfv&quot;, (SPUGenericFunction) invertMaterialfv },<br>
-&nbsp; { NULL, NULL }<br>
-};&nbsp;</td></tr></table>
-<p>Notice two things about this table:&nbsp; First, the function names on the left
-do not begin with &quot;gl&quot;.&nbsp; Second, the functions on the right
-(which we haven't implemented yet) must be cast to &quot;SPUGenericFunction&quot;
-in order to properly build this table.&nbsp; This has the unfortunate side
-effect that you can easily get the number or type of arguments to a function
-wrong, and the compiler will not catch the error, so be careful.</p>
-<p>After this step, you will not be able to compile the SPU, because the
-functions <code>invertColor3f</code>, <code>invertClearColor</code>, and <code>invertMaterialfv
-</code>are not defined.</p>
-<h2 class="PageSubHeading">Step 4: Define the functions</h2>
-<p>We will implement the three needed functions at the top of the file <code>invertspu.c</code>,
-since that's where they are referred to.&nbsp; In a larger SPU, it you would
-probably want to break these things into multiple files.</p>
-<p>Immediately before the table you created in step 3, add the lines:</p>
-<table width="100%"><tr><td class="GrayCodeListing">void INVERTSPU_APIENTRY invertColor3f( GLfloat red,&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-GLfloat green,&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-GLfloat blue )<br>
-{<br>
-}</td></tr></table>
-<p>(We will fill in the body in a minute).&nbsp; The strange identifier &quot;<code>INVERTSPU_APIENTRY</code>&quot;,
-defined in the header <code>invertspu.h</code>, is necessary to ensure correct
-operation on Windows.&nbsp; On Windows, it is defined to &quot;<code>__stdcall</code>&quot;,
-which matches the calling conventions used by the system's OpenGL
-implementation.&nbsp; This is necessary since the OpenGL replacement DLL will
-simply <i>jump</i> to this function instead of calling it, so the calling
-conventions need to match those expected by the calling application.&nbsp; On
-non-Windows machines, this identifier has no effect.&nbsp; See the header file
-for the entire definition.</p>
-<p><b>Important</b>: Every OpenGL replacement function needs to use this
-identifier.</p>
-<p>The definition of the other two functions is similarly straightforward:</p>
-<table width="100%"><tr><td class="GrayCodeListing">void INVERTSPU_APIENTRY invertClearColor( GLfloat red,&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-GLfloat green,&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-GLfloat blue,&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-GLfloat alpha )<br>
-{<br>
-}</td></tr></table>
-<table width="100%"><tr><td class="GrayCodeListing">void INVERTSPU_APIENTRY invertMaterialfv( GLenum face,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-GLenum mode,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-const GLfloat *param )<br>
-{<br>
-}</td></tr></table>
-<p>Note that the SPU may still not compile at this point, because the unused
-variables may generate warnings (depending on your compiler), and the default
-Chromium build system configuration files (in <code>cr/config</code>) consider
-warnings to be errors.</p>
-<h2 class="PageSubHeading">Step 5: Write the function bodies</h2>
-<p>The final step in our SPU is to actually implement our filters.&nbsp; Let's
-look at the implementation of <code>glColor3f </code>first.</p>
-<p>All we need to do is subtract the specified colors from unity before passing
-them to our child.&nbsp; Since our SuperSPU already handles passing parameters
-to a child SPU, all we need to do is call our SuperSPU's implementation of <code>Color3f</code>
-with modified arguments. Therefore, the full body for <code>invertColor3f</code>
-should look like:</p>
-<table width="100%"><tr><td class="GrayCodeListing">void INVERTSPU_APIENTRY invertColor3f( GLfloat red,&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; GLfloat
-green,&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; GLfloat
-blue )<br>
-{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; invert_spu.super.Color3f( 1-red,
-1-green, 1-blue );<br>
-}</td></tr></table>
-<p>That's all there is to it!&nbsp; Note that this would have been exactly
-equivalent to calling:</p>
-<table width="100%"><tr><td class="GrayCodeListing">invert_spu.child.Color3f( 1-red, 1-green, 1-blue );</td></tr></table>
-<p>But I prefer calling the passthrough SPU as a (marginally) cleaner design.</p>
-<p>The implementation of <code>invertMaterialfv</code> is slightly more
-interesting, because it needs to behave differently depending on what the &quot;<code>mode</code>&quot;
-parameter is.&nbsp; In particular, if <code>mode</code> is <code>GL_SHININESS</code>,
-there is only one parameter, and we shouldn't invert it.&nbsp; Otherwise, there
-are four parameters, and they should get inverted.&nbsp; To do this, we make a
-local array of four <code>float</code> variables, invert the provided
-parameters, and pass them to the SuperSPU.
-If the user specifies the material shininess, we leave the parameters alone
-and just dispatch them to the SuperSPU verbatim:</p>
-<table width="100%"><tr><td class="GrayCodeListing">void INVERTSPU_APIENTRY invertMaterialfv( GLenum face,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-GLenum mode,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-const GLfloat *param )<br>
-{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (mode != GL_SHININESS)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-GLfloat local_param[4];<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-local_param[0] = 1-param[0];<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-local_param[1] = 1-param[1];<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-local_param[2] = 1-param[2];<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-local_param[3] = 1-param[3];<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-invert_spu.super.Materialfv( face, mode, local_param );<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; else<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-invert_spu.super.Materialfv( face, mode, param );<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br>
-}</td></tr></table>
-<p>The implementation of <code>invertClearColor</code> is almost identical to
-the implementation of <code>invertColor3f</code>, and is not shown here.</p>
-<h2 class="PageSubHeading">Step 6: Test it out!</h2>
-<p>All that's missing at this point is a configuration script that references
-our new SPU.&nbsp; For this example, we'll just modify the <a href="crdemo.conf" target="new_window">crdemo.conf</a>
-file that was described in the &quot;<a href="configscript.html">Configuration
-Scripts</a>&quot; section of this documentation.&nbsp; Change directories to <code>cr/mothership/configs</code>
-and copy <code>crdemo.conf</code> to <code>invert.conf</code>.&nbsp;</p>
-<p>All that's required is a single call to the <code>AddSPU</code> method of the
-client node.&nbsp; Around lines 17 and 18, where the server and client SPU's are
-created, add the line:</p>
-<table width="100%"><tr><td class="GrayCodeListing">invert_spu = SPU( 'invert' )</td></tr></table>
-<p>Then, immediately before the client SPU is added to the client node (line 29
-in the unmodified crdemo.conf), add the line:</p>
-<table width="100%"><tr><td class="GrayCodeListing">client_node.AddSPU( invert_spu )</td></tr></table>
-<p>It is important that the invert SPU comes before the client SPU in the
-configuration script, since that is the SPU chain order that will be created
-when the application starts up.&nbsp; Your resulting script should <a href="invert.conf" target="new_window">look
-like this</a>.</p>
-
-  <table border="1" width="100%">
-    <tr>
-      <td width="756" height="33" align="center">
-        <p align="center"><img border="0" src="bluepony.jpg" width="254" height="273"></td>
-      <td width="756" height="33" align="center">
-        <p align="center"><img border="0" src="invert_bluepony.jpg" width="254" height="273"></td>
-    </tr>
-    <tr>
-      <td width="756" height="33" align="center">&quot;bluepony&quot; without the Invert SPU</td>
-      <td width="756" height="33" align="center">&quot;bluepony&quot; with the Invert SPU</td>
-    </tr>
-  </table>
-
-<h2 class="PageSubHeading">Step 7: Overriding default OpenGL state</h2>
-<p>OpenGL is a tricky business, and getting simple things right can sometimes be
-a little hard.&nbsp; For example, what if the user <i>never</i> sets the color,
-material, or clear color, and simply uses the defaults?&nbsp; Surely we'd want
-those colors to be inverted too, right?
-The solution is to override the default OpenGL state.</p>
-
-<p>At this point we must consider OpenGL rendering contexts.
-A rendering context keeps track of all OpenGL state (such as current color,
-lighting state, blending, textures, etc).
-Application programs must create at least one rendering context (with
-glXCreateContext, for example) and bind a context (with glXMakeCurrent)
-before drawing anything.
-Furthermore, an application may create many rendering contexts and bind
-them at different times to different windows.
-</p>
-
-<p>If we want to override the default state in an OpenGL rendering context,
-the time to do it is immediately after we bind the context for the first
-time.
-That means we have to override Chromium's <code>MakeCurrent</code> function.
-</p>
-
-<p>Here's an example that overrides the default color, material and
-clear color:</p>
-
-<table width="100%"><tr><td class="GrayCodeListing">
-void INVERTSPU_APIENTRY invertMakeCurrent(GLint crWindow, GLint nativeWindow, GLint ctx)<br>
-{<br>
-&nbsp;&nbsp;&nbsp;&nbsp;static GLfloat diffuse[4] = { 1-0.8f, 1-0.8f, 1-0.8f, 1.0f };<br>
-&nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.MakeCurrent(crWindow, nativeWindow, ctx);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.Color3f( 0, 0, 0 );       // default color is white<br>
-&nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.ClearColor( 1, 1, 1, 1 ); // default clear color is black<br>
-&nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.Materialfv( GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse );<br>
-}
-</td></tr></table>
-
-<p>Note: in this example we're actually overriding the default state
-<em>every</em> time <code>MakeCurrent</code> is called.
-That's OK if only a little state is being set.
-Otherwise, we'd  have to keep track of the context (<code>ctx</code>)
-parameter and only set the state when we saw a new context handle.
-</p>
-
-<p>The <code>crWindow</code> parameter is Chromium's internal window ID
-number.  It's typically a small integer.</p>
-
-<p>The <code>nativeWindow</code> parameter is the handle of the corresponding
-native window system window (i.e. an X Window ID).</p>
-
-<p>The <code>ctx</code> parameter is Chromium's internal context ID.
-It's typically a small integer.</p>
-
-
-<p>We might have alternately called the functions from step 5 with the
-OpenGL defaults, so we wouldn't have inverting logic in too many places.&nbsp;
-Also, careful implementors will want to invert the default specular, emission,
-and ambient colors as well.</p>
-<p>A good program to test this SPU with is the &quot;bluepony&quot; demo that
-comes with GLUT.&nbsp; Notice that the pony is a different color, as is the
-clear color.&nbsp; However, the floor is still the same, because those colors
-were specified with <code>glColor4fv</code>, which we did not implement.&nbsp;
-For an example of how to write this SPU in a more complete and correct way, see
-&quot;<a href="codegen.html">Automatically generating code for a
-SPU</a>&quot;.</p>
-
-</body>
-
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+    <title>
+      Writing a new SPU
+    </title>
+    <base target="_self">
+    <link rel="stylesheet" type="text/css" href="chromium.css">
+  </head>
+  <body>
+    <h1 class="PageHeading">
+      Writing a new SPU
+    </h1>
+    <p>
+      This web page will step you through the creation of the "invert"
+      SPU.&nbsp; This SPU will modify the OpenGL stream so that all of the
+      colors are inverted.&nbsp; Although this is a toy example, it shows the
+      power of Chromium's modularity, and can be used as a starting point for
+      more complex SPUs.
+    </p>
+    <h2 class="PageSubHeading">
+      Step 1: Creating the SPU directory
+    </h2>
+    <p>
+      This step is very simple.&nbsp; Change to the <span class=
+      "Directory">spu/</span> directory, and type the following commands:
+    </p>
+    <p class="Command">
+      cp -r template invert<br>
+      cd invert<br>
+      python gen_template.py invert
+    </p>
+    <p>
+      The first command will make a copy of the "template" SPU in a directory
+      <span class="Directory">spu/invert/</span>.&nbsp; The <span class=
+      "File">gen_template.py</span> script will rename all of the template
+      files to be consistent with your chosen SPU name (in this case,
+      "invert"), and it will also change all of the variable names and other
+      identifiers in the C code and header files to be consistent with the new
+      SPU name.
+    </p>
+    <p>
+      This process will leave you with seven files:
+    </p>
+    <ul>
+      <li>
+        <span class="File">Makefile</span>: A properly formed Makefile for
+        Chromium's build system.
+      </li>
+      <li>
+        <span class="File">gen_template.py</span>: The script you just
+        ran.&nbsp; You can delete it now; it will no longer be needed.
+      </li>
+      <li>
+        <span class="File">invertspu.c</span>: This file contains the list of
+        functions that the Invert SPU will implement.&nbsp; Currently that list
+        is empty.
+      </li>
+      <li>
+        <span class="File">invertspu.def</span>: A list of exported symbols for
+        Windows.&nbsp; SPUs only ever export one function, and it's already
+        listed in this file, so you should never have to change this.&nbsp; If
+        you're not building on Windows, you <em>really</em> don't care about
+        this file.
+      </li>
+      <li>
+        <span class="File">invertspu.h</span>: A header file containing a
+        global structure to represent the state of this SPU, as well as a
+        couple of pre-defined function declarations.
+      </li>
+      <li>
+        <span class="File">invertspu_config.c</span>: Code to communicate with
+        the mothership to gather configuration.&nbsp; Currently the code in
+        this file just connects to the mothership and immediately quits.&nbsp;
+      </li>
+      <li>
+        <span class="File">invertspu_init.c</span>: Startup and initialization
+        code for this SPU.&nbsp; These entry points will be called by the SPU
+        loader before any application code is run, so they are the best place
+        to contact the mothership (already implemented in the template),
+        initialize any external resources or libraries that need initializing,
+        etc.
+      </li>
+    </ul>
+    <p>
+      Assuming that the rest of the Chromium system has been built already, you
+      should be able to type "make" at this point, and the SPU should compile
+      without warnings.&nbsp; If it doesn't, something is horribly wrong.
+    </p>
+    <h2 class="PageSubHeading">
+      Step 2: Initialize the SPU
+    </h2>
+    <p>
+      For the most part, this SPU initializes itself.&nbsp; However, there are
+      two small changes to be made to the initialization routine.
+    </p>
+    <p>
+      First, we must introduce the notion of <em>SPU inheritance</em>.&nbsp; A
+      SPU need not implement the full OpenGL API.&nbsp; In fact, most SPUs will
+      not.&nbsp; Instead, a SPU can implement a subset of the OpenGL API, and
+      the remainder of the API can be obtained from a "SuperSPU".&nbsp; For
+      example, a SPU that is designed to only accept calls to <code class=
+      "Function">glDrawPixels</code> could get the rest of its API from the
+      <span class="SPU">error</span> SPU, which will print an error message on
+      any OpenGL function call.&nbsp; The <span class="SPU">error</span> SPU is
+      in fact the default SuperSPU.
+    </p>
+    <p>
+      In the case of the Invert SPU, we will inherit from the <span class=
+      "SPU">passthrough</span> SPU, since we want to modify an OpenGL stream as
+      it is made.&nbsp; To do this, edit the file <span class=
+      "File">invertspu_init.c</span>.&nbsp; In the function <code class=
+      "Function">SPULoad</code>, you will see the line:
+    </p>
+    <p class="GrayCodeListing2">
+      super = NULL;
+    </p>
+    <p>
+      Change this line to:
+    </p>
+    <p class="GrayCodeListing2">
+      super = "passthrough";
+    </p>
+    <p>
+      That's all there is to it.&nbsp; If you've been paying really close
+      attention, you might think that we need to check to make sure this SPU is
+      loaded with a child (i.e., it does not appear at the end of a SPU
+      chain).&nbsp; This check is actually performed by the <span class=
+      "SPU">passthrough</span> SPU when <em>it</em> is loaded, so another check
+      would be redundant.
+    </p>
+    <p>
+      Notice two other things about this initialization file, and in particular
+      the function <code class="Function">SPUInit</code>:
+    </p>
+    <ol>
+      <li>There is a global variable called <code>invert_spu</code> that holds
+      all information pertaining to this instance of this SPU.
+      </li>
+      <li>A copy of the dispatch tables for the SPU's SuperSPU, and this SPU's
+      child (i.e., the SPU following it in the chain) are stored in the <code>
+        invert_spu</code> global variable.&nbsp; This is how we will pass
+        functions through once we have modified their arguments.
+      </li>
+    </ol>
+    <p>
+      You should still be able to compile the <span class="SPU">invert</span>
+      SPU after this step.
+    </p>
+    <h2 class="PageSubHeading">
+      Step 3: Tell the SPU which functions you're going to implement
+    </h2>
+    <p>
+      Open the file <span class="File">invertspu.c</span>.&nbsp; You will see
+      the following code at the bottom of the file:
+    </p>
+    <p class="GrayCodeListing2">
+      SPUNamedFunctionTable _cr_invert_table[] = {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{ NULL, NULL }<br>
+      };
+    </p>
+    <p>
+      This table is a NULL-terminated list of&nbsp; <code>{ name, function
+      }&nbsp;</code> pairs that will be parsed by the SPU loader to build a SPU
+      dispatch table.&nbsp; Therefore, order does not matter.&nbsp; For this
+      SPU, we will want to implement those functions that affect the
+      color.&nbsp; There are actually a lot of them, so for the purposes of
+      this example, we'll only implement a few: <code class=
+      "Function">glColor3f</code>, <code class="Function">glClearColor</code>,
+      and <code class="Function">glMaterialfv</code>.&nbsp; For this step, all
+      we have to do is add these function names and pointers to our
+      implementation in this list.&nbsp; Change the above code to:
+    </p>
+    <p class="GrayCodeListing2">
+      SPUNamedFunctionTable _cr_invert_table[] = {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{ "Color3f",&nbsp;&nbsp;&nbsp;
+      (SPUGenericFunction) invertColor3f },<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{ "ClearColor", (SPUGenericFunction)
+      invertClearColor },<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{ "Materialfv", (SPUGenericFunction)
+      invertMaterialfv },<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;{ NULL, NULL }<br>
+      };
+    </p>
+    <p>
+      Notice two things about this table:&nbsp; First, the function names on
+      the left do not begin with "gl".&nbsp; Second, the functions on the right
+      (which we haven't implemented yet) must be cast to "SPUGenericFunction"
+      in order to properly build this table.&nbsp; This has the unfortunate
+      side effect that you can easily get the number or type of arguments to a
+      function wrong, and the compiler will not catch the error, so be careful.
+    </p>
+    <p>
+      After this step, you will not be able to compile the SPU, because the
+      functions <code class="Function">invertColor3f</code>, <code class=
+      "Function">invertClearColor</code>, and <code class=
+      "Function">invertMaterialfv</code> are not defined.
+    </p>
+    <h2 class="PageSubHeading">
+      Step 4: Define the functions
+    </h2>
+    <p>
+      We will implement the three needed functions at the top of the file
+      <span class="File">invertspu.c</span>, since that's where they are
+      referred to.&nbsp; In a larger SPU, it you would probably want to break
+      these things into multiple files.
+    </p>
+    <p>
+      Immediately before the table you created in step 3, add the lines:
+    </p>
+    <p class="GrayCodeListing">
+      void INVERTSPU_APIENTRY invertColor3f( GLfloat red,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      GLfloat green,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      GLfloat blue )<br>
+      {<br>
+      }
+    </p>
+    <p>
+      (We will fill in the body in a minute).&nbsp; The strange identifier
+      "<code>INVERTSPU_APIENTRY</code>", defined in the header <span class=
+      "File">invertspu.h</span>, is necessary to ensure correct operation on
+      Windows.&nbsp; On Windows, it is defined to "<code>__stdcall</code>",
+      which matches the calling conventions used by the system's OpenGL
+      implementation.&nbsp; This is necessary since the OpenGL replacement DLL
+      will simply <em>jump</em> to this function instead of calling it, so the
+      calling conventions need to match those expected by the calling
+      application.&nbsp; On non-Windows machines, this identifier has no
+      effect.&nbsp; See the header file for the entire definition.
+    </p>
+    <p>
+      <b>Important</b>: Every OpenGL replacement function needs to use this
+      identifier.
+    </p>
+    <p>
+      The definition of the other two functions is similarly straightforward:
+    </p>
+    <p class="GrayCodeListing2">
+      void INVERTSPU_APIENTRY invertClearColor( GLfloat red,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      GLfloat green,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      GLfloat blue,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      GLfloat alpha )<br>
+      {<br>
+      }
+    </p>
+    <p class="GrayCodeListing2">
+      void INVERTSPU_APIENTRY invertMaterialfv( GLenum face,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      GLenum mode,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      const GLfloat *param )<br>
+      {<br>
+      }
+    </p>
+    <p>
+      Note that the SPU may still not compile at this point, because the unused
+      variables may generate warnings (depending on your compiler), and the
+      default Chromium build system configuration files (in <span class=
+      "Directory">config/</span>) consider warnings to be errors.
+    </p>
+    <h2 class="PageSubHeading">
+      Step 5: Write the function bodies
+    </h2>
+    <p>
+      The final step in our SPU is to actually implement our filters.&nbsp;
+      Let's look at the implementation of <code class=
+      "Function">glColor3f</code> first.
+    </p>
+    <p>
+      All we need to do is subtract the specified colors from unity before
+      passing them to our child.&nbsp; Since our SuperSPU already handles
+      passing parameters to a child SPU, all we need to do is call our
+      SuperSPU's implementation of <code class="Function">Color3f</code> with
+      modified arguments. Therefore, the full body for <code class=
+      "Function">invertColor3f</code> should look like:
+    </p>
+    <p class="GrayCodeListing2">
+      void INVERTSPU_APIENTRY invertColor3f( GLfloat red,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      GLfloat green,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      GLfloat blue )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.Color3f( 1-red, 1-green, 1-blue
+      );<br>
+      }
+    </p>
+    <p>
+      That's all there is to it!&nbsp; Note that this would have been exactly
+      equivalent to calling:
+    </p>
+    <p class="GrayCodeListing2">
+      invert_spu.child.Color3f( 1-red, 1-green, 1-blue );
+    </p>
+    <p>
+      But I prefer calling the <span class="SPU">passthrough</span> SPU as a
+      (marginally) cleaner design.
+    </p>
+    <p>
+      The implementation of <code class="Function">invertMaterialfv</code> is
+      slightly more interesting, because it needs to behave differently
+      depending on what the "<code>mode</code>" parameter is.&nbsp; In
+      particular, if <code>mode</code> is <code>GL_SHININESS</code>, there is
+      only one parameter, and we shouldn't invert it.&nbsp; Otherwise, there
+      are four parameters, and they should get inverted.&nbsp; To do this, we
+      make a local array of four <code>float</code> variables, invert the
+      provided parameters, and pass them to the SuperSPU. If the user specifies
+      the material shininess, we leave the parameters alone and just dispatch
+      them to the SuperSPU verbatim:
+    </p>
+    <p class="GrayCodeListing2">
+      void INVERTSPU_APIENTRY invertMaterialfv( GLenum face,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      GLenum mode,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      const GLfloat *param )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp; if (mode != GL_SHININESS)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp; {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GLfloat
+      local_param[4];<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local_param[0] =
+      1-param[0];<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local_param[1] =
+      1-param[1];<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local_param[2] =
+      1-param[2];<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;local_param[3] =
+      1-param[3];<br>
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.Materialfv(
+      face, mode, local_param );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp; }<br>
+      &nbsp;&nbsp;&nbsp;&nbsp; else<br>
+      &nbsp;&nbsp;&nbsp;&nbsp; {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.Materialfv(
+      face, mode, param );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      }
+    </p>
+    <p>
+      The implementation of <code class="Function">invertClearColor</code> is
+      almost identical to the implementation of <code class=
+      "Function">invertColor3f</code>, and is not shown here.
+    </p>
+    <h2 class="PageSubHeading">
+      Step 6: Test it out!
+    </h2>
+    <p>
+      All that's missing at this point is a configuration script that
+      references our new SPU.&nbsp; For this example, we'll just modify the
+      <a href="crdemo.conf" class="File">crdemo.conf</a> file that was
+      described in the "<a href="configscript.html">Configuration Scripts</a>"
+      section of this documentation.&nbsp; Change directories to <span class=
+      "Directory">mothership/configs/</span> and copy <span class=
+      "File">crdemo.conf</span> to <span class="File">invert.conf</span>.
+    </p>
+    <p>
+      All that's required is a single call to the <code class=
+      "Function">AddSPU</code> method of the client node.&nbsp; Around lines 17
+      and 18, where the server and client SPUs are created, add the line:
+    </p>
+    <p class="GrayCodeListing2">
+      invert_spu = SPU( 'invert' )
+    </p>
+    <p>
+      Then, immediately before the client SPU is added to the client node (line
+      29 in the unmodified <span class="File">crdemo.conf</span>), add the
+      line:
+    </p>
+    <p class="GrayCodeListing2">
+      client_node.AddSPU( invert_spu )
+    </p>
+    <p>
+      It is important that the <span class="SPU">invert</span> SPU comes before
+      the client SPU in the configuration script, since that is the SPU chain
+      order that will be created when the application starts up.&nbsp; Your
+      resulting script should <a href="invert.conf">look like this</a>.
+    </p>
+    <table border="0" width="100%">
+      <tr class="Center">
+        <td width="50%">
+          <img src="bluepony.jpg" class="noborder">
+        </td>
+        <td width="50%">
+          <img src="invert_bluepony.jpg" class="noborder">
+        </td>
+      </tr>
+      <tr class="Center">
+        <td>
+          "bluepony" without the Invert SPU
+        </td>
+        <td>
+          "bluepony" with the Invert SPU
+        </td>
+      </tr>
+    </table>
+    <h2 class="PageSubHeading">
+      Step 7: Overriding default OpenGL state
+    </h2>
+    <p>
+      OpenGL is a tricky business, and getting simple things right can
+      sometimes be a little hard.&nbsp; For example, what if the user
+      <em>never</em> sets the color, material, or clear color, and simply uses
+      the defaults?&nbsp; Surely we'd want those colors to be inverted too,
+      right? The solution is to override the default OpenGL state.
+    </p>
+    <p>
+      At this point we must consider OpenGL rendering contexts. A rendering
+      context keeps track of all OpenGL state (such as current color, lighting
+      state, blending, textures, etc). Application programs must create at
+      least one rendering context (with <code class=
+      "Function">glXCreateContext</code>, for example) and bind a context (with
+      <code class="Function">glXMakeCurrent</code>) before drawing anything.
+      Furthermore, an application may create many rendering contexts and bind
+      them at different times to different windows.
+    </p>
+    <p>
+      If we want to override the default state in an OpenGL rendering context,
+      the time to do it is immediately after we bind the context for the first
+      time. That means we have to override Chromium's <code class=
+      "Function">MakeCurrent</code> function.
+    </p>
+    <p>
+      Here's an example that overrides the default color, material and clear
+      color:
+    </p>
+    <p class="GrayCodeListing2">
+      void INVERTSPU_APIENTRY invertMakeCurrent( GLint crWindow, GLint
+      nativeWindow, GLint ctx )<br>
+      {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;static GLfloat diffuse[4] = { 1-0.8f, 1-0.8f,
+      1-0.8f, 1.0f };<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.MakeCurrent( crWindow,
+      nativeWindow, ctx );<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.Color3f( 0, 0, 0 ); // default
+      color is white<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.ClearColor( 1, 1, 1, 1 ); //
+      default clear color is black<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;invert_spu.super.Materialfv( GL_FRONT_AND_BACK,
+      GL_DIFFUSE, diffuse );<br>
+      }
+    </p>
+    <p>
+      Note: in this example we're actually overriding the default state
+      <em>every</em> time <code class="Function">MakeCurrent</code> is called.
+      That's OK if only a little state is being set. Otherwise, we'd have to
+      keep track of the context (<code>ctx</code>) parameter and only set the
+      state when we saw a new context handle.
+    </p>
+    <p>
+      The <code>crWindow</code> parameter is Chromium's internal window ID
+      number. It's typically a small integer.
+    </p>
+    <p>
+      The <code>nativeWindow</code> parameter is the handle of the
+      corresponding native window system window (i.e. an X Window ID).
+    </p>
+    <p>
+      The <code>ctx</code> parameter is Chromium's internal context ID. It's
+      typically a small integer.
+    </p>
+    <p>
+      We might have alternately called the functions from step 5 with the
+      OpenGL defaults, so we wouldn't have inverting logic in too many
+      places.&nbsp; Also, careful implementors will want to invert the default
+      specular, emission, and ambient colors as well.
+    </p>
+    <p>
+      A good program to test this SPU with is the "bluepony" demo that comes
+      with GLUT.&nbsp; Notice that the pony is a different color, as is the
+      clear color.&nbsp; However, the floor is still the same, because those
+      colors were specified with <code class="Function">glColor4fv</code>,
+      which we did not implement.&nbsp; For an example of how to write this SPU
+      in a more complete and correct way, see "<a href=
+      "codegen.html">Automatically generating code for a SPU</a>".
+    </p>
+  </body>
 </html>
