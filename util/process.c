@@ -18,8 +18,8 @@
 #pragma warning ( disable : 4127 )
 #endif
 
-/*
- * Sleep/pause for the given time.
+/**
+ * Sleep/pause for the given number of seconds.
  */
 void crSleep( unsigned int seconds )
 {
@@ -30,12 +30,15 @@ void crSleep( unsigned int seconds )
 #endif
 }
 
+/**
+ * Sleep/pause for the given number of milliseconds.
+ */
 void crMsleep( unsigned int msec )
 {
 #ifdef WINDOWS
      Sleep(msec); 
 #else
-     sleep(msec*1000); /* usecs */
+     usleep(msec*1000); /* usecs */
 #endif
 }
 
