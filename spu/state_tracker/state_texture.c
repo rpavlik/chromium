@@ -881,7 +881,7 @@ void STATE_APIENTRY crStateTexImage1D (GLenum target, GLint level, GLint compone
 		return;
 	}
 
-	if (width > (int) g->limits.maxTextureSize)
+	if (width > ((int) g->limits.maxTextureSize + 2))
 	{
 		if (target == GL_PROXY_TEXTURE_1D)
 		{
@@ -1088,13 +1088,13 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 
 	if (target == GL_TEXTURE_2D)
 	{
-		if (width > (int) g->limits.maxTextureSize)
+		if (width > ((int) g->limits.maxTextureSize + 2))
 		{
 			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
 				     "glTexImage2D width oob: %d", width);
 			return;
 		}
-		if (height > (int) g->limits.maxTextureSize)
+		if (height > ((int) g->limits.maxTextureSize + 2))
 		{
 			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
 				     "glTexImage2D height oob: %d", height);
@@ -1103,7 +1103,7 @@ void STATE_APIENTRY crStateTexImage2D (GLenum target, GLint level, GLint compone
 	}
 	else if (target == GL_PROXY_TEXTURE_2D)
 	{
-		if (width > (int) g->limits.maxTextureSize || height > (int) g->limits.maxTextureSize)
+		if (width > ((int) g->limits.maxTextureSize + 2) || height > ((int) g->limits.maxTextureSize + 2))
 		{
 			/* clear all the texture object state */
 			crStateTextureInitTextureObj(t, &(t->proxy2D), 0, GL_TEXTURE_2D);
@@ -1279,7 +1279,7 @@ void STATE_APIENTRY crStateTexSubImage1D (GLenum target, GLint level, GLint xoff
 		return;
 	}
 
-	if (width > (int) g->limits.maxTextureSize)
+	if (width > ((int) g->limits.maxTextureSize + 2))
 	{
 		crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
 					"glSubTexImage1D width oob: %d", width);
@@ -1354,13 +1354,13 @@ void STATE_APIENTRY crStateTexSubImage2D (GLenum target, GLint level, GLint xoff
 			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "glTexSubImage2D level oob: %d", level);
 			return;
 		}
-		if (width < 0 || width > (int) g->limits.maxTextureSize)
+		if (width < 0 || width > ((int) g->limits.maxTextureSize + 2))
 		{
 			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
 				     "glSubTexImage2D width oob: %d", width);
 			return;
 		}
-		if (height < 0 || height > (int) g->limits.maxTextureSize)
+		if (height < 0 || height > ((int) g->limits.maxTextureSize + 2))
 		{
 			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE,
 				     "glSubTexImage2D height oob: %d", height);
