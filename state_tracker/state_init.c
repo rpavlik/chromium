@@ -78,6 +78,8 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits)
 	/* This has to come last. */
 	crStateAttribInit( &(ctx->attrib) );
 
+	ctx->renderMode = GL_RENDER;
+
 	return ctx;
 }
 

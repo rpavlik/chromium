@@ -19,6 +19,7 @@ REGULAR_FILES = state_attrib \
 	state_error \
 	state_evaluators \
 	state_extensions \
+	state_feedback \
 	state_flush \
 	state_fog \
 	state_get \
@@ -71,6 +72,7 @@ LIB_COPIES = crserver \
 	tilesortspu \
 	arrayspu \
 	hiddenlinespu \
+	feedbackspu \
 	nopspu \
 	simplequeryspu \
 	binaryswapspu \

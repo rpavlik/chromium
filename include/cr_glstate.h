@@ -18,6 +18,7 @@ typedef struct CRContext CRContext;
 #include "state/cr_client.h"
 #include "state/cr_current.h"
 #include "state/cr_evaluators.h"
+#include "state/cr_feedback.h"
 #include "state/cr_fog.h"
 #include "state/cr_hint.h"
 #include "state/cr_lighting.h"
@@ -53,6 +54,7 @@ typedef struct {
 	CRClientBits    client;
 	CRCurrentBits   current;
 	CREvaluatorBits eval;
+	CRFeedbackBits	feedback;
 	CRFogBits       fog;
 	CRHintBits      hint;
 	CRLightingBits  lighting;
@@ -62,6 +64,7 @@ typedef struct {
 	CRPointBits	point;
 	CRPolygonBits   polygon;
 	CRRegCombinerBits regcombiner;
+	CRSelectionBits	selection;
 	CRStencilBits   stencil;
 	CRTextureBits   texture;
 	CRTransformBits transform;
@@ -75,6 +78,8 @@ struct CRContext {
 	GLbitvalue bitid[CR_MAX_BITARRAY];
 	GLbitvalue neg_bitid[CR_MAX_BITARRAY];
 
+	GLenum     renderMode;
+
 	GLenum     error;
 
 	CRStateFlushFunc flush_func;
@@ -86,6 +91,7 @@ struct CRContext {
 	CRCurrentState   current;
 	CREvaluatorState eval;
 	CRExtensionState extensions;
+	CRFeedbackState  feedback;
 	CRFogState       fog;
 	CRHintState      hint;
 	CRLightingState  lighting;
@@ -96,6 +102,7 @@ struct CRContext {
 	CRPointState	 point;
 	CRPolygonState   polygon;
 	CRRegCombinerState regcombiner;
+	CRSelectionState selection;
 	CRStencilState   stencil;
 	CRTextureState   texture;
 	CRTransformState transform;
