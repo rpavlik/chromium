@@ -22,8 +22,7 @@ SHARED = 1
 LIBRARY = renderspu
 FILES = renderspu \
 	renderspu_config \
-	renderspu_init \
-	renderspu_swap
+	renderspu_init
 
 ifeq ($(ARCH), WIN_NT)
 FILES += renderspu_wgl

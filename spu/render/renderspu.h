@@ -127,6 +127,7 @@ extern void renderspu_SystemWindowSize( WindowInfo *window, int w, int h );
 extern void renderspu_SystemWindowPosition( WindowInfo *window, int x, int y );
 extern void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt );
 extern void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, GLint windowInfor, ContextInfo *context );
+extern void renderspu_SystemSwapBuffers( GLint window, GLint flags );
 extern int renderspuCreateFunctions( SPUNamedFunctionTable table[] );
 
 extern GLint RENDER_APIENTRY renderspuCreateWindow( const char *dpyName, GLint visBits );
