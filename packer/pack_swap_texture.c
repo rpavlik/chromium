@@ -264,17 +264,19 @@ void PACK_APIENTRY crPackDeleteTexturesSWAP( GLsizei n, const GLuint *textures )
 {
 	unsigned char *data_ptr;
 	int i;
+
 	int packet_length = 
-		sizeof( int ) + 
+		sizeof( int ) +  
 		sizeof( n ) + 
 		n*sizeof( *textures );
 
 	data_ptr = (unsigned char *) crPackAlloc( packet_length );
 	WRITE_DATA( 0, int, SWAP32(packet_length) );
 	WRITE_DATA( sizeof( int ) + 0, GLsizei, SWAP32(n) );
+
 	for ( i = 0 ; i < n ; i++)
 	{
-		WRITE_DATA( (i+1)*sizeof( int ) + 4, GLint, SWAP32(textures[i]) );
+		WRITE_DATA( (i+1)*sizeof(int) + 4, GLint, SWAP32(textures[i]) );
 	}
 	crHugePacket( CR_DELETETEXTURES_OPCODE, data_ptr );
 	crPackFree( data_ptr );
@@ -440,24 +442,50 @@ static GLboolean __handleTexParameterData( GLenum target, GLenum pname, const GL
 
 	switch( pname )
 	{
-		case GL_TEXTURE_MIN_FILTER:
-		case GL_TEXTURE_MAG_FILTER:
-		case GL_TEXTURE_WRAP_S:
-		case GL_TEXTURE_WRAP_T:
-		case GL_TEXTURE_WRAP_R:
+
+	case GL_TEXTURE_MIN_FILTER:
+	case GL_TEXTURE_MAG_FILTER:
+	case GL_TEXTURE_WRAP_R:
+	case GL_TEXTURE_WRAP_S:
+	case GL_TEXTURE_WRAP_T:
 #ifdef GL_TEXTURE_PRIORITY
-		case GL_TEXTURE_PRIORITY:
+	case GL_TEXTURE_PRIORITY:
 #endif
-		case GL_TEXTURE_MAX_ANISOTROPY_EXT:
-		case GL_TEXTURE_MIN_LOD:
-		case GL_TEXTURE_MAX_LOD:
-		case GL_TEXTURE_BASE_LEVEL:
-		case GL_TEXTURE_MAX_LEVEL:
-			num_params = 1;
-			break;
-		case GL_TEXTURE_BORDER_COLOR:
-			num_params = 4;
-			break;
+	  num_params = 1;
+		break;
+	case GL_TEXTURE_MAX_ANISOTROPY_EXT:
+		num_params = 1;
+		break;
+	case GL_TEXTURE_MIN_LOD:
+	case GL_TEXTURE_MAX_LOD:
+	case GL_TEXTURE_BASE_LEVEL:
+	case GL_TEXTURE_MAX_LEVEL:
+		num_params = 1;
+		break;
+	case GL_TEXTURE_BORDER_COLOR:
+		num_params = 4;
+		break;
+#ifdef CR_ARB_shadow
+	case GL_TEXTURE_COMPARE_MODE_ARB:
+	case GL_TEXTURE_COMPARE_FUNC_ARB:
+		num_params = 1;
+		break;
+#endif
+#ifdef CR_ARB_shadow_ambient
+	case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
+		num_params = 1;
+		break;
+#endif
+#ifdef CR_ARB_depth_texture
+	case GL_DEPTH_TEXTURE_MODE_ARB:
+		num_params = 1;
+		break;
+#endif
+#ifdef CR_SGIS_generate_mipmap
+	case GL_GENERATE_MIPMAP_SGIS:
+		num_params = 1;
+		break;
+#endif
 		default:
 			num_params = __packTexParameterNumParams( pname );
 			if (!num_params)
@@ -533,10 +561,10 @@ void PACK_APIENTRY crPackTexSubImage3DSWAP (GLenum target, GLint level,
         WRITE_DATA( 4, GLint, SWAP32(level) );
         WRITE_DATA( 8, GLint, SWAP32(xoffset) );
         WRITE_DATA( 12, GLint, SWAP32(yoffset) );
-	WRITE_DATA( 16, GLint, SWAP32(zoffset) );
+		WRITE_DATA( 16, GLint, SWAP32(zoffset) );
         WRITE_DATA( 20, GLsizei, SWAP32(width) );
         WRITE_DATA( 24, GLsizei, SWAP32(height) );
-	WRITE_DATA( 28, GLsizei, SWAP32(depth) );
+		WRITE_DATA( 28, GLsizei, SWAP32(depth) );
         WRITE_DATA( 32, GLenum, SWAP32(format) );
         WRITE_DATA( 36, GLenum, SWAP32(type) );
 
@@ -556,6 +584,8 @@ void PACK_APIENTRY crPackTexSubImage2DSWAP (GLenum target, GLint level,
 {
 	unsigned char *data_ptr;
 	int packet_length;
+
+	CRPixelPackState tmpUnpackState = *unpackstate;
 
 	packet_length = 
 		sizeof( target ) +
@@ -578,9 +608,12 @@ void PACK_APIENTRY crPackTexSubImage2DSWAP (GLenum target, GLint level,
 	WRITE_DATA( 24, GLenum, SWAP32(format) );
 	WRITE_DATA( 28, GLenum, SWAP32(type) );
 
+	/* flip application-requested swapBytes state */
+	tmpUnpackState.swapBytes = unpackstate->swapBytes ? GL_FALSE : GL_TRUE;
+
 	crPixelCopy2D( width, height,
 								 (GLvoid *) (data_ptr + 32), format, type, NULL,  /* dst */
-								 pixels, format, type, unpackstate );  /* src */
+								 pixels, format, type, &tmpUnpackState );  /* src */
 
 	crHugePacket( CR_TEXSUBIMAGE2D_OPCODE, data_ptr );
 	crPackFree( data_ptr );
@@ -592,6 +625,7 @@ void PACK_APIENTRY crPackTexSubImage1DSWAP (GLenum target, GLint level,
 {
 	unsigned char *data_ptr;
 	int packet_length;
+    CRPixelPackState tmpUnpackState = *unpackstate;
 
 	packet_length = 
 		sizeof( target ) +
@@ -610,8 +644,11 @@ void PACK_APIENTRY crPackTexSubImage1DSWAP (GLenum target, GLint level,
 	WRITE_DATA( 16, GLenum, SWAP32(format) );
 	WRITE_DATA( 20, GLenum, SWAP32(type) );
 
+	/* flip application-requested swapBytes state */
+	tmpUnpackState.swapBytes = unpackstate->swapBytes ? GL_FALSE : GL_TRUE;
+
 	crPixelCopy1D((GLvoid *) (data_ptr + 24), format, type,
-								pixels, format, type, width, unpackstate );
+								pixels, format, type, width, &tmpUnpackState );
 
 	crHugePacket( CR_TEXSUBIMAGE1D_OPCODE, data_ptr );
 	crPackFree( data_ptr );
