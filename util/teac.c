@@ -22,9 +22,8 @@
 #include "cr_string.h"
 #include "cr_net.h"
 #include "cr_endian.h"
-#include "net_internals.h"
-
 #include "teac.h"
+#include "net_internals.h"
 
 #define CR_TEAC_BUFFER_PAD 8 /* sizeof( SBuffer *) || sizeof( RBuffer * ) */
 #define CR_TEAC_SEND_CREDITS_THRESHOLD ( 1 << 18 )
@@ -484,7 +483,7 @@ void crTeacInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
     }    
 
   key_sum= 0;
-  for (i=0; i<sizeof(cr_teac.key); i++) key_sum += cr_teac.key[i];
+  for (i=0; i<(int)sizeof(cr_teac.key); i++) key_sum += cr_teac.key[i];
   if (key_sum==0) /* key not initialized */
     crStrncpy((char*)&(cr_teac.key), "This is pretty random!", 
 	      sizeof(cr_teac.key));

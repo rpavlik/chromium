@@ -10,7 +10,7 @@
 
 #define E_BUFFER_INITIAL_SIZE 	0x200000
 #define NUM_SEND_BUFFERS 4
-#define TEAC_KEY_SIZE sizeof(ELAN_USERKEY)
+#define TEAC_KEY_SIZE (int)sizeof(ELAN_USERKEY)
 
 #define	EQUE_PAD	16 - 6
 /* pad data size to 64 boundary */
@@ -43,7 +43,6 @@ typedef struct _teac_rbuffer {
 typedef struct _teac_comm  {
   ELAN3_CTX	       *ctx;
   ELAN_CAPABILITY	cap;
-  ELAN3_DEVINFO	        info;
   E3_DMA_MAIN          *dma;
   sdramaddr_t           e_dma;
   sdramaddr_t           s_event;

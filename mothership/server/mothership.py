@@ -541,7 +541,7 @@ class CRApplicationNode(CRNode):
 
 	def __add_crut_server( self, node, url ):
 		self.crutservers.append( (node, url) )
-		
+
 	def AddCRUTServer( self, node, protocol='tcpip', port=9000 ):
 		self.__add_crut_server( node, "%s://%s:%d" % (protocol,node.host,port) )
 		if node != None:
@@ -834,24 +834,6 @@ class CR:
 		self.config["comm_key"]= byteList
 		CRDebug("Setting comm key to %s"%str(byteList))
 
-	def CommKey( self, byteList ):
-		"""CommKey( [byte0, byte1, ..., byte15] )
-		Sets the user key to use with Elan."""
-		self.config["comm_key"]= byteList
-		CRDebug("Setting comm key to %s"%str(byteList))
-
-	def CommKey( self, byteList ):
-		"""CommKey( [byte0, byte1, ..., byte15] )
-		Sets the user key to use with Elan."""
-		self.config["comm_key"]= byteList
-		CRDebug("Setting comm key to %s"%str(byteList))
-
-	def CommKey( self, byteList ):
-		"""CommKey( [byte0, byte1, ..., byte15] )
-		Sets the user key to use with Elan."""
-		self.config["comm_key"]= byteList
-		CRDebug("Setting comm key to %s"%str(byteList))
-
 	def AllSPUConf( self, regex, key, *values ):
 		"""AllSPUConf(regex, key, *values)
 		Adds the key/values list to the global SPU configuration."""
@@ -872,7 +854,7 @@ class CR:
 		self.Conf(key, value)
 		sock.Success( "OK" )
 		return
-		
+
 	def do_getparam( self, sock, args ):
 		"""Get a global mothership parameter value (via C)"""
 		key = args
@@ -1063,7 +1045,7 @@ class CR:
 		elif (protocol == 'ib'):
 			(p, hostname, port_str, node_id_str, endianness_str, lid1, qp_ous, qp) = connect_info
 			CRInfo("do_connectrequest processing ib protocol")
-			hostname = socket.gethostbyname(hostname)
+			hostname = socket.gethostbyname(__qualifyHostname__(hostname))
 			port = int(port_str)
 			node_id = int(node_id_str)
 			endianness = int(endianness_str)
