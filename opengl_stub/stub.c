@@ -1,6 +1,8 @@
 #include "cr_applications.h"
 #include "cr_spu.h"
 
+#include <stdio.h>
+
 extern SPU *stub_spu;
 extern void StubInit(void);
 
