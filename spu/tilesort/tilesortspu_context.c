@@ -181,10 +181,10 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		server->context[slot] = crStateCreateContext( &tilesort_spu.limits );
 		server->context[slot]->current.rasterPos.x =
 			server->context[slot]->current.rasterPosPre.x =
-			(float) server->x1[0];
+			(float) server->extents[0].x1;
 		server->context[slot]->current.rasterPos.y =
 			server->context[slot]->current.rasterPosPre.y =
-			(float) server->y1[0];
+			(float) server->extents[0].y1;
 	}
 
 	/*

@@ -30,9 +30,7 @@
 
 typedef struct {
 	int num_extents;
-	int x1[CR_MAX_EXTENTS], y1[CR_MAX_EXTENTS];
-	int x2[CR_MAX_EXTENTS], y2[CR_MAX_EXTENTS];
-
+	GLrecti extents[CR_MAX_EXTENTS];
 	CRContext *context[CR_MAX_CONTEXTS];
 	GLint serverCtx[CR_MAX_CONTEXTS];
 

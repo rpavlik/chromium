@@ -66,11 +66,8 @@ static void fillBucketingHash(void)
 			for (k=0;k<CR_MAX_BITARRAY;k++)
 				r->id[k] = 0;
 			r->id[node32] = (1 << node);
-			r->extents.x1 = tilesort_spu.servers[i].x1[j];
-			r->extents.x2 = tilesort_spu.servers[i].x2[j];
-			r->extents.y1 = tilesort_spu.servers[i].y1[j];
-			r->extents.y2 = tilesort_spu.servers[i].y2[j];
-			
+			r->extents = tilesort_spu.servers[i].extents[j]; /* x1,y1,x2,y2 */
+
 			for (k=BKT_DOWNHASH(r->extents.x1, tilesort_spu.muralWidth);
 				   k<=BKT_UPHASH(r->extents.x2, (int)tilesort_spu.muralWidth) && k < HASHRANGE;
 				   k++) 
@@ -243,10 +240,10 @@ static void doBucket( TileSortBucketInfo *bucketInfo )
 			const int node = i & 0x1f;
 			for (j=0; j < tilesort_spu.servers[i].num_extents; j++) 
 			{
-				if (ibounds.x1 < tilesort_spu.servers[i].x2[j] && 
-				    ibounds.x2 >= tilesort_spu.servers[i].x1[j] &&
-				    ibounds.y1 < tilesort_spu.servers[i].y2[j] &&
-				    ibounds.y2 >= tilesort_spu.servers[i].y1[j]) 
+				if (ibounds.x1 < tilesort_spu.servers[i].extents[j].x2 && 
+				    ibounds.x2 >= tilesort_spu.servers[i].extents[j].x1 &&
+				    ibounds.y1 < tilesort_spu.servers[i].extents[j].y2 &&
+				    ibounds.y2 >= tilesort_spu.servers[i].extents[j].y1) 
 				{
 					retval[node32] |= (1 << node);
 					break;
@@ -356,9 +353,9 @@ void tilesortspuComputeMaxViewport(void)
 
 		for (j=0; j < tilesort_spu.servers[i].num_extents; j++) 
 		{
-			if (tilesort_spu.servers[i].x1[j] == 0)
+			if (tilesort_spu.servers[i].extents[j].x1 == 0)
 				totalDims[1] += vpdims[0];
-			if (tilesort_spu.servers[i].y2[j] == (int)tilesort_spu.muralHeight)
+			if (tilesort_spu.servers[i].extents[j].y2 == (int)tilesort_spu.muralHeight)
 				totalDims[0] += vpdims[1];
 		}
 	}

@@ -94,9 +94,9 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 	CRViewportState *v = &(ctx->viewport);
 	unsigned char *data_ptr;
 	GLfloat screen_bbox[8];
-	int i, rect[4], stride;
+	int i, stride;
 	int bytes_per_pixel = 0;
-	int isect[4];
+	GLrecti rect, isect;
 	int len = 44 + sizeof(CRNetworkPointer);
 	int offset;
 	int new_width, new_height, new_x, new_y, bytes_per_row;
@@ -221,10 +221,10 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 	}
 
 	/* Build the rectangle here to save the addition each time */
-	rect[0] = x;
-	rect[1] = y;
-	rect[2] = x + width;
-	rect[3] = y + height;
+	rect.x1 = x;
+	rect.y1 = y;
+	rect.x2 = x + width;
+	rect.y2 = y + height;
 	stride  = width * bytes_per_pixel;
 
 	tilesort_spu.ReadPixels = 0;
@@ -234,29 +234,26 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 		CRPackBuffer *pack = &(thread->pack[i]);
 
 		/* Grab current server's boundaries */
-		isect[0] = server->x1[0];
-		isect[1] = server->y1[0];
-		isect[2] = server->x2[0];
-		isect[3] = server->y2[0];
+		isect = server->extents[0];  /* x1,y1,x2,y2 */
 
 		/* Reset rectangle to current boundary for server */
-		if ( isect[0] < rect[0] ) isect[0] = rect[0];
-		if ( isect[1] < rect[1] ) isect[1] = rect[1];
-		if ( isect[2] > rect[2] ) isect[2] = rect[2];
-		if ( isect[3] > rect[3] ) isect[3] = rect[3];
+		if ( isect.x1 < rect.x1 ) isect.x1 = rect.x1;
+		if ( isect.y1 < rect.y1 ) isect.y1 = rect.y1;
+		if ( isect.x2 > rect.x2 ) isect.x2 = rect.x2;
+		if ( isect.y2 > rect.y2 ) isect.y2 = rect.y2;
 
 		/* Don't bother with this server if we're out of bounds */
-		if (!( isect[2] > isect[0] && isect[3] > isect[1] ))
+		if (!( isect.x2 > isect.x1 && isect.y2 > isect.y1 ))
 			continue;
 
 		/* We've got one in the pot ! */
 		tilesort_spu.ReadPixels++;
 
 		/* Build new ReadPixels parameters */
-		new_width  = isect[2] - isect[0];
-		new_height = isect[3] - isect[1];
-		new_x      = isect[0] - server->x1[0];
-		new_y      = isect[1] - server->y1[0];
+		new_width  = isect.x2 - isect.x1;
+		new_height = isect.y2 - isect.y1;
+		new_x      = isect.x1 - server->extents[0].x1;
+		new_y      = isect.y1 - server->extents[0].y1;
 
 		bytes_per_row = new_width * bytes_per_pixel;
 
@@ -273,9 +270,9 @@ void TILESORTSPU_APIENTRY tilesortspu_ReadPixels( GLint x, GLint y, GLsizei widt
 #endif
 		
 		/* Calculate X offset */
-		offset = (isect[0] - x) * bytes_per_pixel;
+		offset = (isect.x1 - x) * bytes_per_pixel;
 		/* Calculate Y offset */
-		offset += ((isect[1] - y) * stride);
+		offset += ((isect.y1 - y) * stride);
 
 		/* Munge the per server packing structures */
 		data_ptr = pack->data_current; 

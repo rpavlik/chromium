@@ -234,21 +234,22 @@ void tilesortspuGetTileInformation(CRConnection *conn)
 
 		for (tile = 0; tile < server->num_extents ; tile++)
 		{
-			int w, h;
-			sscanf( tilelist[tile], "%d %d %d %d", &(server->x1[tile]), 
-					&(server->y1[tile]), &w, &h );
+			int x, y, w, h;
 
-			server->x2[tile] = server->x1[tile] + w;
-			server->y2[tile] = server->y1[tile] + h;
+			sscanf( tilelist[tile], "%d %d %d %d", &x, &y, &w, &h);
+			server->extents[tile].x1 = x;
+			server->extents[tile].y1 = y;
+			server->extents[tile].x2 = x + w;
+			server->extents[tile].y2 = y + h;
 
 			/* update mural size */
-			if (server->x2[tile] > (int) tilesort_spu.muralWidth)
+			if (server->extents[tile].x2 > (int) tilesort_spu.muralWidth)
 			{
-				tilesort_spu.muralWidth = server->x2[tile];
+				tilesort_spu.muralWidth = server->extents[tile].x2;
 			}
-			if (server->y2[tile] > (int) tilesort_spu.muralHeight)
+			if (server->extents[tile].y2 > (int) tilesort_spu.muralHeight)
 			{
-				tilesort_spu.muralHeight = server->y2[tile];
+				tilesort_spu.muralHeight = server->extents[tile].y2;
 			}
 
 			/* make sure tile is right size for optimizeBucket */
@@ -301,9 +302,9 @@ void tilesortspuComputeRowsColumns(void)
 
 		for (j = 0; j < server->num_extents ; j++)
 		{
-			if (server->x1[j] == 0)
+			if (server->extents[j].x1 == 0)
 				tilesort_spu.muralRows++;
-			if (server->y1[j] == 0)
+			if (server->extents[j].y1 == 0)
 				tilesort_spu.muralColumns++;
 		}
 	}

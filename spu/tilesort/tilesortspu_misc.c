@@ -37,8 +37,8 @@ static void PropogateCursorPosition(const GLint pos[2])
 		*/
 
 		/* transform the client window cursor position to the tile position */
-		tilePos[0] = (GLint) (pos[0] * tilesort_spu.widthScale) - server->x1[0];
-		tilePos[1] = (GLint) (pos[1] * tilesort_spu.heightScale) - server->y1[0];
+		tilePos[0] = (GLint) (pos[0] * tilesort_spu.widthScale) - server->extents[0].x1;
+		tilePos[1] = (GLint) (pos[1] * tilesort_spu.heightScale) - server->extents[0].y1;
 
 		crPackSetBuffer( thread->packer, &(thread->pack[i]) );
 
@@ -89,10 +89,10 @@ static void sendTileInfoToServers(void)
 		tileInfo[3] = server->num_extents;
 		for (j = 0; j < server->num_extents; j++)
 		{
-			tileInfo[4 + j * 4 + 0] = server->x1[j];
-			tileInfo[4 + j * 4 + 1] = server->y1[j];
-			tileInfo[4 + j * 4 + 2] = server->x2[j];
-			tileInfo[4 + j * 4 + 3] = server->y2[j];
+			tileInfo[4 + j * 4 + 0] = server->extents[j].x1;
+			tileInfo[4 + j * 4 + 1] = server->extents[j].y1;
+			tileInfo[4 + j * 4 + 2] = server->extents[j].x2;
+			tileInfo[4 + j * 4 + 3] = server->extents[j].y2;
 		}
 		arraySize = 4 + 4 * server->num_extents;
 
@@ -124,16 +124,16 @@ static void recomputeTiling(int width, int height)
 	tilesort_spu.muralHeight = height;
 
 	tilesort_spu.servers[0].num_extents = 1;
-	tilesort_spu.servers[0].x1[0] = 0;
-	tilesort_spu.servers[0].y1[0] = 0;
-	tilesort_spu.servers[0].x2[0] = width / 2;
-	tilesort_spu.servers[0].y2[0] = height;
+	tilesort_spu.servers[0].extents[0].x1 = 0;
+	tilesort_spu.servers[0].extents[0].y1 = 0;
+	tilesort_spu.servers[0].extents[0].x2 = width / 2;
+	tilesort_spu.servers[0].extents[0].y2 = height;
 
 	tilesort_spu.servers[1].num_extents = 1;
-	tilesort_spu.servers[1].x1[0] = width / 2;
-	tilesort_spu.servers[1].y1[0] = 0;
-	tilesort_spu.servers[1].x2[0] = width;
-	tilesort_spu.servers[1].y2[0] = height;
+	tilesort_spu.servers[1].extents[0].x1 = width / 2;
+	tilesort_spu.servers[1].extents[0].y1 = 0;
+	tilesort_spu.servers[1].extents[0].x2 = width;
+	tilesort_spu.servers[1].extents[0].y2 = height;
 
 	tilesortspuBucketingInit();
 #if 0
@@ -198,10 +198,10 @@ static void recomputeTiling(int muralWidth, int muralHeight)
 			server = tile % numServers;
 
 			t = tilesort_spu.servers[server].num_extents;
-			tilesort_spu.servers[server].x1[t] = x;
-			tilesort_spu.servers[server].y1[t] = y;
-			tilesort_spu.servers[server].x2[t] = x + width;
-			tilesort_spu.servers[server].y2[t] = y + height;
+			tilesort_spu.servers[server].extents[t].x1 = x;
+			tilesort_spu.servers[server].extents[t].y1 = y;
+			tilesort_spu.servers[server].extents[t].x2 = x + width;
+			tilesort_spu.servers[server].extents[t].y2 = y + height;
 			tilesort_spu.servers[server].num_extents = t + 1;
 
 			tile++;
@@ -234,7 +234,10 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint w, GLint h)
 	 * Lightning-2) then we'll want to resize all the tiles so that
 	 * the set of tiles matches the app window size.
 	 */
-	recomputeTiling(w, h);
+	if (tilesort_spu.optimizeBucketing)
+		crDebug("Tilesort SPU asked to resize window, but optimize_bucketing is enabled");
+	else
+		recomputeTiling(w, h);
 }
 
 
@@ -364,10 +367,31 @@ void TILESORTSPU_APIENTRY tilesortspu_ChromiumParametervCR(GLenum target, GLenum
 		break;
 
 	case GL_TILE_INFO_CR:  /* GL_CR_tile_info */
-		/* save info and forward to the servers */
+		{
+			const int *ivalues = (const int *) values;
+			const int server = ivalues[0];
+			const int muralWidth = ivalues[1];
+			const int muralHeight = ivalues[2];
+			const int numTiles = ivalues[3];
+			int i;
+			tilesort_spu.muralWidth = muralWidth;
+			tilesort_spu.muralHeight = muralHeight;
+			tilesort_spu.servers[server].num_extents = numTiles;
+			for (i = 0; i < numTiles; i++)
+			{
+				tilesort_spu.servers[server].extents[i].x1 = ivalues[4 + i * 4 + 0];
+				tilesort_spu.servers[server].extents[i].y1 = ivalues[4 + i * 4 + 1];
+				tilesort_spu.servers[server].extents[i].x2 = ivalues[4 + i * 4 + 2];
+				tilesort_spu.servers[server].extents[i].y2 = ivalues[4 + i * 4 + 3];
+			}
 
-		/* XXX to do */
-
+			tilesortspuBucketingInit();
+#if 0
+			/* this leads to crashes - investigate */
+			tilesortspuComputeMaxViewport();
+#endif
+			sendTileInfoToServers();
+		}
 		break;
 
 	default:
@@ -422,14 +446,15 @@ void TILESORTSPU_APIENTRY tilesortspu_GetChromiumParametervCR(GLenum target, GLu
 	case GL_TILE_BOUNDS_CR:
 		if (type == GL_INT && count == 4)
 		{
+			GLint *ivalues = (GLint *) values;
 			int server = index >> 16;
 			int tile = index & 0xffff;
 			if (server < tilesort_spu.num_servers &&
 					tile < tilesort_spu.servers[server].num_extents) {
-				((GLint *) values)[0] = (GLint) tilesort_spu.servers[server].x1[tile];
-				((GLint *) values)[1] = (GLint) tilesort_spu.servers[server].y1[tile];
-				((GLint *) values)[2] = (GLint) tilesort_spu.servers[server].x2[tile];
-				((GLint *) values)[3] = (GLint) tilesort_spu.servers[server].y2[tile];
+				ivalues[0] = (GLint) tilesort_spu.servers[server].extents[tile].x1;
+				ivalues[1] = (GLint) tilesort_spu.servers[server].extents[tile].y1;
+				ivalues[2] = (GLint) tilesort_spu.servers[server].extents[tile].x2;
+				ivalues[3] = (GLint) tilesort_spu.servers[server].extents[tile].y2;
 			}
 		}
 		break;
