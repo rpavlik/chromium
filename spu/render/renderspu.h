@@ -27,7 +27,7 @@ typedef struct {
 	GLbitfield visAttribs;
 	const char *displayName;
 #ifdef WINDOWS
-	HDC device_context; /* XXX FIXME: for the benefit of CreateContext */
+	HDC device_context;
 	HWND hWnd;
 #else
 	Display *dpy;
@@ -41,9 +41,7 @@ typedef struct {
 	int width, height;
 	VisualInfo *visual;
 	GLboolean mapPending;
-#ifdef WINDOWS
-	HDC device_context;
-#else
+#ifndef WINDOWS
 	Window window;
 #endif
 } WindowInfo;

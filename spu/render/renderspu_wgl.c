@@ -72,8 +72,8 @@ bSetupPixelFormat( HDC hdc )
 		sizeof(PIXELFORMATDESCRIPTOR),  /*  size of this pfd */
 		1,                              /* version number */
 		PFD_DRAW_TO_WINDOW |            /* support window */
-			PFD_SUPPORT_OPENGL |            /* support OpenGL */
-			PFD_DOUBLEBUFFER,               /* double buffered */
+		PFD_SUPPORT_OPENGL |            /* support OpenGL */
+		PFD_DOUBLEBUFFER,               /* double buffered */
 		PFD_TYPE_RGBA,                  /* RGBA type */
 		24,                             /* 24-bit color depth */
 		0, 0, 0, 0, 0, 0,               /* color bits ignored */
@@ -99,6 +99,9 @@ bSetupPixelFormat( HDC hdc )
 	 *pfd.cColorBits = GetDeviceCaps(hdc,BITSPIXEL); */
 	ppfd = &pfd;
 
+#if 0
+	/* Seems we don't need this anymore..... */
+
 	/* calling the wgl functions directly if the SPU was loaded by the 
 	 * application (i.e., if the app didn't create a window and get 
 	 * faked out) seems to not work. */
@@ -117,6 +120,7 @@ bSetupPixelFormat( HDC hdc )
 		}
 	}
 	else
+#endif
 	{
 		/* Okay, we were loaded manually.  Call the GDI functions. */
 		pixelformat = ChoosePixelFormat( hdc, ppfd );
@@ -316,9 +320,6 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 
 	visual->device_context = GetDC( visual->hWnd );
 
-	/* XXX we should really fix this properly for Windows */
-	window->device_context = visual->device_context;
-
 	crDebug( " Got the DC: 0x%x", visual->device_context );
 
 	if ( !bSetupPixelFormat( visual->device_context ) )
@@ -346,7 +347,7 @@ GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *contex
 	context->hRC = render_spu.ws.wglCreateContext( visual->device_context );
 	if (!context->hRC)
 	{
-		crError( "Couldn't create the context for the window!" );
+		crError( "Couldn't create the context for the window 0x%x !", GetLastError() );
 		return GL_FALSE;
 	}
 
@@ -366,7 +367,7 @@ void renderspu_SystemMakeCurrent( ThreadInfo *thread, WindowInfo *window, Contex
 	if (context && window) {
 		CRASSERT(context->hRC);
 
-		render_spu.ws.wglMakeCurrent( window->device_context, context->hRC );
+		render_spu.ws.wglMakeCurrent( window->visual->device_context, context->hRC );
 	} else if (thread) {
 		render_spu.ws.wglMakeCurrent( 0, 0 );
 	}

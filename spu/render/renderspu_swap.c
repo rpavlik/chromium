@@ -159,7 +159,7 @@ void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 		CRASSERT(window >= 0);
 		CRASSERT(window < MAX_WINDOWS);
 		w = &(render_spu.windows[window]);
-		return_value = render_spu.ws.wglSwapBuffers( w->device_context );
+		return_value = render_spu.ws.wglSwapBuffers( w->visual->device_context );
 		if (!return_value)
 		{
 			/* GOD DAMN IT.  The latest versions of the NVIDIA drivers
