@@ -97,6 +97,9 @@ int perfSPUCleanup(void)
 			perfspuDump( str );
 			sprintf(str, "SPUID %d CONNECTION ID %d TOTAL_BYTES SENT %d", perf_spu.id, i, c->total_bytes_sent);
 			perfspuDump( str );
+		} else {
+			sprintf(str, "SPUID %d CONNECTION ID %d UNUSED (NULL CRConnection)", perf_spu.id, i);
+			perfspuDump( str );
 		}
 	}
 
