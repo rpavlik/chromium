@@ -119,7 +119,9 @@ CRConnection *crNetConnectToServer( char *server,
 	 * "foo.bar.com" are the same machine.
 	 */
 	if (crStrcmp(hostname, "localhost") == 0) {
-		CRASSERT(!crGetHostname(hostname, 4096));
+		int rv = crGetHostname(hostname, 4096);
+		CRASSERT(rv == 0);
+		(void) rv;
 	}
 
 	if ( !crStrcmp( protocol, "quadrics" ) ||
