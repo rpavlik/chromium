@@ -43,7 +43,7 @@ keys = apiutil.GetDispatchedFunctions()
 for func_name in keys:
 	if ("pack" in apiutil.ChromiumProps(func_name) or
 		"extpack" in apiutil.ChromiumProps(func_name) or
-		apiutil.VectorAlias(func_name) != '' or
+		apiutil.NonVectorFunction(func_name) != '' or
 		apiutil.FindSpecial('packer', func_name)):
 
 		# OK, generate a crPackFooBar() prototype for this function
@@ -71,7 +71,7 @@ for func_name in keys:
 	if (func_name[0:6] == "Vertex" and
 		"pervertex" in apiutil.Properties(func_name) and
 		("pack" in apiutil.ChromiumProps(func_name) or
-		 apiutil.VectorAlias(func_name) != '')):
+		 apiutil.NonVectorFunction(func_name) != '')):
 
 		assert apiutil.ReturnType(func_name) == "void"
 

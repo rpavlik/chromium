@@ -311,17 +311,11 @@ def ReverseAlias(funcName):
 		return ''
 
 
-def VectorAlias(funcName):
-	"""Return the non-vector version of the given function, or ''.
-	For example: VectorAlias("Color3fv") = "Color3f"."""
-	d = GetFunctionDict()
-	return d[funcName].vectoralias
-
-
 def NonVectorFunction(funcName):
 	"""Return the non-vector version of the given function, or ''.
-	For example: VectorAlias("Color3fv") = "Color3f"."""
-	return VectorAlias(funcName)
+	For example: NonVectorFunction("Color3fv") = "Color3f"."""
+	d = GetFunctionDict()
+	return d[funcName].vectoralias
 
 
 def VectorFunction(funcName):

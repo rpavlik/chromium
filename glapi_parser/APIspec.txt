@@ -120,7 +120,7 @@
 #	example:
 #	param         v               const GLbyte *
 #	paramvec      v               2 2 2
-#	vector                v               3
+#	vector        v               3
 #
 #
 
@@ -3343,14 +3343,14 @@ name		PopClientAttrib
 return		void
 category	1.1
 props		setclient
-chromium	extpack
+chromium	
 
 name		PushClientAttrib
 return		void
 param		mask		GLbitfield
 category	1.1
 props		setclient
-chromium	extpack
+chromium	
 
 
 # GL_EXT_blend_color

@@ -5,3 +5,5 @@
 PixelStorei
 PixelStoref
 GetBufferPointervARB
+PushClientAttrib
+PopClientAttrib
