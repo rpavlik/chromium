@@ -57,7 +57,8 @@ class IntDialog(wxDialog):
 		rowSizer.Add(self.OkButton, option=0, flag=wxALIGN_CENTER, border=10)
 		self.CancelButton = wxButton(parent=self, id=id_CANCEL, label="Cancel")
 		rowSizer.Add(self.CancelButton, option=0, flag=wxALIGN_CENTER, border=10)
-		outerSizer.Add(rowSizer, option=0, flag=wxGROW|wxBOTTOM, border=8)
+		outerSizer.Add(rowSizer, option=0,
+					   flag=wxGROW|wxBOTTOM|wxLEFT|wxRIGHT, border=8)
 		EVT_BUTTON(self.OkButton, id_OK, self._onOK)
 		EVT_BUTTON(self.CancelButton, id_CANCEL, self._onCancel)
 
@@ -92,3 +93,42 @@ class IntDialog(wxDialog):
 		retVal = wxDialog.ShowModal(self)
 		return retVal
 
+
+# ======================================================================
+# Test routines
+
+class TestFrame(wxFrame):
+	def __init__(self, parent, id, title):
+		wxFrame.__init__(self, parent, id, title,
+				 style = wxDEFAULT_FRAME_STYLE | wxWANTS_CHARS |
+					 wxNO_FULL_REPAINT_ON_RESIZE)
+		EVT_CLOSE(self, self.doClose)
+
+	def doClose(self, event):
+		global app
+		self.Destroy()
+		app.ExitMainLoop()
+	
+class TestApp(wxApp):
+	""" Test harness wxApp class."""
+	def OnInit(self):
+		wxInitAllImageHandlers()
+
+		frame = TestFrame(parent=None, id=-1, title="Test App")
+		frame.Show(TRUE)
+
+		dialog = IntDialog(parent=frame, id=-1, title="Test Dialog",
+						   labels=["Value 1", "Value 2"],
+						   defaultValues=[5, 10])
+		dialog.Centre()
+		dialog.ShowModal()
+		return TRUE
+
+def _test():
+	global app
+	app = TestApp()
+	app.MainLoop()
+	return
+
+if __name__ == "__main__":
+	_test()
