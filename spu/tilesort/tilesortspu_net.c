@@ -85,7 +85,9 @@ tilesortspuReceiveData( CRConnection *conn, void *buf, unsigned int len )
 			*/
 			return 0; /* NOT HANDLED */
 	}
+#if !defined(IRIX) && !defined(IRIX64)
 	return 0; /* never get here */
+#endif
 }
 
 void tilesortspuConnectToServers( void )
