@@ -105,8 +105,8 @@ void PACK_APIENTRY crPackEndListSWAP( void )
 	GET_PACKER_CONTEXT(pc);
 	unsigned char *data_ptr;
 	(void) pc;
-	GET_BUFFERED_POINTER_NO_ARGS( pc );
-	WRITE_DATA( 0, GLint, SWAP32(0) );
+	GET_BUFFERED_POINTER( pc, 8 );
+	WRITE_DATA( 0, GLint, SWAP32(8) );
 	WRITE_DATA( 4, GLenum, SWAP32(CR_ENDLIST_EXTEND_OPCODE) );
 	WRITE_OPCODE( pc, CR_EXTEND_OPCODE );
 	pc->buffer.in_List = GL_FALSE;
