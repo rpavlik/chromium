@@ -6,7 +6,7 @@
 # Authors:
 #   Brian Paul
 
-""" tilesort_tmp.py
+""" tilesort_template.py
     Tilesort template module.
 """
 
@@ -29,7 +29,6 @@ import crutils, crtypes, configio
 class TilesortParameters:
 	"""C-style struct describing a tilesort configuration"""
 	# This is where we set all the default tilesort parameters.
-	NumClients = 1
 	Columns = 2
 	Rows = 1
 	TileWidth = 1024
@@ -43,7 +42,6 @@ class TilesortParameters:
 		"""Return a clone of this object."""
 		# We're not using the copy.copy() function since it's flakey
 		p = TilesortParameters()
-		p.NumClients = self.NumClients
 		p.Columns = self.Columns
 		p.Rows = self.Rows
 		p.TileWidth = self.TileWidth
@@ -58,19 +56,14 @@ class TilesortParameters:
 
 # Predefined tile sizes shown in the wxChoice widget (feel free to change)
 CommonTileSizes = [ [128, 128],
-					  [256, 256],
-					  [512, 512],
-					  [1024, 1024],
-					  [1280, 1024],
-					  [1600, 1200] ]
+					[256, 256],
+					[512, 512],
+					[1024, 1024],
+					[1280, 1024],
+					[1600, 1200] ]
 
 BackgroundColor = wxColor(70, 170, 130)
 
-# We use the SPU options dialog to handle server and global options!
-ServerOptions = [
-	("optimize_bucket", "Optimized Extent Bucketing", "BOOL", 1, [1], [], []),
-	("lighting2", "Generate Lightning-2 Strip Headers", "BOOL", 1, [0], [], [])
-]
 
 # This is the guts of the tilesort configuration script.
 # It's simply appended to the file after we write all the configuration options
@@ -103,7 +96,7 @@ localHostname = os.uname()[1]
 
 def MakeHostname(format, number):
 	# find the hash characters first
-	p = re.search("#+", format)
+	p = re.search('#+', format)
 	if not p:
 		return format
 	numHashes = p.end() - p.start()
@@ -123,25 +116,32 @@ def MakeHostname(format, number):
 cr = CR()
 cr.MTU( GLOBAL_MTU )
 
-tilesortspu = SPU('tilesort')
-tilesortspu.Conf('broadcast', TILESORT_broadcast)
-tilesortspu.Conf('optimize_bucket', TILESORT_optimize_bucket)
-tilesortspu.Conf('sync_on_swap', TILESORT_sync_on_swap)
-tilesortspu.Conf('sync_on_finish', TILESORT_sync_on_finish)
-tilesortspu.Conf('draw_bbox', TILESORT_draw_bbox)
-tilesortspu.Conf('bbox_line_width', TILESORT_bbox_line_width)
-#tilesortspu.Conf('fake_window_dims', fixme)
-tilesortspu.Conf('scale_to_mural_size', TILESORT_scale_to_mural_size)
 
+tilesortSPUs = []
+clientNodes = []
 
-clientnode = CRApplicationNode()
-clientnode.AddSPU(tilesortspu)
+for i in range(NUM_CLIENTS):
+	tilesortspu = SPU('tilesort')
+	tilesortspu.Conf('broadcast', TILESORT_broadcast)
+	tilesortspu.Conf('optimize_bucket', TILESORT_optimize_bucket)
+	tilesortspu.Conf('sync_on_swap', TILESORT_sync_on_swap)
+	tilesortspu.Conf('sync_on_finish', TILESORT_sync_on_finish)
+	tilesortspu.Conf('draw_bbox', TILESORT_draw_bbox)
+	tilesortspu.Conf('bbox_line_width', TILESORT_bbox_line_width)
+	#tilesortspu.Conf('fake_window_dims', fixme)
+	tilesortspu.Conf('scale_to_mural_size', TILESORT_scale_to_mural_size)
+	tilesortSPUs.append(tilesortspu)
 
-clientnode.StartDir( crbindir )
-clientnode.SetApplication( os.path.join(crbindir, program) )
-if GLOBAL_auto_start:
-	clientnode.AutoStart( ["/bin/sh", "-c",
-		"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
+	clientnode = CRApplicationNode()
+	clientnode.AddSPU(tilesortspu)
+
+	clientnode.StartDir( crbindir )
+	clientnode.SetApplication( os.path.join(crbindir, program) )
+	if GLOBAL_auto_start:
+		clientnode.AutoStart( ["/bin/sh", "-c",
+				"LD_LIBRARY_PATH=%s /usr/local/bin/crappfaker" % crlibdir] )
+
+	clientNodes.append(clientnode)
 
 
 for row in range(TILE_ROWS):
@@ -186,14 +186,16 @@ for row in range(TILE_ROWS):
 		servernode.Conf('optimize_bucket', SERVER_optimize_bucket)
 
 		cr.AddNode(servernode)
-		tilesortspu.AddServer(servernode, protocol='tcpip', port = 7000 + index)
+		for i in range(NUM_CLIENTS):
+			tilesortSPUs[i].AddServer(servernode, protocol='tcpip', port = 7000 + index)
 
 		if GLOBAL_auto_start:
 			servernode.AutoStart( ["/usr/bin/rsh", host,
 									"/bin/sh -c 'DISPLAY=:0.0  CRMOTHERSHIP=%s  LD_LIBRARY_PATH=%s  crserver'" % (localHostname, crlibdir) ] )
 
 
-cr.AddNode(clientnode)
+for i in range(NUM_CLIENTS):
+	cr.AddNode(clientNodes[i])
 cr.SetParam('minimum_window_size', GLOBAL_minimum_window_size)
 cr.SetParam('match_window_title', GLOBAL_match_window_title)
 cr.SetParam('show_cursor', GLOBAL_show_cursor)
@@ -202,6 +204,16 @@ cr.Go()
 """
 
 #----------------------------------------------------------------------------
+
+def FindClientNode(mothership):
+	"""Search the mothership for the client node."""
+	nodes = mothership.Nodes()
+	assert len(nodes) == 2
+	if nodes[0].IsAppNode():
+		return nodes[0]
+	else:
+		assert nodes[1].IsAppNode()
+		return nodes[1]
 
 def FindTilesortSPU(mothership):
 	"""Search the mothership for the tilesort SPU."""
@@ -419,27 +431,7 @@ class TilesortDialog(wxDialog):
 
 		self.__RecomputeTotalSize()
 		# end of dialog construction
-		
-		# Make the Tilesort SPU options dialog
-		self.tilesortInfo = crutils.GetSPUOptions("tilesort")
-		assert self.tilesortInfo
-		(tilesortParams, tilesortOptions) = self.tilesortInfo
-		self.TilesortDialog = spudialog.SPUDialog(parent=NULL, id=-1,
-												  title="Tilesort SPU Options",
-												  options=tilesortOptions)
 
-		# Make the render SPU options dialog
-		self.renderInfo = crutils.GetSPUOptions("render")
-		assert self.renderInfo
-		(renderParams, renderOptions) = self.renderInfo
-		self.RenderDialog = spudialog.SPUDialog(parent=NULL, id=-1,
-												title="Render SPU Options",
-												options=renderOptions)
-
-		# Make the server options dialog
-		self.ServerDialog = spudialog.SPUDialog(parent=NULL, id=-1,
-												title="Server Options",
-												options=ServerOptions)
 	# end of __init__()
 
 	def __RecomputeTotalSize(self):
@@ -527,7 +519,7 @@ class TilesortDialog(wxDialog):
 
 	def __OnTilesortOptions(self, event):
 		"""Called when Tilesort Options button is pressed."""
-		tilesortSPU = FindTilesortSPU(self.mothership)
+		tilesortSPU = FindTilesortSPU(self.__Mothership)
 		(params, opts) = crutils.GetSPUOptions("tilesort")
 		# create the dialog
 		dialog = spudialog.SPUDialog(parent=NULL, id=-1,
@@ -639,25 +631,23 @@ def Create_Tilesort(parentWindow, mothership):
 
 	# XXX need a widget for the hostnames???
 	dialogDefaults = [
-		mothership.Tilesort.NumClients,
+		1,
 		mothership.Tilesort.Columns,
 		mothership.Tilesort.Rows]
 	dialog = intdialog.IntDialog(NULL, id=-1,
 								 title="Tilesort Template",
-								 labels=["Number of client/application nodes:",
-										 "Columns of server/render nodes:",
-										 "Rows of server/render nodes:"],
+								 labels=["Number of application nodes:",
+										 "Mural Columns:",
+										 "Mural Rows:"],
 								 defaultValues=dialogDefaults, maxValue=10000)
 	if dialog.ShowModal() == wxID_CANCEL:
 		dialog.Destroy()
 		return 0
 	values = dialog.GetValues()
-	mothership.Tilesort.NumClients = values[0]
 	mothership.Tilesort.Columns = values[1]
 	mothership.Tilesort.Rows = values[2]
 	numClients = values[0]
 	numServers = values[1] * values[2]
-	m = max(numClients, numServers)
 	hostname = "localhost"
 	mothership.DeselectAllNodes()
 	# Create the <numClients> app nodes
@@ -733,7 +723,6 @@ def Edit_Tilesort(parentWindow, mothership):
 		else:
 			clientNode = nodes[1]
 			serverNode = nodes[0]
-		mothership.Tilesort.NumClients = clientNode.GetCount()
 		mothership.Tilesort.Hostname = serverNode.GetHost()
 		mothership.Tilesort.FirstHost = serverNode.GetFirstHost()
 	else:
@@ -754,7 +743,6 @@ def Edit_Tilesort(parentWindow, mothership):
 		serverNode.SetCount(tiles)
 		serverNode.SetHost(mothership.Tilesort.Hostname)
 		serverNode.SetFirstHost(mothership.Tilesort.FirstHost)
-		clientNode.SetCount(mothership.Tilesort.NumClients)
 
 
 def __ParseOption(s, prefix):
@@ -832,7 +820,7 @@ def Read_Tilesort(mothership, fileHandle):
 			mothership.Tilesort.FirstHost = int(l[v.start() : v.end()])
 		elif re.match("^NUM_CLIENTS = [0-9]+$", l):
 			v = re.search("[0-9]+", l)
-			mothership.Tilesort.NumClients = int(l[v.start() : v.end()])
+			numClients = int(l[v.start() : v.end()])
 		elif re.match("^TILESORT_", l):
 			# A tilesort SPU option
 			(name, values) = __ParseOption(l, "TILESORT")
@@ -857,7 +845,7 @@ def Read_Tilesort(mothership, fileHandle):
 			print "unrecognized line: %s" % l
 	# endwhile
 
-	clientNode.SetCount(mothership.Tilesort.NumClients)
+	clientNode.SetCount(numClients)
 	serverNode.SetCount(mothership.Tilesort.Rows * mothership.Tilesort.Columns)
 	serverNode.SetHost(mothership.Tilesort.Hostname)
 	serverNode.SetFirstHost(mothership.Tilesort.FirstHost)
@@ -869,7 +857,10 @@ def Write_Tilesort(mothership, file):
 	"""Write a tilesort config to the given file handle."""
 	assert Is_Tilesort(mothership)
 	assert mothership.GetTemplateType() == "Tilesort"
+
 	tilesort = mothership.Tilesort
+	clientNode = FindClientNode(mothership)
+
 	file.write('TEMPLATE = "Tilesort"\n')
 	file.write("TILE_ROWS = %d\n" % tilesort.Rows)
 	file.write("TILE_COLS = %d\n" % tilesort.Columns)
@@ -879,7 +870,7 @@ def Write_Tilesort(mothership, file):
 	file.write("BOTTOM_TO_TOP = %d\n" % tilesort.BottomToTop)
 	file.write('HOSTNAME = "%s"\n' % tilesort.Hostname)
 	file.write("FIRSTHOST = %d\n" % tilesort.FirstHost)
-	file.write("NUM_CLIENTS = %d\n" % tilesort.NumClients)
+	file.write("NUM_CLIENTS = %d\n" % clientNode.GetCount())
 
 	# write tilesort SPU options
 	tilesortSPU = FindTilesortSPU(mothership)
