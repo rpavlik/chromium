@@ -47,6 +47,10 @@ void glMultiTexCoord4ivARB (GLenum texture, const GLint *t);
 void glMultiTexCoord4svARB (GLenum texture, const GLshort *t);
 void glActiveTextureARB (GLenum texture);
 void glClientActiveTextureARB (GLenum texture);
+void glLoadTransposeMatrixfARB (const GLfloat *m);
+void glLoadTransposeMatrixdARB (const GLdouble *m);
+void glMultTransposeMatrixfARB (const GLfloat *m);
+void glMultTransposeMatrixdARB (const GLdouble *m);
 /* GL_NV_register_combiners */
 void glCombinerParameterfvNV (GLenum pname, const GLfloat *params);
 void glCombinerParameterivNV (GLenum pname, const GLint *params);

@@ -13,3 +13,7 @@ ChromiumParametervCR
 CreateContext
 WindowCreate
 AreTexturesResident
+LoadTransposeMatrixfARB
+LoadTransposeMatrixdARB
+MultTransposeMatrixdARB
+MultTransposeMatrixfARB

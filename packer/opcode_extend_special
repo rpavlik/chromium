@@ -21,6 +21,10 @@ BlendEquationEXT
 #MultiTexCoord4fARB
 #MultiTexCoord4iARB
 #MultiTexCoord4sARB
+LoadTransposeMatrixfARB
+LoadTransposeMatrixdARB
+MultTransposeMatrixfARB
+MultTransposeMatrixdARB
 ActiveTextureARB
 AreTexturesResident
 ClientActiveTextureARB

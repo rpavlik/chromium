@@ -15,6 +15,7 @@ typedef struct {
   GLboolean ARB_multitexture;
   GLboolean ARB_texture_border_clamp; /* or SGIS_texture_border_clamp */
   GLboolean ARB_texture_cube_map; /* or EXT_texture_cube_map */
+  GLboolean ARB_transpose_matrix;
   GLboolean EXT_blend_color;
   GLboolean EXT_blend_minmax;
   GLboolean EXT_blend_subtract;

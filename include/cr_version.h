@@ -28,12 +28,13 @@
 /* These define the OpenGL extensions that Chromium supports.
  * Users can enable/disable support for particular OpenGL extensions here.
  * Again, use OpenGL's convention.
- * WARNING: if you add new extensions here, also update spu/loader/limits.c
- * and spu/state_tracker/extensions.c
+ * WARNING: if you add new extensions here, also update spu_loader/limits.c
+ * and state_tracker/state_extensions.c
  */
 #define CR_ARB_multitexture 1
 #define CR_ARB_texture_border_clamp 1
 #define CR_ARB_texture_cube_map 1
+#define CR_ARB_transpose_matrix 1
 #define CR_EXT_blend_color 1
 #define CR_EXT_blend_minmax 1
 #define CR_EXT_blend_subtract 1

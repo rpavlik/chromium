@@ -56,6 +56,9 @@ void crStateExtensionsInit( CRContext *g )
 		hasExtension((const char*)g->limits.extensions, "GL_EXT_texture_cube_map"))
 		g->extensions.ARB_texture_cube_map = GL_TRUE;
 
+	if (hasExtension((const char*)g->limits.extensions, "GL_ARB_transpose_matrix"))
+		g->extensions.ARB_transpose_matrix = GL_TRUE;
+
 	if (hasExtension((const char*)g->limits.extensions, "GL_EXT_blend_color"))
 		g->extensions.EXT_blend_color= GL_TRUE;
 

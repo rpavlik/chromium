@@ -36,7 +36,12 @@ aliases = [ 		('ActiveTexture','ActiveTextureARB'),
 			('MultiTexCoord4i', 'MultiTexCoord4iARB'),
 			('MultiTexCoord4iv','MultiTexCoord4ivARB'),
 			('MultiTexCoord4s', 'MultiTexCoord4sARB'),
-			('MultiTexCoord4sv','MultiTexCoord4svARB') ]
+			('MultiTexCoord4sv','MultiTexCoord4svARB'),
+			('LoadTransposeMatrixf','LoadTransposeMatrixfARB'),
+			('LoadTransposeMatrixd','LoadTransposeMatrixdARB'),
+			('MultTransposeMatrixf','MultTransposeMatrixfARB'),
+			('MultTransposeMatrixd','MultTransposeMatrixdARB')
+ 			]
 
 def AliasMap( func_name ):
     for aliased_index in range(len(aliases)):

@@ -90,6 +90,9 @@ static char *crExtensionString =
 #ifdef CR_ARB_texture_cube_map
 	"GL_ARB_texture_cube_map "
 #endif
+#ifdef CR_ARB_transpose_matrix
+	"GL_ARB_transpose_matrix "
+#endif
 #ifdef CR_EXT_blend_color
 	"GL_EXT_blend_color "
 #endif

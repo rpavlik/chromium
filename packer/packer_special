@@ -79,3 +79,7 @@ SelectBuffer
 Begin
 End
 VertexArrayRangeNV
+LoadTransposeMatrixfARB
+LoadTransposeMatrixdARB
+MultTransposeMatrixfARB
+MultTransposeMatrixdARB
