@@ -42,19 +42,11 @@
                 <a href="#Prereqs">Prerequisites</a>
               </li>
               <li>
-                <a href="#Compiling">Compiling the source</a>
+                <a href="#Notes">Platform-specific Notes</a>
               </li>
               <li>
-                <a href="#SpecialNotes">Special Notes</a>
-                <ol>
-                  <li>
-                    <a href="#NVonRH">NVIDIA drivers with Red Hat Linux</a>
-                  </li>
-                  <li>
-                    <a href="#CompilerOpts">Additional Compiler
-                    Optimizations</a>
-                  </li>
-                </ol>
+                <a href="#CompilerOpts">Additional Compiler
+                Optimizations</a>
               </li>
             </ol>
           </li>
@@ -244,39 +236,11 @@
       You'll need GLUT installed so that the demonstration programs will
       compile.
     </p><a name="Compiling" class="mozTocH3" id="Compiling"></a>
+
+    <a name="Notes" class="mozTocH3" id="Notes"></a>
     <h3>
-      Compiling the source
-    </h3>
-    <p>
-      All of Chromium lives under a directory called "<span class=
-      "Directory">cr-X.Y</span>" (where X.Y is the version). Change to that
-      directory.
-    </p>
-    <p>
-      There are a few compile-time options that can be specified in the
-      <span class="File">options.mk</span> file. DMX support and threadsafety
-      options are specified in this file, for example. If you have Myrinet or
-      Quadrics network hardware, you can enable those interfaces here. At least
-      initially, you shouldn't have to change anything in this file.
-    </p>
-    <p>
-      To start compilation, just type <span class="App">make</span> (or
-      <span class="App">gmake</span> on some systems).
-    </p>
-    <p>
-      Binaries are put in <span class=
-      "Directory">cr-X.Y/bin/&lt;ARCH&gt;</span>, where <span class=
-      "Directory">&lt;ARCH&gt;</span> is the name of your architecture
-      (Actually, it's what's returned by the <span class="App">uname</span>
-      command. Except on Windows, where <a href="http://cygwin.com/" target=
-      "_parent">cygwin's</a> <span class="App">uname</span> returns something
-      long and silly, so it gets re-written to <span class=
-      "Directory">WIN_NT</span>.). You should add this directory to your
-      <span class="EnvVar">PATH</span> environment variable.
-    </p>
-    <p>
       Platform specific notes:
-    </p>
+    </h3>
     <ul>
       <li>
         <b>Any UNIX</b>: Shared libraries will be put in the directory
@@ -284,6 +248,38 @@
         directory to your <span class="EnvVar">LD_LIBRARY_PATH</span>
         environment variable. Chromium builds a <em>lot</em> of shared
         libraries, so you can't skip this step.
+      </li>
+      <li class="empty">
+        <br>
+      </li>
+      <li>
+        <b>Linux NVIDIA header files</b>: 
+	NVIDIA's OpenGL header files (gl.h and glext.h) are somewhat
+	broken. Just don't use them! If you accidentally install NVIDIA's
+	header files in /usr/include/GL you should replace them with the
+	stock XFree86 OpenGL headers or the headers included with Mesa.
+      </li>
+      <li class="empty">
+        <br>
+      </li>
+      <li
+        <b>Red Hat Linux and NVIDIA drivers</b>:
+	If you're using RedHat Linux 9.0 (or later?) with NVIDIA
+        hardware/drivers you'll probably have to set the <span class=
+	"EnvVar">CR_SYSTEM_GL_PATH</span> environment variable to <span class=
+	"Directory">/usr/lib/tls</span> . This causes Chromium to use the
+	<span class="File">libGL.so</span> library found in <span class=
+	"Directory">/usr/lib/tls</span> instead of <span class=
+	"Directory">/usr/lib</span>, thus avoiding some thread-related
+        problems.
+      </li>
+      <li class="empty">
+        <br>
+      </li>
+      <li>
+        <b>Gentoo Linux</b>: If using NVIDIA drivers, Craig Jacobs reports
+        that the two files in /usr/lib/opengl/nvidia/tls must be removed in
+        order for things to work.
       </li>
       <li class="empty">
         <br>
@@ -359,31 +355,11 @@
         <span class="EnvVar">LD</span> variables may interfere with the build
         process.
       </li>
-    </ul><a name="SpecialNotes" class="mozTocH3" id="SpecialNotes"></a>
+    </ul>
+    <a name="CompilerOpts" class="mozTocH4" id="CompilerOpts"></a>
     <h3>
-      Special Notes
-    </h3><a name="NVonRH" class="mozTocH4" id="NVonRH"></a>
-    <h4>
-      NVIDIA drivers with Red Hat Linux
-    </h4>
-    <p>
-      Firstly, NVIDIA's OpenGL header files (gl.h and glext.h) are somewhat
-      broken. Just don't use them! If you accidentally install NVIDIA's header
-      files in /usr/include/GL you should replace them with the stock XFree86
-      OpenGL headers or the headers included with Mesa.
-    </p>
-    <p>
-      If you're using RedHat Linux 9.0 (or later?) with NVIDIA hardware/drivers
-      you'll probably have to set the <span class=
-      "EnvVar">CR_SYSTEM_GL_PATH</span> environment variable to <span class=
-      "Directory">/usr/lib/tls</span> . This causes Chromium to use the
-      <span class="File">libGL.so</span> library found in <span class=
-      "Directory">/usr/lib/tls</span> instead of <span class=
-      "Directory">/usr/lib</span>, thus avoiding some thread-related problems.
-    </p><a name="CompilerOpts" class="mozTocH4" id="CompilerOpts"></a>
-    <h4>
       Additional Compiler Optimizations
-    </h4>
+    </h3>
     <p>
       Look at the <span class="File">cr-X.Y/config/Linux.mk</span> for some
       additional gcc compiler flags that can increase performance on x86 Linux
