@@ -280,12 +280,15 @@ void perfspuCheckVertexData( PerfVertex *stats, PerfVertex *snapshot )
 
 void PERFSPU_APIENTRY perfspuChromiumParameteriCR(GLenum target, GLint value)
 {
+	char rstr[100];
+
 	switch (target) {
 	case GL_PERF_SET_DUMP_ON_SWAP_CR:
 		perf_spu.dump_on_swap_count = value;
 		break;
 	case GL_PERF_DUMP_COUNTERS_CR:
-		perfspuDumpCounters("REQUESTED 0", &perf_spu.old_framestats, &perf_spu.framestats);
+		sprintf(rstr, "REQUESTED%s0", perf_spu.separator);
+		perfspuDumpCounters(rstr, &perf_spu.old_framestats, &perf_spu.framestats);
 		break;
 	default:
 		perf_spu.super.ChromiumParameteriCR( target, value );
@@ -682,7 +685,7 @@ void PERFSPU_APIENTRY perfspuClear( GLbitfield mask )
 	perf_spu.clear_counter++;
 
 	if (perf_spu.clear_counter & perf_spu.dump_on_clear_count) {
-		sprintf(cstr, "CLEARCOUNT %d", perf_spu.dump_on_clear_count);
+		sprintf(cstr, "CLEARCOUNT%s%d", perf_spu.separator, perf_spu.dump_on_clear_count);
 		perfspuDumpCounters(cstr, &perf_spu.old_framestats, &perf_spu.framestats);
 	}
 
@@ -691,13 +694,17 @@ void PERFSPU_APIENTRY perfspuClear( GLbitfield mask )
 
 void PERFSPU_APIENTRY perfspuFinish( )
 {
-	perfspuDumpCounters("FINISH\t0", &perf_spu.old_framestats, &perf_spu.framestats);
+	char fstr[100];
+	sprintf(fstr, "FINISH%s0", perf_spu.separator);
+	perfspuDumpCounters(fstr, &perf_spu.old_framestats, &perf_spu.framestats);
 	perf_spu.super.Finish( );
 }
 
 void PERFSPU_APIENTRY perfspuFlush( )
 {
-	perfspuDumpCounters("FLUSH\t0", &perf_spu.old_framestats, &perf_spu.framestats);
+	char fstr[100];
+	sprintf(fstr, "FLUSH%s0", perf_spu.separator);
+	perfspuDumpCounters(fstr, &perf_spu.old_framestats, &perf_spu.framestats);
 	perf_spu.super.Flush( );
 }
 
@@ -719,13 +726,13 @@ void PERFSPU_APIENTRY perfspuSwapBuffers( GLint window, GLint flags )
 		printf( "FPS: %f\n", fps );
 
 		/* And the timerstats to the log file */
-		sprintf(sstr, "TIMERSTATS %2.2f", perf_spu.timer_event);
+		sprintf(sstr, "TIMERSTATS%s%2.2f", perf_spu.separator, perf_spu.timer_event);
 
 		perfspuDumpCounters(sstr, &perf_spu.old_timerstats, &perf_spu.timerstats);
 	}
 
 	if (perf_spu.frame_counter & perf_spu.dump_on_swap_count) {
-		sprintf(sstr, "FRAMESTATS %d", perf_spu.dump_on_swap_count);
+		sprintf(sstr, "FRAMESTATS%s%d", perf_spu.separator, perf_spu.dump_on_swap_count);
 		perfspuDumpCounters(sstr, &perf_spu.old_framestats, &perf_spu.framestats);
 	}
 	
