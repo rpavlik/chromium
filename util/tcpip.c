@@ -636,10 +636,8 @@ int crTCPIPRecv( void )
 			 * a mothership connection here, and we shouldn't
 			 * process it 
 			 */
-			if ((int)sock == msock+1){
-				printf("CLEARING %d\n",sock);
+			if ((int)sock == msock+1)
 				FD_CLR(sock, &read_fds);
-			}
 		}
 	}
 
