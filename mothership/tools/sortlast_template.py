@@ -103,8 +103,8 @@ for (name, value) in opts:
 
 if len(args) > 0:
 	PROGRAM = args[0]
-if PROGRAM == "":
-	Usage()
+#if PROGRAM == "":
+#	Usage()
 
 # update window width/height if changed
 if WIDTH and HEIGHT:
