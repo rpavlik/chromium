@@ -257,7 +257,28 @@ void PACK_APIENTRY crPackZPix( GLsizei width, GLsizei height,
 	WRITE_DATA( 24, GLint,   zparm );
 	WRITE_DATA( 28, GLint,   length );
 
-        crMemcpy((void *) (data_ptr+32), pixels, length);
+	crMemcpy((void *) (data_ptr+32), pixels, length);
 
 	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
+}
+
+
+void PACK_APIENTRY
+crPackGetTexImage( GLenum target, GLint level, GLenum format, GLenum type,
+									 GLvoid * pixels, const CRPixelPackState * packstate,
+									 int * writeback )
+{
+	GET_PACKER_CONTEXT(pc);
+	unsigned char *data_ptr;
+	(void) pc;
+	GET_BUFFERED_POINTER( pc, 40 );
+	WRITE_DATA( 0, GLint, 40 );
+	WRITE_DATA( 4, GLenum, CR_GETTEXIMAGE_EXTEND_OPCODE );
+	WRITE_DATA( 8, GLenum, target );
+	WRITE_DATA( 12, GLint, level );
+	WRITE_DATA( 16, GLenum, format );
+	WRITE_DATA( 20, GLenum, type );
+	WRITE_NETWORK_POINTER( 24, (void *) pixels );
+	WRITE_NETWORK_POINTER( 32, (void *) writeback );
+	WRITE_OPCODE( pc, CR_EXTEND_OPCODE );
 }

@@ -22,6 +22,7 @@ DeleteTextures
 DrawPixels
 Fogfv
 Fogiv
+GetTexImage
 Lightfv
 Lightiv
 LightModelfv
