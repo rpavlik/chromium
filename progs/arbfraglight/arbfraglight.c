@@ -43,6 +43,7 @@ typedef void (APIENTRY * glProgramEnvParameter4fvARB_t) (GLenum target, GLuint i
 typedef void (APIENTRY * glGetProgramEnvParameterdvARB_t) (GLenum target, GLuint index, GLdouble *params);
 typedef void (APIENTRY * glGetProgramEnvParameterfvARB_t) (GLenum target, GLuint index, GLfloat *params);
 typedef void (APIENTRY * glGenProgramsARB_t) (GLsizei n, GLuint *programs);
+typedef void (APIENTRY * glDeleteProgramsARB_t) (GLsizei n, const GLuint *programs);
 typedef void (APIENTRY * glProgramStringARB_t) (GLenum target, GLenum format, GLsizei len, const GLvoid *string);
 typedef void (APIENTRY * glBindProgramARB_t) (GLenum target, GLuint program);
 typedef GLboolean (APIENTRY * glIsProgramARB_t) (GLuint program);
@@ -61,6 +62,7 @@ static glGetProgramEnvParameterdvARB_t glGetProgramEnvParameterdvARB_func;
 static glGetProgramEnvParameterfvARB_t glGetProgramEnvParameterfvARB_func;
 
 static glGenProgramsARB_t glGenProgramsARB_func;
+static glDeleteProgramsARB_t glDeleteProgramsARB_func;
 static glProgramStringARB_t glProgramStringARB_func;
 static glBindProgramARB_t glBindProgramARB_func;
 static glIsProgramARB_t glIsProgramARB_func;
@@ -211,6 +213,14 @@ static void Reshape( int width, int height )
 }
 
 
+static void Cleanup(void)
+{
+   glDeleteProgramsARB_func(1, &FragProg);
+   glDeleteProgramsARB_func(1, &VertProg);
+   glFlush();
+}
+
+
 static void Key( unsigned char key, int x, int y )
 {
    (void) x;
@@ -246,6 +256,7 @@ static void Key( unsigned char key, int x, int y )
          }
          break;
       case 27:
+         Cleanup();
          exit(0);
          break;
    }
@@ -322,7 +333,7 @@ static void Init( void )
       "MUL specularColor, Specular, specAtten.x;      # specular attenuation\n"
 
       "ADD result.color, diffuseColor, specularColor; # add colors\n"
-      "END \n"
+      "END\n"
       ;
 
    static const char *vertProgramText =
@@ -393,6 +404,9 @@ static void Init( void )
    glGenProgramsARB_func = (glGenProgramsARB_t) crGetProcAddress("glGenProgramsARB");
    assert(glGenProgramsARB_func);
 
+   glDeleteProgramsARB_func = (glDeleteProgramsARB_t) crGetProcAddress("glDeleteProgramsARB");
+   assert(glDeleteProgramsARB_func);
+
    glProgramStringARB_func = (glProgramStringARB_t) crGetProcAddress("glProgramStringARB");
    assert(glProgramStringARB_func);
 
@@ -419,7 +433,7 @@ static void Init( void )
    err = glGetError();
    if (err != GL_NO_ERROR || errorPos != -1) {
       int l = FindLine(fragProgramText, errorPos);
-      printf("Fragment Program Error (err=%d pos=%d line=%d): %s\n",
+      printf("Fragment Program Error (err=0x%x pos=%d line=%d): %s\n",
              err, errorPos, l,
              (char *) glGetString(GL_PROGRAM_ERROR_STRING_ARB));
       exit(0);
@@ -468,9 +482,11 @@ static void Init( void )
                            strlen(vertProgramText),
                            (const GLubyte *) vertProgramText);
    glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
-   if (glGetError() != GL_NO_ERROR || errorPos != -1) {
-      int l = FindLine(fragProgramText, errorPos);
-      printf("Vertex Program Error (pos=%d line=%d): %s\n", errorPos, l,
+   err = glGetError();
+   if (err != GL_NO_ERROR || errorPos != -1) {
+      int l = FindLine(vertProgramText, errorPos);
+      printf("Vertex Program Error (err=0x%x pos=%d line=%d): %s\n",
+             err, errorPos, l,
              (char *) glGetString(GL_PROGRAM_ERROR_STRING_ARB));
       exit(0);
    }
