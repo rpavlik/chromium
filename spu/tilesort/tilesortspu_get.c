@@ -283,7 +283,7 @@ GetExtensionsString(void)
 		}
 
 		/* make sure we didn't overflow the buffer */
-		CRASSERT(crStrlen(extensions[i]) < 50*1000);
+		CRASSERT(crStrlen((char *) extensions[i]) < 50*1000);
 	}
 
 	/* Restore the default pack buffer */
