@@ -14,12 +14,12 @@
 
 static int is_digit_string( const char *s )
 {
-	if ( !isdigit( *s ) )
+     if (!isdigit( (int) *s))
 	{
 		return 0;
 	}
 
-	while ( *s && isdigit( *s ) )
+     while (*s && isdigit ( (int) *s))
 	{
 		s++;
 	}

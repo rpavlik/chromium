@@ -10,7 +10,7 @@
 #include "cr_string.h"
 #include "stdio.h"
 
-#if defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(DARWIN)
+#if defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(DARWIN) || defined(SunOS)
 #include <dlfcn.h>
 #endif
 
@@ -25,7 +25,7 @@ CRDLL *crDLLOpen( const char *dllname )
 #if defined(WINDOWS)
 	dll->hinstLib = LoadLibrary( dllname );
 	dll_err = NULL;
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) | defined (DARWIN)
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined (DARWIN) || defined(SunOS)
 	dll->hinstLib = dlopen( dllname, RTLD_LAZY );
 	dll_err = (char*) dlerror();
 #else
@@ -47,7 +47,7 @@ CRDLLFunc crDLLGetNoError( CRDLL *dll, const char *symname )
 {
 #if defined(WINDOWS)
 	return (CRDLLFunc) GetProcAddress( dll->hinstLib, symname );
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(DARWIN)
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined(DARWIN) || defined(SunOS)
 	return (CRDLLFunc) dlsym( dll->hinstLib, symname );
 #else
 #error CR DLL ARCHITETECTURE
@@ -69,7 +69,7 @@ void crDLLClose( CRDLL *dll )
 {
 #if defined(WINDOWS)
 	FreeLibrary( dll->hinstLib );
-#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined (DARWIN)
+#elif defined(IRIX) || defined(IRIX64) || defined(Linux) || defined(FreeBSD) || defined(AIX) || defined (DARWIN) || defined(SunOS)
 
 	dlclose( dll->hinstLib );
 #else
