@@ -91,6 +91,55 @@ AllocBuffers(WindowInfo * window)
 }
 
 
+/**
+ * Called to resize a window.  This involves allocating new image buffers.
+ */
+static void
+ResizeWindow(WindowInfo *window, int newWidth, int newHeight)
+{
+	CRMessage *msg;
+
+	/* The window size has changed (or first-time init) */
+	window->width = newWidth;
+	window->height = newHeight;
+	AllocBuffers(window);
+
+	if (readback_spu.resizable)
+	{
+		/* update super/render SPU window size & viewport */
+		CRASSERT(newWidth > 0);
+		CRASSERT(newHeight > 0);
+		readback_spu.super.WindowSize(window->renderWindow,
+																	newWidth, newHeight);
+		readback_spu.super.Viewport(0, 0, newWidth, newHeight);
+		/* set child's viewport too */
+		readback_spu.child.Viewport(0, 0, newWidth, newHeight);
+	}
+
+	if (readback_spu.extract_alpha)
+		window->bytesPerColor = 4 * sizeof(GLubyte);
+	else
+		window->bytesPerColor = 3 * sizeof(GLubyte);
+
+	msg = (CRMessage *) window->colorBuffer;
+	msg->header.type = CR_MESSAGE_GATHER;
+
+	if (readback_spu.extract_depth)
+	{
+		GLint zBits;
+		readback_spu.super.GetIntegerv(GL_DEPTH_BITS, &zBits);
+		if (zBits > 16)
+			window->bytesPerDepth = 4;
+		else if (zBits > 8)
+			window->bytesPerDepth = 2;
+		else
+			window->bytesPerDepth = 1;
+		CRASSERT(window->depthBuffer);
+		msg = (CRMessage *) window->depthBuffer;
+		msg->header.type = CR_MESSAGE_GATHER;
+	}
+}
+
 
 /**
  * Determine the size of the given readback SPU window.
@@ -101,7 +150,6 @@ static void
 CheckWindowSize(WindowInfo * window)
 {
 	GLint newSize[2];
-	CRMessage *msg;
 
 	newSize[0] = newSize[1] = 0;
 
@@ -147,44 +195,7 @@ CheckWindowSize(WindowInfo * window)
 	if (newSize[0] != window->width || newSize[1] != window->height)
 	{
 		/* The window size has changed (or first-time init) */
-		window->width = newSize[0];
-		window->height = newSize[1];
-		AllocBuffers(window);
-
-		if (readback_spu.resizable)
-		{
-			/* update super/render SPU window size & viewport */
-			CRASSERT(newSize[0] > 0);
-			CRASSERT(newSize[1] > 0);
-			readback_spu.super.WindowSize(window->renderWindow,
-																		newSize[0], newSize[1]);
-			readback_spu.super.Viewport(0, 0, newSize[0], newSize[1]);
-			/* set child's viewport too */
-			readback_spu.child.Viewport(0, 0, newSize[0], newSize[1]);
-		}
-
-		if (readback_spu.extract_alpha)
-			window->bytesPerColor = 4 * sizeof(GLubyte);
-		else
-			window->bytesPerColor = 3 * sizeof(GLubyte);
-
-		msg = (CRMessage *) window->colorBuffer;
-		msg->header.type = CR_MESSAGE_GATHER;
-
-		if (readback_spu.extract_depth)
-		{
-			GLint zBits;
-			readback_spu.super.GetIntegerv(GL_DEPTH_BITS, &zBits);
-			if (zBits > 16)
-				window->bytesPerDepth = 4;
-			else if (zBits > 8)
-				window->bytesPerDepth = 2;
-			else
-				window->bytesPerDepth = 1;
-			CRASSERT(window->depthBuffer);
-			msg = (CRMessage *) window->depthBuffer;
-			msg->header.type = CR_MESSAGE_GATHER;
-		}
+		ResizeWindow(window, newSize[0], newSize[0]);
 	}
 }
 
@@ -855,11 +866,25 @@ readbackspuWindowSize(GLint win, GLint w, GLint h)
 	WindowInfo *window;
 	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
 	CRASSERT(window);
+	ResizeWindow(window, w, h);
 	readback_spu.super.WindowSize(window->renderWindow, w, h);
 	readback_spu.child.WindowSize(window->childWindow, w, h);
 }
 
-/* don't implement WindowPosition() */
+/**
+ * If you really don't want to allow windows to move, set the
+ * 'ignore_window_moves' config option.  This function propogates
+ * window moves downstream because that's sometimes useful.
+ */
+static void READBACKSPU_APIENTRY
+readbackspuWindowPosition(GLint win, GLint x, GLint y)
+{
+	WindowInfo *window;
+	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
+	CRASSERT(window);
+	readback_spu.super.WindowPosition(window->renderWindow, x, y);
+	readback_spu.child.WindowPosition(window->childWindow, x, y);
+}
 
 
 /**
@@ -1013,6 +1038,7 @@ SPUNamedFunctionTable _cr_readback_table[] = {
 	{"WindowCreate", (SPUGenericFunction) readbackspuWindowCreate},
 	{"WindowDestroy", (SPUGenericFunction) readbackspuWindowDestroy},
 	{"WindowSize", (SPUGenericFunction) readbackspuWindowSize},
+	{"WindowPosition", (SPUGenericFunction) readbackspuWindowPosition},
 	{"BarrierCreateCR", (SPUGenericFunction) readbackspuBarrierCreateCR},
 	{"BarrierDestroyCR", (SPUGenericFunction) readbackspuBarrierDestroyCR},
 	{"BarrierExecCR", (SPUGenericFunction) readbackspuBarrierExecCR},
