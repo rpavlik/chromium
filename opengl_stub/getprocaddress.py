@@ -18,6 +18,8 @@ print """#include "cr_glwrapper.h"
 #include "cr_string.h"
 #include "cr_error.h"
 
+#include <stdio.h>
+
 #ifdef WINDOWS
 #pragma warning( disable: 4055 )
 #endif
