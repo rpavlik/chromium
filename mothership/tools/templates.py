@@ -13,80 +13,8 @@ import crtypes
 import crutils
 import intdialog
 import tilesort_template
+import sortlast_template
 
-
-# Eventually we'll move these into separate files in a special directory.
-# We've only done this for the tilesort template (tilesort_template.py) so far.
-
-def __Create_Sortlast(parentWindow, mothership):
-	"""Create a sort-last configuration"""
-	# XXX need a widget for the hostnames???
-	dialog = intdialog.IntDialog(NULL, id=-1,
-								 title="Sort-last Template",
-								 labels=["Number of application nodes:"],
-								 defaultValues=[2], maxValue=10000)
-	if dialog.ShowModal() == wxID_CANCEL:
-		dialog.Destroy()
-		return 0
-	numClients = dialog.GetValue()
-	hostname = "localhost"
-	mothership.DeselectAllNodes()
-	# Create the server/render node
-	xPos = 300
-	if 1:
-		yPos = 5
-	else:
-		yPos = numClients * 60 / 2 - 20
-	serverNode = crtypes.NetworkNode(host=hostname)
-	serverNode.SetPosition(xPos, yPos)
-	serverNode.Select()
-	renderSPU = crutils.NewSPU("render")
-	serverNode.AddSPU(renderSPU)
-	mothership.AddNode(serverNode)
-	# Create the client/app nodes
-	xPos = 5
-	yPos = 5
-	if 1:
-		# Make one N-count node
-		appNode = crtypes.ApplicationNode(host=hostname)
-		appNode.SetPosition(xPos, yPos)
-		appNode.SetCount(numClients)
-		appNode.Select()
-		readbackSPU = crutils.NewSPU("readback")
-		appNode.AddSPU(readbackSPU)
-		packSPU = crutils.NewSPU("pack")
-		appNode.AddSPU(packSPU)
-		mothership.AddNode(appNode)
-		packSPU.AddServer(serverNode)
-	else:
-		# Make N discreet nodes
-		for i in range(0, numClients):
-			appNode = crtypes.ApplicationNode(host=hostname)
-			appNode.SetPosition(xPos, yPos)
-			appNode.Select()
-			readbackSPU = crutils.NewSPU("readback")
-			appNode.AddSPU(readbackSPU)
-			packSPU = crutils.NewSPU("pack")
-			appNode.AddSPU(packSPU)
-			mothership.AddNode(appNode)
-			packSPU.AddServer(serverNode)
-			yPos += 60
-	dialog.Destroy()
-	return 1
-
-def __Is_Sortlast(mothership):
-	# XXX temporary
-	return 1
-
-def __Edit_Sortlast(parentWindow, mothership):
-	"""Edit parameters for a sort-last template"""
-	pass
-
-def __Read_Sortlast(mothership, file):
-	pass
-
-def __Write_Sortlast(mothership, file):
-	pass
 
 def __Create_BinarySwap(parentWindow, mothership):
 	"""Create a binary-swap, sort-last configuration"""
@@ -108,7 +36,7 @@ def __Create_BinarySwap(parentWindow, mothership):
 		yPos = 5
 	else:
 		yPos = numClients * 60 / 2 - 20
-	serverNode = crtypes.NetworkNode(host=hostname)
+	serverNode = crutils.NewNetworkNode(1)
 	serverNode.SetPosition(xPos, yPos)
 	serverNode.Select()
 	renderSPU = crutils.NewSPU("render")
@@ -118,9 +46,8 @@ def __Create_BinarySwap(parentWindow, mothership):
 	xPos = 5
 	yPos = 5
 	if 1:
-		appNode = crtypes.ApplicationNode(host=hostname)
+		appNode = crutils.NewApplicationNode(numClients)
 		appNode.SetPosition(xPos, yPos)
-		appNode.SetCount(numClients)
 		appNode.Select()
 		readbackSPU = crutils.NewSPU("binaryswap")
 		appNode.AddSPU(readbackSPU)
@@ -130,7 +57,7 @@ def __Create_BinarySwap(parentWindow, mothership):
 		packSPU.AddServer(serverNode)
 	else:
 		for i in range(0, numClients):
-			appNode = crtypes.ApplicationNode(host=hostname)
+			appNode = crutils.NewApplicationNode(1)
 			appNode.SetPosition(xPos, yPos)
 			appNode.Select()
 			readbackSPU = crutils.NewSPU("binaryswap")
@@ -168,11 +95,11 @@ __Templates = {
 					   tilesort_template.Edit_Tilesort,
 					   tilesort_template.Read_Tilesort,
 					   tilesort_template.Write_Tilesort ),
-	"Sort-last"    : ( __Create_Sortlast,
-					   __Is_Sortlast,
-					   __Edit_Sortlast,
-					   __Read_Sortlast,
-					   __Write_Sortlast ),
+	"Sort-last"    : ( sortlast_template.Create_Sortlast,
+					   sortlast_template.Is_Sortlast,
+					   sortlast_template.Edit_Sortlast,
+					   sortlast_template.Read_Sortlast,
+					   sortlast_template.Write_Sortlast ),
 	"Binary-swap"  : ( __Create_BinarySwap,
 					   __Is_BinarySwap,
 					   __Edit_BinarySwap,
