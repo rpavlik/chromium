@@ -7,6 +7,7 @@ CFLAGS += /nologo /DWIN32 /DWINDOWS /W4 /WX /MD /TC
 LDFLAGS += /nologo
 DEBUGFLAGS = /Yd /Z7 /GZ
 RELEASEFLAGS = /Ox /DNDEBUG
+CAT = cat
 LEX = flex -t
 LEXLIB = -ll
 YACC = bison -y -d
