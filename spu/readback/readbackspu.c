@@ -95,7 +95,7 @@ AllocBuffers(WindowInfo * window)
  * Called to resize a window.  This involves allocating new image buffers.
  */
 static void
-ResizeWindow(WindowInfo *window, int newWidth, int newHeight)
+readbackspu_ResizeWindow(WindowInfo *window, int newWidth, int newHeight)
 {
 	CRMessage *msg;
 
@@ -195,7 +195,7 @@ CheckWindowSize(WindowInfo * window)
 	if (newSize[0] != window->width || newSize[1] != window->height)
 	{
 		/* The window size has changed (or first-time init) */
-		ResizeWindow(window, newSize[0], newSize[1]);
+		readbackspu_ResizeWindow(window, newSize[0], newSize[1]);
 	}
 }
 
@@ -879,7 +879,7 @@ readbackspuWindowSize(GLint win, GLint w, GLint h)
 	WindowInfo *window;
 	window = (WindowInfo *) crHashtableSearch(readback_spu.windowTable, win);
 	CRASSERT(window);
-	ResizeWindow(window, w, h);
+	readbackspu_ResizeWindow(window, w, h);
 	readback_spu.super.WindowSize(window->renderWindow, w, h);
 	readback_spu.child.WindowSize(window->childWindow, w, h);
 }

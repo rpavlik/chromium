@@ -162,7 +162,7 @@ static void AllocBuffers( WindowInfo *window )
  * Called to resize a window.  This involves allocating new image buffers.
  */
 static void
-ResizeWindow(WindowInfo *window, int newWidth, int newHeight)
+binaryswapspu_ResizeWindow(WindowInfo *window, int newWidth, int newHeight)
 {
 	window->width = newWidth;
 	window->height = newHeight;
@@ -244,7 +244,7 @@ static void CheckWindowSize( WindowInfo *window )
 	if (newSize[0] != window->width || newSize[1] != window->height)
 	{
 		/* The window size has changed (or first-time init) */
-		ResizeWindow(window, newSize[0], newSize[1]);
+		binaryswapspu_ResizeWindow(window, newSize[0], newSize[1]);
 	}
 }
 
@@ -1044,7 +1044,7 @@ static void BINARYSWAPSPU_APIENTRY binaryswapspuWindowSize( GLint win, GLint w, 
 	WindowInfo *window;
 	window = (WindowInfo *) crHashtableSearch(binaryswap_spu.windowTable, win);
 	CRASSERT(window);
-	ResizeWindow(window, w, h);
+	binaryswapspu_ResizeWindow(window, w, h);
 	binaryswap_spu.super.WindowSize( window->renderWindow, w, h );
 	binaryswap_spu.child.WindowSize( window->childWindow, w, h );
 }
