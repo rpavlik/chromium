@@ -634,10 +634,10 @@ AccumulateScreenBBox(const GLfloat *bbox)
 	GET_CONTEXT(context);
 	WindowInfo *window = context->currentWindow;
 
-	winBox.x1 = bbox[0];
-	winBox.y1 = bbox[1];
-	winBox.x2 = bbox[4];
-	winBox.y2 = bbox[5];
+	winBox.x1 = (int) bbox[0];
+	winBox.y1 = (int) bbox[1];
+	winBox.x2 = (int) bbox[4];
+	winBox.y2 = (int) bbox[5];
 
 	if (window->bboxUnion.x1 == 0 && window->bboxUnion.x2 == 0) {
 		/* this is the first box */
