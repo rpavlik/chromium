@@ -94,6 +94,7 @@ int main(int argc, char *argv[])
 	int visual = CR_RGB_BIT | CR_DEPTH_BIT | CR_DOUBLE_BIT;
 	int triangles = 15 * 30 * 2;
 	int sides, rings;
+	float aspectRatio;
 
 	if (argc < 5)
 	{
@@ -191,6 +192,8 @@ int main(int argc, char *argv[])
 		GLint winsize[2];
 		glGetChromiumParametervCR_ptr(GL_WINDOW_SIZE_CR, 0, GL_INT, 2, winsize);
 		printf("psubmit using window size: %d x %d\n", winsize[0], winsize[1]);
+		glViewport(0, 0, winsize[0], winsize[1]);
+		aspectRatio = (float) winsize[0] / (float) winsize[1];
 	}
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
@@ -211,7 +214,7 @@ int main(int argc, char *argv[])
 
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity();
-	glFrustum( -1.0, 1.0, -1.0, 1.0, 7.0, 13.0 );
+	glFrustum( -aspectRatio, aspectRatio, -1.0, 1.0, 7.0, 13.0 );
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();
 	glTranslatef( 0.0, 0.0, -10.0 );

@@ -447,6 +447,7 @@ DrawFrame(const TriangleMesh *mesh, const Options *options, int frame,
 static void
 Reshape(int w, int h)
 {
+	float aspect = (float) w / (float) h;
 	WinWidth = w;
 	WinHeight = h;
 
@@ -454,7 +455,7 @@ Reshape(int w, int h)
 
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity();
-	glFrustum( -1.0, 1.0, -1.0, 1.0, 2.0, 13.0 );
+	glFrustum( -aspect, aspect, -1.0, 1.0, 2.0, 13.0 );
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();
 	glTranslatef( 0.0, 0.0, -3.5 );
@@ -492,7 +493,6 @@ InitGL(const Options *options)
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 10.0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
 							 colors[options->rank % 7]);
-	glClearColor(0.5, 0.5, 0.5, 0.0);
 
 	Reshape(WinWidth, WinHeight);
 }
@@ -674,6 +674,9 @@ ChromiumMain(const Options *options)
 	{
 		GLint winsize[2];
 		glGetChromiumParametervCR_ptr(GL_WINDOW_SIZE_CR, 0, GL_INT, 2, winsize);
+		printf("spheres:  using %d x %d window\n", winsize[0], winsize[1]);
+		WinWidth = winsize[0];
+		WinHeight = winsize[1];
 	}
 
 	/* It's OK for everyone to create this, as long as all the "size"s match */
