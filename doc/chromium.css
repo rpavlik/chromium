@@ -3,6 +3,7 @@
 .LineNumbers { font-family: Courier New; font-size: 12pt; text-align: right }
 .CodeListing { white-space: nowrap; font-family: Courier New; color: #DD0000; font-size: 12pt }
 .GrayCodeListing { white-space: nowrap; font-family: Courier New; background-color: #E6E6E6; color: #DD0000; font-size: 12pt }
+.GrayCodeListing2 { font-family: Courier New; background-color: #E6E6E6; color: #DD0000; font-size: 12pt }
 .GrayBackground { background-color: #E6E6E6 }
 .PageSubHeading { font-weight: normal; text-align: Center; font-size: 24pt }
 .ProvidedThing { font-style: italic }
