@@ -326,6 +326,8 @@ void STATE_APIENTRY crStateMatrixMode(GLenum e)
 	}
 	DIRTY(tb->matrixMode, g->neg_bitid);
 	DIRTY(tb->dirty, g->neg_bitid);
+
+	CRASSERT(t->currentStack->top == t->currentStack->stack + t->currentStack->depth);
 }
 
 void STATE_APIENTRY crStateLoadIdentity() 
@@ -372,6 +374,8 @@ void STATE_APIENTRY crStatePopMatrix()
 		return;
 	}
 
+	CRASSERT(t->currentStack->top == t->currentStack->stack + t->currentStack->depth);
+
 	t->currentStack->depth--;
 	t->currentStack->top = t->currentStack->stack + t->currentStack->depth;
 
@@ -402,6 +406,7 @@ void STATE_APIENTRY crStatePushMatrix()
 		return;
 	}
 
+	CRASSERT(t->currentStack->top == t->currentStack->stack + t->currentStack->depth);
 	/* Perform the copy */
 	*(t->currentStack->top + 1) = *(t->currentStack->top);
 
@@ -431,6 +436,7 @@ void crStateLoadMatrix(const CRmatrix *m)
 
 	FLUSH();
 
+	CRASSERT(t->currentStack->top == t->currentStack->stack + t->currentStack->depth);
 	*t->currentStack->top = *m;
 	t->modelViewProjectionValid = 0;
 	DIRTY(tb->currentMatrix, g->neg_bitid);
@@ -1113,6 +1119,11 @@ void crStateTransformSwitch( CRTransformBits *t, CRbitvalue *bitID,
 	 * set it to the proper value now.  
 	 */
 	diff_api.MatrixMode(to->matrixMode);
+
+	/* sanity tests */
+	CRASSERT(from->modelViewStack.top == from->modelViewStack.stack + from->modelViewStack.depth);
+	CRASSERT(from->projectionStack.top == from->projectionStack.stack + from->projectionStack.depth);
+
 }
 
 void
@@ -1232,6 +1243,7 @@ crStateTransformDiff( CRTransformBits *t, CRbitvalue *bitID,
 				diff_api.PushMatrix();
 		}
 		from->modelViewStack.depth = to->modelViewStack.depth;
+		from->modelViewStack.top = from->modelViewStack.stack + from->modelViewStack.depth;
 
 		CLEARDIRTY(t->modelviewMatrix, nbitID);
 	}
@@ -1265,6 +1277,7 @@ crStateTransformDiff( CRTransformBits *t, CRbitvalue *bitID,
 				diff_api.PushMatrix();
 		}
 		from->projectionStack.depth = to->projectionStack.depth;
+		from->projectionStack.top = from->projectionStack.stack + from->projectionStack.depth;
 
 		CLEARDIRTY(t->projectionMatrix, nbitID);
 	}
@@ -1310,6 +1323,7 @@ crStateTransformDiff( CRTransformBits *t, CRbitvalue *bitID,
 					diff_api.PushMatrix();
 			}
 			from->textureStack[j].depth = to->textureStack[j].depth;
+			from->textureStack[j].top = from->textureStack[j].stack + from->textureStack[j].depth;
 		}
 		CLEARDIRTY(t->textureMatrix, nbitID);
 
@@ -1346,6 +1360,7 @@ crStateTransformDiff( CRTransformBits *t, CRbitvalue *bitID,
 				diff_api.PushMatrix();
 		}
 		from->colorStack.depth = to->colorStack.depth;
+		from->colorStack.top = from->colorStack.stack + from->colorStack.depth;
 
 		CLEARDIRTY(t->colorMatrix, nbitID);
 	}
@@ -1358,4 +1373,8 @@ crStateTransformDiff( CRTransformBits *t, CRbitvalue *bitID,
 		diff_api.MatrixMode(to->matrixMode);
 		from->matrixMode = to->matrixMode;
 	}
+
+	/* sanity tests */
+	CRASSERT(from->modelViewStack.top == from->modelViewStack.stack + from->modelViewStack.depth);
+	CRASSERT(from->projectionStack.top == from->projectionStack.stack + from->projectionStack.depth);
 }
