@@ -112,6 +112,7 @@ struct CRContext {
 	GLuint    vCount;
 	CRVertex  vBuffer[4];
 	GLboolean lineReset;
+	GLboolean lineLoop;
 };
 
 

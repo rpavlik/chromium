@@ -8,6 +8,20 @@
 #include "state_internals.h"
 #include "state/cr_feedback.h"
 
+/* 
+ * This file is really a complement to the feedbackSPU and as such
+ * has big dependencies upon it. We have to monitor a whole bunch 
+ * of state in the feedbackSPU to be able to properly implement
+ * full functionality. 
+ *
+ * We have to intercept glColor3f(v)/4f(v) to get state updates on 
+ * color properties and also glTexCoord* too, as unlike the tilesortSPU
+ * we don't have a pincher that pulls these out as they're passing 
+ * through.
+ *
+ * - Alan.
+ */
+
 
 /*
  * Selection and feedback
@@ -15,7 +29,6 @@
  * TODO:
  *   1. Implement lighting for vertex colors for feedback
  *   2. Implement user clip planes for points and lines
- *   3. Implement glPolygonMode points/lines.
  */
 
 
@@ -38,7 +51,8 @@
 #define MAP_POINT( Q, P, VP )                                      \
    Q.x = ((P.x / P.w) + 1.0) * VP.viewportW / 2.0 + VP.viewportX;  \
    Q.y = ((P.y / P.w) + 1.0) * VP.viewportH / 2.0 + VP.viewportY;  \
-   Q.z = ((P.z / P.w) + 1.0) * (VP.farClip - VP.nearClip) / 2.0 + VP.nearClip;
+   Q.z = ((P.z / P.w) + 1.0) * (VP.farClip - VP.nearClip) / 2.0 + VP.nearClip;\
+   Q.w = P.w;
 
 
 /*
@@ -447,17 +461,17 @@ feedback_vertex(const CRVertex *v)
 	CRFeedbackState *f = &(g->feedback);
 	CRTransformState *t = &(g->transform);
 
-	FEEDBACK_TOKEN(v->pos.x);
-	FEEDBACK_TOKEN(v->pos.y);
+	FEEDBACK_TOKEN(v->winPos.x);
+	FEEDBACK_TOKEN(v->winPos.y);
 
 	if (f->mask & FB_3D)
 	{
-		FEEDBACK_TOKEN(v->pos.z);
+		FEEDBACK_TOKEN(v->winPos.z);
 	}
 
 	if (f->mask & FB_4D)
 	{
-		FEEDBACK_TOKEN(v->pos.w);
+		FEEDBACK_TOKEN(v->winPos.w);
 	}
 
 	/* We don't deal with color index in Chromium */
@@ -496,13 +510,20 @@ static void
 feedback_rasterpos(void)
 {
 	CRContext *g = GetCurrentContext();
+	CRVertex *tv = g->vBuffer + g->vCount;
 	CRVertex v;
 
-	v.pos = g->current.rasterPos;
+	v.winPos = g->current.rasterPos;
 	v.color = g->current.rasterColor;  /* XXX need to apply lighting */
 	v.secondaryColor = g->current.rasterSecondaryColor;
 	v.index = g->current.rasterIndex;  /* XXX need to apply lighting */
-	v.texCoord[0] = g->current.rasterTexture;
+
+	/* Don't do this, we're capturing TexCoord ourselves and
+	 * we'd miss the conversion in RasterPosUpdate */
+	/* v.texCoord[0] = g->current.rasterTexture; */
+
+	/* So we do this instead, and pluck it from the current vertex */
+	v.texCoord[0] = tv->texCoord[0];
 
 	feedback_vertex(&v);
 }
@@ -518,7 +539,7 @@ feedback_point(const CRVertex *v)
 		CRVertex c = *v;
 		MAP_POINT(c.winPos, c.clipPos, g->viewport);
 		FEEDBACK_TOKEN((GLfloat) GL_POINT_TOKEN);
-		feedback_vertex(v);
+		feedback_vertex(&c);
 	}
 }
 
@@ -569,6 +590,7 @@ crStateFeedbackVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
 	CRContext *g = GetCurrentContext();
 	CRTransformState *t = &(g->transform);
+	CRPolygonState *p = &(g->polygon);
 	CRVertex *v = g->vBuffer + g->vCount;
 
 	/* store the vertex */
@@ -578,7 +600,9 @@ crStateFeedbackVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 	v->pos.w = w;
 	v->color = g->current.color;  /* XXX need to apply lighting */
 	v->index = g->current.index;  /* XXX need to apply lighting */
-	v->texCoord[0] = g->current.rasterTexture;
+	/* Don't do this, we're capturing TexCoord ourselves as 
+	 * we don't have a pincher like the tilesortSPU */
+	/* v->texCoord[0] = g->current.texCoord[0]; */
 
 	/* transform to eye space, then clip space */
 	TRANSFORM_POINT(v->eyePos, t->modelView[t->modelViewDepth], v->pos);
@@ -618,18 +642,21 @@ crStateFeedbackVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 	case GL_LINE_LOOP:
 		if (g->vCount == 0)
 		{
+			g->lineLoop = GL_FALSE;
 			g->vCount = 1;
 		}
 		else if (g->vCount == 1)
 		{
 			feedback_line(g->vBuffer + 0, g->vBuffer + 1, g->lineReset);
 			g->lineReset = GL_FALSE;
+			g->lineLoop = GL_TRUE;
 			g->vCount = 2;
 		}
 		else
 		{
 			CRASSERT(g->vCount == 2);
 			CRASSERT(g->lineReset == GL_FALSE);
+			g->lineLoop = GL_FALSE;
 			feedback_line(g->vBuffer + 1, g->vBuffer + 2, g->lineReset);
 			g->vBuffer[1] = g->vBuffer[2];
 			/* leave g->vCount at 2 */
@@ -708,17 +735,50 @@ crStateFeedbackVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 		}
 		break;		
 	case GL_POLYGON:
-		/* draw as a tri-fan */
-		if (g->vCount == 0 || g->vCount == 1)
+		switch (p->frontMode) {
+		case GL_POINT:
+			CRASSERT(g->vCount == 0);
+			feedback_point(v);
+			break;
+		case GL_LINE:
+		if (g->vCount == 0)
 		{
-			g->vCount++;
+			g->lineLoop = GL_FALSE;
+			g->vCount = 1;
+		}
+		else if (g->vCount == 1)
+		{
+			feedback_line(g->vBuffer + 0, g->vBuffer + 1, g->lineReset);
+			g->lineReset = GL_FALSE;
+			g->lineLoop = GL_TRUE;
+			g->vCount = 2;
 		}
 		else
 		{
 			CRASSERT(g->vCount == 2);
-			feedback_triangle(g->vBuffer + 0, g->vBuffer + 1, g->vBuffer + 2);
+			CRASSERT(g->lineReset == GL_FALSE);
+			g->lineLoop = GL_FALSE;
+			feedback_line(g->vBuffer + 1, g->vBuffer + 2, g->lineReset);
 			g->vBuffer[1] = g->vBuffer[2];
-			/* leave g->vCount = 2 */
+			/* leave g->vCount at 2 */
+		}
+			break;
+		case GL_FILL:
+			/* draw as a tri-fan */
+			if (g->vCount == 0 || g->vCount == 1)
+			{
+				g->vCount++;
+			}
+			else
+			{
+				CRASSERT(g->vCount == 2);
+				feedback_triangle(g->vBuffer + 0, g->vBuffer + 1, g->vBuffer + 2);
+				g->vBuffer[1] = g->vBuffer[2];
+				/* leave g->vCount = 2 */
+			}
+			break;
+		default:
+			; /* impossible */
 		}
 		break;
 	default:
@@ -736,6 +796,7 @@ crStateFeedbackBegin(GLenum mode)
 
 	g->vCount = 0;
 	g->lineReset = GL_TRUE;
+	g->lineLoop = GL_FALSE;
 }
 
 
@@ -744,10 +805,15 @@ crStateFeedbackEnd(void)
 {
 	CRContext *g = GetCurrentContext();
 
-	if (g->current.mode == GL_LINE_LOOP && g->vCount == 2)
+	if ( (g->current.mode == GL_LINE_LOOP ||
+	     (g->current.mode == GL_POLYGON && g->polygon.frontMode == GL_LINE))
+	     && g->vCount == 2 )
 	{
 		/* draw the last line segment */
-		feedback_line(g->vBuffer + 2, g->vBuffer + 0, GL_FALSE);
+		if (g->lineLoop)
+			feedback_line(g->vBuffer + 1, g->vBuffer + 0, GL_FALSE);
+		else
+			feedback_line(g->vBuffer + 2, g->vBuffer + 0, GL_FALSE);
 	}
 
 	crStateEnd();
@@ -982,12 +1048,19 @@ crStateFeedbackBitmap(GLsizei width, GLsizei height, GLfloat xorig,
 
 	(void) width;
 	(void) height;
+	(void) bitmap;
 	(void) xorig;
 	(void) yorig;
-	(void) bitmap;
 
 	FEEDBACK_TOKEN((GLfloat) (GLint) GL_BITMAP_TOKEN);
+
 	feedback_rasterpos();
+
+	if (g->current.rasterValid)
+	{
+		g->current.rasterPos.x += xmove;
+		g->current.rasterPos.y += ymove;
+	}
 }
 
 
@@ -1137,6 +1210,204 @@ crStateFeedbackVertex3dv(const GLdouble * v)
 													1.0f);
 }
 
+void STATE_APIENTRY
+crStateFeedbackTexCoord4f( GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 )
+{
+	CRContext *g = GetCurrentContext();
+	CRVertex *v = g->vBuffer + g->vCount;
+
+	/* store the texCoord in the current vertex */
+	v->texCoord[0].s = v0;
+	v->texCoord[0].t = v1;
+	v->texCoord[0].r = v2;
+	v->texCoord[0].q = v3;
+}
+ 
+void STATE_APIENTRY
+crStateFeedbackTexCoord4fv( const GLfloat *v )
+{
+	crStateFeedbackTexCoord4f( v[0], v[1], v[2], v[3] );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord4s( GLshort v0, GLshort v1, GLshort v2, GLshort v3 )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v0, (GLfloat)v1, (GLfloat)v2, (GLfloat)v3 );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord4sv( const GLshort *v )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v[0], (GLfloat)v[1], (GLfloat)v[2], (GLfloat)v[3] );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord4i( GLint v0, GLint v1, GLint v2, GLint v3 )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v0, (GLfloat)v1, (GLfloat)v2, (GLfloat)v3 );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord4iv( const GLint *v )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v[0], (GLfloat)v[1], (GLfloat)v[2], (GLfloat)v[3] );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord4d( GLdouble v0, GLdouble v1, GLdouble v2, GLdouble v3 )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v0, (GLfloat)v1, (GLfloat)v2, (GLfloat)v3 );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord4dv( const GLdouble *v )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v[0], (GLfloat)v[1], (GLfloat)v[2], (GLfloat)v[3] );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord1i( GLint v0 )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v0, 0.0f, 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord1iv( const GLint *v )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v[0], 0.0f, 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord1s( GLshort v0 )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v0, 0.0f, 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord1sv( const GLshort *v )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v[0], 0.0f, 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord1f( GLfloat v0 )
+{
+	crStateFeedbackTexCoord4f( v0, 0.0f, 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord1fv( const GLfloat *v )
+{
+	crStateFeedbackTexCoord4f( v[0], 0.0f, 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord1d( GLdouble v0 )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v0, 0.0f, 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord1dv( const GLdouble *v )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v[0], 0.0f, 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord2i( GLint v0, GLint v1 )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v0, (GLfloat)v1, 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord2iv( const GLint *v )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v[0], (GLfloat)v[1], 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord2s( GLshort v0, GLshort v1 )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v0, (GLfloat)v1, 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord2sv( const GLshort *v )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v[0], (GLfloat)v[1], 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord2f( GLfloat v0, GLfloat v1 )
+{
+	crStateFeedbackTexCoord4f( v0, v1, 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord2fv( const GLfloat *v )
+{
+	crStateFeedbackTexCoord4f( v[0], v[1], 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord2d( GLdouble v0, GLdouble v1 )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v0, (GLfloat)v1, 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord2dv( const GLdouble *v )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v[0], (GLfloat)v[1], 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord3i( GLint v0, GLint v1, GLint v2 )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v0, (GLfloat)v1, (GLfloat)v2, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord3iv( const GLint *v )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v[0], (GLfloat)v[1], 0.0f, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord3s( GLshort v0, GLshort v1, GLshort v2 )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v0, (GLfloat)v1, (GLfloat)v2, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord3sv( const GLshort *v )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v[0], (GLfloat)v[1], (GLfloat)v[2], 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord3f( GLfloat v0, GLfloat v1, GLfloat v2 )
+{
+	crStateFeedbackTexCoord4f( v0, v1, v2, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord3fv( const GLfloat *v )
+{
+	crStateFeedbackTexCoord4f( v[0], v[1], v[2], 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord3d( GLdouble v0, GLdouble v1, GLdouble v2 )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v0, (GLfloat)v1, (GLfloat)v2, 1.0f );
+}
+
+void STATE_APIENTRY
+crStateFeedbackTexCoord3dv( const GLdouble *v )
+{
+	crStateFeedbackTexCoord4f( (GLfloat)v[0], (GLfloat)v[1], (GLfloat)v[2], 1.0f );
+}
 
 void STATE_APIENTRY
 crStateFeedbackRectf(GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1)
@@ -1483,6 +1754,7 @@ crStateSelectVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
 	CRContext *g = GetCurrentContext();
 	CRTransformState *t = &(g->transform);
+	CRPolygonState *p = &(g->polygon);
 	CRVertex *v = g->vBuffer + g->vCount;
 
 	/* store the vertex */
@@ -1492,7 +1764,9 @@ crStateSelectVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 	v->pos.w = w;
 	v->color = g->current.color;  /* XXX need to apply lighting */
 	v->index = g->current.index;  /* XXX need to apply lighting */
-	v->texCoord[0] = g->current.rasterTexture;
+	/* Don't do this, we're capturing TexCoord ourselves as 
+	 * we don't have a pincher like the tilesortSPU */
+	/* v->texCoord[0] = g->current.texCoord[0]; */
 
 	/* transform to eye space, then clip space */
 	TRANSFORM_POINT(v->eyePos, t->modelView[t->modelViewDepth], v->pos);
@@ -1532,15 +1806,18 @@ crStateSelectVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 		if (g->vCount == 0)
 		{
 			g->vCount = 1;
+			g->lineLoop = GL_FALSE;
 		}
 		else if (g->vCount == 1)
 		{
 			select_line(g->vBuffer + 0, g->vBuffer + 1);
+			g->lineLoop = GL_TRUE;
 			g->vCount = 2;
 		}
 		else
 		{
 			CRASSERT(g->vCount == 2);
+			g->lineLoop = GL_FALSE;
 			select_line(g->vBuffer + 1, g->vBuffer + 2);
 			g->vBuffer[1] = g->vBuffer[2];
 			/* leave g->vCount at 2 */
@@ -1619,17 +1896,48 @@ crStateSelectVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 		}
 		break;		
 	case GL_POLYGON:
-		/* draw as a tri-fan */
-		if (g->vCount == 0 || g->vCount == 1)
-		{
-			g->vCount++;
-		}
-		else
-		{
-			CRASSERT(g->vCount == 2);
-			select_triangle(g->vBuffer + 0, g->vBuffer + 1, g->vBuffer + 2);
-			g->vBuffer[1] = g->vBuffer[2];
-			/* leave g->vCount = 2 */
+		switch (p->frontMode) {
+		case GL_POINT:
+			CRASSERT(g->vCount == 0);
+			select_point(v);
+			break;
+		case GL_LINE:
+			if (g->vCount == 0)
+			{
+				g->vCount = 1;
+				g->lineLoop = GL_FALSE;
+			}
+			else if (g->vCount == 1)
+			{
+				select_line(g->vBuffer + 0, g->vBuffer + 1);
+				g->lineLoop = GL_TRUE;
+				g->vCount = 2;
+			}
+			else
+			{
+				CRASSERT(g->vCount == 2);
+				g->lineLoop = GL_FALSE;
+				select_line(g->vBuffer + 1, g->vBuffer + 2);
+				g->vBuffer[1] = g->vBuffer[2];
+				/* leave g->vCount at 2 */
+			}
+			break;
+		case GL_FILL:
+			/* draw as a tri-fan */
+			if (g->vCount == 0 || g->vCount == 1)
+			{
+				g->vCount++;
+			}
+			else
+			{
+				CRASSERT(g->vCount == 2);
+				select_triangle(g->vBuffer + 0, g->vBuffer + 1, g->vBuffer + 2);
+				g->vBuffer[1] = g->vBuffer[2];
+				/* leave g->vCount = 2 */
+			}
+			break;
+		default:
+			; /* impossible */
 		}
 		break;
 	default:
@@ -1654,6 +1962,7 @@ crStateSelectBegin(GLenum mode)
 
 	g->vCount = 0;
 	g->lineReset = GL_TRUE;
+	g->lineLoop = GL_FALSE;
 }
 
 
@@ -1662,10 +1971,15 @@ crStateSelectEnd(void)
 {
 	CRContext *g = GetCurrentContext();
 
-	if (g->current.mode == GL_LINE_LOOP && g->vCount == 2)
+	if ( (g->current.mode == GL_LINE_LOOP ||
+	     (g->current.mode == GL_POLYGON && g->polygon.frontMode == GL_LINE))
+	     && g->vCount == 2 )
 	{
 		/* draw the last line segment */
-		select_line(g->vBuffer + 2, g->vBuffer + 0);
+		if (g->lineLoop)
+			select_line(g->vBuffer + 1, g->vBuffer + 0);
+		else
+			select_line(g->vBuffer + 2, g->vBuffer + 0);
 	}
 
 	crStateEnd();

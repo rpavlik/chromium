@@ -81,7 +81,7 @@ static void __loadRenderAPI( void )
 for index in range(len(keys)):
 	func_name = keys[index]
 	(return_type, args, types) = gl_mapping[func_name]
-	if stub_common.FindSpecial( "feedback", func_name ):
+	if stub_common.FindSpecial( "feedback", func_name ) or stub_common.FindSpecial( "select", func_name ):
 		print '\tCHANGE( %s, feedbackspu_%s );' % (func_name, func_name )
 #	if stub_common.FindSpecial( "select", func_name ):
 #		print '\tCHANGE( %s, feedbackspu_%s );' % (func_name, func_name )
@@ -248,6 +248,38 @@ print """
 	{ "Bitmap", (SPUGenericFunction) feedbackspu_Bitmap },
 	{ "CopyPixels", (SPUGenericFunction) feedbackspu_CopyPixels },
 	{ "DrawPixels", (SPUGenericFunction) feedbackspu_DrawPixels },
+	{ "TexCoord1d", (SPUGenericFunction) feedbackspu_TexCoord1d },
+	{ "TexCoord1dv", (SPUGenericFunction) feedbackspu_TexCoord1dv },
+	{ "TexCoord1f", (SPUGenericFunction) feedbackspu_TexCoord1f },
+	{ "TexCoord1fv", (SPUGenericFunction) feedbackspu_TexCoord1fv },
+	{ "TexCoord1s", (SPUGenericFunction) feedbackspu_TexCoord1s },
+	{ "TexCoord1sv", (SPUGenericFunction) feedbackspu_TexCoord1sv },
+	{ "TexCoord1i", (SPUGenericFunction) feedbackspu_TexCoord1i },
+	{ "TexCoord1iv", (SPUGenericFunction) feedbackspu_TexCoord1iv },
+	{ "TexCoord2d", (SPUGenericFunction) feedbackspu_TexCoord2d },
+	{ "TexCoord2dv", (SPUGenericFunction) feedbackspu_TexCoord2dv },
+	{ "TexCoord2f", (SPUGenericFunction) feedbackspu_TexCoord2f },
+	{ "TexCoord2fv", (SPUGenericFunction) feedbackspu_TexCoord2fv },
+	{ "TexCoord2s", (SPUGenericFunction) feedbackspu_TexCoord2s },
+	{ "TexCoord2sv", (SPUGenericFunction) feedbackspu_TexCoord2sv },
+	{ "TexCoord2i", (SPUGenericFunction) feedbackspu_TexCoord2i },
+	{ "TexCoord2iv", (SPUGenericFunction) feedbackspu_TexCoord2iv },
+	{ "TexCoord3d", (SPUGenericFunction) feedbackspu_TexCoord3d },
+	{ "TexCoord3dv", (SPUGenericFunction) feedbackspu_TexCoord3dv },
+	{ "TexCoord3f", (SPUGenericFunction) feedbackspu_TexCoord3f },
+	{ "TexCoord3fv", (SPUGenericFunction) feedbackspu_TexCoord3fv },
+	{ "TexCoord3s", (SPUGenericFunction) feedbackspu_TexCoord3s },
+	{ "TexCoord3sv", (SPUGenericFunction) feedbackspu_TexCoord3sv },
+	{ "TexCoord3i", (SPUGenericFunction) feedbackspu_TexCoord3i },
+	{ "TexCoord3iv", (SPUGenericFunction) feedbackspu_TexCoord3iv },
+	{ "TexCoord4d", (SPUGenericFunction) feedbackspu_TexCoord4d },
+	{ "TexCoord4dv", (SPUGenericFunction) feedbackspu_TexCoord4dv },
+	{ "TexCoord4f", (SPUGenericFunction) feedbackspu_TexCoord4f },
+	{ "TexCoord4fv", (SPUGenericFunction) feedbackspu_TexCoord4fv },
+	{ "TexCoord4s", (SPUGenericFunction) feedbackspu_TexCoord4s },
+	{ "TexCoord4sv", (SPUGenericFunction) feedbackspu_TexCoord4sv },
+	{ "TexCoord4i", (SPUGenericFunction) feedbackspu_TexCoord4i },
+	{ "TexCoord4iv", (SPUGenericFunction) feedbackspu_TexCoord4iv },
 	{ "RenderMode", (SPUGenericFunction) feedbackspu_RenderMode },
 	{ NULL, NULL }
 };
