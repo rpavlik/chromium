@@ -284,8 +284,7 @@ XVisualInfo *glXChooseVisual( Display *dpy, int screen, int *attribList )
 				crDebug("faker native glXChooseVisual returning visual 0x%x\n",
 								(int) vis->visualid);
 				/* successful glXChooseVisual, so clear ours */
-				stub.desiredVisual = 0;
-				FindVisualInfo(dpy, vis);
+				stub.desiredVisual = FindVisualInfo(dpy, vis);
 				return vis;
 			}
 		}
