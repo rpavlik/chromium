@@ -1,0 +1,195 @@
+<!-- Copyright (c) 2001, Stanford University
+     All rights reserved.
+
+	 See the file LICENSE.txt for information on redistributing this software.  -->
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>New Page 1</title>
+<base target="_self">
+<link rel="stylesheet" type="text/css" href="chromium.css">
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<h1 class="PageHeading">Chromium Test Plan</h1>
+<p>
+This page describes the Chromium test plan.
+The test plan should be executed prior to releasing new versions of Chromium.
+The goal is to ensure that each release of Chromium meets a certain
+minimal level of quality.
+</p>
+
+<ul>
+<li>Compilation tests - test compiling Chromium in the following ways:
+    <ul>
+    <li>Linux debug build
+    <li>Linux release (optimized) build - if possible, test with a variety
+        of gcc versions and different distros.
+    <li>Linux threadsafe release build
+    <li>Linux DMX release build
+    <li>Windows release build
+    <li>Other Unix release build
+    </ul>
+    <p>The tests below should be done with a release build.</p>
+
+<li>Basic SPU tests
+    <ul>
+    <li><b>crdemo.conf</b> - tests Pack SPU
+    <li><b>simplemural.conf</b> - tests Tilesort SPU
+    <li><b>reassemble.conf</b> - tests Tilesort SPU with rendering into the
+        original application window.  Be sure to test resizing the window
+        to exercise the dynamic tile configuration feature.
+    <li><b>psubmit_first.conf</b> - tests Tilesort SPU with a parallel
+        application
+    <li><b>psubmit_last.conf</b> - tests Readback SPU
+    <li><b>psubmit_bswap.conf</b> - test Binary Swap SPU
+    <li><b>local.conf</b> - tests Hidden Line SPU and OpenGL command filtering
+        with just an application node.
+    <li><b>cavetest1.conf</b> - tests non-planar tilesort for virtual
+        reality systems, like the CAVE.
+        Four rendering servers will show north, south, east and west views
+        of the city demo.
+        Use x/X, y/Y, z/Z to simulate moving the observer's viewpoint in the
+        cave.
+    <li><b>cavetest2.conf</b> - like cavetest1.conf but divides each "wall"
+        into two tiles.
+    <li><b>multitilesort.conf</b> - tests a two-tiered tilesort configuration.
+        The scene is rendered both into the original application window and
+        to a two-tiled mural.
+        Test resizing the application window.
+    </ul>
+    <p></p>
+
+<li>Thread safety tests
+    <ul>
+    <li>Build Chromium with thread safety enabled
+    <li><b>threadtest.conf</b> - note that there are four different modes which
+        can be chosen from in this configuration file
+    <li>The <b>glthreads.c</b> demo from Mesa can also be tested.  Use the -n
+        option to specify the number of threads and windows to create.
+    </ul>
+    <p></p>
+
+<li>Stereo rendering tests
+    <ul>
+    <li><b>stereo1.conf</b> - tests that a quad-buffered OpenGL app works in
+        passive stereo mode.
+        Also test with the -force option to test that a non-stereo app can
+        be coerced into passive stereo mode.
+    <li><b>stereo2.conf</b> - tests that a non-stereo OpenGL app can be coerced
+        into rendering in stereo mode.  Default stereo mode is SideBySide.
+	Specify -mode CrystalEyes to test active stereo if your graphics
+        card is capable of that.
+    <li><b>stereo3.conf</b> - tests combining non-planar tilesort with stereo.
+        Three windows will appear, each showing a SideBySide stereo pair.
+        Defocus your eyes to see the stereo effect.
+    <li><b>stereo4.conf</b> - like stereo3.conf but requires a stereo-capable
+        graphics card to test active (quad-buffered) stereo mode.
+    </ul>
+    <p></p>
+
+<li>CRUT tests
+    <p>There are three CRUT test configurations.
+       In all cases, first make sure you delete the lib/Linux/libGL.so*
+       symlinks if they exist.
+    </p>
+    <ul>
+    <li><b>crut_fan.conf</b> - Note: you must start the app/server processes
+        in this order: crappfaker, crappfaker, crutserver, crserver.
+	Use the left/right mouse buttons in the "CRUTServer Interactive Window"
+        to enlarge/shrink the rings
+    <li><b>crut_proxy.conf</b> 
+    <li><b>crut_ring.conf</b> - start the app/server processes in this
+        order: crappfaker, crappfaker, crutserver, crserver.
+    </ul>
+    <p></p>
+
+<li>DMX tests
+    <ul>
+    <li>First, you should have DMX up and running on your display wall.
+    <li>Second, edit mothership/configs/dmx.conf, specifying the correct
+        values for TILE_COLS, TILE_ROWS and HOSTS.
+    <li>Third, try running the atlantis demo on the DMX/Chromium display:
+        <pre>
+	python dmx.conf atlantis
+	</pre>
+	You'll be prompted to start crservers on each of the back-end
+	display hosts.
+    <li>Finally, test the auto-DMX feature.
+        See the <a href="dmx.html">DMX section</a> for details.
+    </ul>
+    <p></p>
+
+<li>Graphical Configuration Tool
+    <ul>
+    <li>Make sure <b>mothership/tools/configtool.py</b> runs.
+        You may have to install some WxWindows packages first.
+    <li>Test the tilesort, reassembly and sort-last templates.
+    <li>Save a few configurations and make sure they work properly.
+    <li>Try reading an arbitrary config file into the config tool to be
+        sure its parser works.
+    </ul>
+    <p></p>
+
+<li>Application Testing
+    <p>The following applications are frequently used with Chromium:</p>
+    <ul>
+    <li><a href="http://www.llnl.gov/visit/" target="_parent">VisIt</a>
+    <li><a href="http://www.paraview.org/" target="_parent">Paraview</a>
+    <li><a href="http://www.llnl.gov/bdiv/meshtv/" target="_parent">MeshTV</a>
+    <li><a href="http://www.openrm.org/" target="_parent">OpenRM</a>
+    <li>Quake
+    </ul>
+
+    <p>The following Mesa programs are good tests:</p>
+    <ul>
+    <li><b>tests/bufferobj.c</b> - tests GL_ARB_vertex_buffer_object
+    <li><b>tests/getprocaddress.c</b> - test glXGetProcAddress
+    <li><b>tests/vparray.c</b> - tests vertex programs with vertex arrays
+    <li><b>tests/texrect.c</b> - tests GL_NV_texture_rectangle
+    <li><b>demos/cubemap.c</b> - tests cube texture maps
+    <li><b>demos/fplight.c</b> - tests NVIDIA vertex/fragment program extensions
+    <li><b>demos/*.c</b> - tests all kinds of OpenGL features
+    </ul>
+
+    <p>Other good tests:</p>
+    <ul>
+    <li>Chromium's <b>arbfraglight.c</b> - tests GL_ARB_vertex/fragment_program
+        extensions.
+    <li>Chromium's <b>viewports.c</b> - tests that glViewportworks correctly
+        with tilesort.
+    <li><a href="http://www.shatters.net/celestia/" target="_parent">Celestia</a>,
+        <a href="http://www.flightgear.org/" target="_parent">FlightGear</a>,
+	<a href="http://www.sgi.com/software/performer/" target="_parent">Performer</a>
+    <li><a href="http://developer.nvidia.com/object/cg_toolkit.html" target="_parent">Cg</a> demos
+    </ul>
+    <p></p>
+
+<li>Performance Tests
+    <ul>
+    <li>The framerates of programs like city.c and atlantis.c should be
+        recorded by the developer for comparison purposes.
+        Occasionally check performance to be sure there's no degradation.
+    <li>The new spheres.c demo can be used to measure triangle throughput
+        in sort-first and sort-last configurations with immediate mode
+        vertex arrays, display lists and vertex buffer objects.
+    </ul>
+    <p></p>
+
+<li>Miscellaneous
+    <ul>
+    <li>Mothership auto-start mode.
+    <li>Feedback SPU for OpenGL feedback/selection support.
+    <li>mothership/daughtership process spawning
+    </ul>
+
+</ul>
+
+
+
+</body>
+</html>
