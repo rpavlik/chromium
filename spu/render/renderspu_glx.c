@@ -3,7 +3,10 @@
  *
  * See the file LICENSE.txt for information on redistributing this software.
  */
-
+#if 00 /*TEMPORARY*/
+#include <unistd.h>
+#include "cr_rand.h"
+#endif
 
 #include <GL/glx.h>
 #include <X11/Xlib.h>
@@ -404,36 +407,44 @@ JoinSwapGroup(Display *dpy, int screen, Window window,
 			!render_spu.ws.glXQueryMaxSwapGroupsNV ||
 			!render_spu.ws.glXJoinSwapGroupNV ||
 			!render_spu.ws.glXBindSwapBarrierNV) {
-		crWarning("Render SPU nv_swap_group is set but GLX_NV_swap_group is not supported on this system!");
+		crWarning("Render SPU: nv_swap_group is set but GLX_NV_swap_group is not supported on this system!");
 		return;
 	}
 
 	b = render_spu.ws.glXQueryMaxSwapGroupsNV(dpy, screen,
 																						&maxGroups, &maxBarriers);
 	if (!b)
-		crWarning("Render SPU call to glXQueryMaxSwapGroupsNV() failed!");
+		crWarning("Render SPU: call to glXQueryMaxSwapGroupsNV() failed!");
 
 	if (group >= maxGroups) {
-		crWarning("Render SPU nv_swap_group too large (%d > %d)",
+		crWarning("Render SPU: nv_swap_group too large (%d > %d)",
 						group, (int) maxGroups);
 		return;
 	}
+	crDebug("Render SPU: max swap groups = %d, max barriers = %d\n",
+					maxGroups, maxBarriers);
 
 	/* add this window to the swap group */
 	b = render_spu.ws.glXJoinSwapGroupNV(dpy, window, group);
 	if (!b) {
-		crWarning("Render SPU call to glXJoinSwapGroupNV() failed!");
+		crWarning("Render SPU: call to glXJoinSwapGroupNV() failed!");
 		return;
+	}
+	else {
+		crDebug("Render SPU: call to glXJoinSwapGroupNV() worked!");
 	}
 
 	/* ... and bind window to barrier of same ID */
 	b = render_spu.ws.glXBindSwapBarrierNV(dpy, group, barrier);
 	if (!b) {
-		crWarning("Render SPU call to glXBindSwapBarrierNV() failed!");
+		crWarning("Render SPU: call to glXBindSwapBarrierNV(group=%d barrier=%d) failed!", group, barrier);
 		return;
 	}
+	else {
+		 crDebug("Render SPU: call to glXBindSwapBarrierNV(group=%d barrier=%d) worked!", group, barrier);
+	}
 
-	crDebug("NOTE: Render SPU has joined swap group %d\n", group);
+	crDebug("Render SPU: window has joined swap group %d\n", group);
 }
 
 
@@ -677,8 +688,9 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		 * app window is in a separate swap group while all the back-end windows
 		 * which form a mural are in the same swap group.
 		 */
-		GLuint group = render_spu.nvSwapGroup + window->id;
-		JoinSwapGroup(dpy, visual->visual->screen, window->window, group, group);
+		GLuint group = 0; /*render_spu.nvSwapGroup + window->id;*/
+		GLuint barrier = 0;
+		JoinSwapGroup(dpy, visual->visual->screen, window->window, group, barrier);
 	}
 
 	/*
@@ -1014,8 +1026,18 @@ void renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 {
 	CRASSERT(w);
 
-
-
+#if 00 /*TEMPORARY - FOR TESTING SWAP LOCK*/
+	if (1) {
+		/* random delay */
+		int k = crRandInt(1000 * 100, 750*1000);
+		static int first = 1;
+		if (first) {
+			 crRandAutoSeed();
+			 first = 0;
+		}
+		usleep(k);
+	}
+#endif
 	/* render_to_app_window:
 	 * w->nativeWindow will only be non-zero if the
 	 * render_spu.render_to_app_window option is true and
