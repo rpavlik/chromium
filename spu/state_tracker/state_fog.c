@@ -4,6 +4,7 @@
 #include "cr_glstate.h"
 #include "state/cr_statetypes.h"
 #include "state_internals.h"
+#include "state_extensionfuncs.h"
 
 void crStateFogInit (CRFogState *f) 
 {
@@ -16,6 +17,8 @@ void crStateFogInit (CRFogState *f)
 	f->mode = GL_EXP;
 	f->index = 0;
 	f->enable = GL_FALSE;
+
+	crStateFogInitExtensions( f );
 }
 
 void STATE_APIENTRY crStateFogf(GLenum pname, GLfloat param) 
@@ -51,7 +54,10 @@ void STATE_APIENTRY crStateFogiv(GLenum pname, const GLint *param)
 			crStateFogfv( pname, (GLfloat *) &f_color );
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Invalid glFog Param: %d", param);
+			if (!crStateFogivExtensions( pname, param ))
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Invalid glFog Param: %d", param);
+			}
 			return;
 	}
 }
@@ -82,7 +88,6 @@ void STATE_APIENTRY crStateFogfv(GLenum pname, const GLfloat *param)
 					return;
 				}
 				f->mode = e;
-				fb->dirty = g->neg_bitid;
 				fb->mode = g->neg_bitid;
 			}
 			break;
@@ -92,22 +97,18 @@ void STATE_APIENTRY crStateFogfv(GLenum pname, const GLfloat *param)
 			{
 				f->density = 0.0f;
 			}
-			fb->dirty = g->neg_bitid;
 			fb->density = g->neg_bitid;
 			break;
 		case GL_FOG_START:
 			f->start = *param;
-			fb->dirty = g->neg_bitid;
 			fb->start = g->neg_bitid;
 			break;
 		case GL_FOG_END:
 			f->end = *param;
-			fb->dirty = g->neg_bitid;
 			fb->end = g->neg_bitid;
 			break;
 		case GL_FOG_INDEX:
 			f->index = (GLint) *param;
-			fb->dirty = g->neg_bitid;
 			fb->index = g->neg_bitid;
 			break;
 		case GL_FOG_COLOR:
@@ -115,11 +116,15 @@ void STATE_APIENTRY crStateFogfv(GLenum pname, const GLfloat *param)
 			f->color.g = param[1];
 			f->color.b = param[2];
 			f->color.a = param[3];
-			fb->dirty = g->neg_bitid;
 			fb->color = g->neg_bitid;
 			break;
 		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Invalid glFog Param: %d", param);
-			return;
+			if (!crStateFogfvExtensions( f, pname, param ))
+			{
+				crStateError(__LINE__, __FILE__, GL_INVALID_VALUE, "Invalid glFog Param: %d", param);
+			}
+			fb->extensions = g->neg_bitid;
+			break;
 	}
+	fb->dirty = g->neg_bitid;
 }

@@ -235,7 +235,8 @@ void __handleTexParameterData( GLenum target, GLenum pname, const GLfloat *param
 			params_length = 4* sizeof( *params );
 			break;
 		default:
-			if (!crPackTexParameterParamsLength( pname ))
+			params_length = crPackTexParameterParamsLength( pname );
+			if (!params_length)
 			{
 				crError( "Unnown pname: %d", pname );
 			}

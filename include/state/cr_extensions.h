@@ -9,4 +9,8 @@ typedef struct {
 	GLfloat maxAnisotropy;
 } CRTextureObjExtensions;
 
+typedef struct {
+	GLenum fogDistanceMode;
+} CRFogStateExtensions;
+
 #endif /* CR_STATE_EXTENSIONS_H */

@@ -1,10 +1,12 @@
 import sys, re, string
 
 line_re = re.compile(r'^(\S+)\s+(GL_\S+)\s+(.*)\s*$')
-input = open( "state_get.txt", 'r' )
+extensions_line_re = re.compile(r'^(\S+)\s+(GL_\S+)\s(GL_\S+)\s+(.*)\s*$')
 
 params = {}
+extended_params = {}
 
+input = open( "state_get.txt", 'r' )
 for line in input.readlines():
 	match = line_re.match( line )
 	if match:
@@ -12,6 +14,16 @@ for line in input.readlines():
 		pname = match.group(2)
 		fields = string.split( match.group(3) )
 		params[pname] = ( type, fields )
+
+input = open( "state_extensions_get.txt", 'r' )
+for line in input.readlines():
+	match = extensions_line_re.match( line )
+	if match:
+		type = match.group(1)
+		pname = match.group(2)
+		ifdef = match.group(3)
+		fields = string.split( match.group(4) )
+		extended_params[pname] = ( type, ifdef, fields )
 
 convert = {
 	       'GLenum' : {
@@ -148,6 +160,25 @@ for rettype in types:
 		except:
 			print '\t\t\tcrStateError(__LINE__,__FILE__,GL_INVALID_OPERATION, "Unimplemented GLGet!");'
 		print "\t\t\tbreak;"
+
+
+	keys = extended_params.keys();
+	keys.sort()
+  	for pname in keys:
+		(srctype,ifdef,fields) = extended_params[pname]
+		print '#ifdef %s' % ifdef
+		print '\t\tcase %s:' % pname
+		try:
+			cvt = convert[srctype][rettype]
+			i = 0
+			for field in fields:
+				expr = cvt % field
+				print '\t\t\tparams[%d] = %s;' % (i,expr)
+				i += 1
+		except:
+			print '\t\t\tcrStateError(__LINE__,__FILE__,GL_INVALID_OPERATION, "Unimplemented GLGet!");'
+		print "\t\t\tbreak;"
+		print '#endif /* %s */' % ifdef
   
 	print '\t\tdefault:'
 	print '\t\t\tcrStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glGet: Unknown enum: 0x%x", pname);'

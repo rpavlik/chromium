@@ -4,6 +4,7 @@
 
 static void __handleFogData( GLenum pname, const GLfloat *params )
 {
+	int params_length = 0;
 	int packet_length = sizeof( int ) + sizeof( pname );
 	unsigned char *data_ptr;
 	switch( pname )
@@ -13,14 +14,21 @@ static void __handleFogData( GLenum pname, const GLfloat *params )
 		case GL_FOG_START:
 		case GL_FOG_END:
 		case GL_FOG_INDEX:
-			packet_length += sizeof( *params );
+			params_length = sizeof( *params );
 			break;
 		case GL_FOG_COLOR:
-			packet_length += 4*sizeof( *params );
+			params_length = 4*sizeof( *params );
 			break;
 		default:
-			crError( "Invalid pname in Fog: %d", pname );
+			params_length = crPackFogParamsLength( pname );
+			if (!params_length)
+			{
+				crError( "Invalid pname in Fog: %d", pname );
+			}
+			break;
 	}
+	packet_length += params_length;
+
 	GET_BUFFERED_POINTER( packet_length );
 	WRITE_DATA( 0, int, packet_length );
 	WRITE_DATA( 4, GLenum, pname );

@@ -1,0 +1,1 @@
+GLenum    GL_FOG_DISTANCE_MODE_NV GL_NV_fog_distance  g->fog.extensions.fogDistanceMode

@@ -16,3 +16,18 @@ int crPackTexParameterParamsLength( GLenum param )
 	}
 	return 0;
 }
+
+int crPackFogParamsLength( GLenum param )
+{
+	static int one_param = sizeof( GLfloat );
+	switch( param )
+	{
+#ifdef GL_NV_fog_distance
+		case GL_FOG_DISTANCE_MODE_NV:
+			return one_param;
+#endif
+		default:
+			break;
+	}
+	return 0;
+}

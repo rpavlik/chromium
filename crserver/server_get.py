@@ -68,6 +68,10 @@ num_components = {
 	'GL_TEXTURE_BORDER_COLOR' : 4
 }
 
+num_extended_components = {
+	'GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT': ( 1, 'GL_EXT_texture_filter_anisotropic' )
+}
+
 print """unsigned int LookupComponents( GLenum pname )
 {
 	switch( pname )
@@ -77,6 +81,14 @@ comps = num_components.keys();
 comps.sort();
 for comp in comps:
 	print '\t\t\tcase %s: return %d;' % (comp,num_components[comp])
+
+comps = num_extended_components.keys();
+comps.sort();
+for comp in comps:
+	(nc, ifdef) = num_extended_components[comp]
+	print '#ifdef %s' % ifdef
+	print '\t\t\tcase %s: return %d;' % (comp,nc)
+	print '#endif /* %s */' % ifdef
 
 print """
 		default:

@@ -3,6 +3,7 @@
 
 #include "cr_glwrapper.h"
 #include "state/cr_statetypes.h"
+#include "state/cr_extensions.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,6 +18,7 @@ typedef struct {
 	GLbitvalue end;
 	GLbitvalue mode;
 	GLbitvalue enable;
+	GLbitvalue extensions;
 } CRFogBits;
 
 typedef struct {
@@ -27,6 +29,7 @@ typedef struct {
 	GLfloat   end;
 	GLint     mode;
 	GLboolean enable;
+	CRFogStateExtensions extensions;
 } CRFogState;
 
 void crStateFogInitBits (CRFogBits *fb);
