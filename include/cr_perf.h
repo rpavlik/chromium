@@ -50,7 +50,12 @@ typedef struct {
 	int draw_pixels;
 	int read_pixels;
 
-	int teximageBytes;  /* bytes given to glTex[Sub]Image[1/2/3]D */
+	int teximage1DBytes;  /* bytes given to glTexImage1D */
+	int teximage2DBytes;  /* bytes given to glTexImage2D */
+	int teximage3DBytes;  /* bytes given to glTexImage3D */
+	int texsubimage1DBytes;  /* bytes given to glTexSubImage1D */
+	int texsubimage2DBytes;  /* bytes given to glTexSubImage2D */
+	int texsubimage3DBytes;  /* bytes given to glTexSubImage3D */
 	int newLists;       /* glNewList calls */
 	int callLists;      /* glCallList(s) calls */
 
