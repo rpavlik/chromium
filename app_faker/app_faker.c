@@ -771,26 +771,24 @@ static void do_it( char *argv[] )
 		prefix_env_var( tmpdir, "LD_LIBRARY64_PATH" );
 #endif
 #if defined(OSF1)
-          if (crGetenv( "_RLD_LIST" ) ) {
-                      unsigned long len = crStrlen( tmpdir ) + 9;
-                          char *buf = (char *) crAlloc( len );
-                              sprintf( buf, "%s/libGL.so", tmpdir );
-                                  prefix_env_var( buf, "_RLD_LIST" );
-                                      crFree( buf );
-                                        }
-            else {
-                        unsigned long len = crStrlen( tmpdir ) + 18;
-                            char *buf = (char *) crAlloc( len );
-                                sprintf( buf, "%s/libGL.so:DEFAULT", tmpdir );
-                                    crSetenv( "_RLD_LIST", buf );
-                                        crFree( buf );
-                                        
-                                          }
-
-              debug( "_RLD_LIST=\"%s\"\n", crGetenv( "_RLD_LIST" ) );
+	if (crGetenv( "_RLD_LIST" ) ) {
+		unsigned long len = crStrlen( tmpdir ) + 9;
+		char *buf = (char *) crAlloc( len );
+		sprintf( buf, "%s/libGL.so", tmpdir );
+		prefix_env_var( buf, "_RLD_LIST" );
+		crFree( buf );
+	}
+	else {
+		unsigned long len = crStrlen( tmpdir ) + 18;
+		char *buf = (char *) crAlloc( len );
+		sprintf( buf, "%s/libGL.so:DEFAULT", tmpdir );
+		crSetenv( "_RLD_LIST", buf );
+		crFree( buf );
+	}
+	debug( "_RLD_LIST=\"%s\"\n", crGetenv( "_RLD_LIST" ) );
 #endif
 
-    debug( "contacting mothership to determine SPU directory \n");
+	debug( "contacting mothership to determine SPU directory \n");
 	if (crMothershipGetFakerParam( mothership_conn, response, "spu_dir" ) && crStrlen(response) > 0)
 	{
 		crSetenv( "SPU_DIR", response );
@@ -818,10 +816,10 @@ static void do_it( char *argv[] )
 	if ( WIFEXITED(status) ) {
 		int s = WEXITSTATUS(status);
 		if (s != 0) {
-		    crError( "\"%s\" exited with status=%d\n", argv[0], s);
+			crError( "\"%s\" exited with status=%d\n", argv[0], s);
 		}
 		else {
-		    debug( "\"%s\" exited with status=%d\n", argv[0], s);
+			debug( "\"%s\" exited with status=%d\n", argv[0], s);
 		}
 		exit(s);
 	}
@@ -874,12 +872,13 @@ static void usage( void )
 			"is \nsearched for \"" OPENGL_CLIENT_LIB "\".\n", stderr );
 }
 
+
 static void appExit(void)
 {
 	/* kill the mothership we spawned earlier */
 	crMothershipExit( mothership_conn);
-
 }
+
 
 int main( int argc, char **argv )
 {
@@ -900,7 +899,6 @@ int main( int argc, char **argv )
 			break;
 
 		if ( !crStrcmp( argv[i], "-lib" ) ) {
-
 			i++;
 			if ( i == argc )
 				crError( "%s expects argument\n", argv[i-1] );
@@ -915,8 +913,7 @@ int main( int argc, char **argv )
 
 			mothership = argv[i];
 		}
-		else if ( !crStrcmp( argv[i], "-mesa" ) ) 
-		{
+		else if ( !crStrcmp( argv[i], "-mesa" ) ) {
 			char *mesa_path = crGetenv( "CR_MESA_LIB_PATH" );
 			if (mesa_path)
 			{
@@ -933,12 +930,10 @@ int main( int argc, char **argv )
 		}
 		else if ( !crStrcmp( argv[i], "-h" ) ||
 				!crStrcmp( argv[i], "-help" ) ) {
-
 			usage( );
 			exit( 0 );
 		}
 		else {
-
 			crError( "unknown argument: %s\n", argv[i] );
 			usage( );
 			exit( 1 );
@@ -951,6 +946,7 @@ int main( int argc, char **argv )
 
 	if (mothership)
 		crSetenv( "CRMOTHERSHIP", mothership );
+
 	mothership_conn = crMothershipConnect( );
 	if (!mothership_conn)
 	{
@@ -967,12 +963,29 @@ int main( int argc, char **argv )
 	if ( argc < 1 )
 	{
 		/* No command specified, contact the configuration server to 
-		* ask what I should do. */
+		 * ask what I should do.
+		 */
+		char **c, **argvTemp = crStrSplit( chain[1], " " );
+		int i, numArgs = 0;
+		/* count number of non-empty args */
+		for (c = argvTemp; *c; c++)
+			if (c[0][0])
+				numArgs++;
 
-		faked_argv = crStrSplit( chain[1], " " );
+		/* now, make faked_argv array of strings, skipping empty strings */
+		faked_argv = (char **) crCalloc((numArgs + 1) * sizeof(char*));
+		for (i = 0, c = argvTemp; *c; c++) {
+			if (c[0][0])
+				faked_argv[i++] = c[0];
+			else
+				crFree(c[0]); /* no longer needed */
+		}
+		faked_argv[i] = NULL;
+
+		/* free the array, but not the strings */
+		crFree(argvTemp);
 
 		crMothershipGetFakerParam( mothership_conn, response, "start_dir" );
-
 		if (chdir( response ))
 		{
 			crError( "Couldn't change to the starting directory: %s", response );
