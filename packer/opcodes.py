@@ -32,7 +32,7 @@ print "} CROpcode;\n"
 num_extends = 0
 for func_name in keys:
 	(return_type, args, types) = gl_mapping[func_name]
-	if return_type != 'void' or stub_common.FindSpecial( "packer_get", func_name ):
+	if return_type != 'void' or stub_common.FindSpecial( "packer_get", func_name ) or func_name in stub_common.AllSpecials( "opcode_extend" ):
 		num_extends += 1
 
 print "typedef enum {"
@@ -41,7 +41,10 @@ enum_index = 0
 for func_name in keys:
 	(return_type, args, types ) = gl_mapping[func_name]
 	if return_type != 'void' or stub_common.FindSpecial( "packer_get", func_name ) or func_name in stub_common.AllSpecials( "opcode_extend" ):
-		print "\t%s = %d," % ( stub_common.ExtendedOpcodeName( func_name ), enum_index )
+		if enum_index != num_extends-1:
+			print "\t%s = %d," % ( stub_common.ExtendedOpcodeName( func_name ), enum_index )
+		else:
+			print "\t%s = %d" % ( stub_common.ExtendedOpcodeName( func_name ), enum_index )
 		enum_index = enum_index + 1
 print "} CRExtendOpcode;\n"
 print "#endif /* CR_OPCODES_H */"
