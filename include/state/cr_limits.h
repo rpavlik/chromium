@@ -50,7 +50,7 @@ extern "C" {
 
 
 /* glGetString strings */
-#define CR_RENDERER "Chromium"
+#define CR_RENDERER "Chromium 1.0.0"
 #define CR_VENDOR "Humper"
 #if defined(CR_OPENGL_VERSION_1_4)
 #define CR_VERSION "1.4"
