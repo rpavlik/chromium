@@ -10,7 +10,7 @@
 #include "cr_glwrapper.h"
 #include "state/cr_pixel.h"
 
-int crPixelSize( GLenum format, GLenum type, GLsizei width, GLsizei height );
+unsigned int crPixelSize( GLenum format, GLenum type, GLsizei width, GLsizei height );
 void crPixelCopy1D( GLvoid *dst, const GLvoid *src, GLenum format, 
 		                GLenum type, GLsizei width, CRPackState *packstate );
 void crPixelCopy2D( GLvoid *dst, const GLvoid *src, GLenum format, 

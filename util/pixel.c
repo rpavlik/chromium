@@ -9,9 +9,9 @@
 
 #include <memory.h>
 
-int crPixelSize (GLenum format, GLenum type, GLsizei width, GLsizei height )
+unsigned int crPixelSize (GLenum format, GLenum type, GLsizei width, GLsizei height )
 {
-	int pixelbytes = width*height;
+	unsigned int pixelbytes = width*height;
 
 	switch (format) {
 		case GL_COLOR_INDEX :

@@ -148,9 +148,9 @@ GLboolean GL_MAP2_TEXTURE_COORD_3     g->eval.enable2D[pname-GL_MAP2_COLOR_4]
 GLboolean GL_MAP2_TEXTURE_COORD_4     g->eval.enable2D[pname-GL_MAP2_COLOR_4]
 GLboolean GL_MAP2_VERTEX_3            g->eval.enable2D[pname-GL_MAP2_COLOR_4]
 GLboolean GL_MAP2_VERTEX_4            g->eval.enable2D[pname-GL_MAP2_COLOR_4]
-GLfloat   GL_MAP1_GRID_DOMAIN         g->eval.u11D g->eval.u21D
+GLdouble   GL_MAP1_GRID_DOMAIN         g->eval.u11D g->eval.u21D
 GLint     GL_MAP1_GRID_SEGMENTS       g->eval.un1D
-GLfloat   GL_MAP2_GRID_DOMAIN         g->eval.u12D g->eval.u22D g->eval.v12D g->eval.v22D
+GLdouble   GL_MAP2_GRID_DOMAIN         g->eval.u12D g->eval.u22D g->eval.v12D g->eval.v22D
 GLint     GL_MAP2_GRID_SEGMENTS       g->eval.un2D g->eval.vn2D
 
 GLint     GL_NAME_STACK_DEPTH         0

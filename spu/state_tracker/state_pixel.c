@@ -486,12 +486,12 @@ void STATE_APIENTRY crStateGetPixelMapfv (GLenum map, GLfloat * values)
 	switch (map) {
 	case GL_PIXEL_MAP_S_TO_S:
 		for (i = 0; i < p->mapStoSsize; i++) {
-			values[i] = p->mapStoS[i];
+			values[i] = (GLfloat) p->mapStoS[i];
 		}
 		break;
 	case GL_PIXEL_MAP_I_TO_I:
 		for (i = 0; i < p->mapItoIsize; i++) {
-			values[i] = p->mapItoI[i];
+			values[i] = (GLfloat) p->mapItoI[i];
 		}
 		break;
 	case GL_PIXEL_MAP_I_TO_R:
@@ -550,42 +550,42 @@ void STATE_APIENTRY crStateGetPixelMapuiv (GLenum map, GLuint * values)
 		break;
 	case GL_PIXEL_MAP_I_TO_R:
 		for (i = 0; i < p->mapItoRsize; i++) {
-			values[i] = p->mapItoR[i] * maxUint;
+			values[i] = (GLuint) (p->mapItoR[i] * maxUint);
 		}
 		break;
 	case GL_PIXEL_MAP_I_TO_G:
 		for (i = 0; i < p->mapItoGsize; i++) {
-			values[i] = p->mapItoG[i] * maxUint;
+			values[i] = (GLuint) (p->mapItoG[i] * maxUint);
 		}
 		break;
 	case GL_PIXEL_MAP_I_TO_B:
 		for (i = 0; i < p->mapItoBsize; i++) {
-			values[i] = p->mapItoB[i] * maxUint;
+			values[i] = (GLuint) (p->mapItoB[i] * maxUint);
 		}
 		break;
 	case GL_PIXEL_MAP_I_TO_A:
 		for (i = 0; i < p->mapItoAsize; i++) {
-			values[i] = p->mapItoA[i] * maxUint;
+			values[i] = (GLuint) (p->mapItoA[i] * maxUint);
 		}
 		break;
 	case GL_PIXEL_MAP_R_TO_R:
 		for (i = 0; i < p->mapRtoRsize; i++) {
-			values[i] = p->mapRtoR[i] * maxUint;
+			values[i] = (GLuint) (p->mapRtoR[i] * maxUint);
 		}
 		break;
 	case GL_PIXEL_MAP_G_TO_G:
 		for (i = 0; i < p->mapGtoGsize; i++) {
-			values[i] = p->mapGtoG[i] * maxUint;
+			values[i] = (GLuint) (p->mapGtoG[i] * maxUint);
 		}
 		break;
 	case GL_PIXEL_MAP_B_TO_B:
 		for (i = 0; i < p->mapBtoBsize; i++) {
-			values[i] = p->mapBtoB[i] * maxUint;
+			values[i] = (GLuint) (p->mapBtoB[i] * maxUint);
 		}
 		break;
 	case GL_PIXEL_MAP_A_TO_A:
 		for (i = 0; i < p->mapAtoAsize; i++) {
-			values[i] = p->mapAtoA[i] * maxUint;
+			values[i] = (GLuint) (p->mapAtoA[i] * maxUint);
 		}
 		break;
 	default:
@@ -620,42 +620,42 @@ void STATE_APIENTRY crStateGetPixelMapusv (GLenum map, GLushort * values)
 		break;
 	case GL_PIXEL_MAP_I_TO_R:
 		for (i = 0; i < p->mapItoRsize; i++) {
-			values[i] = p->mapItoR[i] * maxUshort;
+			values[i] = (GLushort) (p->mapItoR[i] * maxUshort);
 		}
 		break;
 	case GL_PIXEL_MAP_I_TO_G:
 		for (i = 0; i < p->mapItoGsize; i++) {
-			values[i] = p->mapItoG[i] * maxUshort;
+			values[i] = (GLushort) (p->mapItoG[i] * maxUshort);
 		}
 		break;
 	case GL_PIXEL_MAP_I_TO_B:
 		for (i = 0; i < p->mapItoBsize; i++) {
-			values[i] = p->mapItoB[i] * maxUshort;
+			values[i] = (GLushort) (p->mapItoB[i] * maxUshort);
 		}
 		break;
 	case GL_PIXEL_MAP_I_TO_A:
 		for (i = 0; i < p->mapItoAsize; i++) {
-			values[i] = p->mapItoA[i] * maxUshort;
+			values[i] = (GLushort) (p->mapItoA[i] * maxUshort);
 		}
 		break;
 	case GL_PIXEL_MAP_R_TO_R:
 		for (i = 0; i < p->mapRtoRsize; i++) {
-			values[i] = p->mapRtoR[i] * maxUshort;
+			values[i] = (GLushort) (p->mapRtoR[i] * maxUshort);
 		}
 		break;
 	case GL_PIXEL_MAP_G_TO_G:
 		for (i = 0; i < p->mapGtoGsize; i++) {
-			values[i] = p->mapGtoG[i] * maxUshort;
+			values[i] = (GLushort) (p->mapGtoG[i] * maxUshort);
 		}
 		break;
 	case GL_PIXEL_MAP_B_TO_B:
 		for (i = 0; i < p->mapBtoBsize; i++) {
-			values[i] = p->mapBtoB[i] * maxUshort;
+			values[i] = (GLushort) (p->mapBtoB[i] * maxUshort);
 		}
 		break;
 	case GL_PIXEL_MAP_A_TO_A:
 		for (i = 0; i < p->mapAtoAsize; i++) {
-			values[i] = p->mapAtoA[i] * maxUshort;
+			values[i] = (GLushort) (p->mapAtoA[i] * maxUshort);
 		}
 		break;
 	default:

@@ -15,7 +15,9 @@
 static GLint __sizeQuery( GLenum map )
 {
 	GLint get_values;
-	GLenum newmap;
+	GLenum newmap = GL_PIXEL_MAP_I_TO_I_SIZE; // Windows compiler gets mad if 
+	                                          // variables might be uninitialized
+
 
 	switch( map )
 	{

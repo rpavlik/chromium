@@ -39,7 +39,7 @@ GLuint __evaluator_components( GLenum target )
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapdv( GLenum target, GLenum query, GLdouble *v )
 {
-	GLdouble *coeffs;
+	GLdouble *coeffs = NULL;
 	GLdouble order[2];
 	GLdouble domain[4];
 	GLdouble *retptr = NULL;
@@ -114,7 +114,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapdv( GLenum target, GLenum qu
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapfv( GLenum target, GLenum query, GLfloat *v )
 {
-	GLfloat *coeffs;
+	GLfloat *coeffs = NULL;
 	GLfloat order[2];
 	GLfloat domain[4];
 	GLfloat *retptr = NULL;
@@ -189,7 +189,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapfv( GLenum target, GLenum qu
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchGetMapiv( GLenum target, GLenum query, GLint *v )
 {
-	GLint *coeffs;
+	GLint *coeffs = NULL;
 	GLint order[2];
 	GLint domain[4];
 	GLint *retptr = NULL;
