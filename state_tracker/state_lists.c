@@ -20,6 +20,7 @@ void crStateListsInit(CRListsState *l)
 	l->freeList->max = GL_MAXUINT;
 	l->freeList->next = NULL;
 	l->freeList->prev = NULL;
+	l->hash = crAllocHashtable();
 }
 
 void crStateListsBindName(CRListsState *l, GLuint name) 
@@ -195,6 +196,7 @@ void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode)
 {
 	CRContext *g = GetCurrentContext();
 	CRListsState *l = &(g->lists);
+	CRListEffect *effect;
 
 	if (g->current.inBeginEnd)
 	{
@@ -220,6 +222,8 @@ void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode)
 	l->currentIndex = list;
 	l->newEnd = GL_TRUE;
 	l->mode = mode;
+	effect = crCalloc(sizeof(CRListEffect));
+	crHashtableAdd(l->hash, list, effect);
 }
 
 void STATE_APIENTRY crStateEndList (void) 
@@ -306,6 +310,7 @@ void STATE_APIENTRY crStateDeleteLists (GLuint list, GLsizei range)
 	for (i=0; i<range; i++)
 	{
 		crStateListsUnbindName(l, list+i);
+		crHashtableDelete(l->hash, list + i);
 	}
 }
 

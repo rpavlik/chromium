@@ -463,6 +463,10 @@ void TILESORTSPU_APIENTRY tilesortspu_Bitmap(
 	if (ctx->lists.mode != 0)
 	{
 		/* compile into display list */
+		CRListEffect *effect = crHashtableSearch(ctx->lists.hash, ctx->lists.currentIndex);
+		CRASSERT(effect);
+		effect->rasterPosDx += xmove;
+		effect->rasterPosDy += ymove;
 		if (tilesort_spu.swap)
 		{
 			crPackBitmapSWAP(width, height, xorig, yorig, xmove, ymove, bitmap, &(ctx->client.unpack));
