@@ -127,6 +127,7 @@ void crStateInit(void);
 CRContext *crStateCreateContext(const CRLimitsState *limits);
 void crStateMakeCurrent(CRContext *ctx);
 void crStateSetCurrent(CRContext *ctx);
+CRContext *crStateGetCurrent(void);
 void crStateDestroyContext(CRContext *ctx);
 
 void crStateFlushFunc( CRStateFlushFunc ff );

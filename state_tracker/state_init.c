@@ -257,6 +257,12 @@ void crStateSetCurrent( CRContext *ctx )
 }
 
 
+CRContext *crStateGetCurrent(void)
+{
+	return GetCurrentContext();
+}
+
+
 void crStateUpdateColorBits(void)
 {
 	/* This is a hack to force updating the 'current' attribs */
