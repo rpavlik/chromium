@@ -15,7 +15,7 @@ typedef int ssize_t;
 #define write(a,b,c) send(a,b,c,0)
 #else
 #include <sys/types.h>
-#ifdef __APPLE__
+#ifdef DARWIN
 typedef unsigned int socklen_t;
 #endif
 #include <sys/socket.h>
