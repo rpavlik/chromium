@@ -27,7 +27,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 #ifdef CR_ARB_vertex_buffer_object
 		if (array->e.buffer->data)
 		{
-			p = (unsigned char *)(array->e.buffer->data) + (unsigned int)p;
+			p = (unsigned char *)(array->e.buffer->data) + (unsigned long)p;
 		}
 #endif
 
@@ -50,7 +50,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 #ifdef CR_ARB_vertex_buffer_object
 				if (array->a[attr].buffer->data)
 				{
-					p = (unsigned char *)(array->a[attr].buffer->data) + (unsigned int)p;
+					p = (unsigned char *)(array->a[attr].buffer->data) + (unsigned long)p;
 				}
 #endif
 
@@ -111,7 +111,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 #ifdef CR_ARB_vertex_buffer_object
 			if (array->t[unit].buffer->data)
 			{
-				p = (unsigned char *)(array->t[unit].buffer->data) + (unsigned int)p;
+				p = (unsigned char *)(array->t[unit].buffer->data) + (unsigned long)p;
 			}
 #endif
 
@@ -163,7 +163,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 #ifdef CR_ARB_vertex_buffer_object
 		if (array->i.buffer->data)
 		{
-			p = (unsigned char *)(array->i.buffer->data) + (unsigned int)p;
+			p = (unsigned char *)(array->i.buffer->data) + (unsigned long)p;
 		}
 #endif
 
@@ -182,7 +182,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 #ifdef CR_ARB_vertex_buffer_object
 		if (array->c.buffer->data)
 		{
-			p = (unsigned char *)(array->c.buffer->data) + (unsigned int)p;
+			p = (unsigned char *)(array->c.buffer->data) + (unsigned long)p;
 		}
 #endif
 
@@ -253,7 +253,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 #ifdef CR_ARB_vertex_buffer_object
 		if (array->n.buffer->data)
 		{
-			p = (unsigned char *)(array->n.buffer->data) + (unsigned int)p;
+			p = (unsigned char *)(array->n.buffer->data) + (unsigned long)p;
 		}
 #endif
 
@@ -274,7 +274,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 #ifdef CR_ARB_vertex_buffer_object
 		if (array->s.buffer->data)
 		{
-			p = (unsigned char *)(array->s.buffer->data) + (unsigned int)p;
+			p = (unsigned char *)(array->s.buffer->data) + (unsigned long)p;
 		}
 #endif
 
@@ -307,7 +307,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 #ifdef CR_ARB_vertex_buffer_object
 		if (array->f.buffer->data)
 		{
-			p = (unsigned char *)(array->f.buffer->data) + (unsigned int)p;
+			p = (unsigned char *)(array->f.buffer->data) + (unsigned long)p;
 		}
 #endif
 
@@ -323,7 +323,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 #ifdef CR_ARB_vertex_buffer_object
 		if (array->a[VERT_ATTRIB_POS].buffer->data)
 		{
-			p = (unsigned char *)(array->a[VERT_ATTRIB_POS].buffer->data) + (unsigned int)p;
+			p = (unsigned char *)(array->a[VERT_ATTRIB_POS].buffer->data) + (unsigned long)p;
 		}
 #endif
 
@@ -377,7 +377,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 #ifdef CR_ARB_vertex_buffer_object
 		if (array->v.buffer->data)
 		{
-			p = (unsigned char *)(array->v.buffer->data) + (unsigned int)p;
+			p = (unsigned char *)(array->v.buffer->data) + (unsigned long)p;
 		}
 #endif
 
@@ -470,7 +470,7 @@ static void ARRAYSPU_APIENTRY arrayspu_DrawElements(GLenum mode, GLsizei count,
 #ifdef CR_ARB_vertex_buffer_object
 	if (elementsBuffer->data)
 	{
-		p = (unsigned char *)(elementsBuffer->data) + (unsigned int)p;
+		p = (unsigned char *)(elementsBuffer->data) + (unsigned long)p;
 	}
 #endif
 
