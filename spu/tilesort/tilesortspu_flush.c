@@ -43,7 +43,7 @@ void tilesortspuDebugOpcodes( CRPackBuffer *pack )
 	unsigned char *tmp;
 	for (tmp = pack->opcode_start; tmp > pack->opcode_current; tmp--)
 	{
-		crDebug( "  %d (0x%x, 0x%x)", *tmp, tmp, pack->opcode_current );
+		crDebug( "  %d (0x%p, 0x%p)", *tmp, tmp, pack->opcode_current );
 	}
 	crDebug( "\n" );
 }

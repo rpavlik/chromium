@@ -16,7 +16,7 @@ void crStatePixelInit(CRPixelState *p) {
 	p->unpack.alignment   = 4;
 	p->unpack.imageHeight = 0;
 	p->unpack.swapBytes   = GL_FALSE;
-	p->unpack.LSBFirst    = GL_FALSE;
+	p->unpack.psLSBFirst    = GL_FALSE;
 	p->pack.rowLength     = 0;
 	p->pack.skipRows      = 0;
 	p->pack.skipPixels    = 0;
@@ -24,7 +24,7 @@ void crStatePixelInit(CRPixelState *p) {
 	p->pack.alignment     = 4;
 	p->pack.imageHeight   = 0;
 	p->pack.swapBytes     = GL_FALSE;
-	p->pack.LSBFirst      = GL_FALSE;
+	p->pack.psLSBFirst      = GL_FALSE;
 	p->mapColor           = GL_FALSE;
 	p->mapStencil         = GL_FALSE;
 	p->indexShift         = 0;
@@ -75,7 +75,7 @@ void STATE_APIENTRY crStatePixelStorei (GLenum pname, GLint param) {
 			pb->pack = g->neg_bitid;
 			break;
 		case GL_PACK_LSB_FIRST:
-			p->pack.LSBFirst = (GLboolean) param;
+			p->pack.psLSBFirst = (GLboolean) param;
 			pb->pack = g->neg_bitid;
 			break;
 		case GL_PACK_ROW_LENGTH:
@@ -124,7 +124,7 @@ void STATE_APIENTRY crStatePixelStorei (GLenum pname, GLint param) {
 			pb->unpack = g->neg_bitid;
 			break;
 		case GL_UNPACK_LSB_FIRST:
-			p->unpack.LSBFirst = (GLboolean) param;
+			p->unpack.psLSBFirst = (GLboolean) param;
 			pb->unpack = g->neg_bitid;
 			break;
 		case GL_UNPACK_ROW_LENGTH:

@@ -5,6 +5,7 @@
 #define TILESORTSPU_APIENTRY __stdcall
 #else
 #define TILESORTSPU_APIENTRY
+#include <X11/Xlib.h>
 #endif
 
 #include "cr_glstate.h"

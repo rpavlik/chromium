@@ -2770,6 +2770,8 @@ void crStateTextureDiff(CRTextureBits *t, GLbitvalue bitID,
 			cname = &(from->currenttexture3dname);
 			break;
 #endif
+		default:
+			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "Bogus target in crStateTextureDiff: %d", tex_broadcast->target );
 		}
 	}
 

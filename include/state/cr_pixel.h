@@ -24,7 +24,7 @@ typedef struct {
 	GLint		   imageHeight;
 	GLint		   skipImages;
 	GLboolean	 swapBytes;
-	GLboolean	 LSBFirst;
+	GLboolean	 psLSBFirst; // don't conflict with crap from Xlib.h
 } CRPackState;
 
 typedef struct {

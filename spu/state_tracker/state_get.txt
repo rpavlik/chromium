@@ -68,7 +68,7 @@ GLboolean GL_LIGHTING                 g->lighting.lighting
 GLboolean GL_LINE_SMOOTH              g->line.lineSmooth
 GLboolean GL_LINE_STIPPLE             g->line.lineStipple
 GLboolean GL_PACK_SWAP_BYTES          g->pixel.pack.swapBytes
-GLboolean GL_PACK_LSB_FIRST           g->pixel.pack.LSBFirst
+GLboolean GL_PACK_LSB_FIRST           g->pixel.pack.psLSBFirst
 GLboolean GL_POINT_SMOOTH             g->line.pointSmooth
 GLboolean GL_POLYGON_SMOOTH           g->polygon.polygonSmooth
 GLboolean GL_POLYGON_STIPPLE          g->polygon.polygonStipple
@@ -82,7 +82,7 @@ GLboolean GL_TEXTURE_1D               g->texture.enabled1D
 GLboolean GL_TEXTURE_2D               g->texture.enabled2D
 # GLboolean GL_TEXTURE_3D               g->texture.enabled3D
 GLboolean GL_UNPACK_SWAP_BYTES        g->pixel.unpack.swapBytes
-GLboolean GL_UNPACK_LSB_FIRST         g->pixel.unpack.LSBFirst
+GLboolean GL_UNPACK_LSB_FIRST         g->pixel.unpack.psLSBFirst
 
 GLfloat   GL_POINT_SIZE               g->line.pointSize
 # GLfloat   GL_POINT_SIZE_RANGE         g->line.aliasedpointsizerange_min g->line.aliasedpointsizerange_max

@@ -138,7 +138,7 @@ void crPixelCopy2D( GLvoid *dstptr, const GLvoid *srcptr, GLenum format,
 	/* handle skip pixels */
 	src += packstate->skipPixels*pixelbytes;
 
-	if (packstate->LSBFirst)
+	if (packstate->psLSBFirst)
 		crError( "Sorry, no lsbfirst for you" );
 	if (packstate->swapBytes)
 		crError( "Sorry, no swapbytes for you" );

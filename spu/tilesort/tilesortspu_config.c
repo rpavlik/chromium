@@ -25,7 +25,7 @@ static void __setDefaults( void )
 	tilesort_spu.client_hwnd = NULL;
 #else
 	tilesort_spu.glx_display = NULL;
-	tilesort_spu.glx_drawable = NULL;
+	tilesort_spu.glx_drawable = 0;
 #endif
 }
 
