@@ -33,6 +33,11 @@ static int TILESORTSPU_APIENTRY tilesortspu_nop(void)
 """
 
 
+print """
+/* This function is called to install the dispatch table used during
+ * display list compilation.
+ */
+"""
 print "void tilesortspuLoadListTable(void)"
 print "{"
 # XXX NOTE: this should basically be identical to the tilesort.py code.

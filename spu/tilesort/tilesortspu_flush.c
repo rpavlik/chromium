@@ -431,14 +431,18 @@ static void __drawBBOX(const TileSortBucketInfo * bucket_info)
 }
 
 static void
-doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway )
+doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway,
+				 TileSortBucketInfo *bucket_info)
 {
 	GET_THREAD(thread);
 	WindowInfo *winInfo = thread->currentContext->currentWindow;
 	CRMessageOpcodes *big_packet_hdr = NULL;
 	unsigned int big_packet_len = 0;
-	TileSortBucketInfo bucket_info;
+	TileSortBucketInfo local_bucket_info;
 	int i;
+
+	if (!bucket_info)
+		bucket_info = &local_bucket_info;
 
 	/*crDebug( "in doFlush (broadcast = %d)", broadcast ); */
 
@@ -480,7 +484,10 @@ doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway )
 
 	/* Here's the big part -- call the bucketer! */
 
-	if (!broadcast)
+	if (bucket_info != &local_bucket_info) {
+		broadcast = GL_FALSE;
+	}
+	else if (!broadcast)
 	{
 		/* We've called the flush routine when no vertices
 		 * have been sent. Therefore we have no bounding box.
@@ -493,7 +500,9 @@ doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway )
 			broadcast = GL_TRUE;
 		} else {
 			/*crDebug( "About to bucket the geometry" ); */
-			tilesortspuBucketGeometry(winInfo, &bucket_info);
+			bucket_info->objectMin = thread->packer->bounds_min;
+			bucket_info->objectMax = thread->packer->bounds_max;
+			tilesortspuBucketGeometry(winInfo, bucket_info);
 			if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR)
 				crPackResetBBOX( thread->packer );
 		}
@@ -557,13 +566,12 @@ doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway )
 
 	for ( i = 0 ; i < tilesort_spu.num_servers; i++ )
 	{
-		int node32 = i >> 5;
-		int node = i & 0x1f;
+		const int node32 = i >> 5, node = i & 0x1f;
 
 		thread->state_server_index = i;
 
 		/* Check to see if this server needs geometry from us. */
-		if (!broadcast && !(bucket_info.hits[node32] & (1 << node)))
+		if (!broadcast && !(bucket_info->hits[node32] & (1 << node)))
 		{
 			/*crDebug( "NOT sending to server %d", i );*/
 			continue;
@@ -586,7 +594,7 @@ doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway )
 			crStateDiffContext( serverState, ctx );
 			if (tilesort_spu.drawBBOX && !broadcast)
 			{
-				__drawBBOX( &bucket_info );
+				__drawBBOX( bucket_info );
 			}
 
 			/* Unbind the buffer of state-change commands to sync it up before
@@ -632,13 +640,13 @@ doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway )
 			{
 				/*
 				crDebug( "Appending a bounded buffer: %d, %d .. %d, %d",
-								 bucket_info.pixelBounds.x1, 
-								 bucket_info.pixelBounds.y1, 
-								 bucket_info.pixelBounds.x2, 
-								 bucket_info.pixelBounds.y2 );
+								 bucket_info->pixelBounds.x1, 
+								 bucket_info->pixelBounds.y1, 
+								 bucket_info->pixelBounds.x2, 
+								 bucket_info->pixelBounds.y2 );
 				*/
 				__appendBoundedBuffer( &(thread->geometry_buffer),
-									   &bucket_info.pixelBounds );
+									   &bucket_info->pixelBounds );
 			}
 			else
 			{
@@ -721,7 +729,7 @@ doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway )
 void tilesortspuBroadcastGeom( GLboolean send_state_anyway )
 {
 	GET_THREAD(thread);
-	doFlush( thread->currentContext->State, GL_TRUE, send_state_anyway );
+	doFlush( thread->currentContext->State, GL_TRUE, send_state_anyway, NULL );
 }
 
 
@@ -732,6 +740,24 @@ void tilesortspuBroadcastGeom( GLboolean send_state_anyway )
 void tilesortspuFlush_callback( void *arg )
 {
 	tilesortspuFlush( (ThreadInfo *) arg );
+}
+
+
+/*
+ * Like the tilesortspuFlush() routine below, but only send buffered data
+ * to the servers indicated by the bucket_info->hit[] arrays.
+ */
+void
+tilesortspuFlushToServers(ThreadInfo *thread, TileSortBucketInfo *bucket_info)
+{
+	CRContext *ctx;
+
+	CRASSERT(thread);
+	CRASSERT(thread->currentContext);
+	CRASSERT(thread->currentContext->State);
+
+	ctx = thread->currentContext->State;
+	doFlush( ctx, GL_FALSE, GL_FALSE, bucket_info );
 }
 
 
@@ -758,7 +784,7 @@ void tilesortspuFlush( ThreadInfo *thread )
 	if ( tilesort_spu.splitBeginEnd ||
 			 !(ctx->current.inBeginEnd || ctx->lists.currentIndex) )
 	{
-		doFlush( ctx, GL_FALSE, GL_FALSE );
+		doFlush( ctx, GL_FALSE, GL_FALSE, NULL );
 		return;
 	}
 

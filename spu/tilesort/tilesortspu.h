@@ -311,6 +311,7 @@ void tilesortspuSendServerBufferThread( int server_index, ThreadInfo *thread );
 void tilesortspuHuge( CROpcode opcode, void *buf );
 void tilesortspuFlush( ThreadInfo *thread );
 void tilesortspuFlush_callback( void *arg );
+void tilesortspuFlushToServers(ThreadInfo *thread, TileSortBucketInfo *bucket_info);
 void tilesortspuBroadcastGeom( GLboolean send_state_anyway );
 void tilesortspuShipBuffers( void );
 void tilesortspuDebugOpcodes( CRPackBuffer *buffer );

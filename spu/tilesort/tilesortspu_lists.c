@@ -49,7 +49,7 @@ tilesortspu_NewList(GLuint list, GLuint mode)
 	 * this debug/sanity-check flag.  We can turn it back on in EndList().
 	 */
 	CRPackContext *c = crPackGetContext();
-	int *listSent = NULL;
+	GLboolean *listSent = NULL;
 
 	c->buffer.geometry_only = GL_FALSE;
 	/*crDebug("tilesortspu_NewList(%d,%d)",list,mode); */
@@ -77,7 +77,7 @@ tilesortspu_NewList(GLuint list, GLuint mode)
 			else
 				crPackNewList(list, mode);
 		} else {
-			listSent = crCalloc(tilesort_spu.num_servers * sizeof(int));
+			listSent = crCalloc(tilesort_spu.num_servers * sizeof(GLboolean));
 			crHashtableAdd(tilesort_spu.listTable, list, listSent);
 
 			crdlm_NewList(list, mode, &(tilesort_spu.self));
@@ -86,7 +86,7 @@ tilesortspu_NewList(GLuint list, GLuint mode)
 	} 
 	else 
 	{
-		/* pack/send the display list now */
+		/* pack/send the display list now so all servers receive it */
 		if (tilesort_spu.swap)
 			crPackNewListSWAP(list, mode);
 		else
@@ -95,8 +95,15 @@ tilesortspu_NewList(GLuint list, GLuint mode)
 		if (tilesort_spu.listTrack)
 			crdlm_NewList(list, mode, &(tilesort_spu.self));
 	}
-	if (!tilesort_spu.listTrack)
+
+	if (!tilesort_spu.listTrack && !tilesort_spu.lazySendDLists) {
 		tilesortspuLoadListTable();
+	}
+
+	if (tilesort_spu.autoDListBBoxes && !tilesort_spu.listTrack) {
+		GET_THREAD(thread);
+		crPackResetBBOX(thread->packer);
+	}
 }
 
 
@@ -113,9 +120,10 @@ tilesortspu_EndList(void)
 
 	if (!tilesort_spu.replay) 
 	{
-		if (tilesort_spu.lazySendDLists) 
+		if (tilesort_spu.lazySendDLists) {
 			crdlm_compile_EndList();
-		if (tilesort_spu.listTrack)
+		}
+		if (tilesort_spu.listTrack || tilesort_spu.lazySendDLists)
 			crdlm_EndList();
 	}
 	crStateEndList();
@@ -165,8 +173,9 @@ tilesortspu_EndList(void)
 		/* restore normal/default dispatch table */
 		if (tilesort_spu.listTrack)
 			crdlm_RestoreDispatch();  /* companion to crdlm_EndList() */
-		else
+		else {
 			tilesortspuLoadSortTable();
+		}
 
 		tilesortspuBroadcastGeom(0);
 
@@ -180,6 +189,39 @@ tilesortspu_EndList(void)
 			/* we really used GL_COMPILE mode.  Now, replay/execute the list */
 			tilesortspu_CallList(list);
 		}
+	}
+
+	/* Set the list's bounding box */
+	if (thread->currentContext->providedBBOX == GL_OBJECT_BBOX_CR) {
+		/*CRASSERT(thread->packer->updateBBOX == 0);*/
+		/* use the user-provided bounding box */
+		crDLMSetBounds(tilesort_spu.dlm, list,
+									 thread->packer->bounds_min.x,
+									 thread->packer->bounds_min.y,
+									 thread->packer->bounds_min.z,
+									 thread->packer->bounds_max.x,
+									 thread->packer->bounds_max.y,
+									 thread->packer->bounds_max.z);
+	}
+	else if (tilesort_spu.autoDListBBoxes) {
+		if (tilesort_spu.listTrack) {
+			/* The DLM will have already recorded the list's bounding box */
+		}
+		else {
+			/* use the packer's bounding box */
+			crDLMSetBounds(tilesort_spu.dlm, list,
+										 thread->packer->bounds_min.x,
+										 thread->packer->bounds_min.y,
+										 thread->packer->bounds_min.z,
+										 thread->packer->bounds_max.x,
+										 thread->packer->bounds_max.y,
+										 thread->packer->bounds_max.z);
+		}
+	}
+	else {
+		/* set NULL bounding box - lists will get broadcast */
+		crDLMSetBounds(tilesort_spu.dlm, list,
+									 FLT_MAX, FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX);
 	}
 }
 
@@ -199,7 +241,6 @@ tilesortspuStateCallList(GLuint list)
 	CRContext *savedContext = crStateGetCurrent();
 	int i;
 
-
 	/*crDebug("tilesortspuStateCallList( %u )", list); */
 
 	/* NOTE: this function may get called recursively when calling a nested
@@ -210,7 +251,6 @@ tilesortspuStateCallList(GLuint list)
 	/* update servers' state records */
 	for (i = 0; i < tilesort_spu.num_servers; i++) 
 	{
-
 		/*crDebug("tilesortspuStateCallList( server = %d )", i ); */
 		crStateSetCurrent(context->server[i].State);
 		crdlm_CallList(list, &tilesort_spu.stateDispatch);
@@ -246,9 +286,7 @@ tilesortspuStateCallLists(GLsizei n, GLenum type, const GLvoid *lists)
 	/* update servers' state records */
 	for (i = 0; i < tilesort_spu.num_servers; i++) 
 	{
-
 		/*crDebug("tilesortspuStateCallLists( server = %d )", i ); */
-
 		crStateSetCurrent(context->server[i].State);
 		crdlm_ListBase(context->State->lists.base); /* not server[i] state */
 		crdlm_CallLists(n, type, lists, &tilesort_spu.stateDispatch);
@@ -271,114 +309,98 @@ tilesortspu_CallList(GLuint list)
 	WindowInfo *winInfo = thread->currentContext->currentWindow;
 	GLboolean resetBBox = GL_FALSE;
 	TileSortBucketInfo bucket_info;
-	int i;
-	int *listSent = NULL;
 
-	/*crDebug("tilesortspu_CallList(%u)", list); */
-	if (tilesort_spu.lazySendDLists)
-		listSent = crHashtableSearch(tilesort_spu.listTable, list);
-
-	/*if(listSent == NULL) */
-	/*	crDebug("TILT"); */
-
-	/* if (tilesort_spu.lazySendDLists) */
-	/* 	for(i = 0;i < tilesort_spu.num_servers; i++)  */
-	/* 		crDebug("list = %d listSent[%d] = %d",list, i, listSent[i]); */
-
-	if (thread->currentContext->State->lists.mode == 0) 
-	{
-		/* 
-		 * If lazy then replay display list and send it out now
+	/*
+	 * check if compiling this call, or executing it
+	 */
+	if (thread->currentContext->State->lists.mode != 0) {
+		/* we're compiling a glCallList into another display list */
+		if (tilesort_spu.listTrack && tilesort_spu.lazySendDLists)
+			crdlm_compile_CallList( list );
+	}
+	else {
+		/* We're executing a glCallList.
+		 * Determine which servers will get this display list.
 		 */
-		if (tilesort_spu.lazySendDLists && ! tilesort_spu.autoDListBBoxes && tilesort_spu.listTrack)
-		{
-			if (!crDLMIsListSent(tilesort_spu.dlm, list)) 
-			{
-				/*crDebug("REPLAY LAZY list = %u",list); */
-				/* now play the list through the packer to send it to the servers */
-	
-				tilesortspuFlush( thread );
+		if (crDLMListHasBounds(tilesort_spu.dlm, list)) {
+			CRDLMBounds bounds;
+			GLfloat bbox[6];
 
-				tilesort_spu.replay = 1;
-				crDLMListSent(tilesort_spu.dlm, list);
-				crdlm_CallList(list, &tilesort_spu.packerDispatch);
-				tilesort_spu.replay = 0;
-				tilesortspuFlush( thread );
+			crDLMGetBounds(tilesort_spu.dlm, list, &bounds);
+
+			/* Run the bucket sort routine to determine which servers will
+			 * receive this display list.
+			 */
+			bucket_info.objectMin.x = bounds.xmin;
+			bucket_info.objectMin.y = bounds.ymin;
+			bucket_info.objectMin.z = bounds.zmin;
+			bucket_info.objectMax.x = bounds.xmax;
+			bucket_info.objectMax.y = bounds.ymax;
+			bucket_info.objectMax.z = bounds.zmax;
+			tilesortspuBucketGeometry(winInfo, &bucket_info);
+
+			/*
+			 * Set the bbox bounds here so when the crPackCallList() call (below)
+			 * gets bucketed, it gets sent to the right servers.
+			 */
+			bbox[0] = (GLfloat) bounds.xmin;
+			bbox[1] = (GLfloat) bounds.ymin;
+			bbox[2] = (GLfloat) bounds.zmin;
+			bbox[3] = (GLfloat) bounds.xmax;
+			bbox[4] = (GLfloat) bounds.ymax;
+			bbox[5] = (GLfloat) bounds.zmax;
+			tilesortspu_ChromiumParametervCR(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bbox);
+			resetBBox = GL_TRUE;
+		}
+		else {
+			/* broadcast - set all bucket_info hit flags */
+			int i;
+			for (i = 0 ; i < (tilesort_spu.num_servers + 31) / 32; i++) {
+				bucket_info.hits[i] = ~0;
 			}
 		}
 
-		/* Execute glCallList */
-
-		/* Try to prefix this display list with a bounding box.
-		 * But only if the user hasn't already specified his own bbox AND if
-		 * the autoDListBBoxes option is turned on.
+		/* 
+		 * If we're sending display lists lazily, check if we need to send this
+		 * list to any new servers.
 		 */
-		if ((thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR && tilesort_spu.autoDListBBoxes) ||
-		     thread->currentContext->providedBBOX == GL_OBJECT_BBOX_CR)
-		{
-			CRDLMBounds bounds;
+		if (tilesort_spu.lazySendDLists && !crDLMIsListSent(tilesort_spu.dlm, list)) {
+			GLboolean *listSent
+				= (GLboolean *) crHashtableSearch(tilesort_spu.listTable, list);
+			GLboolean needAnySend = GL_FALSE;
+			TileSortBucketInfo send_info;
+			int numSent = 0, i;
 
-			if (tilesort_spu.listTrack
-					&& crDLMGetBounds(tilesort_spu.dlm, list, &bounds) == GL_NO_ERROR
-					&& bounds.xmin != FLT_MAX)
-			{
-				GLfloat bbox[6];
-
-				bbox[0] = (GLfloat) bounds.xmin;
-				bbox[1] = (GLfloat) bounds.ymin;
-				bbox[2] = (GLfloat) bounds.zmin;
-				bbox[3] = (GLfloat) bounds.xmax;
-				bbox[4] = (GLfloat) bounds.ymax;
-				bbox[5] = (GLfloat) bounds.zmax;
-
-				/*
-				printf("Autobox for list %d:\n", list);
-				printf(" %f .. %f\n", bounds.xmin, bounds.xmax);
-				printf(" %f .. %f\n", bounds.ymin, bounds.ymax);
-				printf(" %f .. %f\n", bounds.zmin, bounds.zmax);
-				*/
-
-				/* set the bounding box */
-				if ((thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR && tilesort_spu.autoDListBBoxes)) 
-				{
-					tilesortspu_ChromiumParametervCR(GL_OBJECT_BBOX_CR, GL_FLOAT, 6, bbox);
-					resetBBox = GL_TRUE;
-				}
-
-				if (tilesort_spu.lazySendDLists)
-				{
-
-					/* now play the list through the packer to send it to the servers */
-		
-					tilesortspuBucketGeometry(winInfo, &bucket_info);
-					/* Now, see if we need to do things to each server */
-
-					for ( i = 0 ; i < tilesort_spu.num_servers; i++ )
-					{
-						int node32 = i >> 5;
-						int node = i & 0x1f;
-
-						/* Check to see if this server needs geometry from us. */
-						if (listSent[i] == 1)
-						{
-							/*crDebug( "listSent NOT sending list %d to server %d", list, i );*/
-							continue;
-						}
-						if (!(bucket_info.hits[node32] & (1 << node)))
-						{
-							/*crDebug( "Bucket NOT sending list %d to server %d", list, i );*/
-							continue;
-						}
-						/*crDebug( "Sending list %d to server %d", list, i ); */
-						tilesortspuFlush( thread );
-
-						tilesort_spu.replay = 1;
-						listSent[i] = 1;
-						crdlm_CallList(list, &tilesort_spu.packerDispatch);
-						tilesort_spu.replay = 0;
+			/* determine which servers need the display list, but don't yet have it */
+			crMemZero(&send_info, sizeof(send_info));
+			for (i = 0 ; i < tilesort_spu.num_servers; i++) {
+				const int node32 = i >> 5, node = i & 0x1f;
+				if (bucket_info.hits[node32] & (1 << node)) {
+					/* server i needs the list */
+					if (!listSent[i]) {
+						/* server i doesn't have the list yet */
+						needAnySend = GL_TRUE;
+						listSent[i] = GL_TRUE;
+						send_info.hits[node32] |= (1 << node);
 					}
-
 				}
+				if (listSent[i])
+					numSent++;
+			}
+
+			if (numSent == tilesort_spu.num_servers) {
+				/* record the fact that the list has been now sent to _all_ servers */
+				crDLMListSent(tilesort_spu.dlm, list);
+			}
+
+			if (needAnySend) {
+				 static const CRrecti fullscreen = {-CR_MAXINT, CR_MAXINT, -CR_MAXINT, CR_MAXINT};
+				tilesortspuFlush( thread );
+				tilesort_spu.replay = 1;
+				crdlm_CallList(list, &tilesort_spu.packerDispatch);
+				tilesort_spu.replay = 0;
+				send_info.pixelBounds = fullscreen;
+				tilesortspuFlushToServers( thread, &send_info );
 			}
 		}
 
@@ -386,12 +408,6 @@ tilesortspu_CallList(GLuint list)
 		{
 			tilesortspuFlush( thread );
 		}
-	}
-	else 
-	{
-		/* we're compiling a glCallList into another display list */
-		if (tilesort_spu.listTrack && tilesort_spu.lazySendDLists)
-			crdlm_compile_CallList( list );
 	}
 
 	/* This is experimental code to fix some issues with glBindTexture
@@ -424,39 +440,42 @@ tilesortspu_CallList(GLuint list)
 
 	if (thread->currentContext->State->lists.mode == 0) 
 	{
-		/* Execute glCallList */
+		/* Executing glCallList */
 
-		if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR) 
-		{
+		if (!crDLMListHasBounds(tilesort_spu.dlm, list)) {
 			/* we don't have a bounding box for the geometry in this
 			 * display list, so need to broadcast.
 			 */
-			/*printf(" %s broadcast\n", __FUNCTION__);*/
 			tilesortspuBroadcastGeom(1);
 		}
 		else {
 			/* we relied upon the bucketing system to send the list to the
 			 * appropriate servers.
 			 */
-			/*printf(" %s bucket\n", __FUNCTION__);*/
 			tilesortspuFlush( thread );
 		}
 
-		/* only update state on servers if we actually sent the display list!
-		 */
+		/* Only update state on servers if we actually sent the display list! */
+		if (tilesort_spu.listTrack) {
+			ContextInfo *context = thread->currentContext;
+			CRContext *savedContext = crStateGetCurrent();
+			int i;
 
-		/*crDebug("tilesortspu_CallList(%u) call tilesortspuStateCallList", list); */
-
-		if (tilesort_spu.listTrack && tilesort_spu.lazySendDLists) {
+			/* update servers' state records */
 			for (i = 0; i < tilesort_spu.num_servers; i++) {
-				if (listSent && listSent[i] == 0) {
-					/*crDebug( "list state sending list %d to server %d", list, i );*/
-					tilesortspuStateCallList(list);
-				}
-				else {
-					tilesortspuStateCallList(list);
+				const int node32 = i >> 5, node = i & 0x1f;
+				if ((bucket_info.hits[node32] & (1 << node))) {
+					crStateSetCurrent(context->server[i].State);
+					crdlm_CallList(list, &tilesort_spu.stateDispatch);
 				}
 			}
+
+			/* Update our local, application context state */
+			crStateSetCurrent(context->State);
+			crdlm_CallList(list, &tilesort_spu.stateDispatch);
+
+			/* restore previously current context */
+			crStateSetCurrent(savedContext);
 		}
 	}
 
@@ -469,6 +488,65 @@ tilesortspu_CallList(GLuint list)
 void TILESORTSPU_APIENTRY
 tilesortspu_CallLists(GLsizei n, GLenum type, const GLvoid *lists)
 {
+#if 1111
+	/* Not really efficient, but reliable */
+	GET_THREAD(thread);
+	ContextInfo *context = thread->currentContext;
+	const GLuint base = context->State->lists.base;
+	GLint i;
+
+#define EXPAND(typeEnum, typeCast)                       \
+    case typeEnum:                                       \
+      {                                                  \
+        const typeCast *data = (const typeCast *) lists; \
+        for (i = 0; i < n; i++) {                        \
+          tilesortspu_CallList(base + data[i]);          \
+        }                                                \
+      }                                                  \
+      break
+
+	switch (type) {
+		EXPAND(GL_BYTE, GLbyte);
+		EXPAND(GL_UNSIGNED_BYTE, GLubyte);
+		EXPAND(GL_SHORT, GLshort);
+		EXPAND(GL_UNSIGNED_SHORT, GLushort);
+		EXPAND(GL_INT, GLint);
+		EXPAND(GL_UNSIGNED_INT, GLuint);
+		EXPAND(GL_FLOAT, GLfloat);
+
+		case GL_2_BYTES:
+			{
+				const GLubyte *data = (const GLubyte *) lists;
+				for (i = 0; i < n; i++, data += 2)
+					tilesortspu_CallList(base + 256 * data[0] + data[1]);
+			}
+			break;
+
+		case GL_3_BYTES:
+			{
+				const GLubyte *data = (const GLubyte *) lists;
+				for (i = 0; i < n; i++, data += 3)
+					tilesortspu_CallList(base
+															 + 256 * (256 * data[0] + data[1]) + data[2]);
+			}
+			break;
+
+		case GL_4_BYTES:
+			{
+				const GLubyte *data = (const GLubyte *) lists;
+				for (i = 0; i < n; i++, data += 4)
+					tilesortspu_CallList(base
+							 + 256 * (256 * (256 * data[0] + data[1]) + data[2]) + data[3]);
+			}
+			break;
+
+		default:
+			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "CallLists(type)");
+			return;
+	}
+#undef EXPAN
+#else
+
 	GET_CONTEXT(ctx);
 #if 0
 	ContextInfo *context = thread->currentContext;
@@ -551,6 +629,7 @@ tilesortspu_CallLists(GLsizei n, GLenum type, const GLvoid *lists)
 			tilesortspuStateCallLists(n, type, lists);
 		}
 	}
+#endif
 }
 
 

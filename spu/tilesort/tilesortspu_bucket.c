@@ -654,9 +654,10 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 	static const CRrecti nullscreen = {0, 0, 0, 0};
 	GET_CONTEXT(g);
 
+	/* the bounds should be valid at this point */
+	/*CRASSERT(bucketInfo->objectMin.x != FLT_MAX);*/
+
 	/* Init bucketInfo results */
-	bucketInfo->objectMin = thread->packer->bounds_min;
-	bucketInfo->objectMax = thread->packer->bounds_max;
 	bucketInfo->pixelBounds = nullscreen;
 	/* Initialize the results/hits bitvector.  Each bit represents a server.
 	 * If the bit is set, send the geometry to that server.  There are 32
@@ -1087,6 +1088,12 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 }
 
 
+/**
+ * Evaluate the bucketing algorithm to determine which servers should
+ * receive a batch of geometry.
+ * info's objectMin and objectMax fields should be initialized by the caller!
+ * The results of bucketing will be in the info hits[] and pixelBounds fields.
+ */
 void tilesortspuBucketGeometry(WindowInfo *winInfo, TileSortBucketInfo *info)
 {
 	/* First, call the real bucketer */
@@ -1094,6 +1101,7 @@ void tilesortspuBucketGeometry(WindowInfo *winInfo, TileSortBucketInfo *info)
 	/* Finally, do pinching.  This is unimplemented currently. */
 	/* PINCHIT(); */
 }
+
 
 void tilesortspuSetBucketingBounds( WindowInfo *winInfo, int x, int y, unsigned int w, unsigned int h )
 {

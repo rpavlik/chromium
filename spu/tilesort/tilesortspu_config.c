@@ -346,7 +346,7 @@ SPUOptions tilesortSPUOptions[] = {
 	{"bbox_scale", CR_FLOAT, 1, "1.0", "0.1", "10.0",
 	 "Bounding Box Scale Factor", (SPUOptionCB) set_bounding_box_scale},
 
-	{"auto_dlist_bbox", CR_BOOL, 1, "1", NULL, NULL,
+	{"auto_dlist_bbox", CR_BOOL, 1, "0", NULL, NULL,
 	 "Automatically compute/use bounding boxes for display lists",
 	 (SPUOptionCB) set_auto_dlist_bbox},
 

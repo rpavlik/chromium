@@ -279,7 +279,6 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	contextInfo->id = freeContextID;
 	crHashtableAdd(tilesort_spu.contextTable, freeContextID, contextInfo);
 
-#if 11 /* Display list manager */
 	{
 		/* Our configuration for the DLM we're going to create.
 		 * It says that we want the DLM to handle everything
@@ -297,21 +296,20 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		 * for sharing DLMs.  We don't currently get that information, so for now
 		 * give each context its own DLM.
 		 */
-		if (tilesort_spu.listTrack) {
-			if (!tilesort_spu.dlm) {
-				tilesort_spu.dlm = crDLMNewDLM(sizeof(dlmConfig), &dlmConfig);
-				if (!tilesort_spu.dlm) {
-					crDebug("tilesort: couldn't get DLM!");
-				}
-				crDLMErrorFunction(ErrorCallback);
-			}
 
-			contextInfo->dlmContext = crDLMNewContext(tilesort_spu.dlm,
-																							&contextInfo->State->client);
-			if (!contextInfo->dlmContext) {
-				crDebug("tilesort: couldn't get dlmContext");
-				/* XXX need graceful error handling here */
+		if (!tilesort_spu.dlm) {
+			tilesort_spu.dlm = crDLMNewDLM(sizeof(dlmConfig), &dlmConfig);
+			if (!tilesort_spu.dlm) {
+				crDebug("tilesort: couldn't get DLM!");
 			}
+			crDLMErrorFunction(ErrorCallback);
+		}
+
+		contextInfo->dlmContext = crDLMNewContext(tilesort_spu.dlm,
+																							&contextInfo->State->client);
+		if (!contextInfo->dlmContext) {
+			crDebug("tilesort: couldn't get dlmContext");
+			/* XXX need graceful error handling here */
 		}
 
 		/* We're not going to hold onto the dlm ourselves, so we can
@@ -322,7 +320,6 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		crDLMFreeDLM(dlm);
 		*/
 	}
-#endif
 
 	return freeContextID++;
 }
@@ -482,8 +479,7 @@ fprintf(stderr,"MakeCurrent thread = %p\n",thread);
 	/* Restore the default buffer */
 	crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 
-	if (tilesort_spu.listTrack)
-		crDLMSetCurrentState(newCtx->dlmContext);
+	crDLMSetCurrentState(newCtx->dlmContext);
 
 	if (newCtx && !newCtx->everCurrent) {
 		/* This is the first time the context has been made current.  Query
@@ -571,8 +567,7 @@ void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( GLint ctx )
 	/* The default buffer */
 	crPackSetBuffer( thread0->packer, &(thread->geometry_buffer) );
 
-	if (tilesort_spu.listTrack)
-		crDLMFreeContext(contextInfo->dlmContext);
+	crDLMFreeContext(contextInfo->dlmContext);
 }
 
 

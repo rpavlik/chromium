@@ -104,14 +104,14 @@ fprintf(stderr,"tilesortSPUInit call crSetTSD\n");
 	crStateInit();
 	tilesortspuCreateDiffAPI();
 
-        /* special dispatch tables for display lists */
-	if (tilesort_spu.listTrack) {
+	/* special dispatch tables for display lists */
+	if (tilesort_spu.listTrack || tilesort_spu.lazySendDLists) {
 		crMemZero((void *)&tilesort_spu.packerDispatch, sizeof tilesort_spu.packerDispatch);
-        	crSPUInitDispatchTable(&tilesort_spu.packerDispatch);
-        	tilesortspuLoadPackTable(&tilesort_spu.packerDispatch);
+		crSPUInitDispatchTable(&tilesort_spu.packerDispatch);
+		tilesortspuLoadPackTable(&tilesort_spu.packerDispatch);
 
-        	crSPUInitDispatchTable(&tilesort_spu.stateDispatch);
-        	tilesortspuLoadStateTable(&tilesort_spu.stateDispatch);
+		crSPUInitDispatchTable(&tilesort_spu.stateDispatch);
+		tilesortspuLoadStateTable(&tilesort_spu.stateDispatch);
 	}
 
 	if (tilesort_spu.useDMX) {
