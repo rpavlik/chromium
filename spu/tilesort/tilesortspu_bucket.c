@@ -546,14 +546,12 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 	CRrecti ibounds;
 	int i, j;
 
-	CRbitvalue retval[CR_MAX_BITARRAY];
-
 	/* Init bucketInfo */
 	bucketInfo->objectMin = thread->packer->bounds_min;
 	bucketInfo->objectMax = thread->packer->bounds_max;
 	bucketInfo->pixelBounds = nullscreen;
 	for (j=0;j<CR_MAX_BITARRAY;j++)
-	     bucketInfo->hits[j] = 0;
+		bucketInfo->hits[j] = 0;
 
 	/* Check to make sure the transform is valid */
 	if (!t->modelViewProjectionValid)
@@ -622,7 +620,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		{
 			/* trivial reject */
 			for (j=0;j<CR_MAX_BITARRAY;j++)
-	     			bucketInfo->hits[j] = 0;
+				bucketInfo->hits[j] = 0;
 			return;
 		}
 	}
@@ -632,7 +630,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		if (xmin > 1.0f || ymin > 1.0f || xmax < -1.0f || ymax < -1.0f) 
 		{
 			for (j=0;j<CR_MAX_BITARRAY;j++)
-	     			bucketInfo->hits[j] = 0;
+				bucketInfo->hits[j] = 0;
 			return;
 		}
 
@@ -652,13 +650,15 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 	bucketInfo->pixelBounds = ibounds;
 
 
-	/* Initialize the retval bitvector.
+	/* Initialize the results/hits bitvector.  Each bit represents a server.
+	 * If the bit is set, send the geometry to that server.  There are 32
+	 * bits per word in the vector.
 	 */
 	for (j = 0; j < CR_MAX_BITARRAY; j++)
-	     retval[j] = 0;
+		bucketInfo->hits[j] = 0;
 
 
-	/* Compute the retval bitvector values.
+	/* Compute the bucketInfo->hits[] flags.
 	 * Bit [i] is set if the bounding box intersects any tile on server [i].
 	 */
 	if (winInfo->bucketMode == TEST_ALL_TILES)
@@ -669,7 +669,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		for (i=0; i < tilesort_spu.num_servers; i++) 
 		{
 			ServerWindowInfo *servWinInfo = winInfo->server + i;
-			/* 32 bits (flags) per element in retval */
+			/* 32 bits (flags) per element in hits[] */
 			const int node32 = i >> 5;
 			const int node = i & 0x1f;
 			for (j = 0; j < servWinInfo->num_extents; j++) 
@@ -679,7 +679,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 				    ibounds.y1 < servWinInfo->extents[j].y2 &&
 				    ibounds.y2 >= servWinInfo->extents[j].y1) 
 				{
-					retval[node32] |= (1 << node);
+					bucketInfo->hits[node32] |= (1 << node);
 					break;
 				}
 			}
@@ -700,7 +700,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		{
 			for (q=r; q && ibounds.x2 >= q->extents.x1; q = q->right) 
 			{
-				if (CHECKDIRTY(retval, q->id)) 
+				if (CHECKDIRTY(bucketInfo->hits, q->id)) 
 				{
 					continue;
 				}
@@ -708,7 +708,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		 		    ibounds.y1 < q->extents.y2 && ibounds.y2 >= q->extents.y1) 
 				{
 					for (j=0;j<CR_MAX_BITARRAY;j++)
-					     retval[j] |= q->id[j];
+						bucketInfo->hits[j] |= q->id[j];
 				}
 			}
 		}
@@ -777,11 +777,12 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 				const int server = grid->server[i][j];
 				const int node32 = server >> 5;
 				const int node = server & 0x1f;
-				retval[node32] |= (1 << node);
+				bucketInfo->hits[node32] |= (1 << node);
 			}
 		}
 		/*
-		printf("bucket result: %d %d\n", retval[0] & 1, (retval[0] >> 1) & 1);
+		printf("bucket result: %d %d\n",
+		       bucketInfo->hits[0] & 1, (bucketInfo->hits[0] >> 1) & 1);
 		*/
 	}
 	else if (winInfo->bucketMode == WARPED_GRID)
@@ -792,7 +793,7 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		for (i=0; i < tilesort_spu.num_servers; i++) 
 		{
 			ServerWindowInfo *servWinInfo = winInfo->server + i;
-			/* 32 bits (flags) per element in retval */
+			/* 32 bits (flags) per element in bucketInfo->hits */
 			const int node32 = i >> 5;
 			const int node = i & 0x1f;
 
@@ -802,14 +803,14 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 				if (quad_overlap(servWinInfo->world_extents[j],
 												 xmin, ymin, xmax, ymax))
 				{
-					retval[node32] |= (1 << node);
+					bucketInfo->hits[node32] |= (1 << node);
 					break;
 				}
 			}
 
 #else
 			/* XXX: just broadcast now, for debugging */
-			retval[node32] |= (1 << node);
+			bucketInfo->hits[node32] |= (1 << node);
 #endif			
 		}
 	}
@@ -820,16 +821,12 @@ doBucket( const WindowInfo *winInfo, TileSortBucketInfo *bucketInfo )
 		const int node32 = server >> 5;
 		const int node = server & 0x1f;
 
-		retval[node32] |= (1 << node);
+		bucketInfo->hits[node32] |= (1 << node);
 	}
 	else
 	{
 		crError("Invalid value for winInfo->bucketMode");
 	}
-
-	/* XXX why use retval at all?  Why not just use bucketInfo->hits? */
-	crMemcpy((char*)bucketInfo->hits, (char*)retval,
-				sizeof(CRbitvalue) * CR_MAX_BITARRAY);
 
 	return;
 }
