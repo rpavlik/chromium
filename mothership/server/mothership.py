@@ -456,8 +456,8 @@ class CR:
 		for i in range(len(spu.servers)):
 			(node, url) = spu.servers[i]
 			servers += "%d" % (node.SPUs[0].ID)
-			if i != len(spu.servers) -1:
-				servers += ','
+			if i != len(spu.servers) - 1:
+				servers += ' '
 		sock.Success( servers )
 
 	def do_tiles( self, sock, args ):
