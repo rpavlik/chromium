@@ -595,8 +595,7 @@ class CR:
 
 	def AllSPUConf( self, regex, key, *values ):
 		"""AllSPUConf(regex, key, *values)
-		XXX Greg, is this right? (ahern)
-		Adds the key/values list to all SPUs' configuration."""
+		Adds the key/values list to the global SPU configuration."""
 		self.allSPUConf.append( (regex, key, map( MakeString, values) ) )
 		
 	# XXX obsolete; use Conf('MTU', value) instead
@@ -943,7 +942,8 @@ class CR:
 
 	def do_opengldll( self, sock, args ):
 		"""do_opengldll(sock, args)
-		XXX Is this right??!  Not sure. (ahern)
+		XXX Is this documentation right??!  Not sure. (ahern)
+
 		Identifies the application node in the graph.
 		Also, return the client's SPU chain."""
 		(id_string, hostname) = args.split( " " )
@@ -982,7 +982,8 @@ class CR:
 			return
 		spu = allSPUs[sock.SPUid]
 		if not spu.config.has_key( args ):
-			# Okay, there's no specific parameter for the SPU.  Try the global SPU configurations.
+                        # Okay, there's no specific parameter for the SPU.
+                        # Try the global SPU configurations.
 			for (regex, key, values) in self.allSPUConf:
 				if args == key and re.search( regex, spu.name ) != -1:
 					response = values
