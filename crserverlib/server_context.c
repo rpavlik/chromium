@@ -13,10 +13,6 @@
 #include "server.h"
 
 
-/* This makes context numbers more readable during debugging */
-#define MAGIC_OFFSET 5000
-
-
 GLint SERVER_DISPATCH_APIENTRY crServerDispatchCreateContext( const char *dpyName, GLint visualBits )
 {
 	GLint i, retVal = 0, ctxPos = -1;
@@ -91,6 +87,14 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 		CRASSERT(ctxPos < CR_MAX_CONTEXTS);
 
 		mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
+		if (!mural && window == MAGIC_OFFSET &&
+				!cr_server.clients[0].conn->actual_network) {
+			/* We're reading from a file and not a real network connection so
+			 * we have to fudge the window id here.
+			 */
+			window = 0;
+			mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, 0);
+		}
 		CRASSERT(mural);
 
 		/* Update the state tracker's current context */

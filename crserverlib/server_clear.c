@@ -268,5 +268,10 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSwapBuffers( GLint window, GLint f
 	
 		cr_server.head_spu->dispatch_table.Color4f(col.r, col.g, col.b, col.a);
 	}
+
+	/* Check if using a file network */
+	if (!cr_server.clients[0].conn->actual_network && window == MAGIC_OFFSET)
+		window = 0;
+
 	cr_server.head_spu->dispatch_table.SwapBuffers( window, flags );
 }

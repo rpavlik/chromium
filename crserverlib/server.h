@@ -15,6 +15,11 @@
 
 #include "cr_server.h"
 
+/*
+ * This is the base number for window and context IDs
+ */
+#define MAGIC_OFFSET 5000
+
 extern CRServer cr_server;
 
 /* Semaphore wait queue node */
