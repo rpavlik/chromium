@@ -398,7 +398,8 @@ void crSPUReportGLLimits( const CRLimitsState *limits, int spu_id )
 	conn = crMothershipConnect();
 	if (!conn)
 	{
-		crError( "Couldn't connect to the mothership -- I have no idea what to do!" );
+		crWarning( "Couldn't connect to the mothership, couldn't report GL limits" );
+		return;
 	}
 	crMothershipIdentifySPU( conn, spu_id );
 
