@@ -300,23 +300,141 @@ void crUnpackExtendAreTexturesResident( void )
 	(void) cr_unpackDispatch.AreTexturesResident( n, textures, NULL );
 }
 
+
+void crUnpackExtendCompressedTexImage3DARB( void )
+{
+	GLenum  target         = READ_DATA( 4 + sizeof(int) +  0, GLenum );
+	GLint   level          = READ_DATA( 4 + sizeof(int) +  4, GLint );
+	GLenum  internalformat = READ_DATA( 4 + sizeof(int) +  8, GLenum );
+	GLsizei width          = READ_DATA( 4 + sizeof(int) + 12, GLsizei );
+	GLsizei height         = READ_DATA( 4 + sizeof(int) + 16, GLsizei );
+	GLsizei depth          = READ_DATA( 4 + sizeof(int) + 20, GLsizei );
+	GLint   border         = READ_DATA( 4 + sizeof(int) + 24, GLint );
+	GLsizei imagesize      = READ_DATA( 4 + sizeof(int) + 28, GLsizei );
+	int     is_null        = READ_DATA( 4 + sizeof(int) + 32, int );
+	GLvoid  *pixels;
+
+	if( is_null )
+		pixels = NULL;
+	else
+		pixels = DATA_POINTER( 4 + sizeof(int) + 36, GLvoid );
+
+	cr_unpackDispatch.CompressedTexImage3DARB(target, level, internalformat,
+	                                          width, height, depth, border,
+	                                          imagesize, pixels);
+}
+
+
 void crUnpackExtendCompressedTexImage2DARB( void )
 {
 	GLenum target =         READ_DATA( 4 + sizeof( int ) + 0, GLenum );
-	GLint level =           READ_DATA( 4 + sizeof( int ) + 4, GLenum );
+	GLint level =           READ_DATA( 4 + sizeof( int ) + 4, GLint );
 	GLenum internalformat = READ_DATA( 4 + sizeof( int ) + 8, GLenum );
-	GLsizei width =         READ_DATA( 4 + sizeof( int ) + 12, GLenum );
-	GLsizei height =        READ_DATA( 4 + sizeof( int ) + 16, GLenum );
-	GLint border =          READ_DATA( 4 + sizeof( int ) + 20, GLenum );
-	GLsizei imagesize =     READ_DATA( 4 + sizeof( int ) + 24, GLenum );
+	GLsizei width =         READ_DATA( 4 + sizeof( int ) + 12, GLsizei );
+	GLsizei height =        READ_DATA( 4 + sizeof( int ) + 16, GLsizei );
+	GLint border =          READ_DATA( 4 + sizeof( int ) + 20, GLint );
+	GLsizei imagesize =     READ_DATA( 4 + sizeof( int ) + 24, GLsizei );
 	int is_null =           READ_DATA( 4 + sizeof( int ) + 28, int );
-        GLvoid *pixels;
+	GLvoid *pixels;
 
-        if ( is_null )
-                pixels = NULL;
-        else
-                pixels = DATA_POINTER( 4 + sizeof( int ) + 32, GLvoid );
+	if ( is_null )
+		pixels = NULL;
+	else
+		pixels = DATA_POINTER( 4 + sizeof( int ) + 32, GLvoid );
 
-        cr_unpackDispatch.CompressedTexImage2DARB( target, level, internalformat, width, height, 
-                                      border, imagesize, pixels );
+	cr_unpackDispatch.CompressedTexImage2DARB( target, level, internalformat, width, height, 
+	                                           border, imagesize, pixels );
+}
+
+
+void crUnpackExtendCompressedTexImage1DARB( void )
+{
+	GLenum  target         = READ_DATA( 4 + sizeof(int) +  0, GLenum );
+	GLint   level          = READ_DATA( 4 + sizeof(int) +  4, GLint );
+	GLenum  internalformat = READ_DATA( 4 + sizeof(int) +  8, GLenum );
+	GLsizei width          = READ_DATA( 4 + sizeof(int) + 12, GLsizei );
+	GLint   border         = READ_DATA( 4 + sizeof(int) + 16, GLint );
+	GLsizei imagesize      = READ_DATA( 4 + sizeof(int) + 20, GLsizei );
+	int     is_null        = READ_DATA( 4 + sizeof(int) + 24, int );
+	GLvoid  *pixels;
+
+	if( is_null )
+		pixels = NULL;
+	else
+		pixels = DATA_POINTER( 4 + sizeof(int) + 28, GLvoid );
+
+	cr_unpackDispatch.CompressedTexImage1DARB(target, level, internalformat,
+	                                          width, border, imagesize, pixels);
+}
+
+
+void crUnpackExtendCompressedTexSubImage3DARB( void )
+{
+	GLenum  target    = READ_DATA( 4 + sizeof(int) +  0, GLenum );
+	GLint   level     = READ_DATA( 4 + sizeof(int) +  4, GLint );
+	GLint   xoffset   = READ_DATA( 4 + sizeof(int) +  8, GLint );
+	GLint   yoffset   = READ_DATA( 4 + sizeof(int) + 12, GLint );
+	GLint   zoffset   = READ_DATA( 4 + sizeof(int) + 16, GLint );
+	GLsizei width     = READ_DATA( 4 + sizeof(int) + 20, GLsizei );
+	GLsizei height    = READ_DATA( 4 + sizeof(int) + 24, GLsizei );
+	GLsizei depth     = READ_DATA( 4 + sizeof(int) + 28, GLsizei );
+	GLenum  format    = READ_DATA( 4 + sizeof(int) + 32, GLenum );
+	GLsizei imagesize = READ_DATA( 4 + sizeof(int) + 36, GLsizei );
+	int     is_null   = READ_DATA( 4 + sizeof(int) + 40, int );
+	GLvoid  *pixels;
+
+	if( is_null )
+		pixels = NULL;
+	else
+		pixels = DATA_POINTER( 4 + sizeof(int) + 44, GLvoid );
+
+	cr_unpackDispatch.CompressedTexSubImage3DARB(target, level, xoffset,
+	                                             yoffset, zoffset, width,
+	                                             height, depth, format,
+	                                             imagesize, pixels);
+}
+
+
+void crUnpackExtendCompressedTexSubImage2DARB( void )
+{
+	GLenum  target    = READ_DATA( 4 + sizeof(int) +  0, GLenum );
+	GLint   level     = READ_DATA( 4 + sizeof(int) +  4, GLint );
+	GLint   xoffset   = READ_DATA( 4 + sizeof(int) +  8, GLint );
+	GLint   yoffset   = READ_DATA( 4 + sizeof(int) + 12, GLint );
+	GLsizei width     = READ_DATA( 4 + sizeof(int) + 16, GLsizei );
+	GLsizei height    = READ_DATA( 4 + sizeof(int) + 20, GLsizei );
+	GLenum  format    = READ_DATA( 4 + sizeof(int) + 24, GLenum );
+	GLsizei imagesize = READ_DATA( 4 + sizeof(int) + 28, GLsizei );
+	int     is_null   = READ_DATA( 4 + sizeof(int) + 32, int );
+	GLvoid  *pixels;
+
+	if( is_null )
+		pixels = NULL;
+	else
+		pixels = DATA_POINTER( 4 + sizeof(int) + 36, GLvoid );
+
+	cr_unpackDispatch.CompressedTexSubImage2DARB(target, level, xoffset,
+	                                             yoffset, width, height,
+	                                             format, imagesize, pixels);
+}
+
+
+void crUnpackExtendCompressedTexSubImage1DARB( void )
+{
+	GLenum  target    = READ_DATA( 4 + sizeof(int) +  0, GLenum );
+	GLint   level     = READ_DATA( 4 + sizeof(int) +  4, GLint );
+	GLint   xoffset   = READ_DATA( 4 + sizeof(int) +  8, GLint );
+	GLsizei width     = READ_DATA( 4 + sizeof(int) + 12, GLsizei );
+	GLenum  format    = READ_DATA( 4 + sizeof(int) + 16, GLenum );
+	GLsizei imagesize = READ_DATA( 4 + sizeof(int) + 20, GLsizei );
+	int     is_null   = READ_DATA( 4 + sizeof(int) + 24, int );
+	GLvoid  *pixels;
+
+	if( is_null )
+		pixels = NULL;
+	else
+		pixels = DATA_POINTER( 4 + sizeof(int) + 28, GLvoid );
+
+	cr_unpackDispatch.CompressedTexSubImage1DARB(target, level, xoffset, width,
+	                                             format, imagesize, pixels);
 }

@@ -130,4 +130,9 @@ BufferSubDataARB
 GetBufferSubDataARB
 DeleteBuffersARB
 ZPixCR
+CompressedTexImage1DARB
 CompressedTexImage2DARB
+CompressedTexImage3DARB
+CompressedTexSubImage1DARB
+CompressedTexSubImage2DARB
+CompressedTexSubImage3DARB
