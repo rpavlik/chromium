@@ -80,7 +80,7 @@ extern "C" {
 #define CRUT_MENU_EVENT                 6
 #define CRUT_VISIBILITY_EVENT           7
 
-#define DEFAULT_PORT 9000
+#define DEFAULT_CRUT_PORT 9000
 
 #define MENU_MAX_SIZE 1024
 #define MENU_ITEM_REGULAR 0

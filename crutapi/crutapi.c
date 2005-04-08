@@ -126,7 +126,7 @@ crutConnectToClients( CRUTAPI *crut_api )
       
         client = newclients[ind++];
 	
-	if ( !crParseURL( client, protocol, hostname, &port, 9000 ) )
+	if ( !crParseURL( client, protocol, hostname, &port, DEFAULT_CRUT_PORT ) )
 	{
 	    crError( "Malformed URL: \"%s\"", response );
 	}   

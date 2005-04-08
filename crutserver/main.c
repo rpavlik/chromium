@@ -444,6 +444,7 @@ main( int argc, char *argv[] )
 	}
     } 
 
+    crDebug("This the CRUT server");
     crutInitServer(mothership, argc, argv);
 
     if (crut_server.callbacks.mouse)

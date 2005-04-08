@@ -662,7 +662,10 @@ crutInitClient(void)
     mtu = crMothershipGetMTU(crut_api.mothershipConn);
 
     /* set up the connection to recv on */
-    crut_client.recv_conn = crNetConnectToServer( server, DEFAULT_PORT, mtu, 0 );
+    crut_client.recv_conn = crNetConnectToServer( server, DEFAULT_CRUT_PORT, mtu, 0 );
+    if (!crut_client.recv_conn) {
+        crError("CRUT client API: failed to connect to CRUT server!");
+    }
 
     crutConnectToClients( &crut_api );
     crutPostRedisplay();

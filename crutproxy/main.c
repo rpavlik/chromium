@@ -11,8 +11,6 @@
  *
  */
 
-#define DEFAULT_PORT 9000
-
 typedef struct 
 {
     int num_bytes;
@@ -112,7 +110,7 @@ crutInitProxy(char *mothership)
     mtu = crMothershipGetMTU(crut_api.mothershipConn);
  
     /* set up the connection to recv on */
-    crut_proxy.recv_conn = crNetConnectToServer( server, DEFAULT_PORT, mtu, 1 );
+    crut_proxy.recv_conn = crNetConnectToServer( server, DEFAULT_CRUT_PORT, mtu, 1 );
     crutConnectToClients( &crut_api );
 
 }
