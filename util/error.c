@@ -24,6 +24,7 @@ static int my_pid = 0;
 static int canada = 0;
 static int swedish_chef = 0;
 static int australia = 0;
+static int warnings_enabled = 1;
 
 static void __getHostInfo( void )
 {
@@ -155,28 +156,36 @@ void crError( char *format, ... )
 		DebugBreak();
 	}
 #endif
+
 	/* Give chance for things to close down */
 	raise( SIGTERM );
  
 	exit(1);
 }
 
+void crEnableWarnings(int onOff)
+{
+	warnings_enabled = onOff;
+}
+
 void crWarning( char *format, ... )
 {
-	va_list args;
-	static char txt[8092];
-	int offset;
+	if (warnings_enabled) {
+		va_list args;
+		static char txt[8092];
+		int offset;
 
-	__crCheckCanada();
-	__crCheckSwedishChef();
-	__crCheckAustralia();
-	if (!my_hostname[0])
-		__getHostInfo();
-	offset = sprintf( txt, "CR Warning(%s:%d): ", my_hostname, my_pid );
-	va_start( args, format );
-	vsprintf( txt + offset, format, args );
-	outputChromiumMessage( stderr, txt );
-	va_end( args );
+		__crCheckCanada();
+		__crCheckSwedishChef();
+		__crCheckAustralia();
+		if (!my_hostname[0])
+			__getHostInfo();
+		offset = sprintf( txt, "CR Warning(%s:%d): ", my_hostname, my_pid );
+		va_start( args, format );
+		vsprintf( txt + offset, format, args );
+		outputChromiumMessage( stderr, txt );
+		va_end( args );
+	}
 }
 
 void crInfo( char *format, ... )

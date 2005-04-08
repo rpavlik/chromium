@@ -647,8 +647,18 @@ stubInit(void)
 		app_id = "-1";
 	}
 
-	/* contact mothership to get my spu chain */
+	/*
+	 * Contact mothership to get my spu chain.
+	 * Note that we disable (then re-enable) warning messages at this point.
+	 * If we're using Chromium's auto-start feature, there won't be a
+	 * mothership running at this point and we'll print invalid "CR Warning"
+	 * messages which might confuse the user.  This silences those warnings.
+	 * BTW, if the call to crMothershipConnect() fails and we don't have
+	 * auto-start set up we'll still get warning messages eventually.
+	 */
+	crEnableWarnings(0);
 	conn = crMothershipConnect();
+	crEnableWarnings(1);
 	if (!conn) {
 		/* No mothership running.  Try spawning it ourselves now */
 		if (StartMothership()) {

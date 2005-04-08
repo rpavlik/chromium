@@ -19,6 +19,8 @@ extern "C" {
 #define PRINTF __attribute__ ((format(printf,1,2)))
 #endif
 
+void crEnableWarnings(int onOff);
+
 void crDebug( char *format, ... ) PRINTF;
 void crWarning( char *format, ... ) PRINTF;
 void crInfo( char *format, ... ) PRINTF;

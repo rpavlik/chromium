@@ -8,6 +8,7 @@ crDLLGetNoError
 crDLLGet
 crDLLClose
 crError
+crEnableWarnings
 crWarning
 crDebug
 crInfo
