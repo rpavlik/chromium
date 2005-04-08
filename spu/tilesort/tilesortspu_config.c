@@ -447,7 +447,7 @@ tilesortspuGatherConfiguration(const SPU * child_spu)
 	tilesortspuGetTilingFromServers(conn, winInfo);
 	crMothershipDisconnect(conn);
 
-	crInfo("Tilesort SPU: Total output dimensions = (%d, %d)",
+	crDebug("Tilesort SPU: Total output dimensions = (%d, %d)",
 				 winInfo->muralWidth, winInfo->muralHeight);
 
 	/** XXX \todo we should really query all the servers to compute the limits! */
