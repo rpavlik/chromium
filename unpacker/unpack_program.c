@@ -95,8 +95,12 @@ void crUnpackExtendExecuteProgramNV(void)
 {
 	GLenum target = READ_DATA( 8, GLenum );
 	GLuint id = READ_DATA( 12, GLuint );
-	crError( "ExecuteProgramNV needs to be special cased!" );
-	cr_unpackDispatch.ExecuteProgramNV( target, id, NULL );
+	GLfloat params[4];
+	params[0] = READ_DATA( 16, GLfloat );
+	params[1] = READ_DATA( 20, GLfloat );
+	params[2] = READ_DATA( 24, GLfloat );
+	params[3] = READ_DATA( 28, GLfloat );
+	cr_unpackDispatch.ExecuteProgramNV( target, id, params );
 }
 
 void crUnpackExtendRequestResidentProgramsNV(void)
