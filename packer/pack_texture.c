@@ -49,6 +49,7 @@ crPackTexImage1D(GLenum target, GLint level,
 	}
 
 	crHugePacket(CR_TEXIMAGE1D_OPCODE, data_ptr);
+	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY
@@ -110,6 +111,7 @@ crPackTexImage2D(GLenum target, GLint level,
 	}
 
 	crHugePacket(CR_TEXIMAGE2D_OPCODE, data_ptr);
+	crPackFree( data_ptr );
 }
 
 #if defined( GL_EXT_texture3D )
@@ -180,6 +182,7 @@ void PACK_APIENTRY crPackTexImage3DEXT(GLenum target, GLint level,
 	}
 
 	crHugePacket( CR_TEXIMAGE3DEXT_OPCODE, data_ptr );
+	crPackFree( data_ptr );
 }
 #endif /* GL_EXT_texture3D */
 
@@ -253,6 +256,7 @@ void PACK_APIENTRY crPackTexImage3D(GLenum target, GLint level,
 	}
 
 	crHugePacket( CR_TEXIMAGE3D_OPCODE, data_ptr );
+	crPackFree( data_ptr );
 }
 #endif /* CR_OPENGL_VERSION_1_2 */
 
@@ -261,12 +265,15 @@ void PACK_APIENTRY
 crPackDeleteTextures(GLsizei n, const GLuint * textures)
 {
 	unsigned char *data_ptr;
-	int packet_length = sizeof(n) + n * sizeof(*textures);
+	int packet_length =
+		sizeof( n ) +
+		n * sizeof( *textures );
 
 	data_ptr = (unsigned char *) crPackAlloc(packet_length);
 	WRITE_DATA(0, GLsizei, n);
 	crMemcpy(data_ptr + 4, textures, n * sizeof(*textures));
 	crHugePacket(CR_DELETETEXTURES_OPCODE, data_ptr);
+	crPackFree( data_ptr );
 }
 
 static void
@@ -276,7 +283,10 @@ __handleTexEnvData(GLenum target, GLenum pname, const GLfloat * params)
 	unsigned char *data_ptr;
 	int params_length;
 
-	int packet_length = sizeof(int) + sizeof(target) + sizeof(pname);
+	int packet_length =
+		sizeof( int ) +
+		sizeof( target ) +
+		sizeof( pname );
 
 	if (pname == GL_TEXTURE_ENV_COLOR)
 	{
@@ -327,22 +337,24 @@ crPackTexEnvi(GLenum target, GLenum pname, GLint param)
 }
 
 void PACK_APIENTRY
-crPackPrioritizeTextures(GLsizei n,
-												 const GLuint * textures, const GLclampf * priorities)
+crPackPrioritizeTextures(GLsizei n, const GLuint * textures,
+                         const GLclampf * priorities)
 {
 	unsigned char *data_ptr;
 	int packet_length =
-		sizeof(int) + sizeof(n) + n * sizeof(*textures) + n * sizeof(*priorities);
+		sizeof(n) +
+		n * sizeof(*textures) +
+		n * sizeof(*priorities);
 
 	data_ptr = (unsigned char *) crPackAlloc(packet_length);
 
-	WRITE_DATA(0, GLsizei, packet_length);
-	WRITE_DATA(sizeof(int) + 0, GLsizei, n);
-	crMemcpy(data_ptr + sizeof(int) + 4, textures, n * sizeof(*textures));
-	crMemcpy(data_ptr + sizeof(int) + 4 + n * sizeof(*textures),
+	WRITE_DATA(0, GLsizei, n);
+	crMemcpy(data_ptr + 4, textures, n * sizeof(*textures));
+	crMemcpy(data_ptr + 4 + n * sizeof(*textures),
 				 priorities, n * sizeof(*priorities));
 
 	crHugePacket(CR_PRIORITIZETEXTURES_OPCODE, data_ptr);
+	crPackFree( data_ptr );
 }
 
 static void
@@ -548,6 +560,7 @@ crPackTexSubImage3D(GLenum target, GLint level,
 								pixels, format, type, unpackstate);	/* src */
 
 	crHugePacket(CR_TEXSUBIMAGE3D_OPCODE, data_ptr);
+	crPackFree( data_ptr );
 }
 #endif /* CR_OPENGL_VERSION_1_2 */
 
@@ -584,6 +597,7 @@ crPackTexSubImage2D(GLenum target, GLint level,
 								pixels, format, type, unpackstate);	/* src */
 
 	crHugePacket(CR_TEXSUBIMAGE2D_OPCODE, data_ptr);
+	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY
@@ -614,6 +628,7 @@ crPackTexSubImage1D(GLenum target, GLint level,
 								pixels, format, type, width, unpackstate);
 
 	crHugePacket(CR_TEXSUBIMAGE1D_OPCODE, data_ptr);
+	crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY
