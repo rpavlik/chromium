@@ -16,6 +16,7 @@ FILES = unpack \
 	unpack_clipplane \
 	unpack_context \
 	unpack_drawpixels \
+	unpack_fence \
 	unpack_fog \
 	unpack_lights \
 	unpack_map \
