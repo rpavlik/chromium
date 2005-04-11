@@ -386,7 +386,7 @@ glXCreateContext(Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct)
 
 			/*crDebug("ComputeVisBits(0x%x) = 0x%x", (int)vis->visual->visualid, visBits);*/
 			if (stub.force_pbuffers) {
-				crInfo("App faker: Forcing use of Pbuffers");
+				crDebug("App faker: Forcing use of Pbuffers");
 				visBits |= CR_PBUFFER_BIT;
 			}
 
