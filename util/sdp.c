@@ -472,7 +472,10 @@ crSDPAlloc( CRConnection *conn )
 		buf->pad   = 0;
 		buf->allocated = conn->buffer_size;
 	}
-	
+	else {
+		CRASSERT(buf->magic == CR_SDP_BUFFER_MAGIC);
+	}
+
 #ifdef CHROMIUM_THREADSAFE
 	crUnlockMutex(&cr_sdp.mutex);
 #endif
@@ -603,10 +606,10 @@ static void
 crSDPFree( CRConnection *conn, void *buf )
 {
 	CRSDPBuffer *sdp_buffer = (CRSDPBuffer *) buf - 1;
-  
+
 	CRASSERT( sdp_buffer->magic == CR_SDP_BUFFER_MAGIC );
 	conn->recv_credits += sdp_buffer->len;
-  
+
 	switch ( sdp_buffer->kind )
 	{
   case CRSDPMemory:
@@ -638,7 +641,7 @@ crSDPFree( CRConnection *conn, void *buf )
 static int
 crSDPUserbufRecv(CRConnection *conn, CRMessage *msg)
 {
-	unsigned int buf[2];
+	unsigned long buf[2];
 	int len;
   
 	switch (msg->header.type)
@@ -654,7 +657,7 @@ crSDPUserbufRecv(CRConnection *conn, CRMessage *msg)
     msg->gather.len = buf[1];
     
     /* read the rest into the userbuf */
-    if (buf[0]+buf[1] > (unsigned int)conn->userbuf_len)
+    if (buf[0]+buf[1] > (unsigned long) conn->userbuf_len)
     {
       crDebug("userbuf for Gather Message is too small!");
       return len;
@@ -701,6 +704,8 @@ crSDPReceiveMessage(CRConnection *conn)
 	if ( len <= conn->buffer_size )
 	{
 		sdp_buffer = (CRSDPBuffer *) crSDPAlloc( conn ) - 1;
+		CRASSERT(sdp_buffer->magic == CR_SDP_BUFFER_MAGIC);
+		CRASSERT(sdp_buffer->allocated > 0);
 	}
 	else
 	{
