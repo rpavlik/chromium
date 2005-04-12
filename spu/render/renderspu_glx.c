@@ -317,12 +317,12 @@ chooseFBConfig( Display *dpy, int screen, GLbitfield visAttribs )
 		attribs[attrCount++] = 1;
 	}
 
-	attribs[attrCount++] = GLX_DOUBLEBUFFER;
 	if (visAttribs & CR_DOUBLE_BIT) {
+		attribs[attrCount++] = GLX_DOUBLEBUFFER;
 		attribs[attrCount++] = True;
 	}
 	else {
-		attribs[attrCount++] = False;
+		/* don't care */
 	}
 
 	if (visAttribs & CR_STENCIL_BIT) {
