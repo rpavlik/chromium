@@ -84,7 +84,7 @@ typedef struct
 	             */
 	GLuint prefval; /* preferred data value, 0 for XOR  */
 	int nruns;      /* XXX JAG debug count of runs */
-	PLEdata data[0];
+	PLEdata data[1]; /* really, [0] */
 } PLEbuf;
 
 /* 
