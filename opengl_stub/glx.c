@@ -259,6 +259,7 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
 				/* just ignore value for now, we'll try to get 4 samples/pixel */
 				if (attrib[1] > 4)
 					return NULL;
+				visBits |= CR_MULTISAMPLE_BIT;
 				attrib++;
 				break;
 
