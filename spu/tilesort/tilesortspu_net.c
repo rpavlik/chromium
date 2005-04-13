@@ -105,18 +105,19 @@ void tilesortspuConnectToServers( void )
 		CRNetServer *netServer = &(thread0->netServer[i]);
 
 		crNetServerConnect( netServer );
-
+		if (!netServer->conn) {
+			crError("Tilesort SPU: Unable to connect to server %d!", i);
+		}
 
 		/* the connection may have already detected a smaller MTU */
 		if (tilesort_spu.MTU > netServer->conn->mtu)
 			tilesort_spu.MTU = netServer->conn->mtu;
 
-		
 		/* Tear the URL apart into relevant portions. 
 		 * 
 		 * just trying to get at the protocol so we can figure out if 
-		 * we should override the user's choices for synconswap etc. */
-
+		 * we should override the user's choices for synconswap etc.
+		 */
 		if ( !crParseURL( netServer->name, protocol, hostname, &port, 0 ) )
 		{
 			crError( "Malformed URL: \"%s\"", netServer->name );
