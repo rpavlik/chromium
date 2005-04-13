@@ -928,7 +928,7 @@ crSDPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
 	}
   
 	cr_sdp.initialized = 1;
-	crDebug("Initializing SDP\n");
+	crDebug("Initializing SDP");
   
 	cr_sdp.num_conns = 0;
 	cr_sdp.conns     = NULL;
