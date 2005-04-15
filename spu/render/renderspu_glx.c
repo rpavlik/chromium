@@ -359,10 +359,45 @@ chooseFBConfig( Display *dpy, int screen, GLbitfield visAttribs )
 	attribs[attrCount++] = 0;
 
 	fbconfig = render_spu.ws.glXChooseFBConfig(dpy, screen, attribs, &numConfigs);
-	if (fbconfig && numConfigs > 0)
-		return fbconfig[0];
-	else
+	if (!fbconfig || numConfigs == 0) {
+		/* no matches! */
 		return 0;
+	}
+	if (numConfigs == 1) {
+		/* one match */
+		return fbconfig[0];
+	}
+	else {
+		/* found several matches - try to find best one */
+		int i;
+
+		crDebug("Render SPU: glXChooseFBConfig found %d matches for visBits 0x%x",
+						numConfigs, visAttribs);
+		/* Skip/omit configs that have unneeded Z buffer or unneeded double
+		 * buffering.  Possible add other tests in the future.
+		 */
+		for (i = 0; i < numConfigs; i++) {
+			int zBits, db;
+			render_spu.ws.glXGetFBConfigAttrib(dpy, fbconfig[i],
+																				 GLX_DEPTH_SIZE, &zBits);
+			if ((visAttribs & CR_DEPTH_BIT) == 0 && zBits > 0) {
+				/* omit fbconfig with unneeded Z */
+				continue;
+			}
+			render_spu.ws.glXGetFBConfigAttrib(dpy, fbconfig[i],
+																				 GLX_DOUBLEBUFFER, &db);
+			if ((visAttribs & CR_DOUBLE_BIT) == 0 && db) {
+				/* omit fbconfig with uneeded DB */
+				continue;
+			}
+
+			/* if we get here, use this config */
+			return fbconfig[i];
+		}
+
+		/* if we get here, we didn't find a better fbconfig */
+		return fbconfig[0];
+	}
 }
 #endif /* GLX_VERSION_1_3 */
 
