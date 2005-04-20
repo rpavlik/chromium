@@ -334,6 +334,7 @@ useful_agl_functions = [
 	"aglGetCurrentContext",
 	"aglSetDrawable",
 	"aglSetFullScreen",
+	"aglUpdateContext",
 	"aglUseFont"
 ]
 in_gl_functions = [

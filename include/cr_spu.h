@@ -326,6 +326,7 @@ typedef struct {
 	aglSetDrawableFunc_t			aglSetDrawable;
 	aglSetFullScreenFunc_t			aglSetFullScreen;
 	aglGetProcAddressFunc_t			aglGetProcAddress;
+	aglUpdateContextFunc_t			aglUpdateContext;
 	aglUseFontFunc_t				aglUseFont;
 
 	CGLChoosePixelFormatFunc_t		CGLChoosePixelFormat;
