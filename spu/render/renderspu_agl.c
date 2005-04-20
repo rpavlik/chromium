@@ -4,6 +4,10 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <Carbon/Carbon.h>
+#include <AGL/agl.h>
+#include <OpenGL/OpenGL.h>
+
 #include <stdio.h>
 
 #include "cr_environment.h"
@@ -15,32 +19,41 @@
 
 #define WINDOW_NAME window->title
 
-#define SetWContext(w, c)   ( SetWRefCon( (w), (unsigned long) (c) ) )
-#define GetWContext(w)		( (ContextInfo *) GetWRefCon( ((w)->nativeWindow ? (w)->nativeWindow : (w)->window) ) )
+#define renderspuSetWindowContext(w, c) \
+	( SetWRefCon( (w), (unsigned long) (c) ) )
+#define renderspuGetWindowContext(w) \
+	( (ContextInfo *) GetWRefCon( ((w)->nativeWindow ? (w)->nativeWindow : (w)->window) ) )
+
+/* functions not found in headers */
+
+GrafPtr           UMAGetWindowPort( WindowRef inWindowRef );
+CGSConnectionID   _CGSDefaultConnection(void);
+OSStatus         CGSGetWindowBounds( CGSConnectionID cid, CGSWindowID wid,
+                                     float *bounds );
 
 
-
-/* Only one of these overall */
-CGDirectDisplayID   display=NULL;
+// XXX TODO: get all of this into VisualInfo
+CGDirectDisplayID   display=NULL; /* Only one of these overall */
 GDHandle			hDisplay=NULL;
-CFDictionaryRef		old_dispMode=NULL;
-GLboolean			disp_valid = GL_FALSE;
+CFDictionaryRef		old_displayMode=NULL;
+GLboolean			display_valid = GL_FALSE;
 
-CFDictionaryRef		current_dispMode=NULL;
+CFDictionaryRef		current_displayMode=NULL;
 
 // where should this go?!
 WindowGroupRef masterGroup = NULL;
 
 //
 
-GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
+GLboolean
+renderspu_SystemInitVisual( VisualInfo *visual )
 {
-	if (visual->visAttribs & CR_PBUFFER_BIT) {
+	if( visual->visAttribs & CR_PBUFFER_BIT )
 		crWarning("Render SPU: PBuffers not support on Darwin/AGL yet.");
-	}
 
-	if( !disp_valid ) {
+	if( !display_valid ) {
 		display = CGMainDisplayID();
+
 		if( !display ) {
 			crWarning( "Render SPU: Couldn't open display" );
 			return GL_FALSE;
@@ -51,63 +64,66 @@ GLboolean renderspu_SystemInitVisual( VisualInfo *visual )
 			return GL_FALSE;
 		}
 
-		old_dispMode = CGDisplayCurrentMode( display );
+		old_displayMode = CGDisplayCurrentMode( display );
+		display_valid = GL_TRUE;
 	}
 
 	return GL_TRUE;
 }
 
 
-GLboolean renderspuChoosePixelFormat( ContextInfo *context, AGLPixelFormat *pix ) {
+GLboolean
+renderspuChoosePixelFormat( ContextInfo *context, AGLPixelFormat *pix )
+{
 	GLbitfield  visAttribs = context->visual->visAttribs;
 	GLint		attribs[32];
 	GLint		ind = 0;
 
-#define ADD(s)		( attribs[ind++] = (s) )
-#define ADDV(s,v)   ( ADD((s)), ADD((v)) )
+#define ATTR_ADD(s)		( attribs[ind++] = (s) )
+#define ATTR_ADDV(s,v)  ( ATTR_ADD((s)), ATTR_ADD((v)) )
 
 	CRASSERT(render_spu.ws.aglChoosePixelFormat);
 
-	ADD(AGL_RGBA);
-/*	ADDV(AGL_RED_SIZE, 1);
-	ADDV(AGL_GREEN_SIZE, 1);
-	ADDV(AGL_BLUE_SIZE, 1); */
+	ATTR_ADD(AGL_RGBA);
+/*	ATTR_ADDV(AGL_RED_SIZE, 1);
+	ATTR_ADDV(AGL_GREEN_SIZE, 1);
+	ATTR_ADDV(AGL_BLUE_SIZE, 1); */
 
 	if( render_spu.fullscreen )
-		ADD(AGL_FULLSCREEN);
+		ATTR_ADD(AGL_FULLSCREEN);
 
 	if( visAttribs & CR_ALPHA_BIT )
-		ADDV(AGL_ALPHA_SIZE, 1);
+		ATTR_ADDV(AGL_ALPHA_SIZE, 1);
 	
 	if( visAttribs & CR_DOUBLE_BIT )
-		ADD(AGL_DOUBLEBUFFER);
+		ATTR_ADD(AGL_DOUBLEBUFFER);
 
 	if( visAttribs & CR_STEREO_BIT )
-		ADD(AGL_STEREO);
+		ATTR_ADD(AGL_STEREO);
 
 	if( visAttribs & CR_DEPTH_BIT )
-		ADDV(AGL_DEPTH_SIZE, 1);
+		ATTR_ADDV(AGL_DEPTH_SIZE, 1);
 
 	if( visAttribs & CR_STENCIL_BIT )
-		ADDV(AGL_STENCIL_SIZE, 1);
+		ATTR_ADDV(AGL_STENCIL_SIZE, 1);
 
 	if( visAttribs & CR_ACCUM_BIT ) {
-		ADDV(AGL_ACCUM_RED_SIZE, 1);
-		ADDV(AGL_ACCUM_GREEN_SIZE, 1);
-		ADDV(AGL_ACCUM_BLUE_SIZE, 1);
+		ATTR_ADDV(AGL_ACCUM_RED_SIZE, 1);
+		ATTR_ADDV(AGL_ACCUM_GREEN_SIZE, 1);
+		ATTR_ADDV(AGL_ACCUM_BLUE_SIZE, 1);
 		if( visAttribs & CR_ALPHA_BIT )
-			ADDV(AGL_ACCUM_ALPHA_SIZE, 1);
+			ATTR_ADDV(AGL_ACCUM_ALPHA_SIZE, 1);
 	}
 
 	if( visAttribs & CR_MULTISAMPLE_BIT ) {
-		ADDV(AGL_SAMPLE_BUFFERS_ARB, 1);
-		ADDV(AGL_SAMPLES_ARB, 4);
+		ATTR_ADDV(AGL_SAMPLE_BUFFERS_ARB, 1);
+		ATTR_ADDV(AGL_SAMPLES_ARB, 4);
 	}
 
 	if( visAttribs & CR_OVERLAY_BIT )
-		ADDV(AGL_LEVEL, 1);
+		ATTR_ADDV(AGL_LEVEL, 1);
 
-	ADD(AGL_NONE);
+	ATTR_ADD(AGL_NONE);
 
 	if( render_spu.fullscreen )
 		*pix = render_spu.ws.aglChoosePixelFormat( &hDisplay, 1, attribs );
@@ -118,13 +134,16 @@ GLboolean renderspuChoosePixelFormat( ContextInfo *context, AGLPixelFormat *pix 
 }
 
 
-void renderspuDestroyPixelFormat( ContextInfo *context, AGLPixelFormat *pix ) {
+void
+renderspuDestroyPixelFormat( ContextInfo *context, AGLPixelFormat *pix )
+{
 	render_spu.ws.aglDestroyPixelFormat( *pix );
 	*pix = NULL;
 }
 
 
-GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
+GLboolean
+renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
 {
 	AGLPixelFormat pix;
 
@@ -150,64 +169,81 @@ GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *contex
 }
 
 
-void renderspu_SystemDestroyContext( ContextInfo *context )
+void
+renderspu_SystemDestroyContext( ContextInfo *context )
 {
 	if( !context )
 		return;
 
-	render_spu.ws.aglDestroyContext( context->context );
+	render_spu.ws.aglSetDrawable( context->context, NULL );
+	render_spu.ws.aglSetCurrentContext( NULL );
+	if( context->context ) {
+		render_spu.ws.aglDestroyContext( context->context );
+		context->context = NULL;
+	}
+
 	context->visual = NULL;
-	context->context = 0;
 }
 
 
 /*
  * This attempts to fade the screen.  If it can't, it won't.
  */
-void TransitionToDisplayMode( CGDirectDisplayID _display, CFDictionaryRef _dispMode ) {
+void
+renderspuTransitionToDisplayMode( CGDirectDisplayID _display,
+                                  CFDictionaryRef _displayMode )
+{
 	CGDisplayFadeReservationToken   token;
-	CGDisplayFadeInterval			interval = 0.0f;
+	CGDisplayFadeInterval           interval = 0.0f;
 
 	/* fade out */
 	if( interval > 0.0f ) {
-		CGAcquireDisplayFadeReservation(kCGMaxDisplayReservationInterval, &token);
-		CGDisplayFade( token, interval, kCGDisplayBlendNormal, kCGDisplayBlendSolidColor, 0.0f, 0.0f, 0.0f, TRUE );
+		CGAcquireDisplayFadeReservation( kCGMaxDisplayReservationInterval,
+		                                 &token );
+		CGDisplayFade( token, interval, kCGDisplayBlendNormal,
+		               kCGDisplayBlendSolidColor, 0.0f, 0.0f, 0.0f, TRUE );
 	}
 
-	CGDisplaySwitchToMode( _display, _dispMode );
+	CGDisplaySwitchToMode( _display, _displayMode );
 
 	/* fade in */
 	if( interval > 0.0f ) {
-		CGDisplayFade( token, interval, kCGDisplayBlendSolidColor, kCGDisplayBlendNormal, 0.0f, 0.0f, 0.0f, FALSE );
+		CGDisplayFade( token, interval, kCGDisplayBlendSolidColor,
+		               kCGDisplayBlendNormal, 0.0f, 0.0f, 0.0f, FALSE );
 		CGReleaseDisplayFadeReservation( token );
 	}
-
 }
 
-void renderspuFullscreen( WindowInfo *window, GLboolean fullscreen ) {
-	CFDictionaryRef _curr = CGDisplayCurrentMode(display);
-	OSStatus err;
+
+void
+renderspuFullscreen( WindowInfo *window, GLboolean fullscreen )
+{
+	CFDictionaryRef displayMode = CGDisplayCurrentMode(display);
 
 	if( fullscreen ) {
 		crDebug("Render SPU: Going Fullscreen");
 
 		if( !CGDisplayIsCaptured(display) )
-			err = CGDisplayCapture(display);
+			CGDisplayCapture(display);
 
-		if( current_dispMode && current_dispMode != _curr )
-			TransitionToDisplayMode( display, current_dispMode );
+		if( current_displayMode && current_displayMode != displayMode )
+			renderspuTransitionToDisplayMode( display, current_displayMode );
 	} else {
 		crDebug("Render SPU: Reverting from Fullscreen");
 
-		if( old_dispMode != _curr )
-			TransitionToDisplayMode( display, old_dispMode );
+		if( old_displayMode && old_displayMode != displayMode )
+			renderspuTransitionToDisplayMode( display, old_displayMode );
 
-		CGDisplayRelease(display);
+		if( CGDisplayIsCaptured(display) )
+			CGDisplayRelease(display);
 	}
 }
 
 
-GLboolean renderspuWindowAttachContext( WindowInfo *wi, WindowRef window, ContextInfo *context ) {
+GLboolean
+renderspuWindowAttachContext( WindowInfo *wi, WindowRef window,
+                              ContextInfo *context )
+{
 	GLboolean   result;
 
 	if( !context || !wi )
@@ -226,31 +262,39 @@ GLboolean renderspuWindowAttachContext( WindowInfo *wi, WindowRef window, Contex
 		/* just be sure we set hDisplay in the PixelFormat */
 		result = render_spu.ws.aglSetFullScreen( context->context, 0, 0, 0, 0 );
 #else
-		result = render_spu.ws.aglSetFullScreen( context->context, wi->width, wi->height, 0, 0 );
+		result = render_spu.ws.aglSetFullScreen( context->context, wi->width,
+		                                         wi->height, 0, 0 );
 #endif
-		if( !result )
+		if( !result ) {
 			crDebug("Render SPU: SetFullScreen Failed");
+			return GL_FALSE;
+		}
 	} else {
-		CGrafPtr	save;
-		CGrafPtr	port;
+		AGLDrawable drawable;
 
-		GetPort( &save );
-		port = GetWindowPort( window );
-		SetPort( port );
+		drawable = (AGLDrawable) GetWindowPort( window );
 
 		/* Isn't this a bit 'expensive' to do every time? */
-		result = render_spu.ws.aglSetDrawable( context->context, port );
-		if( !result )
+		result = render_spu.ws.aglSetDrawable( context->context, drawable );
+		if( !result ) {
 			crDebug("Render SPU: SetDrawable Failed");
+			return GL_FALSE;
+		}
 
 		result = render_spu.ws.aglSetCurrentContext( context->context );
-		if( !result )
+		if( !result ) {
 			crDebug("Render SPU: SetCurrentContext Failed");
+			return GL_FALSE;
+		}
 
-		SetPort( save );
+		result = render_spu.ws.aglUpdateContext( context->context );
+		if( !result ) {
+			crDebug("Render SPU: UpdateContext Failed");
+			return GL_FALSE;
+		}
 	}
 
-	SetWContext( window, context );
+	renderspuSetWindowContext( window, context );
 
 	return result;
 }
@@ -261,49 +305,80 @@ static double getDictDouble( CFDictionaryRef refDict, CFStringRef key ) {
 	double double_value;
 
 	CFNumberRef number_value = (CFNumberRef) CFDictionaryGetValue(refDict, key);
-	if( !number_value ) // if can't get a number for the dictionary
+
+	// if can't get a number for the dictionary
+	if( !number_value ) 
 		return -1;
 
-	if( !CFNumberGetValue(number_value, kCFNumberDoubleType, &double_value) ) // or if can't convert it
+	// or if can't convert it
+	if( !CFNumberGetValue(number_value, kCFNumberDoubleType, &double_value) )
 		return -1;
 
 	return double_value;
 }
 
 // window event handler
-static pascal OSStatus windowEvtHndlr( EventHandlerCallRef myHandler, EventRef event, void* userData )
+static pascal OSStatus
+windowEvtHndlr( EventHandlerCallRef myHandler, EventRef event, void* userData )
 {
 #pragma unused (userData)
-	WindowRef			window = NULL;
-    OSStatus			result = eventNotHandledErr;
-    UInt32 				class = GetEventClass( event );
-    UInt32 				kind = GetEventKind( event );
+	WindowRef   window = NULL;
+	Rect        rectPort = { 0, 0, 0, 0 };
+	OSStatus    result = eventNotHandledErr;
+	UInt32      class = GetEventClass( event );
+	UInt32      kind = GetEventKind( event );
+
+	GetEventParameter(event, kEventParamDirectObject, typeWindowRef,
+	                  NULL, sizeof(WindowRef), NULL, &window);
+	if( window )
+		GetWindowPortBounds( window, &rectPort );
 
 	switch (class) {
 	case kEventClassWindow:
-		GetEventParameter( event, kEventParamDirectObject, typeWindowRef, NULL, sizeof(WindowRef), NULL, &window );
-
 		switch (kind) {
-		case kEventWindowClose: // called when window is being closed (close box)
+		case kEventWindowActivated:
+		case kEventWindowDrawContent:
+			// draw func
+			break;
+
+		case kEventWindowClose:
 			HideWindow( window );
 			SetWRefCon( window, NULL );
 
 			crWarning( "Render SPU: caught kEventWindowClose -- quitting." );
-			exit(0);
+//			exit(0);
+			break;
+
+		case kEventWindowShown:
+			// build gl
+			if( window == FrontWindow() )
+				SetUserFocusWindow( window );
+			InvalWindowRect( window, &rectPort );
+			break;
+
+		case kEventWindowBoundsChanged:
+			// resize
+			// update
+			break;
+
+		case kEventWindowZoomed: //  zoom button
+			//
 			break;
 		}
 		break;
 	}
 
-    return result;
+	return result;
 }
 
 
-GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
+GLboolean
+renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt,
+                              WindowInfo *window )
 {
 //	CGDirectDisplayID   dpy;
-	WindowAttributes	winAttr = 0L;
-	WindowClass			winClass;
+	WindowAttributes	winAttr = kWindowNoAttributes;
+	WindowClass			winClass = 0;
 	Rect				windowRect;
 	OSStatus			stat;
 
@@ -336,7 +411,7 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		winClass = kAltPlainWindowClass;
 	} else {
 		window->y += 20; // It -should- be offsetting from the title bar...
-		winAttr |= kWindowStandardFloatingAttributes | kWindowStandardHandlerAttribute;
+		winAttr |= kWindowCollapseBoxAttribute | kWindowCloseBoxAttribute;
 		winClass = kDocumentWindowClass;
 	}
 
@@ -344,8 +419,8 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 		/* destroy the old one */
 		DisposeWindow( window->window );
 
-	SetRect( &windowRect, window->x, window->y,
-						  window->x + window->width, window->y + window->height );
+	SetRect( &windowRect, window->x, window->y, window->x + window->width,
+	         window->y + window->height );
 
 	stat = CreateNewWindow( winClass, winAttr, &windowRect, &window->window );
 
@@ -357,7 +432,9 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	{
 		CFStringRef title_string;
 
-		title_string = CFStringCreateWithCStringNoCopy(NULL, WINDOW_NAME, kCFStringEncodingMacRoman, NULL);
+		title_string =
+		    CFStringCreateWithCStringNoCopy(NULL, WINDOW_NAME,
+		                                    kCFStringEncodingMacRoman, NULL);
 		SetWindowTitleWithCFString( window->window, title_string );
 		CFRelease( title_string );
 	}
@@ -368,25 +445,28 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	}
 
 	SetWindowGroup( window->window, masterGroup );
-	SetWindowGroupLevel( masterGroup, 1010 ); /* this sets it above the screensaver */
+//	SetWindowGroupLevel( masterGroup, 1010 ); /* this sets it above the screensaver */
 
 	if( render_spu.fullscreen ) {
-		CGRefreshRate refresh;
-		CFDictionaryRef disp_mode;
+		CGRefreshRate   refresh;
+		CFDictionaryRef displayMode;
+		size_t          depth;
 
-		refresh = getDictDouble( old_dispMode,  kCGDisplayRefreshRate );
+		depth = CGDisplayBitsPerPixel( display );
+		refresh = getDictDouble( old_displayMode,  kCGDisplayRefreshRate );
 
-		/* note: returns a display mode with the specified property,
-		 *       or the current display mode if no matching display mode is found
+		/* note: returns a display mode with the specified property, or the
+		         current display mode if no matching display mode is found
 		 */
-		disp_mode = CGDisplayBestModeForParametersAndRefreshRate( display, CGDisplayBitsPerPixel(display),
-																  window->width, window->height, refresh, NULL );
+		displayMode = CGDisplayBestModeForParametersAndRefreshRate( display,
+		    depth, window->width, window->height, refresh, NULL );
 
-		if( !current_dispMode || disp_mode != current_dispMode )
-			current_dispMode = disp_mode;
+		if( displayMode && displayMode != current_displayMode )
+			current_displayMode = displayMode;
 	} else {
-		/* Even though there are still issues with the windows themselves, install the event handlers */
-		EventTypeSpec event_list[] = { { kEventClassWindow, kEventWindowClose } };
+		/* Even though there are still issues with the windows themselves,
+		   install the event handlers */
+		EventTypeSpec event_list[] = { {kEventClassWindow, kEventWindowClose} };
 
 		window->event_handler = NewEventHandlerUPP( windowEvtHndlr ); 
 
@@ -405,7 +485,8 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 }
 
 
-void renderspu_SystemDestroyWindow( WindowInfo *window )
+void
+renderspu_SystemDestroyWindow( WindowInfo *window )
 {
 	CRASSERT(window);
 	CRASSERT(window->visual);
@@ -418,7 +499,7 @@ void renderspu_SystemDestroyWindow( WindowInfo *window )
 	 * since AGL seems to only like having one context with the screen.
 	 */
 	if( render_spu.fullscreen )
-		renderspu_SystemDestroyContext( GetWContext(window) );
+		renderspu_SystemDestroyContext( renderspuGetWindowContext(window) );
 
 	if( !window->nativeWindow )
 		DisposeWindow( window->window );
@@ -429,7 +510,8 @@ void renderspu_SystemDestroyWindow( WindowInfo *window )
 }
 
 
-void renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
+void
+renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 {
 	CRASSERT(window);
 	CRASSERT(window->window);
@@ -438,7 +520,9 @@ void renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 }
 
 
-void renderspu_SystemGetWindowGeometry( WindowInfo *window, GLint *x, GLint *y, GLint *w, GLint *h )
+void
+renderspu_SystemGetWindowGeometry( WindowInfo *window, GLint *x, GLint *y,
+                                   GLint *w, GLint *h )
 {
 	GrafPtr save;
 	Rect r;
@@ -458,7 +542,8 @@ void renderspu_SystemGetWindowGeometry( WindowInfo *window, GLint *x, GLint *y, 
 }
 
 
-void renderspu_SystemGetMaxWindowSize( WindowInfo *window, GLint *w, GLint *h )
+void
+renderspu_SystemGetMaxWindowSize( WindowInfo *window, GLint *w, GLint *h )
 {
 	/* XXX fix this */
 	(void) window;
@@ -467,7 +552,8 @@ void renderspu_SystemGetMaxWindowSize( WindowInfo *window, GLint *w, GLint *h )
 }
 
 
-void renderspu_SystemWindowPosition( WindowInfo *window, GLint x, GLint y )
+void
+renderspu_SystemWindowPosition( WindowInfo *window, GLint x, GLint y )
 {
 	CRASSERT(window);
 
@@ -476,14 +562,16 @@ void renderspu_SystemWindowPosition( WindowInfo *window, GLint x, GLint y )
 
 
 /* Either show or hide the render SPU's window. */
-void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
+void
+renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 {
 	if( render_spu.fullscreen )
 		renderspuFullscreen( window, showIt );
 
 	if( IsValidWindowPtr(window->window) ) {
 		if( showIt ) {
-			TransitionWindow( window->window, kWindowZoomTransitionEffect, kWindowShowTransitionAction, NULL );
+			TransitionWindow( window->window, kWindowZoomTransitionEffect,
+			                  kWindowShowTransitionAction, NULL );
 			ShowWindow( window->window );
 			SelectWindow( window->window );
 		} else {
@@ -494,10 +582,10 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 	window->visible = showIt;
 }
 
-extern CGSConnectionID    _CGSDefaultConnection(void);
-extern OSStatus CGSGetWindowBounds( CGSConnectionID cid, CGSWindowID wid, float *bounds );
 
-GLboolean WindowExists( CGSWindowID window ) {
+GLboolean
+WindowExists( CGSWindowID window )
+{
 	OSStatus err;
 	float bounds[4];
 
@@ -507,14 +595,17 @@ GLboolean WindowExists( CGSWindowID window ) {
 }
 
 
-void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, ContextInfo *context )
+void
+renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
+                             ContextInfo *context )
 {
 //	CRConnection* conn;
 	Boolean result;
 //	char response[8096];
 
 	CRASSERT(render_spu.ws.aglSetCurrentContext);
-	crDebug( "renderspu_SystemMakeCurrent( %x, %i, %x )", window, nativeWindow, context );
+	crDebug( "renderspu_SystemMakeCurrent( %x, %i, %x )", window, nativeWindow,
+	                                                      context );
 
 	if( window && context ) {
 		if( window->visual != context->visual ) {
@@ -527,7 +618,8 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 			 * and re-create it with the context's visual abilities
 			 */
 			renderspu_SystemDestroyWindow( window );
-			renderspu_SystemCreateWindow( context->visual, window->visible, window );
+			renderspu_SystemCreateWindow( context->visual, window->visible,
+			                              window );
 		}
 
 		CRASSERT(context->context);
@@ -540,13 +632,15 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 			if( render_spu.crut_drawable == 0 ) {
 				conn = crMothershipConnect();
 				if( !conn )
-					crError( "Couldn't connect to the mothership to get CRUT drawable-- I have no idea what to do!" );
+					crError( "Couldn't connect to the mothership to get CRUT"
+					         " drawable -- I have no idea what to do!" );
 
 				crMothershipGetParam( conn, "crut_drawable", response );
 				render_spu.crut_drawable = crStrToInt(response);  // Getting CGSWindow
 				crMothershipDisconnect( conn );
 
-				crDebug( "Render SPU: using CRUT drawable 0x%x", render_spu.crut_drawable );
+				crDebug( "Render SPU: using CRUT drawable 0x%x",
+				         render_spu.crut_drawable );
 				if( !render_spu.crut_drawable )
 					crDebug( "Render SPU: Crut drawable 0 is invalid" );
 			}
@@ -554,30 +648,36 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 			nativeWindow = render_spu.crut_drawable;
 		}
 
-		if( (render_spu.render_to_crut_window || render_spu.render_to_app_window) && nativeWindow )
+		if( (render_spu.render_to_crut_window ||
+		     render_spu.render_to_app_window) && nativeWindow )
 		{
-			/* The render_to_app_window option is set and we've got a nativeWindow
-			 * handle, save the handle for later calls to swapbuffers().
+			/* The render_to_app_window option is set and we've got a native
+			 * window handle, save the handle for later calls to swapbuffers().
 			 */
 			if( WindowExists(nativeWindow) ) {
 				window->nativeWindow = (WindowRef) nativeWindow;
 
-				result = renderspuWindowAttachContext( window, window->nativeWindow, context );
+				renderspuWindowAttachContext( window, window->nativeWindow,
+				                              context );
 				/* don't CRASSERT(result) - it causes a problem with CRUT */
 			} else {
 				crWarning("Render SPU: render_to_app/crut_window option is set,"
-						  "but the application window ID (%i) is invalid", nativeWindow);
+				          "but the application window ID (%i) is invalid",
+				          nativeWindow);
 				CRASSERT(window->window);
-				result = renderspuWindowAttachContext( window, window->window, context );
+
+				result = renderspuWindowAttachContext( window, window->window,
+				                                       context );
 				CRASSERT(result);
 			}
 		}
 		else
 #endif
 		{
-			/* This is the normal case - rendering to the render SPU's own window */
+			// This is the normal case: rendering to the render SPU's own window
 			CRASSERT(window->window);
-			result = renderspuWindowAttachContext( window, window->window, context );
+			result = renderspuWindowAttachContext( window, window->window,
+			                                       context );
 			CRASSERT(result);
 		}
 
@@ -596,13 +696,14 @@ void renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow, Contex
 }
 
 
-void renderspu_SystemSwapBuffers( WindowInfo *window, GLint flags )
+void
+renderspu_SystemSwapBuffers( WindowInfo *window, GLint flags )
 {
 	ContextInfo *context;
 
 	CRASSERT(window);
 
-	context = GetWContext( window );
+	context = renderspuGetWindowContext( window );
 
 	if( !context )
 		crError( "Render SPU: SwapBuffers got a null context from the window" );
