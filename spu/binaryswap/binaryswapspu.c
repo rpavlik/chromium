@@ -341,23 +341,23 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 		{
 			if (read_width > 0 && read_height > 0)
 				binaryswap_spu.super.ReadPixels(read_start_x, read_start_y,
-																				read_width, read_height,
-																				GL_RGBA, GL_UNSIGNED_BYTE,
-																				(GLubyte *) window->msgBuffer +
-																				binaryswap_spu.offset);
+                                                read_width, read_height,
+                                                GL_RGBA, GL_UNSIGNED_BYTE,
+                                                (GLubyte *) window->msgBuffer +
+                                                binaryswap_spu.offset);
 
 			if (binaryswap_spu.highlow[i])
 			{
 				/* lower of pair => recv,send */
 				crNetGetMessage(binaryswap_spu.peer_recv[i], &incoming_msg);
 				crNetSend(binaryswap_spu.peer_send[i], NULL, window->msgBuffer,
-									(read_width * read_height * 4) + binaryswap_spu.offset);
+                          (read_width * read_height * 4) + binaryswap_spu.offset);
 			}
 			else
 			{
 				/* higher of pair => send,recv */
 				crNetSend(binaryswap_spu.peer_send[i], NULL, window->msgBuffer,
-									(read_width * read_height * 4) + binaryswap_spu.offset);
+                          (read_width * read_height * 4) + binaryswap_spu.offset);
 				crNetGetMessage(binaryswap_spu.peer_recv[i], &incoming_msg);
 			}
 
@@ -380,31 +380,57 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 				/* figure out blend function based on z */
 				binaryswap_spu.super.Enable(GL_BLEND);
 				/* Other image is on top of ours! */
-				if (binaryswap_spu.depth >= other_depth)
+				if (binaryswap_spu.depth > other_depth)
 				{
 					/* over operator */
 					binaryswap_spu.super.BlendFuncSeparateEXT(GL_SRC_ALPHA,
-																										GL_ONE_MINUS_SRC_ALPHA,
-																										GL_ONE, GL_ONE);
+                                                              GL_ONE_MINUS_SRC_ALPHA,
+                                                              GL_ONE, GL_ONE);
 					binaryswap_spu.super.WindowPos2iARB(draw_x, draw_y);
 					binaryswap_spu.super.DrawPixels(draw_width, draw_height,
-																					GL_RGBA, GL_UNSIGNED_BYTE,
-																					incoming_color);
+                                                    GL_RGBA, GL_UNSIGNED_BYTE,
+                                                    incoming_color);
 				}
 				/* other image is under ours */
-				else
+				else if(binaryswap_spu.depth < other_depth)
 				{
 					/* under operator */
 					binaryswap_spu.super.BlendFuncSeparateEXT(GL_ONE_MINUS_DST_ALPHA,
-																										GL_DST_ALPHA, GL_ONE,
-																										GL_ONE);
+                                                              GL_DST_ALPHA,
+                                                              GL_ONE,
+                                                              GL_ONE);
 					binaryswap_spu.super.WindowPos2iARB(draw_x, draw_y);
 					binaryswap_spu.super.DrawPixels(draw_width, draw_height,
-																					GL_RGBA, GL_UNSIGNED_BYTE,
-																					incoming_color);
+                                                    GL_RGBA, GL_UNSIGNED_BYTE,
+                                                    incoming_color);
 				}
-
-				if (binaryswap_spu.depth < other_depth)
+                else
+                {
+                    if(binaryswap_spu.highlow[i])
+                    {
+                        /* over operator */
+                        binaryswap_spu.super.BlendFuncSeparateEXT(GL_SRC_ALPHA,
+                                                                  GL_ONE_MINUS_SRC_ALPHA,
+                                                                  GL_ONE, GL_ONE);
+                        binaryswap_spu.super.WindowPos2iARB(draw_x, draw_y);
+                        binaryswap_spu.super.DrawPixels(draw_width, draw_height,
+                                                        GL_RGBA, GL_UNSIGNED_BYTE,
+                                                        incoming_color);
+                    }
+                    else
+                    {
+                        /* under operator */
+                        binaryswap_spu.super.BlendFuncSeparateEXT(GL_ONE_MINUS_DST_ALPHA,
+                                                                  GL_DST_ALPHA,
+                                                                  GL_ONE,
+                                                                  GL_ONE);
+                        binaryswap_spu.super.WindowPos2iARB(draw_x, draw_y);
+                        binaryswap_spu.super.DrawPixels(draw_width, draw_height,
+                                                        GL_RGBA, GL_UNSIGNED_BYTE,
+                                                        incoming_color);
+                    }
+                }
+				if (binaryswap_spu.depth > other_depth)
 				{
 					binaryswap_spu.depth = other_depth;
 				}
@@ -569,7 +595,7 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 		/* clean up the memory allocated for the recv */
 		crNetFree(binaryswap_spu.peer_recv[i], incoming_msg);
 	}
-
+    
 	draw_x = recalc_start_x;
 	draw_y = recalc_start_y;
 	draw_width = recalc_end_x - recalc_start_x;
@@ -838,6 +864,7 @@ AccumulateObjectBBox(const GLfloat * bbox)
 	/* transform by modelview and projection */
 	binaryswap_spu.super.GetFloatv(GL_PROJECTION_MATRIX, proj);
 	binaryswap_spu.super.GetFloatv(GL_MODELVIEW_MATRIX, modl);
+    
 	crProjectBBox(modl, proj, &x1, &y1, &z1, &x2, &y2, &z2);
 
 	/* Sanity check... */
@@ -846,9 +873,9 @@ AccumulateObjectBBox(const GLfloat * bbox)
 		crWarning("Damnit!!!!, we screwed up the clipping somehow...");
 		return;
 	}
-
+    
 	/* adjust depth for alpha composite */
-	binaryswap_spu.depth = z2;
+	binaryswap_spu.depth = z1;
 
 	/* map to window coords */
 	binaryswap_spu.super.GetFloatv(GL_VIEWPORT, viewport);
@@ -876,7 +903,7 @@ AccumulateScreenBBox(const GLfloat * bbox)
 	CRrecti winBox;
 	GET_CONTEXT(context);
 	WindowInfo *window = context->currentWindow;
-	GLfloat z2 = bbox[6];
+	GLfloat z1 = bbox[2];
 
 	winBox.x1 = (int) bbox[0];
 	winBox.y1 = (int) bbox[1];
@@ -884,7 +911,7 @@ AccumulateScreenBBox(const GLfloat * bbox)
 	winBox.y2 = (int) bbox[5];
 
 	/* adjust depth for alpha composite */
-	binaryswap_spu.depth = z2;
+	binaryswap_spu.depth = z1;
 
 	if (window->bboxUnion.x1 == 0 && window->bboxUnion.x2 == 0)
 	{
