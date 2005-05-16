@@ -517,6 +517,9 @@ renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 	CRASSERT(window->window);
 
 	SizeWindow( window->window, w, h, true );
+	/* save the new size */
+	window->width = w;
+	window->height = h;
 }
 
 
