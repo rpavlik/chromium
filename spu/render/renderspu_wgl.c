@@ -614,6 +614,9 @@ void renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 	SetWindowPos( window->visual->hWnd, HWND_TOPMOST, 
 			window->x, window->y,
 			w, h, winprop );
+	/* save the new size */
+	window->width = w;
+	window->height = h;
 }
 
 

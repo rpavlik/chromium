@@ -311,9 +311,13 @@ static void RENDER_APIENTRY renderspuWindowDestroy( GLint win )
 	WindowInfo *window;
 	CRASSERT(win >= 0);
 	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
-	CRASSERT(window);
-	renderspu_SystemDestroyWindow( window );
-	crHashtableDelete(render_spu.windowTable, win, crFree);
+	if (window) {
+		renderspu_SystemDestroyWindow( window );
+		crHashtableDelete(render_spu.windowTable, win, crFree);
+	}
+	else {
+		crWarning("Render SPU: Attempt to destroy invalid window (%d)", win);
+	}
 }
 
 static void RENDER_APIENTRY renderspuWindowSize( GLint win, GLint w, GLint h )
@@ -324,10 +328,10 @@ static void RENDER_APIENTRY renderspuWindowSize( GLint win, GLint w, GLint h )
 	CRASSERT(h > 0);
 	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
 	if (window) {
-		/* XXX check if window size really is changing */
 		renderspu_SystemWindowSize( window, w, h );
-		window->width = w;
-		window->height = h;
+	}
+	else {
+		crWarning("Render SPU: Attempt to resize invalid window (%d)", win);
 	}
 }
 
@@ -341,6 +345,9 @@ static void RENDER_APIENTRY renderspuWindowPosition( GLint win, GLint x, GLint y
 			renderspu_SystemWindowPosition( window, x, y );
 			window->x = x;
 			window->y = y;
+		}
+		else {
+			crWarning("Render SPU: Attempt to move invalid window (%d)", win);
 		}
 	}
 }
@@ -359,6 +366,9 @@ static void RENDER_APIENTRY renderspuWindowShow( GLint win, GLint flag )
 			flag = 0;
 		}
 		renderspu_SystemShowWindow( window, (GLboolean) flag );
+	}
+	else {
+		crWarning("Render SPU: Attempt to hide/show invalid window (%d)", win);
 	}
 }
 

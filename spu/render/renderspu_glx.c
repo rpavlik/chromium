@@ -834,16 +834,8 @@ createPBuffer( VisualInfo *visual, WindowInfo *window )
 	{
 		int attribs[100], i = 0, w, h;
 		CRASSERT(visual->fbconfig);
-		if (render_spu.pbufferWidth == 0 && render_spu.pbufferHeight == 0) {
-			/* allocate the exact requested size */
-			w = window->width;
-			h = window->height;
-		}
-		else {
-			/* allocate fixed size specified by 'pbuffer_size' */
-			w = render_spu.pbufferWidth;
-			h = render_spu.pbufferHeight;
-		}
+		w = window->width;
+		h = window->height;
 		attribs[i++] = GLX_PRESERVED_CONTENTS;
 		attribs[i++] = True;
 		attribs[i++] = GLX_PBUFFER_WIDTH;
@@ -1002,6 +994,7 @@ renderspu_RecreateContext( ContextInfo *context, int newVisualID )
 	render_spu.ws.glXDestroyContext(context->visual->dpy, context->context);
 
 	/* create new context */
+	crDebug("Creating new GLX context with visual 0x%x", newVisualID);
 	context->context = render_spu.ws.glXCreateContext(context->visual->dpy,
 																										vis, NULL,
 																										render_spu.try_direct);
@@ -1218,6 +1211,9 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 }
 
 
+/**
+ * Set window (or pbuffer) size.
+ */
 void
 renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 {
@@ -1236,7 +1232,7 @@ renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 	{
 		/* resizing a pbuffer */
 		if (render_spu.pbufferWidth != 0 || render_spu.pbufferHeight != 0) {
-			/* we're configured to use a fixed size pbuffer */
+			/* size limit check */
 			if (w > render_spu.pbufferWidth != 0 ||
 					h > render_spu.pbufferHeight != 0) {
 				crWarning("Render SPU: Request for %d x %d pbuffer is larger than "
@@ -1244,8 +1240,21 @@ renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 									w, h, render_spu.pbufferWidth, render_spu.pbufferHeight);
 				return;
 			}
+			/*
+			 * If the requested new pbuffer size is greater than 1/2 the size of
+			 * the max pbuffer, just use the max pbuffer size.  This helps avoid
+			 * problems with VRAM memory fragmentation.  If we run out of VRAM
+			 * for pbuffers, some drivers revert to software rendering.  We want
+			 * to avoid that!
+			 */
+			if (w * h >= render_spu.pbufferWidth * render_spu.pbufferHeight / 2) {
+				/* increase the dimensions to the max pbuffer size now */
+				w = render_spu.pbufferWidth;
+				h = render_spu.pbufferHeight;
+			}
 		}
-		else if (window->width != w || window->height != h) {
+
+		if (window->width != w || window->height != h) {
 			/* Only resize if the new dimensions really are different */
 #ifdef CHROMIUM_THREADSAFE
 			ContextInfo *currentContext = (ContextInfo *) crGetTSD(&_RenderTSD);
@@ -1259,7 +1268,7 @@ renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 			crDebug("Render SPU: Creating new %d x %d PBuffer (id=%d)",
 							w, h, window->id);
 			if (!createPBuffer(window->visual, window)) {
-				crWarning("Render SPU: Unable to create the PBuffer!");
+				crWarning("Render SPU: Unable to create PBuffer (out of VRAM?)!");
 			}
 			else if (currentContext && currentContext->currentWindow == window) {
 				/* Determine if we need to bind the current context to new pbuffer */
@@ -1269,8 +1278,8 @@ renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 			}
 		}
 	}
-	else
-	{
+	else {
+		/* Resize ordinary X window */
 		/*
 		 * This is ugly, but it seems to be the only thing that works.
 		 * Basically, XResizeWindow() doesn't seem to always take effect
@@ -1292,6 +1301,10 @@ renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 			crMsleep(1);
 		}
 	}
+
+	/* finally, save the new size */
+	window->width = w;
+	window->height = h;
 }
 
 
@@ -1414,7 +1427,6 @@ renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 }
 
 
-/** Experimental **/
 static void
 MarkWindow(WindowInfo *w)
 {
@@ -1447,24 +1459,21 @@ renderspu_SystemSwapBuffers( WindowInfo *w, GLint flags )
 	}
 #endif
 
-	{
-		/* render_to_app_window:
-		 * w->nativeWindow will only be non-zero if the
-		 * render_spu.render_to_app_window option is true and
-		 * MakeCurrent() recorded the nativeWindow handle in the WindowInfo
-		 * structure.
-		 */
-		if (w->nativeWindow) {
-			render_spu.ws.glXSwapBuffers( w->visual->dpy, w->nativeWindow );
+	/* render_to_app_window:
+	 * w->nativeWindow will only be non-zero if the
+	 * render_spu.render_to_app_window option is true and
+	 * MakeCurrent() recorded the nativeWindow handle in the WindowInfo
+	 * structure.
+	 */
+	if (w->nativeWindow) {
+		render_spu.ws.glXSwapBuffers( w->visual->dpy, w->nativeWindow );
 #if 0
-			MarkWindow(w);
+		MarkWindow(w);
 #else
-			(void) MarkWindow;
+		(void) MarkWindow;
 #endif
-		}
-		else {
-			render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );
-		}
 	}
-
+	else {
+		render_spu.ws.glXSwapBuffers( w->visual->dpy, w->window );
+	}
 }

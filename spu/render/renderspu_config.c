@@ -303,7 +303,7 @@ SPUOptions renderSPUOptions[] = {
 		"Ignore crWindowPosition calls", (SPUOptionCB) set_ignore_window_moves },
 
 	{ "pbuffer_size", CR_INT, 2, "[0, 0]", "[0, 0]", NULL,
-		"Fixed PBuffer Size", (SPUOptionCB) set_pbuffer_size },
+		"Maximum PBuffer Size", (SPUOptionCB) set_pbuffer_size },
 
 	{ "use_glxchoosevisual", CR_BOOL, 1, "1", NULL, NULL,
 		"Use glXChooseVisual", (SPUOptionCB) set_use_glxchoosevisual },
