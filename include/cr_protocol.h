@@ -72,12 +72,13 @@ typedef struct CRMessageFlowControl {
 
 typedef struct CRMessageReadPixels {
 	CRMessageHeader        header;
+	int                    width, height;
 	unsigned int           bytes_per_row;
 	unsigned int           stride;
-	unsigned int           rows;
 	int                    alignment;
 	int                    skipRows;
 	int                    skipPixels;
+	int                    rowLength;
 	int                    format;
 	int                    type;
 	CRNetworkPointer       pixels;

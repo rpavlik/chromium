@@ -21,17 +21,20 @@ void crUnpackReadPixels( void )
 	GLint skipRows      = READ_DATA( 32, GLint );
 	GLint skipPixels    = READ_DATA( 36, GLint );
 	GLint bytes_per_row = READ_DATA( 40, GLint );
+	GLint rowLength     = READ_DATA( 44, GLint );
 	GLvoid *pixels;
 
 	/* point <pixels> at the 8-byte network pointer */
-	pixels = DATA_POINTER( 44, GLvoid );
+	pixels = DATA_POINTER( 48, GLvoid );
 
 	(void) stride;
 	(void) bytes_per_row;
 	(void) alignment;
 	(void) skipRows;
 	(void) skipPixels;
+	(void) rowLength;
 
+	/* we always pack densely on the server side! */
 	cr_unpackDispatch.PixelStorei( GL_PACK_ROW_LENGTH, 0 );
 	cr_unpackDispatch.PixelStorei( GL_PACK_SKIP_PIXELS, 0 );
 	cr_unpackDispatch.PixelStorei( GL_PACK_SKIP_ROWS, 0 );

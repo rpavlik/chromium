@@ -24,6 +24,7 @@
 #include "cr_url.h"
 #include "cr_net.h"
 #include "cr_netserver.h"
+#include "cr_pixeldata.h"
 #include "cr_environment.h"
 #include "cr_endian.h"
 #include "cr_bufpool.h"
@@ -631,6 +632,7 @@ crDequeueMessage(CRMessageList *list, CRMessage **msg, unsigned int *len,
 	}
 
 	*msg = node->mesg;
+	CRASSERT((*msg)->header.type);
 	*len = node->len;
 	if (conn)
 		*conn = node->conn;
@@ -897,6 +899,50 @@ crNetRecvReadback( CRMessageReadback *rb, unsigned int len )
 	(*writeback)--;
 	crMemcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
 }
+
+
+/**
+ * This is used by the SPUs that do packing (such as Pack, Tilesort and
+ * Replicate) to process ReadPixels messaages.  We can't call this directly
+ * from the message loop below because the SPU's have other housekeeping
+ * to do for ReadPixels (such as decrementing counters).
+ */
+void
+crNetRecvReadPixels( const CRMessageReadPixels *rp, unsigned int len )
+{
+   int payload_len = len - sizeof( *rp );
+   char *dest_ptr;
+   const char *src_ptr = (const char *) rp + sizeof(*rp);
+
+   /* set dest_ptr value */
+   crMemcpy( &(dest_ptr), &(rp->pixels), sizeof(dest_ptr));
+
+   /* store pixel data in app's memory */
+   if (rp->alignment == 1 &&
+       rp->skipRows == 0 &&
+       rp->skipPixels == 0 &&
+       (rp->rowLength == 0 || rp->rowLength == rp->width)) {
+      /* no special packing is needed */
+      crMemcpy( dest_ptr, src_ptr, payload_len );
+   }
+   else {
+      /* need special packing */
+      CRPixelPackState packing;
+      packing.rowLength = 0;
+      packing.skipRows = rp->skipRows;
+      packing.skipPixels = rp->skipPixels;
+      packing.alignment = rp->alignment;
+      packing.rowLength = rp->rowLength;
+      packing.imageHeight = 0;
+      packing.skipImages = 0;
+      packing.swapBytes = GL_FALSE;
+      packing.psLSBFirst = GL_FALSE;
+      crPixelCopy2D( rp->width, rp->height,
+		     dest_ptr, rp->format, rp->type, &packing,
+		     src_ptr, rp->format, rp->type, /*unpacking*/NULL);
+   }
+}
+
 
 
 /**

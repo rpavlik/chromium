@@ -15,32 +15,41 @@
 #include "server.h"
 
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels)
+void SERVER_DISPATCH_APIENTRY
+crServerDispatchReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
+														GLenum format, GLenum type, GLvoid *pixels)
 {
 	CRMessageReadPixels *rp;
-	int msg_len = sizeof(*rp);
-	GLint stride = READ_DATA( 24, GLint );
-	GLint alignment = READ_DATA( 28, GLint );
-	GLint skipRows = READ_DATA( 32, GLint );
-	GLint skipPixels = READ_DATA( 36, GLint );
-	GLint bytes_per_row = READ_DATA( 40, GLint );
+	const GLint stride = READ_DATA( 24, GLint );
+	const GLint alignment = READ_DATA( 28, GLint );
+	const GLint skipRows = READ_DATA( 32, GLint );
+	const GLint skipPixels = READ_DATA( 36, GLint );
+	const GLint bytes_per_row = READ_DATA( 40, GLint );
+	const GLint rowLength = READ_DATA( 44, GLint );
+	const int msg_len = sizeof(*rp) + bytes_per_row * height;
 
 	CRASSERT(bytes_per_row > 0);
 
-	msg_len += bytes_per_row * height;
-
 	rp = (CRMessageReadPixels *) crAlloc( msg_len );
-	cr_server.head_spu->dispatch_table.ReadPixels( x, y, width, height, format, type, rp + 1);
+
+	/* Note: the ReadPixels data gets densely packed into the buffer
+	 * (no skip pixels, skip rows, etc.  It's up to the receiver (pack spu,
+	 * tilesort spu, etc) to apply the real PixelStore packing parameters.
+	 */
+	cr_server.head_spu->dispatch_table.ReadPixels( x, y, width, height,
+																								 format, type, rp + 1);
 
 	rp->header.type = CR_MESSAGE_READ_PIXELS;
+	rp->width = width;
+	rp->height = height;
 	rp->bytes_per_row = bytes_per_row;
 	rp->stride = stride;
 	rp->format = format;
 	rp->type = type;
-	rp->rows = height;
 	rp->alignment = alignment;
 	rp->skipRows = skipRows;
 	rp->skipPixels = skipPixels;
+	rp->rowLength = rowLength;
 
 	/* <pixels> points to the 8-byte network pointer */
 	crMemcpy( &rp->pixels, pixels, sizeof(rp->pixels) );

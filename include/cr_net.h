@@ -242,6 +242,7 @@ extern void crInitMessageList(CRMessageList *list);
 extern void crEnqueueMessage(CRMessageList *list, CRMessage *msg, unsigned int len, CRConnection *conn);
 extern void crDequeueMessage(CRMessageList *list, CRMessage **msg, unsigned int *len, CRConnection **conn);
 
+extern void crNetRecvReadPixels( const CRMessageReadPixels *rp, unsigned int len );
 
 
 /*

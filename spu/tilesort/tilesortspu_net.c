@@ -8,6 +8,7 @@
 #include "tilesortspu_gen.h"
 #include "cr_pack.h"
 #include "cr_net.h"
+#include "cr_pixeldata.h"
 #include "cr_protocol.h"
 #include "cr_error.h"
 #include "cr_string.h"
@@ -18,46 +19,11 @@ static void
 tilesortspuReadPixels( const CRMessageReadPixels *rp, unsigned int len )
 {
 	GET_THREAD(thread);
-	int payload_len = len - sizeof( *rp );
-	char *dest_ptr;
-	const char *src_ptr = (const char *) rp + sizeof(*rp);
 
 	/* we better be expecting a ReadPixels result! */
 	CRASSERT(thread->currentContext->readPixelsCount > 0);
 
-	crMemcpy ( &(dest_ptr), &(rp->pixels), sizeof(dest_ptr));
-
-	if (rp->alignment == 1 &&
-			rp->skipRows == 0 &&
-			rp->skipPixels == 0 &&
-			rp->stride == rp->bytes_per_row) {
-		/* no special packing is needed */
-		crMemcpy ( dest_ptr, ((char *)rp) + sizeof(*rp), payload_len );
-	}
-	else {
-		/* need special packing */
-#if 0
-		CRPixelPackState packing;
-		packing.rowLength = 0;
-		packing.skipRows = rp->skipRows;
-		packing.skipPixels = rp->skipPixels;
-		packing.alignment = rp->alignment;
-		packing.imageHeight = 0;
-		packing.skipImages = 0;
-		packing.swapBytes = GL_FALSE;
-		packing.psLSBFirst = GL_FALSE;
-		crPixelCopy2D( rp->bytes_per_row, rp->rows,
-				dest_ptr, rp->format, rp->type, &packing,
-				src_ptr, rp->format, rp->type, NULL);
-#else
-		GLuint row;
-		for (row = 0; row < rp->rows; row++) {
-		   crMemcpy( dest_ptr, src_ptr, rp->bytes_per_row );
-		   src_ptr += rp->bytes_per_row;
-		   dest_ptr += rp->stride;
-		}
-#endif
-	}
+	crNetRecvReadPixels(rp, len);
 
 	thread->currentContext->readPixelsCount--;
 	CRASSERT(thread->currentContext->readPixelsCount >= 0);

@@ -7,6 +7,7 @@
 #include "cr_pack.h"
 #include "cr_mem.h"
 #include "cr_net.h"
+#include "cr_pixeldata.h"
 #include "cr_protocol.h"
 #include "cr_error.h"
 #include "replicatespu.h"
@@ -22,6 +23,10 @@ static void replicatespuWriteback( CRMessageWriteback *wb )
 	*writeback = 0;
 }
 
+/**
+ * XXX Note that this routine is identical to crNetRecvReadback except
+ * we set *writeback=0 instead of decrementing it.  Hmmm.
+ */
 static void replicatespuReadback( CRMessageReadback *rb, unsigned int len )
 {
 	/* minus the header, the destination pointer, 
@@ -39,44 +44,7 @@ static void replicatespuReadback( CRMessageReadback *rb, unsigned int len )
 
 static void replicatespuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 {
-	int payload_len = len - sizeof( *rp );
-	char *dest_ptr;
-	const char *src_ptr = (char *) rp + sizeof(*rp);
-
-	crMemcpy ( &(dest_ptr), &(rp->pixels), sizeof(dest_ptr));
-
-	if (rp->alignment == 1 &&
-		rp->skipRows == 0 &&
-		rp->skipPixels == 0 &&
-		rp->stride == rp->bytes_per_row) {
-		/* no special packing is needed */
-		crMemcpy ( dest_ptr, ((char *)rp) + sizeof(*rp), payload_len );
-	}
-	else {
-		/* need special packing */
-#if 0
-		CRPixelPackState packing;
-		packing.rowLength = 0;
-		packing.skipRows = rp->skipRows;
-		packing.skipPixels = rp->skipPixels;
-		packing.alignment = rp->alignment;
-		packing.imageHeight = 0;
-		packing.skipImages = 0;
-		packing.swapBytes = GL_FALSE;
-		packing.psLSBFirst = GL_FALSE;
-		crPixelCopy2D( rp->bytes_per_row, rp->rows,
-				dest_ptr, rp->format, rp->type, &packing,
-				src_ptr, rp->format, rp->type, NULL);
-#else
-		GLuint row;
-		for (row = 0; row < rp->rows; row++) {
-		   crMemcpy( dest_ptr, src_ptr, rp->bytes_per_row );
-		   src_ptr += rp->bytes_per_row;
-		   dest_ptr += rp->stride;
-		}
-#endif
-	}
-
+	crNetRecvReadPixels(rp, len);
 	--replicate_spu.ReadPixels;
 }
 
