@@ -280,7 +280,7 @@ void stubSetPFA( ContextInfo *ctx, CGLPixelFormatAttribute *attribs, int size, G
 	SET_ATTR(attribs, i, kCGLPFAWindow);
 	SET_ATTR_V(attribs, i, kCGLPFADisplayMask, ctx->disp_mask);
 
-	SET_ATTR(attribs, i, NULL);
+	SET_ATTR(attribs, i, 0);
 
 	*num = i;
 }
@@ -332,7 +332,7 @@ InstantiateNativeContext( WindowInfo *window, ContextInfo *context )
 			stub.wsInterface.CGLSetParameter( context->cglc, kCGLCPSwapInterval, &(context->swap_interval) );
 
 		if( context->parambits & VISBIT_CLIENT_STORAGE )
-			stub.wsInterface.CGLSetParameter( context->cglc, kCGLCPClientStorage, &(context->client_storage) );
+			stub.wsInterface.CGLSetParameter( context->cglc, kCGLCPClientStorage, (long*)&(context->client_storage) );
 
 		context->parambits = 0;
 	}

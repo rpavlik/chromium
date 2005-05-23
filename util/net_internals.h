@@ -4,6 +4,7 @@
 #include "cr_bufpool.h"
 #include "cr_threads.h"
 
+#include <sys/time.h>
 
 /*
  * Mothership networking

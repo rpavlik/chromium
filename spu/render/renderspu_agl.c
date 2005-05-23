@@ -343,7 +343,7 @@ windowEvtHndlr( EventHandlerCallRef myHandler, EventRef event, void* userData )
 
 		case kEventWindowClose:
 			HideWindow( window );
-			SetWRefCon( window, NULL );
+			SetWRefCon( window, (int)NULL );
 
 			crWarning( "Render SPU: caught kEventWindowClose -- quitting." );
 //			exit(0);

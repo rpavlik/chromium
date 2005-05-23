@@ -525,7 +525,7 @@ InitGL(const Options *options)
 	glBufferSubDataARB_ptr = (PFNGLBUFFERSUBDATAARBPROC) crGetProcAddress("glBufferSubDataARB");
 	glDrawRangeElements_ptr = (glDrawRangeElements_t) crGetProcAddress("glDrawRangeElements");
 
-	extensions = glGetString(GL_EXTENSIONS);
+	extensions = (char*)glGetString(GL_EXTENSIONS);
 	if (!strstr(extensions, "GL_ARB_vertex_buffer_object")) {
 		printf("Sorry, this program requires GL_ARB_vertex_buffer_object\n");
 		exit(1);

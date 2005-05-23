@@ -86,7 +86,6 @@ def GenerateEntrypoints(hacks = []):
 				print "{"
 				print "\tglim.ProgramParameters4dvNV( target, index, num, params );"
 				print "}"
-
 		else:
 			# the usual path
 			print "%s gl%s( %s );" % (return_type, func_name, apiutil.MakeDeclarationString(params))
@@ -118,10 +117,26 @@ def GenerateEntrypoints(hacks = []):
 		alias = apiutil.Alias(func_name)
 		if alias:
 			if func_name in hacks:
+				print "/* hacked entrypoint: %s */" % func_name
 				if func_name == "MultiDrawArrays":
 					print "void glMultiDrawArrays( GLenum mode, const GLint *first, const GLsizei *count, GLsizei primcount )"
 					print "{"
 					print "\tglim.MultiDrawArraysEXT( mode, (GLint*)first, (GLsizei*)count, primcount );"
+					print "}"
+				elif func_name == "BufferData":
+					print "void glBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage)"
+					print "{"
+					print "\tglim.BufferDataARB(target, size, data, usage);"
+					print "}"
+				elif func_name == "BufferSubData":
+					print "void glBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid *data)"
+					print "{"
+					print "\tglim.BufferSubDataARB(target, offset, size, data);"
+					print "}"
+				elif func_name == "GetBufferSubData":
+					print "void glGetBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size, GLvoid *data)"
+					print "{"
+					print "\tglim.GetBufferSubDataARB(target, offset, size, data);"
 					print "}"
 			else:
 				return_type = apiutil.ReturnType(func_name)

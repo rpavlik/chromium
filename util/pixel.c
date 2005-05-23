@@ -164,7 +164,7 @@ int crPixelSize( GLenum format, GLenum type )
  * Pack src pixel data into tmpRow array as either GLfloat[][1] or
  * GLfloat[][4] depending on whether the format is for colors.
  */
-static void get_row(const char *src, GLenum srcFormat, GLenum srcType,
+static void get_row(const GLubyte *src, GLenum srcFormat, GLenum srcType,
 										GLsizei width, GLfloat *tmpRow)
 {
 	const GLbyte *bSrc = (GLbyte *) src;
@@ -1327,7 +1327,7 @@ void crPixelCopy2D( GLsizei width, GLsizei height,
 										const CRPixelPackState *srcPacking )
 										
 {
-	const char *src = (const char *) srcPtr;
+	const GLubyte *src = (const GLubyte *) srcPtr;
 	char *dst = (char *) dstPtr;
 	int srcBytesPerPixel;
 	int dstBytesPerPixel;

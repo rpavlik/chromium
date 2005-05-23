@@ -11,10 +11,11 @@
 #include "cr_environment.h"
 #include "stub.h"
 
-#define GET_CONTEXTINFO(c)  (ContextInfo *) crHashtableSearch( stub.contextTable, (unsigned long) (c) )
+#define GET_CONTEXTINFO(c) \
+	(ContextInfo *) crHashtableSearch( stub.contextTable, (unsigned long) (c) )
 
 #define MakeCurrent(w,c)	\
-		( stubMakeCurrent((w), (c)) ? noErr : kCGLBadContext )
+	( stubMakeCurrent((w), (c)) ? noErr : kCGLBadContext )
 
 #if 1
 #define DEBUG_FUNCTION(s)	crDebug(#s)
@@ -31,40 +32,43 @@ static GLuint desiredVisual = CR_RGB_BIT;
  */
 static GLuint ComputeVisBits( CGLPixelFormatObj pix )
 {
-	GLuint b = 0;
+	GLuint bits = 0;
 	long val = 0;
 
 	CRASSERT(pix);
 
-	stub.wsInterface.CGLDescribePixelFormat( pix, 0, kCGLPFADepthSize, &val );
-	if( val > 0 )
-		b |= CR_DEPTH_BIT;
+#define DESCRIBE(name, v) \
+	stub.wsInterface.CGLDescribePixelFormat( pix, 0, (name), &(v) )
 
-	stub.wsInterface.CGLDescribePixelFormat( pix, 0, kCGLPFAAccumSize, &val );
+	DESCRIBE(kCGLPFADepthSize, val);
 	if( val > 0 )
-		b |= CR_ACCUM_BIT;
+		bits |= CR_DEPTH_BIT;
 
-	stub.wsInterface.CGLDescribePixelFormat( pix, 0, kCGLPFAColorSize, &val );
+	DESCRIBE(kCGLPFAAccumSize, val);
+	if( val > 0 )
+		bits |= CR_ACCUM_BIT;
+
+	DESCRIBE(kCGLPFAColorSize, val);
 	if( val > 8 )
-		b |= CR_RGB_BIT;
+		bits |= CR_RGB_BIT;
 
-	stub.wsInterface.CGLDescribePixelFormat( pix, 0, kCGLPFAStencilSize, &val );
+	DESCRIBE(kCGLPFAStencilSize, val);
 	if( val > 0 )
-		b |= CR_STENCIL_BIT;
+		bits |= CR_STENCIL_BIT;
 
-	stub.wsInterface.CGLDescribePixelFormat( pix, 0, kCGLPFAAlphaSize, &val );
+	DESCRIBE(kCGLPFAAlphaSize, val);
 	if( val > 0 )
-		b |= CR_ALPHA_BIT;
+		bits |= CR_ALPHA_BIT;
 
-	stub.wsInterface.CGLDescribePixelFormat( pix, 0, kCGLPFADoubleBuffer, &val );
+	DESCRIBE(kCGLPFADoubleBuffer, val);
 	if( val )
-		b |= CR_DOUBLE_BIT;
+		bits |= CR_DOUBLE_BIT;
 
-	stub.wsInterface.CGLDescribePixelFormat( pix, 0, kCGLPFAStereo, &val );
+	DESCRIBE(kCGLPFAStereo, val);
 	if( val )
-		b |= CR_STEREO_BIT;
+		bits |= CR_STEREO_BIT;
 
-	return b;
+	return bits;
 }
 
 /*
@@ -155,7 +159,7 @@ CGLError CGLFlushDrawable( CGLContextObj ctx )
 
 CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPixelFormatObj *pix, long *npix )
 {
-	CGLPixelFormatAttribute *attrib = attribList;
+	CGLPixelFormatAttribute* attrib = (CGLPixelFormatAttribute*)attribList;
 	CGLPixelFormatAttribute attribCopy[128];
 	int copy=0;
 
@@ -169,7 +173,7 @@ CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPix
 	 */
 //	crSetenv("CR_WGL_DO_NOT_USE_GDI", "yes");
 
-	for( ; *attrib != NULL; attrib++ ) {
+	for( ; *attrib != 0; attrib++ ) {
 		attribCopy[copy++] = *attrib;
 
 		switch( *attrib ) {
@@ -258,10 +262,11 @@ CGLError CGLChoosePixelFormat( const CGLPixelFormatAttribute *attribList, CGLPix
 
 		default:
 			crError("CGLChoosePixelFormat: doesn't support 0x%x", *attrib);
+			break;
 		}
 	}
 
-	attribCopy[copy++] = NULL;
+	attribCopy[copy++] = 0;
 
 	if( stub.haveNativeOpenGL ) {
 		stub.wsInterface.CGLChoosePixelFormat( attribList, pix, npix );
@@ -415,6 +420,10 @@ CGLError CGLDescribePixelFormat( CGLPixelFormatObj pix, long pix_num, CGLPixelFo
 		case kCGLPFAVirtualScreenCount:
 			*value = 1;
 			break;
+
+		default:
+			crError("CGLDescribePixelFormat: doesn't support 0x%x", attrib);
+			break;
 	}
 
 	return noErr;
@@ -423,7 +432,7 @@ CGLError CGLDescribePixelFormat( CGLPixelFormatObj pix, long pix_num, CGLPixelFo
 
 CGLContextObj CGLGetCurrentContext( void )
 {
-	return (CGLContextObj) ( stub.currentContext ? stub.currentContext->id : NULL );
+	return (CGLContextObj) ( stub.currentContext ? stub.currentContext->id : 0 );
 }
 
 ///
@@ -531,8 +540,12 @@ CGLError CGLEnable( CGLContextObj ctx, CGLContextEnable pname ) {
 		context->options |= CGL_OPT_STATE_VAL;
 		break;
 
-	case kCGLCEDrawSyncBlueLine:
+/*	case kCGLCEDrawSyncBlueLine:
 		context->options |= CGL_OPT_DRAW_LINE;
+		break;
+*/
+	default:
+		crError("CGLEnable: doesn't support 0x%x", pname);
 		break;
 	}
 
@@ -564,8 +577,12 @@ CGLError CGLDisable( CGLContextObj ctx, CGLContextEnable pname ) {
 		context->options &= ~CGL_OPT_STATE_VAL;
 		break;
 
-	case kCGLCEDrawSyncBlueLine:
+/*	case kCGLCEDrawSyncBlueLine:
 		context->options &= ~CGL_OPT_DRAW_LINE;
+		break;
+*/
+	default:
+		crError("CGLDisable: doesn't support 0x%x", pname);
 		break;
 	}
 
@@ -597,8 +614,12 @@ CGLError CGLIsEnabled( CGLContextObj ctx, CGLContextEnable pname, long *enable )
 		*enable = ( context->options & CGL_OPT_STATE_VAL ) != 0;
 		break;
 
-	case kCGLCEDrawSyncBlueLine:
+/*	case kCGLCEDrawSyncBlueLine:
 		*enable = ( context->options & CGL_OPT_DRAW_LINE ) != 0;
+		break;
+*/
+	default:
+		crError("CGLIsEnabled: doesn't support 0x%x", pname);
 		break;
 	}
 
@@ -646,6 +667,10 @@ CGLError CGLSetParameter( CGLContextObj ctx, CGLContextParameter pname, const lo
 		crDebug( "CGLSetParameter: SurfaceOpacy: %i", *params );
 		context->surf_opacy = *params;
 		break;
+
+	default:
+		crError("CGLSetParameter: doesn't support 0x%x", pname);
+		break;
 	}
 
 	return noErr;
@@ -681,6 +706,10 @@ CGLError CGLGetParameter(CGLContextObj ctx, CGLContextParameter pname, long *par
 
 	case kCGLCPSurfaceOpacity:
 		*params = context->surf_opacy;
+		break;
+
+	default:
+		crError("CGLGetParameter: doesn't support 0x%x", pname);
 		break;
 	}
 

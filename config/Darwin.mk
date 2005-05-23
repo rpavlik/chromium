@@ -13,11 +13,11 @@ G++-INCLUDE-DIR = /usr/include/g++
 CXX = g++ -fno-common
 CC = gcc -fno-common
 
-CXXFLAGS          += -DDARWIN -Wall -Wno-format
+CXXFLAGS          += -DDARWIN -Wall -Werror -Wno-format -DGL_GLEXT_LEGACY
 CXX_RELEASE_FLAGS += -O3 -DNDEBUG
 CXX_DEBUG_FLAGS   += -g
 
-CFLAGS            += -DDARWIN -Wall -Wno-format
+CFLAGS            += -DDARWIN -Wall -Werror -Wno-format -DGL_GLEXT_LEGACY
 C_RELEASE_FLAGS   += -O3 -DNDEBUG
 C_DEBUG_FLAGS     += -g
 
