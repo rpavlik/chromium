@@ -379,6 +379,8 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank,
   result->hctx = result->lctx = -1;
   result->msgnum = 0;
   result->poll_shift = 0;
+  result->totalSendBufferBytesAllocated= 0;
+  result->totalRecvBufferBytesAllocated= 0;
       
   a = trans_host(lh);
   b = trans_host(hh);
@@ -708,6 +710,7 @@ Tcomm *teac_Init(char *lh, char *hh, int lctx, int hctx, int myrank,
     result->sendWrappers[i]->totSize= E_BUFFER_INITIAL_SIZE;
     result->sendWrappers[i]->validSize= 0;
     result->sendWrappers[i]->buf= buf;
+    result->totalSendBufferBytesAllocated += result->sendWrappers[i]->totSize; 
   }
   
   elan3_initevent_word (result->ctx, 
@@ -779,8 +782,11 @@ void teac_Close(Tcomm *tcomm)
       elan3_freeElan(tcomm->ctx, tcomm->sbuf_pull_event[0]);
     if (tcomm->sendWrappers[0] != NULL) {
       for (i=0; i<NUM_SEND_BUFFERS; i++) {
-	if (tcomm->sendWrappers[i]->buf != NULL) 
+	if (tcomm->sendWrappers[i]->buf != NULL) {
 	  elan3_free(tcomm->ctx, tcomm->sendWrappers[i]->buf);
+	  tcomm->totalSendBufferBytesAllocated -= 
+	    tcomm->sendWrappers[i]->totSize;
+	}
       }
       crFree(tcomm->sendWrappers[0]);
     }
@@ -832,7 +838,9 @@ int teac_Poll(Tcomm* tcomm, int *ids, int num_ids)
     int thisId= ids[index];
     for (i=0; i<NUM_SEND_BUFFERS; i++) {
       if (elan3_pollevent_word(tcomm->ctx, &(tcomm->m_rcv[thisId][i]), 1)) {
+#ifdef never
 	tcomm->poll_shift= index;
+#endif
 	return thisId;
       }
     }
@@ -872,12 +880,14 @@ SBuffer* teac_getSendBuffer( Tcomm* tcomm, long size )
    * replace it with something larger.
    */
   if (tcomm->sendWrappers[i]->totSize < size) {
+    tcomm->totalSendBufferBytesAllocated -= tcomm->sendWrappers[i]->totSize;
     elan3_free( tcomm->ctx, tcomm->sendWrappers[i]->buf );
     if (!(tcomm->sendWrappers[i]->buf= 
 	  (char*)elan3_allocMain(tcomm->ctx, 8, size))) {
       perror("teac_getSendBuffer: failed to grow send buffer");
       exit(-1);
     }
+    tcomm->totalSendBufferBytesAllocated += size;
   }
   tcomm->sendWrappers[i]->totSize= size;
   tcomm->sendWrappers[i]->validSize= 0;
@@ -904,6 +914,8 @@ SBuffer* teac_getUnreadySendBuffer( Tcomm* tcomm, long size )
   }
   result->totSize= size;
   result->validSize= 0;
+  tcomm->totalSendBufferBytesAllocated += result->totSize;
+
   return result;
 }
 
@@ -928,6 +940,7 @@ SBuffer* teac_makeSendBufferReady( Tcomm* tcomm, SBuffer* buf )
   *(tcomm->sbuf_ready[i])= 0; /* mark it busy */
 
   /* Substitute the unready payload for the old payload */
+  tcomm->totalSendBufferBytesAllocated -= tcomm->sendWrappers[i]->totSize;
   elan3_free( tcomm->ctx, tcomm->sendWrappers[i]->buf );
   tcomm->sendWrappers[i]->buf= buf->buf;
   
@@ -1086,6 +1099,7 @@ RBuffer* teac_Recv(Tcomm* tcomm, int id)
     return(NULL);
   }
   result->totSize= tcomm->mbuff[id][iBuf].size;
+  tcomm->totalRecvBufferBytesAllocated+= result->totSize;
   result->validSize= tcomm->mbuff[id][iBuf].size;
   result->from= tcomm->mbuff[id][iBuf].host;
   result->senderMsgnum= tcomm->mbuff[id][iBuf].msgnum;
@@ -1117,6 +1131,7 @@ RBuffer* teac_Recv(Tcomm* tcomm, int id)
 
 int teac_Dispose( Tcomm* tcomm, RBuffer* buf )
 {
+  tcomm->totalRecvBufferBytesAllocated -= buf->totSize;
   elan3_free(tcomm->ctx, buf->buf);
   crFree(buf);
   return 0;

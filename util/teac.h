@@ -60,6 +60,8 @@ typedef struct _teac_comm  {
   int		        hctx, lctx;
   int		        msgnum;
   int                   poll_shift; 
+  long                  totalSendBufferBytesAllocated;
+  long                  totalRecvBufferBytesAllocated;
 } Tcomm;
 
 typedef struct _host {
