@@ -126,9 +126,11 @@ __findSystemLib( const char *provided_system_path, char *lib )
 		 * version if it exists; otherwise, we'll use /usr/lib.
 		 */
 		crStrcpy(system_path, "/usr/lib");
+#if !defined(OSF1)
 		if (sizeof(void *) == 8) {
 			crStrcat(system_path, "64");
 		}
+#endif
 		if (FileExists("/usr/lib/tls", lib) ||
 		    FileExists("/usr/lib64/tls", lib)) {
 			crStrcat(system_path, "/tls");
