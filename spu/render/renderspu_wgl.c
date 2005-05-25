@@ -248,7 +248,7 @@ bSetupPixelFormatNormal( HDC hdc, GLbitfield visAttribs )
 			crError( "render_spu.ws.wglSetPixelFormat failed" );
 		}
 	
-		render_spu.ws.wglDescribePixelFormat( hdc, pixelformat, sizeof(ppfd), ppfd );
+		render_spu.ws.wglDescribePixelFormat( hdc, pixelformat, sizeof(*ppfd), ppfd );
 	}
 	else
 	{
@@ -265,7 +265,7 @@ bSetupPixelFormatNormal( HDC hdc, GLbitfield visAttribs )
 			crError( "SetPixelFormat failed (Error 0x%x)", GetLastError() );
 		}
 		
-		DescribePixelFormat( hdc, pixelformat, sizeof(ppfd), ppfd );
+		DescribePixelFormat( hdc, pixelformat, sizeof(*ppfd), ppfd );
 	}
 
 
