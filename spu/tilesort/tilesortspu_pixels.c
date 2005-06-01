@@ -525,8 +525,9 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 		WRITE_DATA( 28, GLint, p->alignment );
 		WRITE_DATA( 32, GLint, p->skipRows );
 		WRITE_DATA( 36, GLint, p->skipPixels );
-		WRITE_DATA( 40, GLint,  bytes_per_row );
-		WRITE_NETWORK_POINTER( 44, (char *) pixels + offset );
+		WRITE_DATA( 40, GLint, bytes_per_row );
+		WRITE_DATA( 44, GLint, p->rowLength);
+		WRITE_NETWORK_POINTER( 48, (char *) pixels + offset );
 		*(buffer->opcode_current--) = (unsigned char) CR_READPIXELS_OPCODE;
 
 		tilesortspuSendServerBuffer( i );
