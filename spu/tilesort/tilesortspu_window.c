@@ -629,7 +629,6 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowPosition(GLint window, GLint x, GLin
 GLint TILESORTSPU_APIENTRY
 tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 {
-	GET_THREAD(thread);
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
 	static GLint freeWinID = 1 /*400*/;
 	WindowInfo *winInfo;
@@ -643,7 +642,7 @@ tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 		visBits |= CR_STEREO_BIT;
 
 	/* release geometry buffer */
-	crPackReleaseBuffer(thread->packer );
+	crPackReleaseBuffer(thread0->packer );
 
 	winInfo = tilesortspuCreateWindowInfo( freeWinID, visBits );
 	if (!winInfo)
@@ -669,7 +668,7 @@ tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 		crPackReleaseBuffer( thread0->packer );
 
 		/* Flush buffer (send to server) */
-		tilesortspuSendServerBuffer( i );
+		tilesortspuSendServerBufferThread( i, thread0 );
 
 		if (!thread0->netServer[0].conn->actual_network)
 		{
