@@ -465,6 +465,12 @@ int glXGetConfig( Display *dpy, XVisualInfo *vis, int attrib, int *value )
 	struct VisualInfo *v;
 	int visBits;
 
+	if (!vis) {
+		/* SGI OpenGL Performer hits this */
+		crWarning("glXGetConfig called with NULL XVisualInfo");
+		return GLX_BAD_VISUAL;
+	}
+
 	v = FindVisualInfo(dpy, DefaultScreen(dpy), vis->visual->visualid);
 	if (v) {
 		visBits = v->visBits;
