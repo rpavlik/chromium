@@ -575,12 +575,13 @@ void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( GLint ctx )
 	/* Destroy the tilesort state context */
 	crFree(contextInfo->server);
 	crStateDestroyContext(contextInfo->State);
-	crHashtableDelete(tilesort_spu.contextTable, ctx, crFree);
 
 	/* The default buffer */
 	crPackSetBuffer( thread0->packer, &(thread->geometry_buffer) );
 
 	crDLMFreeContext(contextInfo->dlmContext);
+
+	crHashtableDelete(tilesort_spu.contextTable, ctx, crFree);
 }
 
 
