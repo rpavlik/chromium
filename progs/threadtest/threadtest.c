@@ -122,7 +122,12 @@ doughnut(GLfloat r, GLfloat R, GLint nsides, GLint rings)
 }
 
 
-static void *render_loop( void *threadData )
+/**
+ * This function runs in a separate thread.
+ * There many be many threads all running this function.
+ */
+static void *
+render_loop( void *threadData )
 {
 	static const GLfloat white[4] = { 1, 1, 1, 1 };
 	static const GLfloat gray[4] = { 0.25, 0.25, 0.25, 1 };
@@ -190,6 +195,7 @@ static void *render_loop( void *threadData )
 		doughnut((GLfloat).15,(GLfloat)0.7, 15, 30);
 
 		glPopMatrix();
+		glFinish();
 
 		if (context->UseBarriers)
 			glBarrierExecCR_func( MASTER_BARRIER );
@@ -198,6 +204,8 @@ static void *render_loop( void *threadData )
 		 * No need to test for rank==0 as we used to do.
 		 */
 		crSwapBuffersCR_func(context->Window, context->SwapFlags);
+
+		/* XXX we _might_ need another barrier at this point */
 	}
 
 	ExitFlag = GL_TRUE;
