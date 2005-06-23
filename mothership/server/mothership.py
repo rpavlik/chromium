@@ -31,7 +31,7 @@ Other internal functions/classes:
     SockWrapper:    Internal convenience class for handling sockets
 """
 
-import sys, string, types, traceback, re, threading, os, socket, select, signal, pickle, copy
+import sys, string, types, traceback, re, threading, os, socket, select, signal, pickle, copy, time
 
 from crconfig import arch, crdir, crbindir, crlibdir
 
@@ -724,8 +724,9 @@ class CRSpawner(threading.Thread):
 	NOTE: Yes, the program name should be the zeroth item in the list
 	of arguments, which means it is repeated.
 
-	Since a new process is created, there is no need for your program
-	to complete before the application finishes.
+	To use this class, instantiate a CRSpawner object and call its
+	start() method.  Call the waitForFinish() method if you want to
+	wait for the CRSpawner thread to exit/finish.
 	"""
 	def __init__( self, nodes, branches=0, maxnodes=1):
 		self.maxnodes = maxnodes
@@ -741,7 +742,8 @@ class CRSpawner(threading.Thread):
 			# This thread will sequentially spawn all listed nodes.
 			for node in self.nodes:
 				if node.autostart != "":
-					os.spawnv( os.P_NOWAIT, node.autostart, node.autostart_argv )
+					p = os.spawnv( os.P_NOWAIT, node.autostart, node.autostart_argv )
+					print "AUTOSTART process %d" % p
 					CRInfo("Autostart for node %s: %s" % (node.host, str(node.autostart_argv)))
 				else:
 					if isinstance(node, CRNetworkNode):
@@ -761,6 +763,18 @@ class CRSpawner(threading.Thread):
 			for i in range(0, self.count, childsize):
 				child = CRSpawner(self.nodes[i:i+childsize], self.branches, self.maxnodes)
 				child.start()
+	#enddef
+
+	def waitForFinish(self):
+		"""This method won't return until this thread has completed."""
+		# NOTE: the join() method doesn't seem to do what we want.
+		while 1:
+			if self.isAlive():
+				time.sleep(1)  # Wait a second, then try again
+			else:
+				return
+	#enddef
+
 
 class CR:
 	"""Main class that controls the mothership
@@ -991,6 +1005,7 @@ class CR:
 				if self.enable_autostart:
 					spawner = CRSpawner(self.nodes, self.config['autostart_branches'], self.config['autostart_max_nodes_per_thread'])
 					spawner.start()
+					spawner.waitForFinish()
 
 				# If we're supposed to "phone home" with a signal, do so
 				# with the USR1 signal.  This will happen when we're
