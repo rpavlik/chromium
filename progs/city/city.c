@@ -92,7 +92,7 @@ static GLfloat EyeX = 0, EyeY = 0, EyeZ = 0;
 glChromiumParametervCRProc glChromiumParametervCR_ptr;
 #endif
 
-
+static GLboolean Fog = GL_FALSE;
 
 static GLfloat
 _Random(GLfloat min, GLfloat max)
@@ -336,6 +336,16 @@ DrawCompass(void)
 	glPopMatrix();
 }
 
+static void
+doFog(void)
+{
+    /* hand-tuned fog settings to give visually pleasing results */
+    GLfloat fogColor[4] = {0.15,0.06,0.02,1.0};
+    glEnable(GL_FOG);
+    glFogi(GL_FOG_MODE, GL_EXP);
+    glFogf(GL_FOG_DENSITY, 0.025F);
+    glFogfv(GL_FOG_COLOR, fogColor);
+}
 
 /* Setup modelview and draw the 3D scene. */
 static void
@@ -346,6 +356,10 @@ DrawScene(void)
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
+	if (Fog)
+	    doFog();
+	
 	glTranslatef(EyeX, EyeY - EyeHeight, EyeZ - EyeDist);
 
 	glPushMatrix();
@@ -382,6 +396,9 @@ DrawScene(void)
 			DrawBuilding(Buildings + i);
 	}
 
+	if (Fog)
+	    glDisable(GL_FOG);
+	
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_CULL_FACE);
 
@@ -621,6 +638,9 @@ Key(unsigned char key, int x, int y)
 	case 'd':
 		UseDisplayLists = !UseDisplayLists;
 		printf("Use display lists: %d\n", (int) UseDisplayLists);
+		break;
+	case 'f':
+		Fog = !Fog;
 		break;
 	case 't':
 		Texture = !Texture;
@@ -887,6 +907,7 @@ main(int argc, char *argv[])
 		("  b/B                       - decrease/increase number of buildings\n");
 	printf("  t                         - toggle textures on/off\n");
 	printf("  SPACE                     - generate new, random buildings\n");
+	printf("  f                         - toggle fog on/off\n");
 	printf("  q/ESC                     - exit\n");
 
 	glutInitWindowSize(WinWidth, WinHeight);
@@ -906,3 +927,4 @@ main(int argc, char *argv[])
 	glutMainLoop();
 	return 0;
 }
+
