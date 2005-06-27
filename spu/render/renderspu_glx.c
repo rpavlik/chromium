@@ -426,6 +426,19 @@ renderspu_SystemInitVisual( VisualInfo *visual )
 		dpyName = NULL;
 
 	crDebug("Render SPU: Opening display %s", dpyName);
+
+	if (crStrncmp(dpyName, "localhost:11", 12) == 0 ||
+			crStrncmp(dpyName, "localhost:12", 12) == 0 ||
+			crStrncmp(dpyName, "localhost:13", 12) == 0) {
+		/* Issue both debug and warning messages to make sure the
+		 * message gets noticed!
+		 */
+		crDebug("Render SPU: display string looks like a proxy server!");
+		crDebug("Render SPU: This is usually a problem!");
+		crWarning("Render SPU: display string looks like a proxy server!");
+		crWarning("Render SPU: This is usually a problem!");
+	}
+
 	visual->dpy = XOpenDisplay(dpyName);  
 	if (!visual->dpy)
 	{
