@@ -41,25 +41,37 @@ Version = "1.8"
 # Default port we'll listen on (also set in cr_net.h)
 DefaultMothershipPort = 10000
 
-# This controls whether debug messages are printed (1=yes, 0=no)
-DebugMode = 0
+# This controls whether info/debug messages are printed
+# (0=none, 1=info, 2=info+debug)
+DebugLevel = 1
 
 # It seems these aren't defined in all versions of Python
 True = 1
 False = 0
 
-# Some help in figuring out the domains of some non-qualified hostnames
-__hostPrefixPairs__= [ ('iam','.psc.edu'), ('tg-v','.uc.teragrid.org') ]
+# Some help in figuring out the domains of some non-qualified hostnames.
+# See QualifyHostname() below.
+HostPrefixPairs = [
+	('iam','psc.edu'),
+	('tg-v','uc.teragrid.org')
+]
+
+def CRSetDebugLevel(level):
+	global DebugLevel
+	DebugLevel = level
 
 def CRInfo( str ):
 	"""CRInfo(str)
 	Prints informational messages to stderr."""
-	print >> sys.stderr, str
+	global DebugLevel
+	if DebugLevel >= 1:
+		print >> sys.stderr, str
 
 def CRDebug( str ):
 	"""CRDebug(str)
 	Prints debugging message to stderr."""
-	if DebugMode:
+	global DebugLevel
+	if DebugLevel >= 2:
 		print >> sys.stderr, str
 
 def CROutput( str ):
@@ -134,7 +146,7 @@ def RegexConstraint(testName, pattern):
 ConstraintTests["regex"] = (RegexConstraint, DYNAMIC_CONSTRAINT)
 
 def RegexFullConstraint(testName, pattern):
-	fullName = __qualifyHostname__(testName)
+	fullName = QualifyHostname(testName)
 	return re.search(pattern, fullName)
 ConstraintTests["regex_full"] = (RegexFullConstraint, DYNAMIC_CONSTRAINT)
 
@@ -143,7 +155,7 @@ def PatternConstraint(testName, compiledPattern):
 ConstraintTests["pattern"] = (PatternConstraint, DYNAMIC_CONSTRAINT)
 
 def PatternFullConstraint(testName, compiledPattern):
-	fullName = __qualifyHostname__(testName)
+	fullName = QualifyHostname(testName)
 	return compiledPattern.search(fullName)
 ConstraintTests["pattern_full"] = (PatternFullConstraint, DYNAMIC_CONSTRAINT)
 
@@ -198,15 +210,24 @@ def MatchUnresolvedNode(node, hostToMatch):
 	else:
 		return 0
 		
-def __qualifyHostname__( host ):
-	"""__qualifyHostname__(host)
-	Converts host to a fully qualified domain name """
-	if string.find(host,'.')>=0:
+def QualifyHostname( host ):
+	"""Converts host to a fully qualified domain name.
+	Basicially, look if 'host' contains a dot.  If not, search the
+	HostPrefixPairs list to find a suitable domain to append onto
+	the hostname."""
+	if string.find(host, '.') >= 0:
+		# OK as-is
 		return host
 	else:
-		for (prefix, domain) in __hostPrefixPairs__:
-			if string.find(host,prefix)==0:
-				return "%s%s"%(host,domain)
+		# try to find a matching prefix in HostPrefixPairs list
+		for (prefix, domain) in HostPrefixPairs:
+			if string.find(host, prefix) == 0:
+				return host + '.' + domain
+		# Look if the CR_DEFAULT_DOMAIN env var is set
+		domain = os.environ.get("CR_DEFAULT_DOMAIN")
+		if domain:
+			return host + '.' + domain
+		# finally, try using the socket.getfqdn() function
 		return socket.getfqdn(host)
 
 class SPU:
@@ -743,7 +764,6 @@ class CRSpawner(threading.Thread):
 			for node in self.nodes:
 				if node.autostart != "":
 					p = os.spawnv( os.P_NOWAIT, node.autostart, node.autostart_argv )
-					print "AUTOSTART process %d" % p
 					CRInfo("Autostart for node %s: %s" % (node.host, str(node.autostart_argv)))
 				else:
 					if isinstance(node, CRNetworkNode):
@@ -1082,7 +1102,7 @@ class CR:
 		"""Connect routine for TCP/IP (see do_connectrequest())"""
 		(p, hostname, port_str, endianness_str) = connect_info
 		assert p == "tcpip"
-		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
+		hostname = socket.gethostbyname(QualifyHostname(hostname))
 		port = int(port_str)
 		endianness = int(endianness_str)
 		# Loop over all of the mothership's socket wrappers, looking for
@@ -1114,7 +1134,7 @@ class CR:
 	def ConnectSDP( self, sock, connect_info ):
 		"""Connect routine for SDP (see do_connectrequest())"""
 		(p, hostname, port_str, endianness_str) = connect_info
-		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
+		hostname = socket.gethostbyname(QualifyHostname(hostname))
 		port = int(port_str)
 		endianness = int(endianness_str)
 		for server_sock in self.wrappers.values():
@@ -1137,7 +1157,7 @@ class CR:
 		"""Connect routine for InfiniBand (see do_connectrequest())"""
 		(p, hostname, port_str, node_id_str, endianness_str, lid1, qp_ous, qp) = connect_info
 		CRInfo("do_connectrequest processing ib protocol")
-		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
+		hostname = socket.gethostbyname(QualifyHostname(hostname))
 		port = int(port_str)
 		node_id = int(node_id_str)
 		endianness = int(endianness_str)
@@ -1244,7 +1264,7 @@ class CR:
 		"""Accept routine for TCP/IP (see do_acceptrequest())"""
 		(p, hostname, port_str, endianness_str) = accept_info
 		assert p == "tcpip"
-		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
+		hostname = socket.gethostbyname(QualifyHostname(hostname))
 		port = int(port_str)
 		endianness = int(endianness_str)
 		# Loop over all of the mothership's socket wrappers, looking for
@@ -1275,7 +1295,7 @@ class CR:
 	def AcceptSDP( self, sock, accept_info ):
 		"""Accept routine for SDP (see do_acceptrequest())"""
 		(p, hostname, port_str, endianness_str) = accept_info
-		hostname = socket.gethostbyname(__qualifyHostname__(hostname))
+		hostname = socket.gethostbyname(QualifyHostname(hostname))
 		port = int(port_str)
 		endianness = int(endianness_str)
 		for client_sock in self.wrappers.values():
