@@ -209,7 +209,6 @@ void packspuHuge( CROpcode opcode, void *buf )
 
 	CRASSERT( thread->netServer.conn );
 	crNetSend( thread->netServer.conn, NULL, src, len );
-	crPackFree( buf );
 }
 
 void packspuConnectToServer( CRNetServer *server )

@@ -52,6 +52,7 @@ void PACK_APIENTRY crPackDrawPixels( GLsizei width, GLsizei height,
 								 pixels, format, type, unpackstate );  /* src */
 
 	crHugePacket( CR_DRAWPIXELS_OPCODE, data_ptr );
+    crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width, 
@@ -212,6 +213,7 @@ void PACK_APIENTRY crPackBitmap( GLsizei width, GLsizei height,
 	WRITE_DATA( 24, GLuint, isnull );
 
 	crHugePacket( CR_BITMAP_OPCODE, data_ptr );
+    crPackFree( data_ptr );
 }
 /*
        ZPix - compressed DrawPixels
@@ -261,6 +263,7 @@ void PACK_APIENTRY crPackZPixCR( GLsizei width, GLsizei height,
 	crMemcpy((void *) (data_ptr+32), pixels, length);
 
 	crHugePacket( CR_EXTEND_OPCODE, data_ptr );
+    crPackFree( data_ptr );
 }
 
 

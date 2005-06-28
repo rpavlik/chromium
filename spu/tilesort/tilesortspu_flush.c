@@ -245,7 +245,6 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
        go across the wire before this big packet */
 	tilesortspuSendServerBuffer( thread->state_server_index );
 	crNetSend( thread->netServer[thread->state_server_index].conn, NULL, src, len );
-	crPackFree( buf );
 }
 
 static void __drawBBOX(const TileSortBucketInfo * bucket_info)

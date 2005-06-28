@@ -27,6 +27,7 @@ void PACK_APIENTRY crPackPixelMapfv(GLenum map, GLsizei mapsize,
 	unsigned char *data_ptr = __gl_HandlePixelMapData( map, mapsize, sizeof( *values ), values );
 
 	crHugePacket( CR_PIXELMAPFV_OPCODE, data_ptr );
+    crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackPixelMapuiv(GLenum map, GLsizei mapsize, 
@@ -35,6 +36,7 @@ void PACK_APIENTRY crPackPixelMapuiv(GLenum map, GLsizei mapsize,
 	unsigned char *data_ptr = __gl_HandlePixelMapData( map, mapsize, sizeof( *values ), values );
 
 	crHugePacket( CR_PIXELMAPUIV_OPCODE, data_ptr );
+    crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackPixelMapusv(GLenum map, GLsizei mapsize, 
@@ -43,4 +45,5 @@ void PACK_APIENTRY crPackPixelMapusv(GLenum map, GLsizei mapsize,
 	unsigned char *data_ptr = __gl_HandlePixelMapData( map, mapsize, sizeof( *values ), values );
 
 	crHugePacket( CR_PIXELMAPUSV_OPCODE, data_ptr );
+    crPackFree( data_ptr );
 }

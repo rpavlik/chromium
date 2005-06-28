@@ -55,6 +55,7 @@ void PACK_APIENTRY crPackCallLists(GLint n, GLenum type,
 	crMemcpy( data_ptr + 8, lists, num_bytes );
 
 	crHugePacket( CR_CALLLISTS_OPCODE, data_ptr );
+    crPackFree( data_ptr );
 }
 
 

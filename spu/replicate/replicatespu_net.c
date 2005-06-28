@@ -288,8 +288,6 @@ void replicatespuHuge( CROpcode opcode, void *buf )
 			crNetSend( replicate_spu.rserver[i].conn, NULL, src, len );
 		}
 	}
-
-	crPackFree( buf );
 }
 
 void replicatespuConnectToServer( CRNetServer *server )

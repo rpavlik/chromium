@@ -143,6 +143,7 @@ void PACK_APIENTRY crPackMap2d(GLenum target, GLdouble u1,
 	}
 
 	crHugePacket( CR_MAP2D_OPCODE, data_ptr );
+    crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackMap2f(GLenum target, GLfloat u1, 
@@ -199,6 +200,7 @@ void PACK_APIENTRY crPackMap2f(GLenum target, GLfloat u1,
 	}
 
 	crHugePacket( CR_MAP2F_OPCODE, data_ptr );
+    crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackMap1d( GLenum target, GLdouble u1,
@@ -243,6 +245,7 @@ void PACK_APIENTRY crPackMap1d( GLenum target, GLdouble u1,
 	}
 
 	crHugePacket( CR_MAP1D_OPCODE, data_ptr );
+    crPackFree( data_ptr );
 }
 
 void PACK_APIENTRY crPackMap1f( GLenum target, GLfloat u1,
@@ -287,4 +290,5 @@ void PACK_APIENTRY crPackMap1f( GLenum target, GLfloat u1,
 	}
 
 	crHugePacket( CR_MAP1F_OPCODE, data_ptr );
+    crPackFree( data_ptr );
 }
