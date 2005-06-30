@@ -1166,11 +1166,6 @@ int crNetRecv( void )
 	return found_work;
 }
 
-int crGetPID( void )
-{
-	return (int) getpid();
-}
-
 
 /**
  * Teac/TSComm only

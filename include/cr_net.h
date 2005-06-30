@@ -211,7 +211,6 @@ struct CRConnection {
  * Network functions
  */
 extern int crGetHostname( char *buf, unsigned int len );
-extern int crGetPID( void );
 
 extern void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc );
 

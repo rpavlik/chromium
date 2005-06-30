@@ -185,6 +185,20 @@ void crGetCurrentDir( char *dir, int maxLen )
 }
 
 
+/**
+ * Return current process ID number.
+ */
+CRpid crGetPID(void)
+{
+#ifdef WINDOWS
+  crWarnign("crGetPID not implemented on Windows yet!");
+  return 0;
+#else
+  return getpid();
+#endif
+}
+
+
 #if 0
 /* simple test harness */
 int main(int argc, char **argv)

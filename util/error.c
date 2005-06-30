@@ -8,6 +8,7 @@
 #include "cr_error.h"
 #include "cr_string.h"
 #include "cr_net.h"
+#include "cr_process.h"
 
 #ifdef WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -224,6 +225,15 @@ void crDebug( char *format, ... )
 		first_time = 0;
 		if (fname)
 		{
+			char debugFile[1000], *p;
+			crStrcpy(debugFile, fname);
+			p = crStrstr(debugFile, "%p");
+			if (p) {
+				/* replace %p with process number */
+				unsigned long n = (unsigned long) crGetPID();
+				sprintf(p, "%lu", n);
+			}
+			fname = debugFile;
 			output = fopen( fname, "w" );
 			if (!output)
 			{

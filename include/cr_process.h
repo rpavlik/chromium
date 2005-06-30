@@ -38,6 +38,8 @@ extern void crGetProcName( char *name, int maxLen );
 
 extern void crGetCurrentDir( char *dir, int maxLen );
 
+extern CRpid crGetPID(void);
+
 
 #ifdef __cplusplus
 }
