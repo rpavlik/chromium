@@ -29,10 +29,19 @@ main(int argc, char **argv)
     int     screenCount, i;
     int     event_base, error_base;
 
-    display = XOpenDisplay(NULL);
-    if (!display)
-    {
-        fatal("Couldn't open default X display.");
+    if (argc > 1) {
+       display = XOpenDisplay(argv[1]);
+        if (!display)
+        {
+            fatal("Couldn't open display %s", argv[1]);
+        }
+    }
+    else {
+        display = XOpenDisplay(NULL);
+        if (!display)
+        {
+            fatal("Couldn't open default X display.");
+        }
     }
 
     if (!DMXQueryExtension(display, &event_base, &error_base))
