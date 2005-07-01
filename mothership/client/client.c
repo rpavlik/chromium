@@ -297,28 +297,33 @@ int crMothershipGetSPURank( CRConnection *conn )
 /* Called by crserver nodes to get list of its clients */
 void crMothershipGetClients( CRConnection *conn, char *response )
 {
+	response[0] = 0;
 	INSIST( crMothershipSendString( conn, response, "clients" ));
 }
 
 /* Called by crserver nodes to get their config parameters */
 int crMothershipGetServerParam( CRConnection *conn, char *response, const char *param)
 {
+	response[0] = 0;
 	return crMothershipSendString( conn, response, "serverparam %s", param );
 }
 
 int crMothershipGetServerTiles( CRConnection *conn, char *response )
 {
+	response[0] = 0;
 	return crMothershipSendString( conn, response, "servertiles" );
 }
 
 int crMothershipGetServerDisplayTiles( CRConnection *conn, char *response )
 {
+	response[0] = 0;
 	return crMothershipSendString( conn, response, "serverdisplaytiles" );
 }
 
 int crMothershipRequestTileLayout( CRConnection *conn, char *response,
                              int muralWidth, int muralHeight )
 {
+	response[0] = 0;
 	return crMothershipSendString( conn, response, "gettilelayout %d %d",
 																 muralWidth, muralHeight );
 }
