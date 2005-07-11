@@ -1106,8 +1106,13 @@ SwapBuffers is called.  It's useful for "screengrabs".
     <td width="100%" class="ConfigDesc" height="38">
       A full specification of the filename to which to save frames. This
       should include a path (absolute or relative to the working directory
-      of the crserver) and a filename. The filename should have <code>%d</code>
+      of the crserver) and a filename.
+      <p>
+      The filename should have <code>%d</code>
       in it to indicate where the frame number should be inserted.
+      If the window is a stereo window, the filename should contain
+      <code>%c</code> which will be replaced by L or R for each image.
+      <p>
       <b>Note</b>: In Python strings, the percent sign is interpreted, so
       you must insert a percent sign with <code>%%</code> instead of <code>%</code>.
       For example, <code>saveframespu.Conf( "spec", "myMovie/frame%%d.ppm" )</code>
