@@ -218,6 +218,7 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 	crDebug( "Connecting to server %s on port %d, with protocol %s",
 					 hostname, port, protocol );
 
+#ifdef SDP_SUPPORT
 	/* This makes me ill, but we need to "fix" the hostname for sdp. MCH */
 	if (!crStrcmp(protocol, "sdp")) {
 		char* temp;
@@ -227,6 +228,7 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 		crStrcpy(hostname, temp);
 		crDebug("SDP rename hostname: %s", hostname);    
 	}
+#endif
 
 	conn = (CRConnection *) crCalloc( sizeof(*conn) );
 	if (!conn)
