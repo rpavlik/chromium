@@ -124,6 +124,7 @@ extern int crTcscommRecv( void );
  * SDP network interface
  */
 #ifdef SDP_SUPPORT
+extern const char *cr_sdp_hostname_suffix;
 extern void crSDPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl, unsigned int mtu );
 extern void crSDPConnection( CRConnection *conn );
 extern int crSDPRecv( void );

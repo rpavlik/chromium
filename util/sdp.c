@@ -93,6 +93,8 @@ typedef struct {
 } cr_sdp_data;
 
 
+const char *cr_sdp_hostname_suffix = NULL;
+
 /* XXX these could be removed by reordering the functions below */
 static void
 __sdp_dead_connection( CRConnection *conn );
@@ -405,7 +407,8 @@ crSDPAccept( CRConnection *conn, const char *hostname, unsigned short port )
     
 		/* Hack hostname, YUCK!!! */
 		temp = strtok(my_hostname, ".");
-		crStrcat(temp, "sdp");
+		CRASSERT(cr_sdp_hostname_suffix);
+		crStrcat(temp, cr_sdp_hostname_suffix);
 		(void) temp;
 		if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest sdp %s %d %d", temp, conn->port, conn->endianness ) )
 		{
@@ -946,6 +949,15 @@ crSDPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
 	crInitMutex(&cr_sdp.recvmutex);
 #endif
 	cr_sdp.bufpool = crBufferPoolInit(16);
+
+	/* Determine what suffix to put on hostnames for SDP */
+	if (!cr_sdp_hostname_suffix) {
+	   const char *suffix = crGetenv("CR_SDP_SUFFIX");
+	   if (suffix)
+		  cr_sdp_hostname_suffix = suffix;
+	   else
+		  cr_sdp_hostname_suffix = "sdp";
+	}
 }
 
 /* The function that actually connects.  This should only be called by clients 
