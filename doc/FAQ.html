@@ -82,6 +82,9 @@
         <a href="#mozTocId162825">The frames are out of sync. How can I get
         then synchronized ?</a>
       </li>
+      <li>
+        <a href="#sdp">How do I use Infiniband / SDP with Chromium? </a>
+      </li>
     </ol>
     <hr>
     <a name="mozTocId480292" class="mozTocH2" id="mozTocId480292"></a>
@@ -689,6 +692,7 @@
       "File">config/Linux.mk</span> and see if that works.
     </p>
     <hr>
+
     <a name="mozTocId723944" class="mozTocH2" id="mozTocId723944"></a>
     <h2>
       Q: Chromium on Mac OS X
@@ -738,5 +742,43 @@
       unmodified glut app at themoment. <span class="CrProg">Atlantis</span>
       works for me as well.
     </p>
+
+    <a name="sdp"></a>
+    <h2>
+      Q: How do I use InfiniBand / SDP with Chromium?
+    </h2>
+    <p>
+      <span class="AnswerMark">A:</span>
+      Chromium supports Infiniband both with the native (Verbs) interface and
+      SDP.
+      When you call AddServer() in your Python configuration script, you can
+      specify "ib" or "sdp" as the protocol, respectively.
+      You must have first compiled Chromium with InfiniBand/SDP support.
+      See the top-level options.mk file for more information.
+    </p>
+    <p>
+      Socket Direct Protocol (SDP) uses InfiniBand through ordinary
+      Unix network sockets.
+      The advantage of using SDP over the Verbs interface is that connections
+      between Chromium nodes should close cleanly upon exit.
+      With the "ib" protocol, you'll typically have to manually kill
+      crservers, etc. after you exit because the Verbs interface is bad at
+      detecting broken connections.
+    </p>
+    <p>
+      If you're using SDP, Chromium will need to address hosts by their
+      "SDP hostname" which is typically the hostname suffixed with something
+      like "sdp" or "ib".
+      Chromium defaults to using "sdp".
+      A different suffix can be specified with the CR_SDP_SUFFIX environment
+      variable.
+      Check your /etc/hosts file to see what your system uses.
+    </p>
+    <p>
+      Make sure your InfiniBand/SDP environment is working properly before
+      trying to use it with Chromium.
+      InfiniBand vendors typically have test programs for this.
+    </p>
+
   </body>
 </html>
