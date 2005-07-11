@@ -17,6 +17,42 @@
 
 SaveFrameSPU saveframe_spu;
 
+static int
+getFilename( char *filename, int eye, GLboolean stereoOn, const char *spec, int framenum )
+{
+    int numchars;
+    
+    if ( stereoOn == FALSE )
+    {
+#ifdef WINDOWS									/* ? */
+	numchars = _snprintf(filename, MAX_FILENAME_LENGTH,
+			     saveframe_spu.spec, saveframe_spu.framenum);
+#else
+	numchars = snprintf(filename, MAX_FILENAME_LENGTH,
+			    saveframe_spu.spec, saveframe_spu.framenum);
+#endif
+    }
+    else
+    {
+	char eyeChar = (eye == 0 ? 'L' : 'R');
+#ifdef WINDOWS									/* ? */
+	numchars = _snprintf(filename, MAX_FILENAME_LENGTH,
+			     saveframe_spu.spec, saveframe_spu.framenum, eyeChar);
+#else
+	numchars = snprintf(filename, MAX_FILENAME_LENGTH,
+			    saveframe_spu.spec, saveframe_spu.framenum, eyeChar);
+#endif	
+    }
+
+    if (numchars >= MAX_FILENAME_LENGTH)
+    {
+	crWarning("saveframespu: Filename longer than %d characters isn't allowed. Skipping frame %d.",
+		  MAX_FILENAME_LENGTH, saveframe_spu.framenum);
+	return FALSE;
+    }
+
+    return TRUE;
+}
 
 static void
 RGBA_to_PPM(char *filename, int width, int height, const GLubyte * buffer,
@@ -65,6 +101,33 @@ RGBA_to_PPM(char *filename, int width, int height, const GLubyte * buffer,
 		}
 	}
 
+	fclose(file);
+}
+
+static void
+RGB_to_RAW(char *filename, int width, int height, const GLubyte * buffer)
+{
+	FILE *file;
+	int i, j;
+
+	file = fopen(filename, "wb");
+
+	if (file == NULL)
+	{
+		crWarning("Unable to create file %s.\n", filename);
+		return;
+	}
+
+	const GLubyte *row;
+	for (i = 0; i < height; i++)
+	{
+	    row = &buffer[i * width * 3];
+	    for (j = 0; j < width; j++)
+	    {
+		fwrite(row, 3, 1, file);
+		row += 3;
+	    }
+	}
 	fclose(file);
 }
 
@@ -142,55 +205,47 @@ swapBuffers(GLint window, GLint flags)
 		if (saveThisFrame && !(flags & CR_SUPPRESS_SWAP_BIT))
 		{
 			char filename[MAX_FILENAME_LENGTH + 1];
-			int numchars;
-#ifdef WINDOWS									/* ? */
-			numchars =
-				_snprintf(filename, MAX_FILENAME_LENGTH, saveframe_spu.spec,
-									saveframe_spu.framenum);
-#else
-			numchars =
-				snprintf(filename, MAX_FILENAME_LENGTH, saveframe_spu.spec,
-								 saveframe_spu.framenum);
-#endif
-
-			if (numchars < MAX_FILENAME_LENGTH)
+			int i;
+			GLboolean stereoOn = FALSE;
+			GLint pixelFormat;
+			
+			if ( !crStrcmp( saveframe_spu.format, "ppm" ) )
+			    pixelFormat = GL_RGBA;
+			else
+			    pixelFormat = GL_RGB;			
+			saveframe_spu.child.GetBooleanv( GL_STEREO, &stereoOn );
+			
+			int nEyes = (stereoOn ? 2 : 1);
+			for ( i = 0; i < nEyes; i++ )
 			{
-				/* Only save the frame if the filename wasn't truncated by snprintf */
-				if (!crStrcmp(saveframe_spu.format, "ppm"))
-				{
-					saveframe_spu.child.ReadBuffer(GL_BACK);
-					saveframe_spu.child.PixelStorei(GL_PACK_ALIGNMENT, 1);
-					saveframe_spu.child.ReadPixels(0, 0, saveframe_spu.width,
-								       saveframe_spu.height, GL_RGBA,
-								       GL_UNSIGNED_BYTE,
-								       saveframe_spu.buffer);
-					
-					RGBA_to_PPM(filename, saveframe_spu.width, saveframe_spu.height,
-						    saveframe_spu.buffer, saveframe_spu.binary);
-				}
+			    if ( getFilename( filename, i, stereoOn, saveframe_spu.spec, saveframe_spu.framenum ) )
+			    {
+				GLint buffer = GL_BACK;
+				if ( stereoOn )
+				    buffer = (i==0 ? GL_BACK_LEFT : GL_BACK_RIGHT);
+
+				saveframe_spu.child.ReadBuffer(buffer);
+				saveframe_spu.child.PixelStorei(GL_PACK_ALIGNMENT, 1);
+				saveframe_spu.child.ReadPixels(0, 0, saveframe_spu.width,
+							       saveframe_spu.height, pixelFormat,
+							       GL_UNSIGNED_BYTE,
+							       saveframe_spu.buffer);
+
+				if ( !crStrcmp( saveframe_spu.format, "ppm" ) )
+				    RGBA_to_PPM(filename, saveframe_spu.width, saveframe_spu.height,
+						saveframe_spu.buffer, saveframe_spu.binary);
 #ifdef JPEG
 				else if (!crStrcmp(saveframe_spu.format, "jpeg"))
-				{
-					saveframe_spu.child.ReadBuffer(GL_BACK);
-					saveframe_spu.child.PixelStorei(GL_PACK_ALIGNMENT, 1);
-					saveframe_spu.child.ReadPixels(0, 0, saveframe_spu.width,
-																				 saveframe_spu.height, GL_RGB,
-																				 GL_UNSIGNED_BYTE,
-																				 saveframe_spu.buffer);
-					RGB_to_JPG(filename, saveframe_spu.width, saveframe_spu.height,
-										 saveframe_spu.buffer);
-				}
+				    RGB_to_JPG(filename, saveframe_spu.width, saveframe_spu.height,
+					       saveframe_spu.buffer);
 #endif
-				else {
-					crWarning("Invalid value for saveframe_spu.format: %s",
-							  saveframe_spu.format);
-				}
-			}
-			else
-			{
-				crWarning
-					("saveframespu: Filename longer than %d characters isn't allowed. Skipping frame %d.",
-					 MAX_FILENAME_LENGTH, saveframe_spu.framenum);
+				else if (!crStrcmp( saveframe_spu.format, "raw"))
+				    RGB_to_RAW(filename, saveframe_spu.width, saveframe_spu.height,
+					       saveframe_spu.buffer);
+				else
+				    crWarning("Invalid value for saveframe_spu.format: %s",
+					              saveframe_spu.format);
+			    }
 			}
 		}
 	}

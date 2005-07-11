@@ -106,9 +106,9 @@ SPUOptions saveframeSPUOptions[] = {
 	/* Do not move "format" below "basename"... set_basename uses format */
 	{"format", CR_ENUM, 1, "ppm",
 #ifdef JPEG
-	 "'ppm', 'jpeg'",
+	 "'ppm', 'jpeg', 'raw'",
 #else
-	 "'ppm'",
+	 "'ppm', 'raw'",
 #endif
 	 NULL,
 	 "Image Format", (SPUOptionCB) set_format},
