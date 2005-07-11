@@ -832,7 +832,7 @@ crTCPIPReceiveMessage(CRConnection *conn)
 
 	if ( __tcpip_read_exact( sock, tcpip_buffer + 1, total) <= 0 )
 	{
-		crWarning( "Bad juju: %d %d on sock %x", tcpip_buffer->allocated,
+		crWarning( "Bad juju: %d %d on socket 0x%x", tcpip_buffer->allocated,
 							 total, sock );
 		crFree( tcpip_buffer );
 		__tcpip_dead_connection( conn );
