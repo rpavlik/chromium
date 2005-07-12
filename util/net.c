@@ -223,8 +223,7 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 	if (!crStrcmp(protocol, "sdp")) {
 		char* temp;
 		temp = strtok(hostname, ".");
-		CRASSERT(cr_sdp_hostname_suffix);
-		crStrcat(temp, cr_sdp_hostname_suffix);
+		crStrcat(temp, crGetSDPHostnameSuffix());
 		crStrcpy(hostname, temp);
 		crDebug("SDP rename hostname: %s", hostname);    
 	}

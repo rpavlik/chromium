@@ -93,8 +93,6 @@ typedef struct {
 } cr_sdp_data;
 
 
-const char *cr_sdp_hostname_suffix = NULL;
-
 /* XXX these could be removed by reordering the functions below */
 static void
 __sdp_dead_connection( CRConnection *conn );
@@ -116,7 +114,6 @@ crSDPDoDisconnect( CRConnection *conn );
 #define ECONNRESET  WSAECONNRESET
 #undef  EINTR
 #define EINTR       WSAEINTR
-
 
 static int
 crSDPErrno( void )
@@ -197,6 +194,23 @@ crSDPErrorString( int err )
 
 static unsigned short last_port = 0;
 static cr_sdp_data cr_sdp;
+
+/**
+ * Return the suffix to put onto hostnames to address the IB/SDP interface.
+ * We'll check the CR_SDP_SUFFIX env var the first time called.
+ * Note: "sdp" is the default.
+ */
+const char *
+crGetSDPHostnameSuffix(void)
+{
+	static const char *suffix = NULL;
+	if (!suffix) {
+		suffix = crGetenv("CR_SDP_SUFFIX");
+		if (!suffix)
+			suffix = "sdp";
+	}
+	return suffix;
+}
 
 static int
 __sdp_read_exact( CRSocket sock, void *buf, unsigned int len )
@@ -407,8 +421,7 @@ crSDPAccept( CRConnection *conn, const char *hostname, unsigned short port )
     
 		/* Hack hostname, YUCK!!! */
 		temp = strtok(my_hostname, ".");
-		CRASSERT(cr_sdp_hostname_suffix);
-		crStrcat(temp, cr_sdp_hostname_suffix);
+		crStrcat(temp, crGetSDPHostnameSuffix());
 		(void) temp;
 		if (!__copy_of_crMothershipSendString( mother, response, "acceptrequest sdp %s %d %d", temp, conn->port, conn->endianness ) )
 		{
@@ -949,15 +962,6 @@ crSDPInit( CRNetReceiveFuncList *rfl, CRNetCloseFuncList *cfl,
 	crInitMutex(&cr_sdp.recvmutex);
 #endif
 	cr_sdp.bufpool = crBufferPoolInit(16);
-
-	/* Determine what suffix to put on hostnames for SDP */
-	if (!cr_sdp_hostname_suffix) {
-	   const char *suffix = crGetenv("CR_SDP_SUFFIX");
-	   if (suffix)
-		  cr_sdp_hostname_suffix = suffix;
-	   else
-		  cr_sdp_hostname_suffix = "sdp";
-	}
 }
 
 /* The function that actually connects.  This should only be called by clients 
