@@ -427,9 +427,10 @@ renderspu_SystemInitVisual( VisualInfo *visual )
 
 	crDebug("Render SPU: Opening display %s", dpyName);
 
-	if (crStrncmp(dpyName, "localhost:11", 12) == 0 ||
-			crStrncmp(dpyName, "localhost:12", 12) == 0 ||
-			crStrncmp(dpyName, "localhost:13", 12) == 0) {
+	if (dpyName &&
+			(crStrncmp(dpyName, "localhost:11", 12) == 0 ||
+			 crStrncmp(dpyName, "localhost:12", 12) == 0 ||
+			 crStrncmp(dpyName, "localhost:13", 12) == 0)) {
 		/* Issue both debug and warning messages to make sure the
 		 * message gets noticed!
 		 */
