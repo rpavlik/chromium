@@ -907,20 +907,26 @@ int main( int argc, char **argv )
 	mothership_conn = crMothershipConnect( );
 	if (!mothership_conn)
 	{
-		crError( "Couldn't connect to the mothership -- I have no idea what to do!" );
+		crError( "App faker couldn't connect to the mothership -- I have no idea what to do!" );
 	}
 
 	crMothershipIdentifyFaker( mothership_conn, response );
 	chain = crStrSplitn( response, " ", 1 );
 
-	/* the OpenGL faker DLL needs to have a unique ID in case there 
-	* are multiple apps running on the same host. */
+	/*
+	 * chain will be "ID arg[0] arg[1] arg[2] ..."
+	 * where ID is the app node's integer id (first one is zero),
+	 * and the args list is what was set with appnode.SetApplication()
+	 *
+	 * Each OpenGL faker DLL needs to have a unique ID in case there 
+	 * are multiple apps running on the same host.
+	 */
 	crSetenv( "CR_APPLICATION_ID_NUMBER", chain[0] );
 
 	if ( argc < 1 )
 	{
-		/* No command specified, contact the configuration server to 
-		 * ask what I should do.
+		/* No command specified.  Use the argument vector that was specified
+		 * in the mothership config file with appnode.SetApplication().
 		 */
 		char **c, **argvTemp = crStrSplit( chain[1], " " );
 		int i, numArgs = 0;
@@ -942,6 +948,7 @@ int main( int argc, char **argv )
 		/* free the array, but not the strings */
 		crFree(argvTemp);
 
+		/* determine which directory to start in */
 		crMothershipGetFakerParam( mothership_conn, response, "start_dir" );
 		if (chdir( response ))
 		{
