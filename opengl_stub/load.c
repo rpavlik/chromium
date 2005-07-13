@@ -404,7 +404,7 @@ StartMothership(void)
 		/* Restore the older handler, in case it was being used */
 		(void) signal(SIGUSR1, oldHandler);
 		if (!Mothership_Awake) {
-			crWarning("Mothership never woke up!");
+			crError("Mothership failed to start.  Exiting.");
 			return 0;
 		}
 	}
