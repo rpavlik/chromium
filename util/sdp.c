@@ -5,6 +5,14 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+/* POSSIBLE BUG 7/14/2005 (mhouston):
+On the Voltaire stack that LANL is running, it doesn't like it if you
+sent sin_family to AF_INET_SDP and only works if it's set to AF_INET.
+According to the SDP documentation I can find, what little there is,
+this looks like a bug in the Voltaire implementation.  However, all
+other stacks behave correctly and provide the same performance with
+this change, so we are going to make it.  BE AWARE THIS MIGHT CAUSE
+PROBLEMS WITH LATER STACKS, ESPECIALLY THE OPENIB STACK!!! */
 
 /* sometimes the default IB install doesn't setup the includes correctly,
 	 so we are going to manually define AF_INET_SDP */
@@ -384,7 +392,7 @@ crSDPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 		}
 		spankSocket( cr_sdp.server_sock );
 
-		servaddr.sin_family = AF_INET_SDP;
+		servaddr.sin_family = AF_INET;
 		servaddr.sin_addr.s_addr = INADDR_ANY;
 		servaddr.sin_port = htons( port );
 
@@ -996,7 +1004,7 @@ crSDPDoConnect( CRConnection *conn )
 	}
   
 	crMemset( &servaddr, 0, sizeof(servaddr) );
-	servaddr.sin_family = AF_INET_SDP;
+	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons( (short) conn->port );
   
 	crMemcpy( (char *) &servaddr.sin_addr, hp->h_addr,
