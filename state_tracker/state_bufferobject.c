@@ -9,6 +9,7 @@
 #include "state/cr_statefuncs.h"
 #include "state_internals.h"
 #include "cr_mem.h"
+#include "cr_string.h"
 
 
 static CRBufferObject *AllocBufferObject(GLuint name)
@@ -610,6 +611,34 @@ crStateGetBufferPointervARB(GLenum target, GLenum pname, GLvoid **params)
 }
 
 
+/**
+ * We need to check if the GL_EXT_vertex/pixel_buffer_object extensions
+ * are supported before calling any of the diff_api functions.
+ * This flag indidcates if the extensions is available (1), not available (0)
+ * or needs to be tested for (-1).
+ * If we don't do this, we can segfault inside OpenGL.
+ * Ideally, the render SPU should no-op unsupported GL functions, but
+ * that's a bit complicated.
+ */
+static GLboolean
+HaveBufferObjectExtension(void)
+{
+	static GLint haveBufferObjectExt = -1;
+
+	if (haveBufferObjectExt == -1) {
+		const char *ext;
+		CRASSERT(diff_api.GetString);
+		ext = (const char *) diff_api.GetString(GL_EXTENSIONS);
+		if (crStrstr(ext, "GL_ARB_vertex_buffer_object") ||
+				crStrstr(ext, "GL_ARB_pixel_buffer_object")) {
+			haveBufferObjectExt = 1;
+		}
+		else {
+			haveBufferObjectExt = 0;
+		}
+	}
+	return haveBufferObjectExt;
+}
 
 
 void crStateBufferObjectDiff(CRBufferObjectBits *bb, CRbitvalue *bitID,
@@ -617,6 +646,9 @@ void crStateBufferObjectDiff(CRBufferObjectBits *bb, CRbitvalue *bitID,
 {
 	CRBufferObjectState *from = &(fromCtx->bufferobject);
 	const CRBufferObjectState *to = &(toCtx->bufferobject);
+
+	if (!HaveBufferObjectExtension())
+		return;
 
 	/* ARRAY_BUFFER binding */
 	if (CHECKDIRTY(bb->arrayBinding, bitID)) {
@@ -696,6 +728,9 @@ void crStateBufferObjectSwitch(CRBufferObjectBits *bb, CRbitvalue *bitID,
 {
 	const CRBufferObjectState *from = &(fromCtx->bufferobject);
 	const CRBufferObjectState *to = &(toCtx->bufferobject);
+
+	if (!HaveBufferObjectExtension())
+		return;
 
 	/* ARRAY_BUFFER binding */
 	if (CHECKDIRTY(bb->arrayBinding, bitID)) {
