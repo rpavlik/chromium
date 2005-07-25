@@ -107,6 +107,7 @@ RGBA_to_PPM(char *filename, int width, int height, const GLubyte * buffer,
 static void
 RGB_to_RAW(char *filename, int width, int height, const GLubyte * buffer)
 {
+	const GLubyte *row;
 	FILE *file;
 	int i, j;
 
@@ -118,7 +119,6 @@ RGB_to_RAW(char *filename, int width, int height, const GLubyte * buffer)
 		return;
 	}
 
-	const GLubyte *row;
 	for (i = 0; i < height; i++)
 	{
 	    row = &buffer[i * width * 3];
@@ -208,6 +208,7 @@ swapBuffers(GLint window, GLint flags)
 			int i;
 			GLboolean stereoOn = FALSE;
 			GLint pixelFormat;
+			int nEyes;
 			
 			if ( !crStrcmp( saveframe_spu.format, "ppm" ) )
 			    pixelFormat = GL_RGBA;
@@ -215,7 +216,7 @@ swapBuffers(GLint window, GLint flags)
 			    pixelFormat = GL_RGB;			
 			saveframe_spu.child.GetBooleanv( GL_STEREO, &stereoOn );
 			
-			int nEyes = (stereoOn ? 2 : 1);
+			nEyes = (stereoOn ? 2 : 1);
 			for ( i = 0; i < nEyes; i++ )
 			{
 			    if ( getFilename( filename, i, stereoOn, saveframe_spu.spec, saveframe_spu.framenum ) )

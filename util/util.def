@@ -53,6 +53,7 @@ crNetSend
 crNetSendExact
 crNetNewClient
 crNetRecv
+crNetRecvReadPixels
 crNetSingleRecv
 crNetReadline
 crNetFree
