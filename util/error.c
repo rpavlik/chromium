@@ -21,7 +21,11 @@
 #include <signal.h>
 
 static char my_hostname[256];
+#ifdef WINDOWS
+static HANDLE my_pid;
+#else
 static int my_pid = 0;
+#endif
 static int canada = 0;
 static int swedish_chef = 0;
 static int australia = 0;

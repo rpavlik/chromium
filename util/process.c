@@ -191,7 +191,7 @@ void crGetCurrentDir( char *dir, int maxLen )
 CRpid crGetPID(void)
 {
 #ifdef WINDOWS
-  crWarnign("crGetPID not implemented on Windows yet!");
+  crWarning("crGetPID not implemented on Windows yet!");
   return 0;
 #else
   return getpid();
