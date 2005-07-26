@@ -51,11 +51,6 @@ for func_name in keys:
 	    print '\t}'
 	    print '}'
 
-print """
-static void nop(void)
-{
-}
-"""
 
 print """
 void tilesortspuCreateDiffAPI( void )
@@ -73,10 +68,6 @@ for func_name in keys:
 	props = apiutil.Properties(func_name)
 
 	if not apiutil.CanPack(func_name):
-		continue
-
-	if func_name in ['ActiveTextureARB', 'TexEnviv']:
-		print '\tdiff.%s = (%sFunc_t) nop;' % (func_name, func_name)
 		continue
 
 	if "get" in props:
