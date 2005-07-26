@@ -164,7 +164,7 @@ int crPixelSize( GLenum format, GLenum type )
  * Pack src pixel data into tmpRow array as either GLfloat[][1] or
  * GLfloat[][4] depending on whether the format is for colors.
  */
-static void get_row(const GLubyte *src, GLenum srcFormat, GLenum srcType,
+static void get_row(const char *src, GLenum srcFormat, GLenum srcType,
 										GLsizei width, GLfloat *tmpRow)
 {
 	const GLbyte *bSrc = (GLbyte *) src;
@@ -177,576 +177,567 @@ static void get_row(const GLubyte *src, GLenum srcFormat, GLenum srcType,
 	const GLdouble *dSrc = (GLdouble *) src;
 	int i;
 
-	switch (srcFormat) {
-		case GL_COLOR_INDEX:
-		case GL_STENCIL_INDEX:
-			switch (srcType) {
-				case GL_BYTE:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) bSrc[i];
-					break;
-				case GL_UNSIGNED_BYTE:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) ubSrc[i];
-					break;
-				case GL_SHORT:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) sSrc[i];
-					break;
-				case GL_UNSIGNED_SHORT:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) usSrc[i];
-					break;
-				case GL_INT:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) iSrc[i];
-					break;
-				case GL_UNSIGNED_INT:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) uiSrc[i];
-					break;
-				case GL_FLOAT:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = fSrc[i];
-					break;
-				case GL_DOUBLE:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) dSrc[i];
-					break;
-				default:
-					crError("unexpected type in get_row in pixel.c");
-			}
-			break;
-		case GL_DEPTH_COMPONENT:
-			switch (srcType) {
-				case GL_BYTE:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) BYTE_TO_FLOAT(bSrc[i]);
-					break;
-				case GL_UNSIGNED_BYTE:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i]);
-					break;
-				case GL_SHORT:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) SHORT_TO_FLOAT(sSrc[i]);
-					break;
-				case GL_UNSIGNED_SHORT:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) USHORT_TO_FLOAT(usSrc[i]);
-					break;
-				case GL_INT:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) INT_TO_FLOAT(bSrc[i]);
-					break;
-				case GL_UNSIGNED_INT:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) UINT_TO_FLOAT(bSrc[i]);
-					break;
-				case GL_FLOAT:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = fSrc[i];
-					break;
-				case GL_DOUBLE:
-					for (i = 0; i < width; i++)
-						tmpRow[i] = (GLfloat) dSrc[i];
-					break;
-				default:
-					crError("unexpected type in get_row in pixel.c");
-			}
-			break;
-		case GL_RED:
-		case GL_GREEN:
-		case GL_BLUE:
-		case GL_ALPHA:
-			{
-				int dst;
-				if (srcFormat == GL_RED)
-					dst = 0;
-				else if (srcFormat == GL_GREEN)
-					dst = 1;
-				else if (srcFormat == GL_BLUE)
-					dst = 2;
-				else
-					dst = 3;
+	if (srcFormat == GL_COLOR_INDEX || srcFormat == GL_STENCIL_INDEX) {
+		switch (srcType) {
+			case GL_BYTE:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) bSrc[i];
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) ubSrc[i];
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) sSrc[i];
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) usSrc[i];
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) iSrc[i];
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) uiSrc[i];
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = fSrc[i];
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) dSrc[i];
+				break;
+			default:
+				crError("unexpected type in get_row in pixel.c");
+		}
+	}
+	else if (srcFormat == GL_DEPTH_COMPONENT) {
+		switch (srcType) {
+			case GL_BYTE:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) BYTE_TO_FLOAT(bSrc[i]);
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i]);
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) SHORT_TO_FLOAT(sSrc[i]);
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) USHORT_TO_FLOAT(usSrc[i]);
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) INT_TO_FLOAT(bSrc[i]);
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) UINT_TO_FLOAT(bSrc[i]);
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = fSrc[i];
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++)
+					tmpRow[i] = (GLfloat) dSrc[i];
+				break;
+			default:
+				crError("unexpected type in get_row in pixel.c");
+		}
+	}
+	else if (srcFormat == GL_RED || srcFormat == GL_GREEN ||
+					 srcFormat == GL_BLUE || srcFormat == GL_ALPHA) {
+		int dst;
+		if (srcFormat == GL_RED)
+			dst = 0;
+		else if (srcFormat == GL_GREEN)
+			dst = 1;
+		else if (srcFormat == GL_BLUE)
+			dst = 2;
+		else
+			dst = 3;
+		for (i = 0; i < width; i++) {
+			tmpRow[i*4+0] = 0.0;
+			tmpRow[i*4+1] = 0.0;
+			tmpRow[i*4+2] = 0.0;
+			tmpRow[i*4+3] = 1.0;
+		}
+		switch (srcType) {
+			case GL_BYTE:
+				for (i = 0; i < width; i++, dst += 4)
+					tmpRow[dst] = (GLfloat) BYTE_TO_FLOAT(bSrc[i]);
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++, dst += 4)
+					tmpRow[dst] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i]);
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++, dst += 4)
+					tmpRow[dst] = (GLfloat) SHORT_TO_FLOAT(sSrc[i]);
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++, dst += 4)
+					tmpRow[dst] = (GLfloat) USHORT_TO_FLOAT(usSrc[i]);
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++, dst += 4)
+					tmpRow[dst] = (GLfloat) INT_TO_FLOAT(iSrc[i]);
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++, dst += 4)
+					tmpRow[dst] = (GLfloat) UINT_TO_FLOAT(uiSrc[i]);
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++, dst += 4)
+					tmpRow[dst] = fSrc[i];
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++, dst += 4)
+					tmpRow[dst] = (GLfloat) fSrc[i];
+				break;
+			default:
+				crError("unexpected type in get_row in pixel.c");
+		}
+	}
+	else if (srcFormat == GL_LUMINANCE) {
+		switch (srcType) {
+			case GL_BYTE:
 				for (i = 0; i < width; i++) {
-					tmpRow[i*4+0] = 0.0;
-					tmpRow[i*4+1] = 0.0;
-					tmpRow[i*4+2] = 0.0;
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
+						= (GLfloat) BYTE_TO_FLOAT(bSrc[i]);
 					tmpRow[i*4+3] = 1.0;
 				}
-				switch (srcType) {
-					case GL_BYTE:
-						for (i = 0; i < width; i++, dst += 4)
-							tmpRow[dst] = (GLfloat) BYTE_TO_FLOAT(bSrc[i]);
-						break;
-					case GL_UNSIGNED_BYTE:
-						for (i = 0; i < width; i++, dst += 4)
-							tmpRow[dst] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i]);
-						break;
-					case GL_SHORT:
-						for (i = 0; i < width; i++, dst += 4)
-							tmpRow[dst] = (GLfloat) SHORT_TO_FLOAT(sSrc[i]);
-						break;
-					case GL_UNSIGNED_SHORT:
-						for (i = 0; i < width; i++, dst += 4)
-							tmpRow[dst] = (GLfloat) USHORT_TO_FLOAT(usSrc[i]);
-						break;
-					case GL_INT:
-						for (i = 0; i < width; i++, dst += 4)
-							tmpRow[dst] = (GLfloat) INT_TO_FLOAT(iSrc[i]);
-						break;
-					case GL_UNSIGNED_INT:
-						for (i = 0; i < width; i++, dst += 4)
-							tmpRow[dst] = (GLfloat) UINT_TO_FLOAT(uiSrc[i]);
-						break;
-					case GL_FLOAT:
-						for (i = 0; i < width; i++, dst += 4)
-							tmpRow[dst] = fSrc[i];
-						break;
-					case GL_DOUBLE:
-						for (i = 0; i < width; i++, dst += 4)
-							tmpRow[dst] = (GLfloat) fSrc[i];
-						break;
-					default:
-						crError("unexpected type in get_row in pixel.c");
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
+						= (GLfloat) UBYTE_TO_FLOAT(ubSrc[i]);
+					tmpRow[i*4+3] = 1.0;
 				}
-			}
-			break;
-		case GL_LUMINANCE:
-			switch (srcType) {
-				case GL_BYTE:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
-							= (GLfloat) BYTE_TO_FLOAT(bSrc[i]);
-						tmpRow[i*4+3] = 1.0;
-					}
-					break;
-				case GL_UNSIGNED_BYTE:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
-							= (GLfloat) UBYTE_TO_FLOAT(ubSrc[i]);
-						tmpRow[i*4+3] = 1.0;
-					}
-					break;
-				case GL_SHORT:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
-							= (GLfloat) SHORT_TO_FLOAT(sSrc[i]);
-						tmpRow[i*4+3] = 1.0;
-					}
-					break;
-				case GL_UNSIGNED_SHORT:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
-							= (GLfloat) USHORT_TO_FLOAT(usSrc[i]);
-						tmpRow[i*4+3] = 1.0;
-					}
-					break;
-				case GL_INT:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
-							= (GLfloat) INT_TO_FLOAT(iSrc[i]);
-						tmpRow[i*4+3] = 1.0;
-					}
-					break;
-				case GL_UNSIGNED_INT:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
-							= (GLfloat) UINT_TO_FLOAT(uiSrc[i]);
-						tmpRow[i*4+3] = 1.0;
-					}
-					break;
-				case GL_FLOAT:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]	= fSrc[i];
-						tmpRow[i*4+3] = 1.0;
-					}
-					break;
-				case GL_DOUBLE:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = (GLfloat) dSrc[i];
-						tmpRow[i*4+3] = 1.0;
-					}
-					break;
-				default:
-					crError("unexpected type in get_row in pixel.c");
-			}
-			break;
-		case GL_INTENSITY:
-			switch (srcType) {
-				case GL_BYTE:
-					for (i = 0; i < width; i++)
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
-							= (GLfloat) BYTE_TO_FLOAT(bSrc[i]);
-					break;
-				case GL_UNSIGNED_BYTE:
-					for (i = 0; i < width; i++)
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
-							= (GLfloat) UBYTE_TO_FLOAT(ubSrc[i]);
-					break;
-				case GL_SHORT:
-					for (i = 0; i < width; i++)
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
-							= (GLfloat) SHORT_TO_FLOAT(sSrc[i]);
-					break;
-				case GL_UNSIGNED_SHORT:
-					for (i = 0; i < width; i++)
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
-							= (GLfloat) USHORT_TO_FLOAT(usSrc[i]);
-					break;
-				case GL_INT:
-					for (i = 0; i < width; i++)
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
-							= (GLfloat) INT_TO_FLOAT(iSrc[i]);
-					break;
-				case GL_UNSIGNED_INT:
-					for (i = 0; i < width; i++)
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
-							= UINT_TO_FLOAT(uiSrc[i]);
-					break;
-				case GL_FLOAT:
-					for (i = 0; i < width; i++)
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
-							= fSrc[i];
-					break;
-				case GL_DOUBLE:
-					for (i = 0; i < width; i++)
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
-							= (GLfloat) dSrc[i];
-					break;
-				default:
-					crError("unexpected type in get_row in pixel.c");
-			}
-			break;
-		case GL_LUMINANCE_ALPHA:
-			switch (srcType) {
-				case GL_BYTE:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
-							= (GLfloat) BYTE_TO_FLOAT(bSrc[i*2+0]);
-						tmpRow[i*4+3] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*2+1]);
-					}
-					break;
-				case GL_UNSIGNED_BYTE:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
-							= (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*2+0]);
-						tmpRow[i*4+3] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*2+1]);
-					}
-					break;
-				case GL_SHORT:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
-							= (GLfloat) SHORT_TO_FLOAT(sSrc[i*2+0]);
-						tmpRow[i*4+3] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*2+1]);
-					}
-					break;
-				case GL_UNSIGNED_SHORT:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
-							= (GLfloat) USHORT_TO_FLOAT(usSrc[i*2+0]);
-						tmpRow[i*4+3] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*2+1]);
-					}
-					break;
-				case GL_INT:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
-							= (GLfloat) INT_TO_FLOAT(iSrc[i*2+0]);
-						tmpRow[i*4+3] = (GLfloat) INT_TO_FLOAT(iSrc[i*2+1]);
-					}
-					break;
-				case GL_UNSIGNED_INT:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
-							= (GLfloat) UINT_TO_FLOAT(uiSrc[i*2+0]);
-						tmpRow[i*4+3] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*2+1]);
-					}
-					break;
-				case GL_FLOAT:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]	= fSrc[i*2+0];
-						tmpRow[i*4+3] = fSrc[i*2+1];
-					}
-					break;
-				case GL_DOUBLE:
-					for (i = 0; i < width; i++) {
-						tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
-							= (GLfloat) dSrc[i*2+0];
-						tmpRow[i*4+3] = (GLfloat) dSrc[i*2+1];
-					}
-					break;
-				default:
-					crError("unexpected type in get_row in pixel.c");
-			}
-			break;
-		case GL_RGB:
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
+						= (GLfloat) SHORT_TO_FLOAT(sSrc[i]);
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
+						= (GLfloat) USHORT_TO_FLOAT(usSrc[i]);
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
+						= (GLfloat) INT_TO_FLOAT(iSrc[i]);
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
+						= (GLfloat) UINT_TO_FLOAT(uiSrc[i]);
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]	= fSrc[i];
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = (GLfloat) dSrc[i];
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+			default:
+				crError("unexpected type in get_row in pixel.c");
+		}
+	}
+	else if (srcFormat == GL_INTENSITY) {
+		switch (srcType) {
+			case GL_BYTE:
+				for (i = 0; i < width; i++)
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
+						= (GLfloat) BYTE_TO_FLOAT(bSrc[i]);
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++)
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
+						= (GLfloat) UBYTE_TO_FLOAT(ubSrc[i]);
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++)
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
+						= (GLfloat) SHORT_TO_FLOAT(sSrc[i]);
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++)
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
+						= (GLfloat) USHORT_TO_FLOAT(usSrc[i]);
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++)
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
+						= (GLfloat) INT_TO_FLOAT(iSrc[i]);
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++)
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
+						= UINT_TO_FLOAT(uiSrc[i]);
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++)
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
+						= fSrc[i];
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++)
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2] = tmpRow[i*4+3]
+						= (GLfloat) dSrc[i];
+				break;
+			default:
+				crError("unexpected type in get_row in pixel.c");
+		}
+	}
+	else if (srcFormat == GL_LUMINANCE_ALPHA) {
+		switch (srcType) {
+			case GL_BYTE:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
+						= (GLfloat) BYTE_TO_FLOAT(bSrc[i*2+0]);
+					tmpRow[i*4+3] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*2+1]);
+				}
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
+						= (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*2+0]);
+					tmpRow[i*4+3] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*2+1]);
+				}
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
+						= (GLfloat) SHORT_TO_FLOAT(sSrc[i*2+0]);
+					tmpRow[i*4+3] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*2+1]);
+				}
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
+						= (GLfloat) USHORT_TO_FLOAT(usSrc[i*2+0]);
+					tmpRow[i*4+3] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*2+1]);
+				}
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
+						= (GLfloat) INT_TO_FLOAT(iSrc[i*2+0]);
+					tmpRow[i*4+3] = (GLfloat) INT_TO_FLOAT(iSrc[i*2+1]);
+				}
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
+						= (GLfloat) UINT_TO_FLOAT(uiSrc[i*2+0]);
+					tmpRow[i*4+3] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*2+1]);
+				}
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]	= fSrc[i*2+0];
+					tmpRow[i*4+3] = fSrc[i*2+1];
+				}
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = tmpRow[i*4+1] = tmpRow[i*4+2]
+						= (GLfloat) dSrc[i*2+0];
+					tmpRow[i*4+3] = (GLfloat) dSrc[i*2+1];
+				}
+				break;
+			default:
+				crError("unexpected type in get_row in pixel.c");
+		}
+	}
+	else if (srcFormat == GL_RGB 
 #ifdef CR_OPENGL_VERSION_1_2
-		case GL_BGR:
+					 || srcFormat == GL_BGR 
 #endif
-			{
-				int r, b;
-				if (srcFormat == GL_RGB) {
-					r = 0; b = 2;
+					 ) {
+		int r, b;
+		if (srcFormat == GL_RGB) {
+			r = 0; b = 2;
+		}
+		else {
+			r = 2; b = 0;
+		}
+		switch (srcType) {
+			case GL_BYTE:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*3+r]);
+					tmpRow[i*4+1] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*3+1]);
+					tmpRow[i*4+2] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*3+b]);
+					tmpRow[i*4+3] = 1.0;
 				}
-				else {
-					r = 2; b = 0;
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*3+r]);
+					tmpRow[i*4+1] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*3+1]);
+					tmpRow[i*4+2] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*3+b]);
+					tmpRow[i*4+3] = 1.0;
 				}
-				switch (srcType) {
-					case GL_BYTE:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*3+r]);
-							tmpRow[i*4+1] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*3+1]);
-							tmpRow[i*4+2] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*3+b]);
-							tmpRow[i*4+3] = 1.0;
-						}
-						break;
-					case GL_UNSIGNED_BYTE:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*3+r]);
-							tmpRow[i*4+1] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*3+1]);
-							tmpRow[i*4+2] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*3+b]);
-							tmpRow[i*4+3] = 1.0;
-						}
-						break;
-					case GL_SHORT:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*3+r]);
-							tmpRow[i*4+1] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*3+1]);
-							tmpRow[i*4+2] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*3+b]);
-							tmpRow[i*4+3] = 1.0;
-						}
-						break;
-					case GL_UNSIGNED_SHORT:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*3+r]);
-							tmpRow[i*4+1] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*3+1]);
-							tmpRow[i*4+2] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*3+b]);
-							tmpRow[i*4+3] = 1.0;
-						}
-						break;
-					case GL_INT:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) INT_TO_FLOAT(iSrc[i*3+r]);
-							tmpRow[i*4+1] = (GLfloat) INT_TO_FLOAT(iSrc[i*3+1]);
-							tmpRow[i*4+2] = (GLfloat) INT_TO_FLOAT(iSrc[i*3+b]);
-							tmpRow[i*4+3] = 1.0;
-						}
-						break;
-					case GL_UNSIGNED_INT:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*3+r]);
-							tmpRow[i*4+1] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*3+1]);
-							tmpRow[i*4+2] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*3+b]);
-							tmpRow[i*4+3] = 1.0;
-						}
-						break;
-					case GL_FLOAT:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = fSrc[i*3+r];
-							tmpRow[i*4+1] = fSrc[i*3+1];
-							tmpRow[i*4+2] = fSrc[i*3+b];
-							tmpRow[i*4+3] = 1.0;
-						}
-						break;
-					case GL_DOUBLE:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) dSrc[i*3+r];
-							tmpRow[i*4+1] = (GLfloat) dSrc[i*3+1];
-							tmpRow[i*4+2] = (GLfloat) dSrc[i*3+b];
-							tmpRow[i*4+3] = 1.0;
-						}
-						break;
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*3+r]);
+					tmpRow[i*4+1] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*3+1]);
+					tmpRow[i*4+2] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*3+b]);
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*3+r]);
+					tmpRow[i*4+1] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*3+1]);
+					tmpRow[i*4+2] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*3+b]);
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) INT_TO_FLOAT(iSrc[i*3+r]);
+					tmpRow[i*4+1] = (GLfloat) INT_TO_FLOAT(iSrc[i*3+1]);
+					tmpRow[i*4+2] = (GLfloat) INT_TO_FLOAT(iSrc[i*3+b]);
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*3+r]);
+					tmpRow[i*4+1] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*3+1]);
+					tmpRow[i*4+2] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*3+b]);
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = fSrc[i*3+r];
+					tmpRow[i*4+1] = fSrc[i*3+1];
+					tmpRow[i*4+2] = fSrc[i*3+b];
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) dSrc[i*3+r];
+					tmpRow[i*4+1] = (GLfloat) dSrc[i*3+1];
+					tmpRow[i*4+2] = (GLfloat) dSrc[i*3+b];
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
 #ifdef CR_OPENGL_VERSION_1_2
-					case GL_UNSIGNED_BYTE_3_3_2:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+r] = (GLfloat) ((ubSrc[i] >> 5)      ) / 7.0f;
-							tmpRow[i*4+1] = (GLfloat) ((ubSrc[i] >> 2) & 0x7) / 7.0f;
-							tmpRow[i*4+b] = (GLfloat) ((ubSrc[i]     ) & 0x3) / 3.0f;
-							tmpRow[i*4+3] = 1.0;
-						}
-						break;
-					case GL_UNSIGNED_BYTE_2_3_3_REV:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+r] = (GLfloat) ((ubSrc[i]     ) & 0x7) / 7.0f;
-							tmpRow[i*4+1] = (GLfloat) ((ubSrc[i] >> 3) & 0x7) / 7.0f;
-							tmpRow[i*4+b] = (GLfloat) ((ubSrc[i] >> 6)      ) / 3.0f;
-							tmpRow[i*4+3] = 1.0;
-						}
-						break;
-					case GL_UNSIGNED_SHORT_5_6_5:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+r] = (GLfloat) ((usSrc[i] >> 11) & 0x1f) / 31.0f;
-							tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  5) & 0x3f) / 63.0f;
-							tmpRow[i*4+b] = (GLfloat) ((usSrc[i]      ) & 0x1f) / 31.0f;
-							tmpRow[i*4+3] = 1.0;
-						}
-						break;
-					case GL_UNSIGNED_SHORT_5_6_5_REV:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+r] = (GLfloat) ((usSrc[i]      ) & 0x1f) / 31.0f;
-							tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  5) & 0x3f) / 63.0f;
-							tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >> 11) & 0x1f) / 31.0f;
-							tmpRow[i*4+3] = 1.0;
-						}
-						break;
-#endif
-					default:
-						crError("unexpected type in get_row in pixel.c");
+			case GL_UNSIGNED_BYTE_3_3_2:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+r] = (GLfloat) ((ubSrc[i] >> 5)      ) / 7.0f;
+					tmpRow[i*4+1] = (GLfloat) ((ubSrc[i] >> 2) & 0x7) / 7.0f;
+					tmpRow[i*4+b] = (GLfloat) ((ubSrc[i]     ) & 0x3) / 3.0f;
+					tmpRow[i*4+3] = 1.0;
 				}
-			}
-			break;
-		case GL_RGBA:
+				break;
+			case GL_UNSIGNED_BYTE_2_3_3_REV:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+r] = (GLfloat) ((ubSrc[i]     ) & 0x7) / 7.0f;
+					tmpRow[i*4+1] = (GLfloat) ((ubSrc[i] >> 3) & 0x7) / 7.0f;
+					tmpRow[i*4+b] = (GLfloat) ((ubSrc[i] >> 6)      ) / 3.0f;
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+			case GL_UNSIGNED_SHORT_5_6_5:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+r] = (GLfloat) ((usSrc[i] >> 11) & 0x1f) / 31.0f;
+					tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  5) & 0x3f) / 63.0f;
+					tmpRow[i*4+b] = (GLfloat) ((usSrc[i]      ) & 0x1f) / 31.0f;
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+			case GL_UNSIGNED_SHORT_5_6_5_REV:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+r] = (GLfloat) ((usSrc[i]      ) & 0x1f) / 31.0f;
+					tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  5) & 0x3f) / 63.0f;
+					tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >> 11) & 0x1f) / 31.0f;
+					tmpRow[i*4+3] = 1.0;
+				}
+				break;
+#endif
+			default:
+				crError("unexpected type in get_row in pixel.c");
+		}
+	}
+	else if (srcFormat == GL_RGBA
 #ifdef CR_OPENGL_VERSION_1_2
-		case GL_BGRA:
-#endif
-			{
-				int r, b;
-				if (srcFormat == GL_RGB) {
-					r = 0; b = 2;
+					 || srcFormat == GL_BGRA 
+#endif		
+					 ) {
+		int r, b;
+		if (srcFormat == GL_RGB) {
+			r = 0; b = 2;
+		}
+		else {
+			r = 2; b = 0;
+		}
+		switch (srcType) {
+			case GL_BYTE:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*4+r]);
+					tmpRow[i*4+1] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*4+1]);
+					tmpRow[i*4+2] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*4+b]);
+					tmpRow[i*4+3] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*4+3]);
 				}
-				else {
-					r = 2; b = 0;
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*4+r]);
+					tmpRow[i*4+1] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*4+1]);
+					tmpRow[i*4+2] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*4+b]);
+					tmpRow[i*4+3] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*4+3]);
 				}
-				switch (srcType) {
-					case GL_BYTE:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*4+r]);
-							tmpRow[i*4+1] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*4+1]);
-							tmpRow[i*4+2] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*4+b]);
-							tmpRow[i*4+3] = (GLfloat) BYTE_TO_FLOAT(bSrc[i*4+3]);
-						}
-						break;
-					case GL_UNSIGNED_BYTE:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*4+r]);
-							tmpRow[i*4+1] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*4+1]);
-							tmpRow[i*4+2] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*4+b]);
-							tmpRow[i*4+3] = (GLfloat) UBYTE_TO_FLOAT(ubSrc[i*4+3]);
-						}
-						break;
-					case GL_SHORT:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*4+r]);
-							tmpRow[i*4+1] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*4+1]);
-							tmpRow[i*4+2] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*4+b]);
-							tmpRow[i*4+3] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*4+3]);
-						}
-						break;
-					case GL_UNSIGNED_SHORT:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*4+r]);
-							tmpRow[i*4+1] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*4+1]);
-							tmpRow[i*4+2] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*4+b]);
-							tmpRow[i*4+3] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*4+3]);
-						}
-						break;
-					case GL_INT:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) INT_TO_FLOAT(iSrc[i*4+r]);
-							tmpRow[i*4+1] = (GLfloat) INT_TO_FLOAT(iSrc[i*4+1]);
-							tmpRow[i*4+2] = (GLfloat) INT_TO_FLOAT(iSrc[i*4+b]);
-							tmpRow[i*4+3] = (GLfloat) INT_TO_FLOAT(iSrc[i*4+3]);
-						}
-						break;
-					case GL_UNSIGNED_INT:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*4+r]);
-							tmpRow[i*4+1] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*4+1]);
-							tmpRow[i*4+2] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*4+b]);
-							tmpRow[i*4+3] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*4+3]);
-						}
-						break;
-					case GL_FLOAT:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = fSrc[i*4+r];
-							tmpRow[i*4+1] = fSrc[i*4+1];
-							tmpRow[i*4+2] = fSrc[i*4+b];
-							tmpRow[i*4+3] = fSrc[i*4+3];
-						}
-						break;
-					case GL_DOUBLE:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+0] = (GLfloat) dSrc[i*4+r];
-							tmpRow[i*4+1] = (GLfloat) dSrc[i*4+1];
-							tmpRow[i*4+2] = (GLfloat) dSrc[i*4+b];
-							tmpRow[i*4+3] = (GLfloat) dSrc[i*4+3];
-						}
-						break;
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*4+r]);
+					tmpRow[i*4+1] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*4+1]);
+					tmpRow[i*4+2] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*4+b]);
+					tmpRow[i*4+3] = (GLfloat) SHORT_TO_FLOAT(sSrc[i*4+3]);
+				}
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*4+r]);
+					tmpRow[i*4+1] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*4+1]);
+					tmpRow[i*4+2] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*4+b]);
+					tmpRow[i*4+3] = (GLfloat) USHORT_TO_FLOAT(usSrc[i*4+3]);
+				}
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) INT_TO_FLOAT(iSrc[i*4+r]);
+					tmpRow[i*4+1] = (GLfloat) INT_TO_FLOAT(iSrc[i*4+1]);
+					tmpRow[i*4+2] = (GLfloat) INT_TO_FLOAT(iSrc[i*4+b]);
+					tmpRow[i*4+3] = (GLfloat) INT_TO_FLOAT(iSrc[i*4+3]);
+				}
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*4+r]);
+					tmpRow[i*4+1] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*4+1]);
+					tmpRow[i*4+2] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*4+b]);
+					tmpRow[i*4+3] = (GLfloat) UINT_TO_FLOAT(uiSrc[i*4+3]);
+				}
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = fSrc[i*4+r];
+					tmpRow[i*4+1] = fSrc[i*4+1];
+					tmpRow[i*4+2] = fSrc[i*4+b];
+					tmpRow[i*4+3] = fSrc[i*4+3];
+				}
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+0] = (GLfloat) dSrc[i*4+r];
+					tmpRow[i*4+1] = (GLfloat) dSrc[i*4+1];
+					tmpRow[i*4+2] = (GLfloat) dSrc[i*4+b];
+					tmpRow[i*4+3] = (GLfloat) dSrc[i*4+3];
+				}
+				break;
 #ifdef CR_OPENGL_VERSION_1_2
-					case GL_UNSIGNED_SHORT_5_5_5_1:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+r] = (GLfloat) ((usSrc[i] >> 11)       ) / 31.0f;
-							tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  6) & 0x1f) / 31.0f;
-							tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >>  1) & 0x1f) / 31.0f;
-							tmpRow[i*4+3] = (GLfloat) ((usSrc[i]      ) & 0x01);
-						}
-						break;
-					case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+r] = (GLfloat) ((usSrc[i]      ) & 0x1f) / 31.0f;
-							tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  5) & 0x1f) / 31.0f;
-							tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >> 10) & 0x1f) / 31.0f;
-							tmpRow[i*4+3] = (GLfloat) ((usSrc[i] >> 15)       );
-						}
-						break;
-					case GL_UNSIGNED_SHORT_4_4_4_4:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+r] = (GLfloat) ((usSrc[i] >> 12) & 0xf) / 15.0f;
-							tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  8) & 0xf) / 15.0f;
-							tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >>  4) & 0xf) / 15.0f;
-							tmpRow[i*4+3] = (GLfloat) ((usSrc[i]      ) & 0xf) / 15.0f;
-						}
-						break;
-					case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+r] = (GLfloat) ((usSrc[i]      ) & 0xf) / 15.0f;
-							tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  4) & 0xf) / 15.0f;
-							tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >>  8) & 0xf) / 15.0f;
-							tmpRow[i*4+3] = (GLfloat) ((usSrc[i] >> 12) & 0xf) / 15.0f;
-						}
-						break;
-					case GL_UNSIGNED_INT_8_8_8_8:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+r] = (GLfloat) ((uiSrc[i] >> 24) & 0xff) / 255.0f;
-							tmpRow[i*4+1] = (GLfloat) ((uiSrc[i] >> 16) & 0xff) / 255.0f;
-							tmpRow[i*4+b] = (GLfloat) ((uiSrc[i] >>  8) & 0xff) / 255.0f;
-							tmpRow[i*4+3] = (GLfloat) ((uiSrc[i]      ) & 0xff) / 255.0f;
-						}
-						break;
-					case GL_UNSIGNED_INT_8_8_8_8_REV:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+r] = (GLfloat) ((uiSrc[i]      ) & 0xff) / 255.0f;
-							tmpRow[i*4+1] = (GLfloat) ((uiSrc[i] >>  8) & 0xff) / 255.0f;
-							tmpRow[i*4+b] = (GLfloat) ((uiSrc[i] >> 16) & 0xff) / 255.0f;
-							tmpRow[i*4+3] = (GLfloat) ((uiSrc[i] >> 24) & 0xff) / 255.0f;
-						}
-						break;
-					case GL_UNSIGNED_INT_10_10_10_2:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+r] = (GLfloat) ((uiSrc[i] >> 22) & 0x3ff) / 1023.0f;
-							tmpRow[i*4+1] = (GLfloat) ((uiSrc[i] >> 12) & 0x3ff) / 1023.0f;
-							tmpRow[i*4+b] = (GLfloat) ((uiSrc[i] >>  2) & 0x3ff) / 1023.0f;
-							tmpRow[i*4+3] = (GLfloat) ((uiSrc[i]      ) & 0x003) /    3.0f;
-						}
-						break;
-					case GL_UNSIGNED_INT_2_10_10_10_REV:
-						for (i = 0; i < width; i++) {
-							tmpRow[i*4+r] = (GLfloat) ((uiSrc[i]      ) & 0x3ff) / 1023.0f;
-							tmpRow[i*4+1] = (GLfloat) ((uiSrc[i] >> 10) & 0x3ff) / 1023.0f;
-							tmpRow[i*4+b] = (GLfloat) ((uiSrc[i] >> 20) & 0x3ff) / 1023.0f;
-							tmpRow[i*4+3] = (GLfloat) ((uiSrc[i] >> 30) & 0x003) /    3.0f;
-						}
-						break;
-#endif
-
-					default:
-						crError("unexpected type in get_row in pixel.c");
+			case GL_UNSIGNED_SHORT_5_5_5_1:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+r] = (GLfloat) ((usSrc[i] >> 11)       ) / 31.0f;
+					tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  6) & 0x1f) / 31.0f;
+					tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >>  1) & 0x1f) / 31.0f;
+					tmpRow[i*4+3] = (GLfloat) ((usSrc[i]      ) & 0x01);
 				}
-			}
-			break;
-		default:
-			crError("unexpected source format in get_row in pixel.c");
+				break;
+			case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+r] = (GLfloat) ((usSrc[i]      ) & 0x1f) / 31.0f;
+					tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  5) & 0x1f) / 31.0f;
+					tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >> 10) & 0x1f) / 31.0f;
+					tmpRow[i*4+3] = (GLfloat) ((usSrc[i] >> 15)       );
+				}
+				break;
+			case GL_UNSIGNED_SHORT_4_4_4_4:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+r] = (GLfloat) ((usSrc[i] >> 12) & 0xf) / 15.0f;
+					tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  8) & 0xf) / 15.0f;
+					tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >>  4) & 0xf) / 15.0f;
+					tmpRow[i*4+3] = (GLfloat) ((usSrc[i]      ) & 0xf) / 15.0f;
+				}
+				break;
+			case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+r] = (GLfloat) ((usSrc[i]      ) & 0xf) / 15.0f;
+					tmpRow[i*4+1] = (GLfloat) ((usSrc[i] >>  4) & 0xf) / 15.0f;
+					tmpRow[i*4+b] = (GLfloat) ((usSrc[i] >>  8) & 0xf) / 15.0f;
+					tmpRow[i*4+3] = (GLfloat) ((usSrc[i] >> 12) & 0xf) / 15.0f;
+				}
+				break;
+			case GL_UNSIGNED_INT_8_8_8_8:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+r] = (GLfloat) ((uiSrc[i] >> 24) & 0xff) / 255.0f;
+					tmpRow[i*4+1] = (GLfloat) ((uiSrc[i] >> 16) & 0xff) / 255.0f;
+					tmpRow[i*4+b] = (GLfloat) ((uiSrc[i] >>  8) & 0xff) / 255.0f;
+					tmpRow[i*4+3] = (GLfloat) ((uiSrc[i]      ) & 0xff) / 255.0f;
+				}
+				break;
+			case GL_UNSIGNED_INT_8_8_8_8_REV:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+r] = (GLfloat) ((uiSrc[i]      ) & 0xff) / 255.0f;
+					tmpRow[i*4+1] = (GLfloat) ((uiSrc[i] >>  8) & 0xff) / 255.0f;
+					tmpRow[i*4+b] = (GLfloat) ((uiSrc[i] >> 16) & 0xff) / 255.0f;
+					tmpRow[i*4+3] = (GLfloat) ((uiSrc[i] >> 24) & 0xff) / 255.0f;
+				}
+				break;
+			case GL_UNSIGNED_INT_10_10_10_2:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+r] = (GLfloat) ((uiSrc[i] >> 22) & 0x3ff) / 1023.0f;
+					tmpRow[i*4+1] = (GLfloat) ((uiSrc[i] >> 12) & 0x3ff) / 1023.0f;
+					tmpRow[i*4+b] = (GLfloat) ((uiSrc[i] >>  2) & 0x3ff) / 1023.0f;
+					tmpRow[i*4+3] = (GLfloat) ((uiSrc[i]      ) & 0x003) /    3.0f;
+				}
+				break;
+			case GL_UNSIGNED_INT_2_10_10_10_REV:
+				for (i = 0; i < width; i++) {
+					tmpRow[i*4+r] = (GLfloat) ((uiSrc[i]      ) & 0x3ff) / 1023.0f;
+					tmpRow[i*4+1] = (GLfloat) ((uiSrc[i] >> 10) & 0x3ff) / 1023.0f;
+					tmpRow[i*4+b] = (GLfloat) ((uiSrc[i] >> 20) & 0x3ff) / 1023.0f;
+					tmpRow[i*4+3] = (GLfloat) ((uiSrc[i] >> 30) & 0x003) /    3.0f;
+				}
+				break;
+#endif
+			default:
+				crError("unexpected type in get_row in pixel.c");
+		}
+	}
+	else{
+		crError("unexpected source format in get_row in pixel.c");
 	}
 }
 
@@ -764,462 +755,453 @@ static void put_row(char *dst, GLenum dstFormat, GLenum dstType,
 	GLdouble *dDst = (GLdouble *) dst;
 	int i;
 
-	switch (dstFormat) {
-		case GL_COLOR_INDEX:
-		case GL_STENCIL_INDEX:
-			switch (dstType) {
-				case GL_BYTE:
-					for (i = 0; i < width; i++)
-						bDst[i] = (GLbyte) tmpRow[i];
-					break;
-				case GL_UNSIGNED_BYTE:
-					for (i = 0; i < width; i++)
-						ubDst[i] = (GLubyte) tmpRow[i];
-					break;
-				case GL_SHORT:
-					for (i = 0; i < width; i++)
-						sDst[i] = (GLshort) tmpRow[i];
-					break;
-				case GL_UNSIGNED_SHORT:
-					for (i = 0; i < width; i++)
-						usDst[i] = (GLushort) tmpRow[i];
-					break;
-				case GL_INT:
-					for (i = 0; i < width; i++)
-						iDst[i] = (GLint) tmpRow[i];
-					break;
-				case GL_UNSIGNED_INT:
-					for (i = 0; i < width; i++)
-						uiDst[i] = (GLuint) tmpRow[i];
-					break;
-				case GL_FLOAT:
-					for (i = 0; i < width; i++)
-						fDst[i] = tmpRow[i];
-					break;
-				case GL_DOUBLE:
-					for (i = 0; i < width; i++)
-						dDst[i] = tmpRow[i];
-					break;
-				default:
-					crError("unexpected type in put_row in pixel.c");
-			}
-			break;
-		case GL_DEPTH_COMPONENT:
-			switch (dstType) {
-				case GL_BYTE:
-					for (i = 0; i < width; i++)
-						bDst[i] = FLOAT_TO_BYTE(tmpRow[i]);
-					break;
-				case GL_UNSIGNED_BYTE:
-					for (i = 0; i < width; i++)
-						ubDst[i] = FLOAT_TO_UBYTE(tmpRow[i]);
-					break;
-				case GL_SHORT:
-					for (i = 0; i < width; i++)
-						sDst[i] = FLOAT_TO_SHORT(tmpRow[i]);
-					break;
-				case GL_UNSIGNED_SHORT:
-					for (i = 0; i < width; i++)
-						sDst[i] = FLOAT_TO_SHORT(tmpRow[i]);
-					break;
-				case GL_INT:
-					for (i = 0; i < width; i++)
-						bDst[i] = (GLbyte) FLOAT_TO_INT(tmpRow[i]);
-					break;
-				case GL_UNSIGNED_INT:
-					for (i = 0; i < width; i++)
-						bDst[i] = (GLbyte) FLOAT_TO_UINT(tmpRow[i]);
-					break;
-				case GL_FLOAT:
-					for (i = 0; i < width; i++)
-						fDst[i] = tmpRow[i];
-					break;
-				case GL_DOUBLE:
-					for (i = 0; i < width; i++)
-						dDst[i] = tmpRow[i];
-					break;
-				default:
-					crError("unexpected type in put_row in pixel.c");
-			}
-			break;
-		case GL_RED:
-		case GL_GREEN:
-		case GL_BLUE:
-		case GL_ALPHA:
-		case GL_LUMINANCE:
-		case GL_INTENSITY:
-			{
-				int index;
-				if (dstFormat == GL_RED)
-					index = 0;
-				else if (dstFormat == GL_LUMINANCE)
-					index = 0;
-				else if (dstFormat == GL_INTENSITY)
-					index = 0;
-				else if (dstFormat == GL_GREEN)
-					index = 1;
-				else if (dstFormat == GL_BLUE)
-					index = 2;
-				else
-					index = 3;
-				switch (dstType) {
-					case GL_BYTE:
-						for (i = 0; i < width; i++)
-							bDst[i] = FLOAT_TO_BYTE(tmpRow[i*4+index]);
-						break;
-					case GL_UNSIGNED_BYTE:
-						for (i = 0; i < width; i++)
-							ubDst[i] = FLOAT_TO_UBYTE(tmpRow[i*4+index]);
-						break;
-					case GL_SHORT:
-						for (i = 0; i < width; i++)
-							sDst[i] = FLOAT_TO_SHORT(tmpRow[i*4+index]);
-						break;
-					case GL_UNSIGNED_SHORT:
-						for (i = 0; i < width; i++)
-							usDst[i] = FLOAT_TO_USHORT(tmpRow[i*4+index]);
-						break;
-					case GL_INT:
-						for (i = 0; i < width; i++)
-							iDst[i] = FLOAT_TO_INT(tmpRow[i*4+index]);
-						break;
-					case GL_UNSIGNED_INT:
-						for (i = 0; i < width; i++)
-							uiDst[i] = FLOAT_TO_UINT(tmpRow[i*4+index]);
-						break;
-					case GL_FLOAT:
-						for (i = 0; i < width; i++)
-							fDst[i] = tmpRow[i*4+index];
-						break;
-					case GL_DOUBLE:
-						for (i = 0; i < width; i++)
-							dDst[i] = tmpRow[i*4+index];
-						break;
-					default:
-						crError("unexpected type in put_row in pixel.c");
+	if (dstFormat == GL_COLOR_INDEX || dstFormat == GL_STENCIL_INDEX) {
+		switch (dstType) {
+			case GL_BYTE:
+				for (i = 0; i < width; i++)
+					bDst[i] = (GLbyte) tmpRow[i];
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++)
+					ubDst[i] = (GLubyte) tmpRow[i];
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++)
+					sDst[i] = (GLshort) tmpRow[i];
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++)
+					usDst[i] = (GLushort) tmpRow[i];
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++)
+					iDst[i] = (GLint) tmpRow[i];
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++)
+					uiDst[i] = (GLuint) tmpRow[i];
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++)
+					fDst[i] = tmpRow[i];
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++)
+					dDst[i] = tmpRow[i];
+				break;
+			default:
+				crError("unexpected type in put_row in pixel.c");
+		}
+	}
+	else if (dstFormat == GL_DEPTH_COMPONENT) {
+		switch (dstType) {
+			case GL_BYTE:
+				for (i = 0; i < width; i++)
+					bDst[i] = FLOAT_TO_BYTE(tmpRow[i]);
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++)
+					ubDst[i] = FLOAT_TO_UBYTE(tmpRow[i]);
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++)
+					sDst[i] = FLOAT_TO_SHORT(tmpRow[i]);
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++)
+					sDst[i] = FLOAT_TO_SHORT(tmpRow[i]);
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++)
+					bDst[i] = (GLbyte) FLOAT_TO_INT(tmpRow[i]);
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++)
+					bDst[i] = (GLbyte) FLOAT_TO_UINT(tmpRow[i]);
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++)
+					fDst[i] = tmpRow[i];
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++)
+					dDst[i] = tmpRow[i];
+				break;
+			default:
+				crError("unexpected type in put_row in pixel.c");
+		}
+	}
+	else if (dstFormat == GL_RED || dstFormat == GL_GREEN ||
+					 dstFormat == GL_BLUE || dstFormat == GL_ALPHA ||
+					 dstFormat == GL_LUMINANCE || dstFormat == GL_INTENSITY) {
+		int index;
+		if (dstFormat == GL_RED)
+			index = 0;
+		else if (dstFormat == GL_LUMINANCE)
+			index = 0;
+		else if (dstFormat == GL_INTENSITY)
+			index = 0;
+		else if (dstFormat == GL_GREEN)
+			index = 1;
+		else if (dstFormat == GL_BLUE)
+			index = 2;
+		else
+			index = 3;
+		switch (dstType) {
+			case GL_BYTE:
+				for (i = 0; i < width; i++)
+					bDst[i] = FLOAT_TO_BYTE(tmpRow[i*4+index]);
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++)
+					ubDst[i] = FLOAT_TO_UBYTE(tmpRow[i*4+index]);
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++)
+					sDst[i] = FLOAT_TO_SHORT(tmpRow[i*4+index]);
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++)
+					usDst[i] = FLOAT_TO_USHORT(tmpRow[i*4+index]);
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++)
+					iDst[i] = FLOAT_TO_INT(tmpRow[i*4+index]);
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++)
+					uiDst[i] = FLOAT_TO_UINT(tmpRow[i*4+index]);
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++)
+					fDst[i] = tmpRow[i*4+index];
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++)
+					dDst[i] = tmpRow[i*4+index];
+				break;
+			default:
+				crError("unexpected type in put_row in pixel.c");
+		}
+	}
+	else if (dstFormat == GL_LUMINANCE_ALPHA) {
+		switch (dstType) {
+			case GL_BYTE:
+				for (i = 0; i < width; i++) {
+					bDst[i*2+0] = FLOAT_TO_BYTE(tmpRow[i*4+0]);
+					bDst[i*2+1] = FLOAT_TO_BYTE(tmpRow[i*4+3]);
 				}
-			}
-			break;
-		case GL_LUMINANCE_ALPHA:
-			switch (dstType) {
-				case GL_BYTE:
-					for (i = 0; i < width; i++) {
-						bDst[i*2+0] = FLOAT_TO_BYTE(tmpRow[i*4+0]);
-						bDst[i*2+1] = FLOAT_TO_BYTE(tmpRow[i*4+3]);
-					}
-					break;
-				case GL_UNSIGNED_BYTE:
-					for (i = 0; i < width; i++) {
-						ubDst[i*2+0] = FLOAT_TO_UBYTE(tmpRow[i*4+0]);
-						ubDst[i*2+1] = FLOAT_TO_UBYTE(tmpRow[i*4+3]);
-					}
-					break;
-				case GL_SHORT:
-					for (i = 0; i < width; i++) {
-						sDst[i*2+0] = FLOAT_TO_SHORT(tmpRow[i*4+0]);
-						sDst[i*2+1] = FLOAT_TO_SHORT(tmpRow[i*4+3]);
-					}
-					break;
-				case GL_UNSIGNED_SHORT:
-					for (i = 0; i < width; i++) {
-						usDst[i*2+0] = FLOAT_TO_USHORT(tmpRow[i*4+0]);
-						usDst[i*2+1] = FLOAT_TO_USHORT(tmpRow[i*4+3]);
-					}
-					break;
-				case GL_INT:
-					for (i = 0; i < width; i++) {
-						iDst[i*2+0] = FLOAT_TO_INT(tmpRow[i*4+0]);
-						iDst[i*2+1] = FLOAT_TO_INT(tmpRow[i*4+3]);
-					}
-					break;
-				case GL_UNSIGNED_INT:
-					for (i = 0; i < width; i++) {
-						uiDst[i*2+0] = FLOAT_TO_UINT(tmpRow[i*4+0]);
-						uiDst[i*2+1] = FLOAT_TO_UINT(tmpRow[i*4+3]);
-					}
-					break;
-				case GL_FLOAT:
-					for (i = 0; i < width; i++) {
-						fDst[i*2+0] = tmpRow[i*4+0];
-						fDst[i*2+1] = tmpRow[i*4+3];
-					}
-					break;
-				case GL_DOUBLE:
-					for (i = 0; i < width; i++) {
-						dDst[i*2+0] = tmpRow[i*4+0];
-						dDst[i*2+1] = tmpRow[i*4+3];
-					}
-					break;
-				default:
-					crError("unexpected type in put_row in pixel.c");
-			}
-			break;
-		case GL_RGB:
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++) {
+					ubDst[i*2+0] = FLOAT_TO_UBYTE(tmpRow[i*4+0]);
+					ubDst[i*2+1] = FLOAT_TO_UBYTE(tmpRow[i*4+3]);
+				}
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++) {
+					sDst[i*2+0] = FLOAT_TO_SHORT(tmpRow[i*4+0]);
+					sDst[i*2+1] = FLOAT_TO_SHORT(tmpRow[i*4+3]);
+				}
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++) {
+					usDst[i*2+0] = FLOAT_TO_USHORT(tmpRow[i*4+0]);
+					usDst[i*2+1] = FLOAT_TO_USHORT(tmpRow[i*4+3]);
+				}
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++) {
+					iDst[i*2+0] = FLOAT_TO_INT(tmpRow[i*4+0]);
+					iDst[i*2+1] = FLOAT_TO_INT(tmpRow[i*4+3]);
+				}
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++) {
+					uiDst[i*2+0] = FLOAT_TO_UINT(tmpRow[i*4+0]);
+					uiDst[i*2+1] = FLOAT_TO_UINT(tmpRow[i*4+3]);
+				}
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++) {
+					fDst[i*2+0] = tmpRow[i*4+0];
+					fDst[i*2+1] = tmpRow[i*4+3];
+				}
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++) {
+					dDst[i*2+0] = tmpRow[i*4+0];
+					dDst[i*2+1] = tmpRow[i*4+3];
+				}
+				break;
+			default:
+				crError("unexpected type in put_row in pixel.c");
+		}
+	}
+	else if (dstFormat == GL_RGB 
 #ifdef CR_OPENGL_VERSION_1_2
-		case GL_BGR:
+					 || dstFormat == GL_BGR
 #endif
-			{
-				int r, b;
-				if (dstFormat == GL_RGB) {
-					r = 0; b = 2;
+					 ) {
+		int r, b;
+		if (dstFormat == GL_RGB) {
+			r = 0; b = 2;
+		}
+		else {
+			r = 2; b = 0;
+		}
+		switch (dstType) {
+			case GL_BYTE:
+				for (i = 0; i < width; i++) {
+					bDst[i*3+r] = FLOAT_TO_BYTE(tmpRow[i*4+0]);
+					bDst[i*3+1] = FLOAT_TO_BYTE(tmpRow[i*4+1]);
+					bDst[i*3+b] = FLOAT_TO_BYTE(tmpRow[i*4+2]);
 				}
-				else {
-					r = 2; b = 0;
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++) {
+					ubDst[i*3+r] = FLOAT_TO_UBYTE(tmpRow[i*4+0]);
+					ubDst[i*3+1] = FLOAT_TO_UBYTE(tmpRow[i*4+1]);
+					ubDst[i*3+b] = FLOAT_TO_UBYTE(tmpRow[i*4+2]);
 				}
-				switch (dstType) {
-					case GL_BYTE:
-						for (i = 0; i < width; i++) {
-							bDst[i*3+r] = FLOAT_TO_BYTE(tmpRow[i*4+0]);
-							bDst[i*3+1] = FLOAT_TO_BYTE(tmpRow[i*4+1]);
-							bDst[i*3+b] = FLOAT_TO_BYTE(tmpRow[i*4+2]);
-						}
-						break;
-					case GL_UNSIGNED_BYTE:
-						for (i = 0; i < width; i++) {
-							ubDst[i*3+r] = FLOAT_TO_UBYTE(tmpRow[i*4+0]);
-							ubDst[i*3+1] = FLOAT_TO_UBYTE(tmpRow[i*4+1]);
-							ubDst[i*3+b] = FLOAT_TO_UBYTE(tmpRow[i*4+2]);
-						}
-						break;
-					case GL_SHORT:
-						for (i = 0; i < width; i++) {
-							sDst[i*3+r] = FLOAT_TO_SHORT(tmpRow[i*4+0]);
-							sDst[i*3+1] = FLOAT_TO_SHORT(tmpRow[i*4+1]);
-							sDst[i*3+b] = FLOAT_TO_SHORT(tmpRow[i*4+2]);
-						}
-						break;
-					case GL_UNSIGNED_SHORT:
-						for (i = 0; i < width; i++) {
-							usDst[i*3+r] = FLOAT_TO_USHORT(tmpRow[i*4+0]);
-							usDst[i*3+1] = FLOAT_TO_USHORT(tmpRow[i*4+1]);
-							usDst[i*3+b] = FLOAT_TO_USHORT(tmpRow[i*4+2]);
-						}
-						break;
-					case GL_INT:
-						for (i = 0; i < width; i++) {
-							iDst[i*3+r] = FLOAT_TO_INT(tmpRow[i*4+0]);
-							iDst[i*3+1] = FLOAT_TO_INT(tmpRow[i*4+1]);
-							iDst[i*3+b] = FLOAT_TO_INT(tmpRow[i*4+2]);
-						}
-						break;
-					case GL_UNSIGNED_INT:
-						for (i = 0; i < width; i++) {
-							uiDst[i*3+r] = FLOAT_TO_UINT(tmpRow[i*4+0]);
-							uiDst[i*3+1] = FLOAT_TO_UINT(tmpRow[i*4+1]);
-							uiDst[i*3+b] = FLOAT_TO_UINT(tmpRow[i*4+2]);
-						}
-						break;
-					case GL_FLOAT:
-						for (i = 0; i < width; i++) {
-							fDst[i*3+r] = tmpRow[i*4+0];
-							fDst[i*3+1] = tmpRow[i*4+1];
-							fDst[i*3+b] = tmpRow[i*4+2];
-						}
-						break;
-					case GL_DOUBLE:
-						for (i = 0; i < width; i++) {
-							dDst[i*3+r] = tmpRow[i*4+0];
-							dDst[i*3+1] = tmpRow[i*4+1];
-							dDst[i*3+b] = tmpRow[i*4+2];
-						}
-						break;
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++) {
+					sDst[i*3+r] = FLOAT_TO_SHORT(tmpRow[i*4+0]);
+					sDst[i*3+1] = FLOAT_TO_SHORT(tmpRow[i*4+1]);
+					sDst[i*3+b] = FLOAT_TO_SHORT(tmpRow[i*4+2]);
+				}
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++) {
+					usDst[i*3+r] = FLOAT_TO_USHORT(tmpRow[i*4+0]);
+					usDst[i*3+1] = FLOAT_TO_USHORT(tmpRow[i*4+1]);
+					usDst[i*3+b] = FLOAT_TO_USHORT(tmpRow[i*4+2]);
+				}
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++) {
+					iDst[i*3+r] = FLOAT_TO_INT(tmpRow[i*4+0]);
+					iDst[i*3+1] = FLOAT_TO_INT(tmpRow[i*4+1]);
+					iDst[i*3+b] = FLOAT_TO_INT(tmpRow[i*4+2]);
+				}
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++) {
+					uiDst[i*3+r] = FLOAT_TO_UINT(tmpRow[i*4+0]);
+					uiDst[i*3+1] = FLOAT_TO_UINT(tmpRow[i*4+1]);
+					uiDst[i*3+b] = FLOAT_TO_UINT(tmpRow[i*4+2]);
+				}
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++) {
+					fDst[i*3+r] = tmpRow[i*4+0];
+					fDst[i*3+1] = tmpRow[i*4+1];
+					fDst[i*3+b] = tmpRow[i*4+2];
+				}
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++) {
+					dDst[i*3+r] = tmpRow[i*4+0];
+					dDst[i*3+1] = tmpRow[i*4+1];
+					dDst[i*3+b] = tmpRow[i*4+2];
+				}
+				break;
 #ifdef CR_OPENGL_VERSION_1_2
-					case GL_UNSIGNED_BYTE_3_3_2:
-						for (i = 0; i < width; i++) {
-							int red   = (int) (tmpRow[i*4+r] * 7.0);
-							int green = (int) (tmpRow[i*4+1] * 7.0);
-							int blue  = (int) (tmpRow[i*4+b] * 3.0);
-							ubDst[i] = (red << 5) | (green << 2) | blue;
-						}
-						break;
-					case GL_UNSIGNED_BYTE_2_3_3_REV:
-						for (i = 0; i < width; i++) {
-							int red   = (int) (tmpRow[i*4+r] * 7.0);
-							int green = (int) (tmpRow[i*4+1] * 7.0);
-							int blue  = (int) (tmpRow[i*4+b] * 3.0);
-							ubDst[i] = red | (green << 3) | (blue << 6);
-						}
-						break;
-					case GL_UNSIGNED_SHORT_5_6_5:
-						for (i = 0; i < width; i++) {
-							int red   = (int) (tmpRow[i*4+r] * 31.0);
-							int green = (int) (tmpRow[i*4+1] * 63.0);
-							int blue  = (int) (tmpRow[i*4+b] * 31.0);
-							usDst[i] = (red << 11) | (green << 5) | blue;
-						}
-						break;
-					case GL_UNSIGNED_SHORT_5_6_5_REV:
-						for (i = 0; i < width; i++) {
-							int red   = (int) (tmpRow[i*4+r] * 31.0);
-							int green = (int) (tmpRow[i*4+1] * 63.0);
-							int blue  = (int) (tmpRow[i*4+b] * 31.0);
-							usDst[i] = (blue << 11) | (green << 5) | red;
-						}
-						break;
-#endif
-					default:
-						crError("unexpected type in put_row in pixel.c");
+			case GL_UNSIGNED_BYTE_3_3_2:
+				for (i = 0; i < width; i++) {
+					int red   = (int) (tmpRow[i*4+r] * 7.0);
+					int green = (int) (tmpRow[i*4+1] * 7.0);
+					int blue  = (int) (tmpRow[i*4+b] * 3.0);
+					ubDst[i] = (red << 5) | (green << 2) | blue;
 				}
-			}
-			break;
-		case GL_RGBA:
+				break;
+			case GL_UNSIGNED_BYTE_2_3_3_REV:
+				for (i = 0; i < width; i++) {
+					int red   = (int) (tmpRow[i*4+r] * 7.0);
+					int green = (int) (tmpRow[i*4+1] * 7.0);
+					int blue  = (int) (tmpRow[i*4+b] * 3.0);
+					ubDst[i] = red | (green << 3) | (blue << 6);
+				}
+				break;
+			case GL_UNSIGNED_SHORT_5_6_5:
+				for (i = 0; i < width; i++) {
+					int red   = (int) (tmpRow[i*4+r] * 31.0);
+					int green = (int) (tmpRow[i*4+1] * 63.0);
+					int blue  = (int) (tmpRow[i*4+b] * 31.0);
+					usDst[i] = (red << 11) | (green << 5) | blue;
+				}
+				break;
+			case GL_UNSIGNED_SHORT_5_6_5_REV:
+				for (i = 0; i < width; i++) {
+					int red   = (int) (tmpRow[i*4+r] * 31.0);
+					int green = (int) (tmpRow[i*4+1] * 63.0);
+					int blue  = (int) (tmpRow[i*4+b] * 31.0);
+					usDst[i] = (blue << 11) | (green << 5) | red;
+				}
+				break;
+#endif
+			default:
+				crError("unexpected type in put_row in pixel.c");
+		}
+	}
+	else if (dstFormat == GL_RGBA 
 #ifdef CR_OPENGL_VERSION_1_2
-		case GL_BGRA:
+					 || dstFormat == GL_BGRA 
 #endif
-			{
-				int r, b;
-				if (dstFormat == GL_RGB) {
-					r = 0; b = 2;
+					 ) {
+		int r, b;
+		if (dstFormat == GL_RGB) {
+			r = 0; b = 2;
+		}
+		else {
+			r = 2; b = 0;
+		}
+		switch (dstType) {
+			case GL_BYTE:
+				for (i = 0; i < width; i++) {
+					bDst[i*4+r] = FLOAT_TO_BYTE(tmpRow[i*4+0]);
+					bDst[i*4+1] = FLOAT_TO_BYTE(tmpRow[i*4+1]);
+					bDst[i*4+b] = FLOAT_TO_BYTE(tmpRow[i*4+2]);
+					bDst[i*4+3] = FLOAT_TO_BYTE(tmpRow[i*4+3]);
 				}
-				else {
-					r = 2; b = 0;
+				break;
+			case GL_UNSIGNED_BYTE:
+				for (i = 0; i < width; i++) {
+					ubDst[i*4+r] = FLOAT_TO_UBYTE(tmpRow[i*4+0]);
+					ubDst[i*4+1] = FLOAT_TO_UBYTE(tmpRow[i*4+1]);
+					ubDst[i*4+b] = FLOAT_TO_UBYTE(tmpRow[i*4+2]);
+					ubDst[i*4+3] = FLOAT_TO_UBYTE(tmpRow[i*4+3]);
 				}
-				switch (dstType) {
-					case GL_BYTE:
-						for (i = 0; i < width; i++) {
-							bDst[i*4+r] = FLOAT_TO_BYTE(tmpRow[i*4+0]);
-							bDst[i*4+1] = FLOAT_TO_BYTE(tmpRow[i*4+1]);
-							bDst[i*4+b] = FLOAT_TO_BYTE(tmpRow[i*4+2]);
-							bDst[i*4+3] = FLOAT_TO_BYTE(tmpRow[i*4+3]);
-						}
-						break;
-					case GL_UNSIGNED_BYTE:
-						for (i = 0; i < width; i++) {
-							ubDst[i*4+r] = FLOAT_TO_UBYTE(tmpRow[i*4+0]);
-							ubDst[i*4+1] = FLOAT_TO_UBYTE(tmpRow[i*4+1]);
-							ubDst[i*4+b] = FLOAT_TO_UBYTE(tmpRow[i*4+2]);
-							ubDst[i*4+3] = FLOAT_TO_UBYTE(tmpRow[i*4+3]);
-						}
-						break;
-					case GL_SHORT:
-						for (i = 0; i < width; i++) {
-							sDst[i*4+r] = FLOAT_TO_SHORT(tmpRow[i*4+0]);
-							sDst[i*4+1] = FLOAT_TO_SHORT(tmpRow[i*4+1]);
-							sDst[i*4+b] = FLOAT_TO_SHORT(tmpRow[i*4+2]);
-							sDst[i*4+3] = FLOAT_TO_SHORT(tmpRow[i*4+3]);
-						}
-						break;
-					case GL_UNSIGNED_SHORT:
-						for (i = 0; i < width; i++) {
-							usDst[i*4+r] = FLOAT_TO_USHORT(tmpRow[i*4+0]);
-							usDst[i*4+1] = FLOAT_TO_USHORT(tmpRow[i*4+1]);
-							usDst[i*4+b] = FLOAT_TO_USHORT(tmpRow[i*4+2]);
-							usDst[i*4+3] = FLOAT_TO_USHORT(tmpRow[i*4+3]);
-						}
-						break;
-					case GL_INT:
-						for (i = 0; i < width; i++) {
-							iDst[i*4+r] = FLOAT_TO_INT(tmpRow[i*4+0]);
-							iDst[i*4+1] = FLOAT_TO_INT(tmpRow[i*4+1]);
-							iDst[i*4+b] = FLOAT_TO_INT(tmpRow[i*4+2]);
-							iDst[i*4+3] = FLOAT_TO_INT(tmpRow[i*4+3]);
-						}
-						break;
-					case GL_UNSIGNED_INT:
-						for (i = 0; i < width; i++) {
-							uiDst[i*4+r] = FLOAT_TO_UINT(tmpRow[i*4+0]);
-							uiDst[i*4+1] = FLOAT_TO_UINT(tmpRow[i*4+1]);
-							uiDst[i*4+b] = FLOAT_TO_UINT(tmpRow[i*4+2]);
-							uiDst[i*4+3] = FLOAT_TO_UINT(tmpRow[i*4+3]);
-						}
-						break;
-					case GL_FLOAT:
-						for (i = 0; i < width; i++) {
-							fDst[i*4+r] = tmpRow[i*4+0];
-							fDst[i*4+1] = tmpRow[i*4+1];
-							fDst[i*4+b] = tmpRow[i*4+2];
-							fDst[i*4+3] = tmpRow[i*4+3];
-						}
-						break;
-					case GL_DOUBLE:
-						for (i = 0; i < width; i++) {
-							dDst[i*4+r] = tmpRow[i*4+0];
-							dDst[i*4+1] = tmpRow[i*4+1];
-							dDst[i*4+b] = tmpRow[i*4+2];
-							dDst[i*4+3] = tmpRow[i*4+3];
-						}
-						break;
+				break;
+			case GL_SHORT:
+				for (i = 0; i < width; i++) {
+					sDst[i*4+r] = FLOAT_TO_SHORT(tmpRow[i*4+0]);
+					sDst[i*4+1] = FLOAT_TO_SHORT(tmpRow[i*4+1]);
+					sDst[i*4+b] = FLOAT_TO_SHORT(tmpRow[i*4+2]);
+					sDst[i*4+3] = FLOAT_TO_SHORT(tmpRow[i*4+3]);
+				}
+				break;
+			case GL_UNSIGNED_SHORT:
+				for (i = 0; i < width; i++) {
+					usDst[i*4+r] = FLOAT_TO_USHORT(tmpRow[i*4+0]);
+					usDst[i*4+1] = FLOAT_TO_USHORT(tmpRow[i*4+1]);
+					usDst[i*4+b] = FLOAT_TO_USHORT(tmpRow[i*4+2]);
+					usDst[i*4+3] = FLOAT_TO_USHORT(tmpRow[i*4+3]);
+				}
+				break;
+			case GL_INT:
+				for (i = 0; i < width; i++) {
+					iDst[i*4+r] = FLOAT_TO_INT(tmpRow[i*4+0]);
+					iDst[i*4+1] = FLOAT_TO_INT(tmpRow[i*4+1]);
+					iDst[i*4+b] = FLOAT_TO_INT(tmpRow[i*4+2]);
+					iDst[i*4+3] = FLOAT_TO_INT(tmpRow[i*4+3]);
+				}
+				break;
+			case GL_UNSIGNED_INT:
+				for (i = 0; i < width; i++) {
+					uiDst[i*4+r] = FLOAT_TO_UINT(tmpRow[i*4+0]);
+					uiDst[i*4+1] = FLOAT_TO_UINT(tmpRow[i*4+1]);
+					uiDst[i*4+b] = FLOAT_TO_UINT(tmpRow[i*4+2]);
+					uiDst[i*4+3] = FLOAT_TO_UINT(tmpRow[i*4+3]);
+				}
+				break;
+			case GL_FLOAT:
+				for (i = 0; i < width; i++) {
+					fDst[i*4+r] = tmpRow[i*4+0];
+					fDst[i*4+1] = tmpRow[i*4+1];
+					fDst[i*4+b] = tmpRow[i*4+2];
+					fDst[i*4+3] = tmpRow[i*4+3];
+				}
+				break;
+			case GL_DOUBLE:
+				for (i = 0; i < width; i++) {
+					dDst[i*4+r] = tmpRow[i*4+0];
+					dDst[i*4+1] = tmpRow[i*4+1];
+					dDst[i*4+b] = tmpRow[i*4+2];
+					dDst[i*4+3] = tmpRow[i*4+3];
+				}
+				break;
 #ifdef CR_OPENGL_VERSION_1_2
-					case GL_UNSIGNED_SHORT_5_5_5_1:
-						for (i = 0; i < width; i++) {
-							int red   = (int) (tmpRow[i*4+r] * 31.0);
-							int green = (int) (tmpRow[i*4+1] * 31.0);
-							int blue  = (int) (tmpRow[i*4+b] * 31.0);
-							int alpha = (int) (tmpRow[i*4+3]);
-							usDst[i] = (red << 11) | (green << 6) | (blue << 1) | alpha;
-						}
-						break;
-					case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-						for (i = 0; i < width; i++) {
-							int red   = (int) (tmpRow[i*4+r] * 31.0);
-							int green = (int) (tmpRow[i*4+1] * 31.0);
-							int blue  = (int) (tmpRow[i*4+b] * 31.0);
-							int alpha = (int) (tmpRow[i*4+3]);
-							usDst[i] = (alpha << 15) | (blue << 10) | (green << 5) | red;
-						}
-						break;
-					case GL_UNSIGNED_SHORT_4_4_4_4:
-						for (i = 0; i < width; i++) {
-							int red   = (int) (tmpRow[i*4+r] * 15.0f);
-							int green = (int) (tmpRow[i*4+1] * 15.0f);
-							int blue  = (int) (tmpRow[i*4+b] * 15.0f);
-							int alpha = (int) (tmpRow[i*4+3] * 15.0f);
-							usDst[i] = (red << 12) | (green << 8) | (blue << 4) | alpha;
-						}
-						break;
-					case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-						for (i = 0; i < width; i++) {
-							int red   = (int) (tmpRow[i*4+r] * 15.0f);
-							int green = (int) (tmpRow[i*4+1] * 15.0f);
-							int blue  = (int) (tmpRow[i*4+b] * 15.0f);
-							int alpha = (int) (tmpRow[i*4+3] * 15.0f);
-							usDst[i] = (alpha << 12) | (blue << 8) | (green << 4) | red;
-						}
-						break;
-					case GL_UNSIGNED_INT_8_8_8_8:
-						for (i = 0; i < width; i++) {
-							int red   = (int) (tmpRow[i*4+r] * 255.0f);
-							int green = (int) (tmpRow[i*4+1] * 255.0f);
-							int blue  = (int) (tmpRow[i*4+b] * 255.0f);
-							int alpha = (int) (tmpRow[i*4+3] * 255.0f);
-							uiDst[i] = (red << 24) | (green << 16) | (blue << 8) | alpha;
-						}
-						break;
-					case GL_UNSIGNED_INT_8_8_8_8_REV:
-						for (i = 0; i < width; i++) {
-							int red   = (int) (tmpRow[i*4+r] * 255.0f);
-							int green = (int) (tmpRow[i*4+1] * 255.0f);
-							int blue  = (int) (tmpRow[i*4+b] * 255.0f);
-							int alpha = (int) (tmpRow[i*4+3] * 255.0f);
-							uiDst[i] = (alpha << 24) | (blue << 16) | (green << 8) | red;
-						}
-						break;
-					case GL_UNSIGNED_INT_10_10_10_2:
-						for (i = 0; i < width; i++) {
-							int red   = (int) (tmpRow[i*4+r] * 1023.0f);
-							int green = (int) (tmpRow[i*4+1] * 1023.0f);
-							int blue  = (int) (tmpRow[i*4+b] * 1023.0f);
-							int alpha = (int) (tmpRow[i*4+3] *    3.0f);
-							uiDst[i] = (red << 22) | (green << 12) | (blue << 2) | alpha;
-						}
-						break;
-					case GL_UNSIGNED_INT_2_10_10_10_REV:
-						for (i = 0; i < width; i++) {
-							int red   = (int) (tmpRow[i*4+r] * 1023.0f);
-							int green = (int) (tmpRow[i*4+1] * 1023.0f);
-							int blue  = (int) (tmpRow[i*4+b] * 1023.0f);
-							int alpha = (int) (tmpRow[i*4+3] *    3.0f);
-							uiDst[i] = (alpha << 30) | (blue << 20) | (green << 10) | red;
-						}
-						break;
-#endif
-					default:
-						crError("unexpected type in put_row in pixel.c");
+			case GL_UNSIGNED_SHORT_5_5_5_1:
+				for (i = 0; i < width; i++) {
+					int red   = (int) (tmpRow[i*4+r] * 31.0);
+					int green = (int) (tmpRow[i*4+1] * 31.0);
+					int blue  = (int) (tmpRow[i*4+b] * 31.0);
+					int alpha = (int) (tmpRow[i*4+3]);
+					usDst[i] = (red << 11) | (green << 6) | (blue << 1) | alpha;
 				}
-			}
-			break;
-		default:
-			crError("unexpected dest type in put_row in pixel.c");
+				break;
+			case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+				for (i = 0; i < width; i++) {
+					int red   = (int) (tmpRow[i*4+r] * 31.0);
+					int green = (int) (tmpRow[i*4+1] * 31.0);
+					int blue  = (int) (tmpRow[i*4+b] * 31.0);
+					int alpha = (int) (tmpRow[i*4+3]);
+					usDst[i] = (alpha << 15) | (blue << 10) | (green << 5) | red;
+				}
+				break;
+			case GL_UNSIGNED_SHORT_4_4_4_4:
+				for (i = 0; i < width; i++) {
+					int red   = (int) (tmpRow[i*4+r] * 15.0f);
+					int green = (int) (tmpRow[i*4+1] * 15.0f);
+					int blue  = (int) (tmpRow[i*4+b] * 15.0f);
+					int alpha = (int) (tmpRow[i*4+3] * 15.0f);
+					usDst[i] = (red << 12) | (green << 8) | (blue << 4) | alpha;
+				}
+				break;
+			case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+				for (i = 0; i < width; i++) {
+					int red   = (int) (tmpRow[i*4+r] * 15.0f);
+					int green = (int) (tmpRow[i*4+1] * 15.0f);
+					int blue  = (int) (tmpRow[i*4+b] * 15.0f);
+					int alpha = (int) (tmpRow[i*4+3] * 15.0f);
+					usDst[i] = (alpha << 12) | (blue << 8) | (green << 4) | red;
+				}
+				break;
+			case GL_UNSIGNED_INT_8_8_8_8:
+				for (i = 0; i < width; i++) {
+					int red   = (int) (tmpRow[i*4+r] * 255.0f);
+					int green = (int) (tmpRow[i*4+1] * 255.0f);
+					int blue  = (int) (tmpRow[i*4+b] * 255.0f);
+					int alpha = (int) (tmpRow[i*4+3] * 255.0f);
+					uiDst[i] = (red << 24) | (green << 16) | (blue << 8) | alpha;
+				}
+				break;
+			case GL_UNSIGNED_INT_8_8_8_8_REV:
+				for (i = 0; i < width; i++) {
+					int red   = (int) (tmpRow[i*4+r] * 255.0f);
+					int green = (int) (tmpRow[i*4+1] * 255.0f);
+					int blue  = (int) (tmpRow[i*4+b] * 255.0f);
+					int alpha = (int) (tmpRow[i*4+3] * 255.0f);
+					uiDst[i] = (alpha << 24) | (blue << 16) | (green << 8) | red;
+				}
+				break;
+			case GL_UNSIGNED_INT_10_10_10_2:
+				for (i = 0; i < width; i++) {
+					int red   = (int) (tmpRow[i*4+r] * 1023.0f);
+					int green = (int) (tmpRow[i*4+1] * 1023.0f);
+					int blue  = (int) (tmpRow[i*4+b] * 1023.0f);
+					int alpha = (int) (tmpRow[i*4+3] *    3.0f);
+					uiDst[i] = (red << 22) | (green << 12) | (blue << 2) | alpha;
+				}
+				break;
+			case GL_UNSIGNED_INT_2_10_10_10_REV:
+				for (i = 0; i < width; i++) {
+					int red   = (int) (tmpRow[i*4+r] * 1023.0f);
+					int green = (int) (tmpRow[i*4+1] * 1023.0f);
+					int blue  = (int) (tmpRow[i*4+b] * 1023.0f);
+					int alpha = (int) (tmpRow[i*4+3] *    3.0f);
+					uiDst[i] = (alpha << 30) | (blue << 20) | (green << 10) | red;
+				}
+				break;
+#endif
+			default:
+			crError("unexpected type in put_row in pixel.c");
+		}
+	}
+	else{
+		crError("unexpected dest type in put_row in pixel.c");
 	}
 }
 
@@ -1244,6 +1226,7 @@ static void
 swap4(GLuint *ui, GLuint n)
 {
 	GLuint i;
+
 	for (i = 0; i < n; i++) {
 		GLuint b = ui[i];
 		ui[i] =  (b >> 24)
@@ -1327,7 +1310,7 @@ void crPixelCopy2D( GLsizei width, GLsizei height,
 										const CRPixelPackState *srcPacking )
 										
 {
-	const GLubyte *src = (const GLubyte *) srcPtr;
+	const char *src = (const char *) srcPtr;
 	char *dst = (char *) dstPtr;
 	int srcBytesPerPixel;
 	int dstBytesPerPixel;
@@ -1598,4 +1581,3 @@ void crBitmapCopy( GLsizei width, GLsizei height, GLubyte *dstPtr,
 		}
 	}
 }
-
