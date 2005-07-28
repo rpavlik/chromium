@@ -627,6 +627,13 @@ HaveBufferObjectExtension(void)
 
 	if (haveBufferObjectExt == -1) {
 		const char *ext;
+		/* XXX this check is temporary.  We need to make the tilesort SPU plug
+		 * GetString into the diff'ing table in order for this to really work.
+		 */
+		if (!diff_api.GetString) {
+			haveBufferObjectExt = 0;
+			return 0;
+		}
 		CRASSERT(diff_api.GetString);
 		ext = (const char *) diff_api.GetString(GL_EXTENSIONS);
 		if (crStrstr(ext, "GL_ARB_vertex_buffer_object") ||
