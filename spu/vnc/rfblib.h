@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: rfblib.h,v 1.1 2004-12-14 15:39:50 brianp Exp $
+ * $Id: rfblib.h,v 1.2 2005-08-11 20:10:33 brianp Exp $
  * RFB protocol definitions
  */
 
@@ -31,6 +31,27 @@
 #define CARD32  u_int32_t
 
 #endif /* CARD32 */
+
+
+/*
+ * server -> client message codes
+ */
+#define rfbFramebufferUpdate 0
+#define rfbSetColourMapEntries 1
+#define rfbBell 2
+#define rfbServerCutText 3
+
+/*
+ * client -> server message codes
+ */
+#define rfbSetPixelFormat 0
+#define rfbFixColourMapEntries 1	/* not currently supported */
+#define rfbSetEncodings 2
+#define rfbFramebufferUpdateRequest 3
+#define rfbKeyEvent 4
+#define rfbPointerEvent 5
+#define rfbClientCutText 6
+
 
 /*
  * Rectangle.

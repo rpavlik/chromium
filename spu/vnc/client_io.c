@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.1 2004-12-14 15:39:50 brianp Exp $
+ * $Id: client_io.c,v 1.2 2005-08-11 20:10:33 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -255,25 +255,25 @@ static void rf_client_msg(void)
 
   msg_id = (int)cur_slot->readbuf[0] & 0xFF;
   switch(msg_id) {
-  case 0:                       /* SetPixelFormat */
+  case rfbSetPixelFormat:
     aio_setread(rf_client_pixfmt, NULL, 3 + sizeof(RFB_PIXEL_FORMAT));
     break;
-  case 1:                       /* FixColourMapEntries */
+  case rfbFixColourMapEntries:
     aio_setread(rf_client_colormap_hdr, NULL, 5);
     break;
-  case 2:                       /* SetEncodings */
+  case rfbSetEncodings:
     aio_setread(rf_client_encodings_hdr, NULL, 3);
     break;
-  case 3:                       /* FramebufferUpdateRequest */
+  case rfbFramebufferUpdateRequest:
     aio_setread(rf_client_updatereq, NULL, 9);
     break;
-  case 4:                       /* KeyEvent */
+  case rfbKeyEvent:
     aio_setread(rf_client_keyevent, NULL, 7);
     break;
-  case 5:                       /* PointerEvent */
+  case rfbPointerEvent:
     aio_setread(rf_client_ptrevent, NULL, 5);
     break;
-  case 6:                       /* ClientCutText */
+  case rfbClientCutText:
     aio_setread(rf_client_cuttext_hdr, NULL, 7);
     break;
   default:
@@ -399,21 +399,21 @@ static void rf_client_encodings_data(void)
   aio_setread(rf_client_msg, NULL, 1);
 }
 
+/**
+ * Handle an incoming rfbFramebufferUpdateRequest message.
+ * Determine the dirty regions and send pixel rect data to the client.
+ */
 static void rf_client_updatereq(void)
 {
   CL_SLOT *cl = (CL_SLOT *)cur_slot;
   RegionRec tmp_region;
   BoxRec rect;
 
+  /* the requested region of interest */
   rect.x1 = buf_get_CARD16(&cur_slot->readbuf[1]);
   rect.y1 = buf_get_CARD16(&cur_slot->readbuf[3]);
   rect.x2 = rect.x1 + buf_get_CARD16(&cur_slot->readbuf[5]);
   rect.y2 = rect.y1 + buf_get_CARD16(&cur_slot->readbuf[7]);
-
-  /*
-  printf("Got Update Request %d, %d %d x %d\n", rect.x1, rect.y1,
-         rect.x2 - rect.x1, rect.y2 - rect.y1);
-  */
 
   /* Make sure the rectangle bounds fit the framebuffer. */
   if (rect.x1 > cl->fb_width)
@@ -433,7 +433,12 @@ static void rf_client_updatereq(void)
               cur_slot->name);
     if (!cl->newfbsize_pending) {
       REGION_INIT(&tmp_region, &rect, 1);
+#if 0
+      /* Disabling this code prevents the region from outside the GL
+       * window (garbage) from being send to the viewer.
+       */
       REGION_UNION(&cl->pending_region, &cl->pending_region, &tmp_region);
+#endif
       REGION_UNION(&cl->pending_region, &cl->pending_region, &cl->copy_region);
       REGION_EMPTY(&cl->copy_region);
       REGION_UNINIT(&tmp_region);
@@ -443,18 +448,12 @@ static void rf_client_updatereq(void)
               cur_slot->name);
   }
 
-#ifdef CHROMIUM
-  vncspuGetDirtyRegions(&cl->pending_region);
-  send_update();
-#else
-
   if (!cl->update_in_progress &&
       (cl->newfbsize_pending ||
        REGION_NOTEMPTY(&cl->pending_region) ||
        REGION_NOTEMPTY(&cl->copy_region))) {
     send_update();
   }
-#endif
 
 #ifdef CHROMIUM
   /* This is a bit of a hack, but it improves performance */
@@ -600,6 +599,10 @@ void fn_client_add_rect(AIO_SLOT *slot, FB_RECT *rect)
   REGION_UNINIT(&add_region);
 }
 
+/**
+ * Send the dirty rects to the given client, if an update was requested.
+ * This is called as a callback by the aio_walk_slots() function.
+ */
 void fn_client_send_rects(AIO_SLOT *slot)
 {
   CL_SLOT *cl = (CL_SLOT *)slot;

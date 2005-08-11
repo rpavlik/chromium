@@ -17,10 +17,15 @@
 #include "cr_spu.h"
 #include "cr_server.h"
 #include "rfblib.h"
+#include "async_io.h"
+#include "client_io.h"
 #include "region.h"
 
+/**
+ * Per window info
+ */
 typedef struct {
-	GLint dirtyX, dirtyY, dirtyW, dirtyH;
+	GLint nativeWindow;
 } WindowInfo;
 
 
@@ -55,7 +60,5 @@ extern SPUOptions vncSPUOptions[];
 extern void vncspuGatherConfiguration( void );
 
 extern void vncspuStartServerThread(void);
-
-extern void vncspuGetDirtyRegions(RegionPtr dirtyRegion);
 
 #endif /* VNC_SPU_H */

@@ -1,4 +1,4 @@
-# Copyright (c) 2004, Tungsten Graphics, Inc.
+# Copyright (c) 2004-2005, Tungsten Graphics, Inc.
 # All rights reserved.
 #
 # See the file LICENSE.txt for information on redistributing this software.
@@ -30,6 +30,9 @@ FILES = vncspu \
 	region_more \
 	rfblib \
 	translate
+
+#LDFLAGS += -lXmu -lX11 -lVncExt
+LDFLAGS += -lX11 -lVncExt
 
 CFLAGS += -DCHROMIUM -DRASTER_BOTTOM_TO_TOP=1
 

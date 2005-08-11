@@ -9,10 +9,10 @@
 #include "cr_mem.h"
 #include "cr_threads.h"
 #include "vncspu.h"
+#include "async_io.h"
 #include "rfblib.h"
 #include "reflector.h"
 #include "region.h"
-
 
 void
 vncspuStartServerThread(void)
@@ -31,42 +31,20 @@ vncspuStartServerThread(void)
 CARD32 *
 GetFrameBuffer(CARD16 *w, CARD16 *h)
 {
-	 *w = vnc_spu.screen_width;
-	 *h = vnc_spu.screen_height;
-	 return (CARD32 *) vnc_spu.screen_buffer;
+	*w = vnc_spu.screen_width;
+	*h = vnc_spu.screen_height;
+	return (CARD32 *) vnc_spu.screen_buffer;
 }
 
 
-/**
- * Hash table walk callback function, used to accumulate dirty rectangle
- * region.
- */
+/* data used in callback called by aio_walk_slots(). */
+static FB_RECT cur_rect;
+
+/* Callback */
 static void
-walkCallback(unsigned long key, void *data1, void *data2)
+fn_host_add_client_rect(AIO_SLOT *slot)
 {
-	RegionPtr r = (RegionPtr) data2;
-	RegionRec tmpReg;
-	WindowInfo *window = (WindowInfo *) data1;
-	BoxRec box;
-
-	box.x1 = window->dirtyX;
-	box.y1 = window->dirtyY;
-	box.x2 = window->dirtyX + window->dirtyW;
-	box.y2 = window->dirtyY + window->dirtyH;
-	REGION_INIT(&tmpReg, &box, 1);
-	REGION_UNION(r, r, &tmpReg);
-}
-
-
-/**
- * Fill 'dirtyRegion' with the collected glReadPixels bounds.
- */
-void
-vncspuGetDirtyRegions(RegionPtr dirtyRegion)
-{
-	REGION_INIT(dirtyRegion, NullBox, 16);
-	crHashtableWalk(vnc_spu.windowTable, walkCallback, (void *) dirtyRegion);
-	CRASSERT(REGION_NOTEMPTY(dirtyRegion));
+	fn_client_add_rect(slot, &cur_rect);
 }
 
 
@@ -123,11 +101,16 @@ DoReadback(int x, int y, int width, int height)
 
 	CRASSERT(width >= 1);
 	CRASSERT(height >= 1);
-	if (vnc_spu.currentWindow) {	/* This _should_ always be true */
-		vnc_spu.currentWindow->dirtyX = x;
-		vnc_spu.currentWindow->dirtyY = y;
-		vnc_spu.currentWindow->dirtyW = width;
-		vnc_spu.currentWindow->dirtyH = height;
+	if (vnc_spu.currentWindow && vnc_spu.currentWindow->nativeWindow) {
+		cur_rect.x = x;
+		cur_rect.y = y;
+		cur_rect.w = width;
+		cur_rect.h = height;
+		/* append this dirty rect to all clients' pending lists */
+		aio_walk_slots(fn_host_add_client_rect, TYPE_CL_SLOT);
+
+		/* Send the new dirty rects to clients */
+		aio_walk_slots(fn_client_send_rects, TYPE_CL_SLOT);
 	}
 }
 
@@ -143,26 +126,46 @@ vncspuSwapBuffers(GLint win, GLint flags)
 	/*
 	crDebug("%s %d x %d at %d, %d", __FUNCTION__, size[0], size[1], pos[0], pos[1]);
 	*/
+	/*
+	 * XXX if window pos/size changes, compute difference and tell
+	 * vnc server that that region is dirty. - Jul 21, 2005
+	 */
+	/* XXX swap, then readback from front???  - July 21, 2005 */
 	DoReadback(pos[0], pos[1], size[0], size[1]);
 	vnc_spu.super.SwapBuffers(win, flags);
 }
 
+
+/**
+ * Given an integer window ID, return the WindowInfo.  Create a new
+ * WindowInfo for new ID.
+ */
+static WindowInfo *
+LookupWindow(GLint win, GLint nativeWindow)
+{
+	WindowInfo *window;
+	window = (WindowInfo *) crHashtableSearch(vnc_spu.windowTable, win);
+	if (!window) {
+		/* create new */
+		window = (WindowInfo *) crCalloc(sizeof(WindowInfo));
+		crHashtableAdd(vnc_spu.windowTable, win, window);
+	}
+
+	if (window->nativeWindow != nativeWindow && nativeWindow != 0) {
+		/* got the handle to a particular X window */
+		window->nativeWindow = nativeWindow;
+	}
+
+	return window;
+}
 
 
 static void VNCSPU_APIENTRY
 vncspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
 {
 	if (win >= 0) {
-		WindowInfo *window;
-		window = (WindowInfo *) crHashtableSearch(vnc_spu.windowTable, win);
-		if (!window) {
-			window = (WindowInfo *) crCalloc(sizeof(WindowInfo));
-			window->dirtyX = 0;
-			window->dirtyY = 0;
-			window->dirtyW = 1;
-			window->dirtyH = 1;
-			crHashtableAdd(vnc_spu.windowTable, win, window);
-		}
+		WindowInfo *window = LookupWindow(win, nativeWindow);
+		CRASSERT(window);
 		vnc_spu.currentWindow = window;
 	}
 	else {

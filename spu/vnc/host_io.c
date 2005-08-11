@@ -10,10 +10,11 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: host_io.c,v 1.1 2004-12-14 15:39:50 brianp Exp $
+ * $Id: host_io.c,v 1.2 2005-08-11 20:10:33 brianp Exp $
  * Asynchronous interaction with VNC host.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -52,6 +53,7 @@ static void fn_host_pass_cuttext(AIO_SLOT *slot);
 
 static void reset_framebuffer(void);
 static void request_update(int incr);
+
 
 /*
  * Implementation
@@ -193,18 +195,18 @@ static void rf_host_msg(void)
 
   msg_id = (int)cur_slot->readbuf[0] & 0xFF;
   switch(msg_id) {
-  case 0:                       /* FramebufferUpdate */
+  case rfbFramebufferUpdate:
     aio_setread(rf_host_fbupdate_hdr, NULL, 3);
     break;
-  case 1:                       /* SetColourMapEntries */
+  case rfbSetColourMapEntries:
     aio_setread(rf_host_colormap_hdr, NULL, 5);
     break;
-  case 2:                       /* Bell */
+  case rfbBell:
     log_write(LL_DETAIL, "Received Bell message from host");
     fbs_write_data(cur_slot->readbuf, 1);
     aio_setread(rf_host_msg, NULL, 1);
     break;
-  case 3:                       /* ServerCutText */
+  case rfbServerCutText:
     aio_setread(rf_host_cuttext_hdr, NULL, 7);
     break;
   default:
@@ -223,6 +225,9 @@ static CARD16 rect_count;
 static FB_RECT cur_rect;
 static CARD16 rect_cur_row;
 
+/**
+ * Called when we get a rfbFramebufferUpdate message.
+ */
 static void rf_host_fbupdate_hdr(void)
 {
   CARD8 hdr_buf[4];
@@ -546,6 +551,7 @@ static void fn_host_pass_cuttext(AIO_SLOT *slot)
 {
   fn_client_send_cuttext(slot, cut_text, cut_len);
 }
+
 
 /*************************************/
 /* Functions called from client_io.c */

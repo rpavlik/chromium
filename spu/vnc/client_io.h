@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.h,v 1.1 2004-12-14 15:39:50 brianp Exp $
+ * $Id: client_io.h,v 1.2 2005-08-11 20:10:33 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -18,6 +18,8 @@
 #define _REFLIB_CLIENT_IO_H
 
 #include "region.h"
+#include "translate.h"
+#include <zlib.h>
 
 #define TYPE_CL_SLOT    1
 
