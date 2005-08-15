@@ -14,6 +14,31 @@
 #include "reflector.h"
 #include "region.h"
 
+
+
+void
+vncspuInitialize(void)
+{
+#if defined(HAVE_XCLIPLIST_EXT)
+	int eventBase, errorBase;
+
+	vnc_spu.dpy = XOpenDisplay(NULL);
+	CRASSERT(vnc_spu.dpy);
+
+	vnc_spu.haveXClipListExt = XClipListQueryExtension(vnc_spu.dpy, &eventBase,
+																										 &errorBase);
+	if (vnc_spu.haveXClipListExt) {
+		crDebug("VNC SPU: XClipList extension present on %s", DisplayString(vnc_spu.dpy));
+	}
+	else {
+		crWarning("VNC SPU: The display %s doesn't support the XClipList extension", DisplayString(vnc_spu.dpy));
+
+	}
+	/* Note: not checking XClipList extension version at this time */
+#endif
+}
+
+
 void
 vncspuStartServerThread(void)
 {
@@ -38,13 +63,22 @@ GetFrameBuffer(CARD16 *w, CARD16 *h)
 
 
 /* data used in callback called by aio_walk_slots(). */
-static FB_RECT cur_rect;
+static BoxPtr CurrentClipRects = NULL;
+static int CurrentClipRectsCount = 0;
 
 /* Callback */
 static void
 fn_host_add_client_rect(AIO_SLOT *slot)
 {
-	fn_client_add_rect(slot, &cur_rect);
+	int i;
+	for (i = 0; i < CurrentClipRectsCount; i++) {
+		FB_RECT r;
+		r.x = CurrentClipRects[i].x1;
+		r.y = CurrentClipRects[i].y1;
+		r.w = CurrentClipRects[i].x2 - CurrentClipRects[i].x1;
+		r.h = CurrentClipRects[i].y2 - CurrentClipRects[i].y1;
+		fn_client_add_rect(slot, &r);
+	}
 }
 
 
@@ -102,12 +136,38 @@ DoReadback(int x, int y, int width, int height)
 	CRASSERT(width >= 1);
 	CRASSERT(height >= 1);
 	if (vnc_spu.currentWindow && vnc_spu.currentWindow->nativeWindow) {
-		cur_rect.x = x;
-		cur_rect.y = y;
-		cur_rect.w = width;
-		cur_rect.h = height;
+		BoxRec rect;
+		
+#if defined(HAVE_XCLIPLIST_EXT)
+		if (vnc_spu.haveXClipListExt) {
+			int i;
+			CurrentClipRects = XGetClipList(vnc_spu.dpy,
+																			vnc_spu.currentWindow->nativeWindow,
+																			&CurrentClipRectsCount);
+			crDebug("VNC SPU: cliprects: %d", CurrentClipRectsCount);
+			for (i=0;i<CurrentClipRectsCount; i++)
+				crDebug("%d: %d, %d .. %d, %d", i,
+								CurrentClipRects[i].x1,
+								CurrentClipRects[i].y1,
+								CurrentClipRects[i].x2,
+								CurrentClipRects[i].y2);
+		}
+		else
+#endif
+		{
+			rect.x1 = x;
+			rect.y1 = y;
+			rect.x2 = x + width;
+			rect.y2 = y + height;
+			CurrentClipRects = &rect;
+			CurrentClipRectsCount = 1;
+		}
 		/* append this dirty rect to all clients' pending lists */
 		aio_walk_slots(fn_host_add_client_rect, TYPE_CL_SLOT);
+
+		/* reset/clear to be safe */
+		CurrentClipRects = NULL;
+		CurrentClipRectsCount = 0;
 
 		/* Send the new dirty rects to clients */
 		aio_walk_slots(fn_client_send_rects, TYPE_CL_SLOT);

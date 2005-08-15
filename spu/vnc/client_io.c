@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.2 2005-08-11 20:10:33 brianp Exp $
+ * $Id: client_io.c,v 1.3 2005-08-15 20:55:42 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -458,6 +458,7 @@ static void rf_client_updatereq(void)
 #ifdef CHROMIUM
   /* This is a bit of a hack, but it improves performance */
   sched_yield();
+  /* XXX review this */
   usleep((1000 * 1000) / vnc_spu.max_update_rate);
 #endif
 

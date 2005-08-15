@@ -35,8 +35,11 @@ FILES = vncspu \
 LDFLAGS += -lX11 -lVncExt
 
 CFLAGS += -DCHROMIUM -DRASTER_BOTTOM_TO_TOP=1
+#CFLAGS += -DHAVE_XCLIPLIST_EXT
 
-LIBRARIES = spuload crutil crmothership z jpeg
+LIBRARIES = spuload crutil crmothership
+
+LDFLAGS += -lz -ljpeg -L/usr/X11R6/lib -lX11 -lXcliplist
 
 PRECOMP =
 SLOP = $(PRECOMP)

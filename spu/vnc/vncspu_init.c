@@ -51,6 +51,8 @@ vncSPUInit( int id, SPU *child, SPU *self,
 	vnc_spu.screen_buffer = NULL;
 	vnc_spu.windowTable = crAllocHashtable();
 
+	vncspuInitialize();
+
 	vncspuStartServerThread();
 
 	return &vnc_functions;

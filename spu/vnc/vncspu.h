@@ -21,6 +21,12 @@
 #include "client_io.h"
 #include "region.h"
 
+#if defined(HAVE_XCLIPLIST_EXT)
+#include <X11/Xlib.h>
+#define _XCLIPLIST_SERVER_
+#include <X11/extensions/Xcliplist.h>
+#endif
+
 /**
  * Per window info
  */
@@ -46,6 +52,11 @@ typedef struct {
 	GLubyte *screen_buffer;
 	CRHashTable *windowTable;
 	WindowInfo *currentWindow;
+
+#if defined(HAVE_XCLIPLIST_EXT)
+	Display *dpy;
+	int haveXClipListExt;
+#endif
 } VncSPU;
 
 /** Vnc state descriptor */
@@ -60,5 +71,7 @@ extern SPUOptions vncSPUOptions[];
 extern void vncspuGatherConfiguration( void );
 
 extern void vncspuStartServerThread(void);
+
+extern void vncspuInitialize(void);
 
 #endif /* VNC_SPU_H */
