@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode.c,v 1.1 2004-12-14 15:39:50 brianp Exp $
+ * $Id: encode.c,v 1.2 2005-08-16 17:27:28 brianp Exp $
  * Encoding screen rectangles.
  */
 
@@ -624,6 +624,7 @@ static void analyze_rect##bpp(CARD##bpp *buf, PALETTE2 *pal, FB_RECT *r) \
     }                                                                    \
     pal->num_colors = 2;        /* Two colors */                         \
   } else {                                                               \
+    pal->bg = 0;   /* arbitrary, to avoid unitialized read */            \
     pal->num_colors = 0;        /* More than two colors */               \
   }                                                                      \
 }
