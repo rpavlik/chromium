@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.3 2005-08-15 20:55:42 brianp Exp $
+ * $Id: client_io.c,v 1.4 2005-08-16 19:09:21 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -95,6 +95,9 @@ void af_client_accept(void)
   aio_setread(rf_client_ver, NULL, 12);
 }
 
+/**
+ * Close function (called when client goes away)
+ */
 static void cf_client(void)
 {
   CL_SLOT *cl = (CL_SLOT *)cur_slot;
@@ -734,12 +737,12 @@ static void send_update(void)
     0, 0, 0, 1
   };
   CARD8 rect_hdr[12];
-  FB_RECT rect;
-  AIO_BLOCK *block;
   AIO_FUNCPTR fn = NULL;
   int num_copy_rects, num_penging_rects, num_all_rects;
   int raw_bytes = 0, hextile_bytes = 0;
   int i, idx, rev_order;
+
+  crLockMutex(&vnc_spu.lock);
 
   /* Process framebuffer size change. */
   if (cl->newfbsize_pending) {
@@ -762,6 +765,7 @@ static void send_update(void)
        pseudo-rectangle, pixel data will be sent in the next update. */
     if (cl->enable_newfbsize) {
       send_newfbsize();
+      crUnlockMutex(&vnc_spu.lock);
       return;
     }
   } else {
@@ -796,8 +800,10 @@ static void send_update(void)
   num_penging_rects = REGION_NUM_RECTS(&cl->pending_region);
   num_copy_rects = REGION_NUM_RECTS(&cl->copy_region);
   num_all_rects = num_penging_rects + num_copy_rects;
-  if (num_all_rects == 0)
+  if (num_all_rects == 0) {
+    crUnlockMutex(&vnc_spu.lock);
     return;
+  }
 
   log_write(LL_DEBUG, "Sending framebuffer update (min %d rects) to %s",
             num_all_rects, cur_slot->name);
@@ -817,6 +823,8 @@ static void send_update(void)
 
   /* For each CopyRect rectangle: */
   for (i = 0; i < num_copy_rects; i++) {
+    FB_RECT rect;
+    AIO_BLOCK *block;
     idx = (rev_order) ? num_copy_rects - i - 1 : i;
     rect.x = REGION_RECTS(&cl->copy_region)[idx].x1;
     rect.y = REGION_RECTS(&cl->copy_region)[idx].y1;
@@ -848,6 +856,8 @@ static void send_update(void)
 
   /* For each of the usual pending rectangles: */
   for (i = 0; i < num_penging_rects; i++) {
+    FB_RECT rect;
+    AIO_BLOCK *block;
     rect.x = REGION_RECTS(&cl->pending_region)[i].x1;
     rect.y = REGION_RECTS(&cl->pending_region)[i].y1;
     rect.w = REGION_RECTS(&cl->pending_region)[i].x2 - rect.x;
@@ -893,6 +903,7 @@ static void send_update(void)
 
   /* Send LastRect marker. */
   if (cl->enc_prefer == RFB_ENCODING_TIGHT && cl->enable_lastrect) {
+    FB_RECT rect;
     rect.x = rect.y = rect.w = rect.h = 0;
     rect.enc = RFB_ENCODING_LASTRECT;
     put_rect_header(rect_hdr, &rect);
@@ -902,5 +913,7 @@ static void send_update(void)
   /* Something has been queued for sending. */
   cl->update_in_progress = 1;
   cl->update_requested = 0;
+
+  crUnlockMutex(&vnc_spu.lock);
 }
 

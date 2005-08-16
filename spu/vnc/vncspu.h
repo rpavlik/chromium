@@ -16,6 +16,7 @@
 #include "cr_hash.h"
 #include "cr_spu.h"
 #include "cr_server.h"
+#include "cr_threads.h"
 #include "rfblib.h"
 #include "async_io.h"
 #include "client_io.h"
@@ -52,6 +53,8 @@ typedef struct {
 	GLubyte *screen_buffer;
 	CRHashTable *windowTable;
 	WindowInfo *currentWindow;
+
+	CRmutex lock;
 
 #if defined(HAVE_XCLIPLIST_EXT)
 	Display *dpy;

@@ -42,14 +42,18 @@ vncspuInitialize(void)
 void
 vncspuStartServerThread(void)
 {
+	crInitMutex(&vnc_spu.lock);
+
+	{
 #ifdef WINDOWS
-	crError("VNC SPU not supported on Windows yet");
+		crError("VNC SPU not supported on Windows yet");
 #else
-	extern void * vnc_main(void *);
-	pthread_t th;
-	int id = pthread_create(&th, NULL, vnc_main, NULL);
-	(void) id;
+		extern void * vnc_main(void *);
+		pthread_t th;
+		int id = pthread_create(&th, NULL, vnc_main, NULL);
+		(void) id;
 #endif
+	}
 }
 
 
@@ -77,6 +81,7 @@ fn_host_add_client_rect(AIO_SLOT *slot)
 		r.y = CurrentClipRects[i].y1;
 		r.w = CurrentClipRects[i].x2 - CurrentClipRects[i].x1;
 		r.h = CurrentClipRects[i].y2 - CurrentClipRects[i].y1;
+		r.enc = 0; /* XXXX TEMPORARY */
 		fn_client_add_rect(slot, &r);
 	}
 }
@@ -140,17 +145,9 @@ DoReadback(int x, int y, int width, int height)
 		
 #if defined(HAVE_XCLIPLIST_EXT)
 		if (vnc_spu.haveXClipListExt) {
-			int i;
 			CurrentClipRects = XGetClipList(vnc_spu.dpy,
 																			vnc_spu.currentWindow->nativeWindow,
 																			&CurrentClipRectsCount);
-			crDebug("VNC SPU: cliprects: %d", CurrentClipRectsCount);
-			for (i=0;i<CurrentClipRectsCount; i++)
-				crDebug("%d: %d, %d .. %d, %d", i,
-								CurrentClipRects[i].x1,
-								CurrentClipRects[i].y1,
-								CurrentClipRects[i].x2,
-								CurrentClipRects[i].y2);
 		}
 		else
 #endif
@@ -162,8 +159,13 @@ DoReadback(int x, int y, int width, int height)
 			CurrentClipRects = &rect;
 			CurrentClipRectsCount = 1;
 		}
+
+    crLockMutex(&vnc_spu.lock);
+
 		/* append this dirty rect to all clients' pending lists */
 		aio_walk_slots(fn_host_add_client_rect, TYPE_CL_SLOT);
+
+    crUnlockMutex(&vnc_spu.lock);
 
 		/* reset/clear to be safe */
 		CurrentClipRects = NULL;
