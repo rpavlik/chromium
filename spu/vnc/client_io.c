@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.4 2005-08-16 19:09:21 brianp Exp $
+ * $Id: client_io.c,v 1.5 2005-08-16 19:10:35 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -738,7 +738,7 @@ static void send_update(void)
   };
   CARD8 rect_hdr[12];
   AIO_FUNCPTR fn = NULL;
-  int num_copy_rects, num_penging_rects, num_all_rects;
+  int num_copy_rects, num_pending_rects, num_all_rects;
   int raw_bytes = 0, hextile_bytes = 0;
   int i, idx, rev_order;
 
@@ -797,9 +797,9 @@ static void send_update(void)
   }
 
   /* Compute the number of rectangles in regions. */
-  num_penging_rects = REGION_NUM_RECTS(&cl->pending_region);
+  num_pending_rects = REGION_NUM_RECTS(&cl->pending_region);
   num_copy_rects = REGION_NUM_RECTS(&cl->copy_region);
-  num_all_rects = num_penging_rects + num_copy_rects;
+  num_all_rects = num_pending_rects + num_copy_rects;
   if (num_all_rects == 0) {
     crUnlockMutex(&vnc_spu.lock);
     return;
@@ -855,7 +855,7 @@ static void send_update(void)
   }
 
   /* For each of the usual pending rectangles: */
-  for (i = 0; i < num_penging_rects; i++) {
+  for (i = 0; i < num_pending_rects; i++) {
     FB_RECT rect;
     AIO_BLOCK *block;
     rect.x = REGION_RECTS(&cl->pending_region)[i].x1;
@@ -890,7 +890,7 @@ static void send_update(void)
        be called after all data has been sent. But do not do that if
        we use Tight encoding since there would be one more rectangle
        (LastRect marker) */
-    if (i == num_penging_rects - 1)
+    if (i == num_pending_rects - 1)
       fn = wf_client_update_finished;
 
     /* Send the rectangle.
