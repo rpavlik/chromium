@@ -16,26 +16,68 @@
 
 
 
+#if defined(HAVE_VNC_EXT)
+static void
+SendVncStartUpMsg(void)
+{
+	if (vnc_spu.haveVncExt) {
+		VncConnectionList *vnclist;
+		int num_conn, i;
+
+		vnclist = XVncListConnections(vnc_spu.dpy, &num_conn);
+		crDebug("VNC SPU: Found %d open VNC connection(s)", num_conn);
+		for (i = 0; i < num_conn; i++) {
+			int serverPort = vnc_spu.server_port;
+			int mothershipPort = 2;
+			CRASSERT(vnclist->ipaddress);
+			crDebug("VNC SPU: Sending ChromiumStart message to VNC server 0x%x", vnclist[i].ipaddress);
+			XVncChromiumStart(vnc_spu.dpy, vnclist[i].ipaddress,
+												serverPort, mothershipPort);
+		}
+	}
+}
+#endif
+
+
 void
 vncspuInitialize(void)
 {
 #if defined(HAVE_XCLIPLIST_EXT)
 	int eventBase, errorBase;
+	char *dpyStr = NULL;
 
 	vnc_spu.dpy = XOpenDisplay(NULL);
+	if (!vnc_spu.dpy)
+		vnc_spu.dpy = XOpenDisplay(":0");
+
 	CRASSERT(vnc_spu.dpy);
+	dpyStr = DisplayString(vnc_spu.dpy);
 
 	vnc_spu.haveXClipListExt = XClipListQueryExtension(vnc_spu.dpy, &eventBase,
 																										 &errorBase);
 	if (vnc_spu.haveXClipListExt) {
-		crDebug("VNC SPU: XClipList extension present on %s", DisplayString(vnc_spu.dpy));
+		crDebug("VNC SPU: XClipList extension present on %s", dpyStr);
 	}
 	else {
-		crWarning("VNC SPU: The display %s doesn't support the XClipList extension", DisplayString(vnc_spu.dpy));
-
+		crWarning("VNC SPU: The display %s doesn't support the XClipList extension", dpyStr);
 	}
 	/* Note: not checking XClipList extension version at this time */
-#endif
+#endif /* HAVE_XCLIPLIST_EXT */
+
+#if defined(HAVE_VNC_EXT)
+	{
+		int major, minor;
+		vnc_spu.haveVncExt = XVncQueryExtension(vnc_spu.dpy, &major, &minor);
+		if (vnc_spu.haveVncExt) {
+			crDebug("VNC SPU: XVnc extension present on %s", dpyStr);
+			SendVncStartUpMsg();
+		}
+		else {
+			crWarning("VNC SPU: The display %s doesn't support the VNC extension", dpyStr);
+		}
+			
+	}
+#endif /* HAVE_VNC_EXT */
 }
 
 
@@ -81,7 +123,7 @@ fn_host_add_client_rect(AIO_SLOT *slot)
 		r.y = CurrentClipRects[i].y1;
 		r.w = CurrentClipRects[i].x2 - CurrentClipRects[i].x1;
 		r.h = CurrentClipRects[i].y2 - CurrentClipRects[i].y1;
-		r.enc = 0; /* XXXX TEMPORARY */
+		r.enc = 0; /* not really used */
 		fn_client_add_rect(slot, &r);
 	}
 }

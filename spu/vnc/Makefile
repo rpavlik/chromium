@@ -5,6 +5,8 @@
 
 TOP = ../..
 
+include ${TOP}/options.mk
+
 SPU = 1
 SHARED = 1
 LIBRARY = vncspu
@@ -35,11 +37,17 @@ FILES = vncspu \
 LDFLAGS += -lX11 -lVncExt
 
 CFLAGS += -DCHROMIUM -DRASTER_BOTTOM_TO_TOP=1
+LDFLAGS += -lz -ljpeg -L/usr/X11R6/lib -lX11
+
 CFLAGS += -DHAVE_XCLIPLIST_EXT
+LDFLAGS += -lXcliplist
+
+ifeq ($(USE_VNC), 1)
+CFLAGS += -DHAVE_VNC_EXT
+LDFLAGS += -lVncExt
+endif
 
 LIBRARIES = spuload crutil crmothership
-
-LDFLAGS += -lz -ljpeg -L/usr/X11R6/lib -lX11 -lXcliplist
 
 PRECOMP =
 SLOP = $(PRECOMP)

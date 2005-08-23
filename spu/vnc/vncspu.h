@@ -28,6 +28,11 @@
 #include <X11/extensions/Xcliplist.h>
 #endif
 
+#if defined(HAVE_VNC_EXT)
+#include <X11/extensions/vnc.h>
+#endif
+
+
 /**
  * Per window info
  */
@@ -60,6 +65,7 @@ typedef struct {
 	Display *dpy;
 	int haveXClipListExt;
 #endif
+	int haveVncExt;
 } VncSPU;
 
 /** Vnc state descriptor */
