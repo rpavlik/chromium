@@ -68,76 +68,11 @@ void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width,
 	int bytes_per_pixel;
 	(void)writeback;
 
-	switch ( type )
-	{
-#ifdef CR_OPENGL_VERSION_1_2
-	  case GL_UNSIGNED_BYTE_3_3_2:
-	  case GL_UNSIGNED_BYTE_2_3_3_REV:
-#endif
-	  case GL_UNSIGNED_BYTE:
-	  case GL_BYTE:
-			 bytes_per_pixel = 1;
-			 break;
-
-#ifdef CR_OPENGL_VERSION_1_2
-	  case GL_UNSIGNED_SHORT_5_6_5:
-	  case GL_UNSIGNED_SHORT_5_6_5_REV:
-	  case GL_UNSIGNED_SHORT_5_5_5_1:
-	  case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-	  case GL_UNSIGNED_SHORT_4_4_4_4:
-	  case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-#endif
-	  case GL_UNSIGNED_SHORT:
-	  case GL_SHORT:
-			bytes_per_pixel = 2;
-			break;
-
-#ifdef CR_OPENGL_VERSION_1_2
-	  case GL_UNSIGNED_INT_8_8_8_8:
-	  case GL_UNSIGNED_INT_8_8_8_8_REV:
-	  case GL_UNSIGNED_INT_10_10_10_2:
-	  case GL_UNSIGNED_INT_2_10_10_10_REV:
-#endif
-	  case GL_UNSIGNED_INT:
-	  case GL_INT:
-	  case GL_FLOAT:
-			 bytes_per_pixel = 4;
-			 break;
-
-	  default:
-			__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
-									 "crPackReadPixels(bad type)" );
-			return;
-	}
-
-	switch ( format )
-	{
-	  case GL_COLOR_INDEX:
-	  case GL_STENCIL_INDEX:
-	  case GL_DEPTH_COMPONENT:
-	  case GL_RED:
-	  case GL_GREEN:
-	  case GL_BLUE:
-	  case GL_ALPHA:
-	  case GL_LUMINANCE:
-			 break;
-
-	  case GL_LUMINANCE_ALPHA:
-			 bytes_per_pixel *= 2;
-			 break;
-
-	  case GL_RGB:
-			 bytes_per_pixel *= 3;
-			 break;
-
-	  case GL_RGBA:
-			 bytes_per_pixel *= 4;
-			 break;
-
-	  default:
-			__PackError( __LINE__, __FILE__, GL_INVALID_ENUM,
-									 "crPackReadPixels(bad format)" );
-			return;
+	bytes_per_pixel = crPixelSize(format, type);
+	if (bytes_per_pixel <= 0) {
+		__PackError(__LINE__, __FILE__, GL_INVALID_ENUM,
+								"crPackReadPixels(format 0x%x or type 0x%x)", format, type);
+		return;
 	}
 
 	/* default bytes_per_row so crserver can allocate memory */
@@ -157,11 +92,11 @@ void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width,
 	WRITE_DATA( 12, GLsizei,  height );
 	WRITE_DATA( 16, GLenum, format );
 	WRITE_DATA( 20, GLenum, type );
-	WRITE_DATA( 24, GLint,  stride );
+	WRITE_DATA( 24, GLint,  stride ); /* XXX not really used! */
 	WRITE_DATA( 28, GLint, packstate->alignment );
 	WRITE_DATA( 32, GLint, packstate->skipRows );
 	WRITE_DATA( 36, GLint, packstate->skipPixels );
-	WRITE_DATA( 40, GLint,  bytes_per_row );
+	WRITE_DATA( 40, GLint, bytes_per_row );
 	WRITE_DATA( 44, GLint, packstate->rowLength );
 	WRITE_NETWORK_POINTER( 48, (char *) pixels );
 	WRITE_OPCODE( pc, CR_READPIXELS_OPCODE );
