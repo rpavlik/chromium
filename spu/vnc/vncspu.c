@@ -129,13 +129,60 @@ fn_host_add_client_rect(AIO_SLOT *slot)
 }
 
 
-/*
+/**
+ * Read back a window region and place in the screen buffer.
+ * \param scrx, scry - destination position in screen coords (y=0=top)
+ * \param winx, winy - source position in window coords (y=0=bottom)
+ * \param width, height - size of region to copy
+ * Note:  y = 0 = top of screen or window
+ */
+static void
+ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
+{
+#if RASTER_BOTTOM_TO_TOP
+	{
+		/* yFlipped = 0 = bottom of screen */
+		const int scryFlipped = vnc_spu.screen_height - (scry + height);
+
+		/* pack to dest coordinate */
+		vnc_spu.super.PixelStorei(GL_PACK_SKIP_PIXELS, scrx);
+		vnc_spu.super.PixelStorei(GL_PACK_SKIP_ROWS, scryFlipped);
+		vnc_spu.super.PixelStorei(GL_PACK_ROW_LENGTH, vnc_spu.screen_width);
+		vnc_spu.super.ReadPixels(winx, winy, width, height,
+														 GL_BGRA, GL_UNSIGNED_BYTE,
+														 vnc_spu.screen_buffer);
+	}
+#else
+	{
+		GLubyte *buffer;
+		GLubyte *src, *dst;
+		int i;
+
+		buffer = (GLubyte *) crAlloc(width * height * 4);
+		vnc_spu.super.ReadPixels(winx, winy, width, height,
+														 GL_BGRA, GL_UNSIGNED_BYTE, buffer);
+
+		/* copy/flip */
+		src = buffer + (height - 1) * width * 4; /* top row */
+		dst = vnc_spu.screen_buffer + (vnc_spu.screen_width * scry + scrx) * 4;
+		for (i = 0; i < height; i++) {
+			crMemcpy(dst, src, width * 4);
+			src -= width * 4;
+			dst += vnc_spu.screen_width * 4;
+		}
+		crFree(buffer);
+	}
+#endif
+}
+
+
+/**
  * Read back the image from the OpenGL window and store in the screen buffer
- * (i.e. vnc_spu.screen_buffer) at the given x/y position.
+ * (i.e. vnc_spu.screen_buffer) at the given x/y screen position.
  * Then, update the dirty rectangle info.
  */
 static void
-DoReadback(int x, int y, int width, int height)
+DoReadback(int scrx, int scry, int winWidth, int winHeight)
 {
 	/* check/alloc the screen buffer now */
 	if (!vnc_spu.screen_buffer) {
@@ -147,44 +194,12 @@ DoReadback(int x, int y, int width, int height)
 		}
 	}
 
-#if RASTER_BOTTOM_TO_TOP
-	{
-		int yFlipped;
-		yFlipped = vnc_spu.screen_height - (y + height);
-
-		vnc_spu.super.PixelStorei(GL_PACK_SKIP_PIXELS, x);
-		vnc_spu.super.PixelStorei(GL_PACK_SKIP_ROWS, yFlipped);
-		vnc_spu.super.PixelStorei(GL_PACK_ROW_LENGTH, vnc_spu.screen_width);
-		vnc_spu.super.ReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE,
-														 vnc_spu.screen_buffer);
-	}
-#else
-	{
-		GLubyte *buffer;
-		GLubyte *src, *dst;
-		int i;
-
-		buffer = (GLubyte *) crAlloc(width * height * 4);
-		vnc_spu.super.ReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE,
-														 buffer);
-
-		/* copy/flip */
-		src = buffer + (height - 1) * width * 4;
-		dst = vnc_spu.screen_buffer + (vnc_spu.screen_width * y + x) * 4;
-		for (i = 0; i < height; i++) {
-			crMemcpy(dst, src, width * 4);
-			src -= width * 4;
-			dst += vnc_spu.screen_width * 4;
-		}
-		crFree(buffer);
-	}
-#endif
-
-	CRASSERT(width >= 1);
-	CRASSERT(height >= 1);
+	CRASSERT(winWidth >= 1);
+	CRASSERT(winHeight >= 1);
 	if (vnc_spu.currentWindow && vnc_spu.currentWindow->nativeWindow) {
 		BoxRec rect;
-		
+		int i;
+
 #if defined(HAVE_XCLIPLIST_EXT)
 		if (vnc_spu.haveXClipListExt) {
 			CurrentClipRects = XGetClipList(vnc_spu.dpy,
@@ -194,19 +209,39 @@ DoReadback(int x, int y, int width, int height)
 		else
 #endif
 		{
-			rect.x1 = x;
-			rect.y1 = y;
-			rect.x2 = x + width;
-			rect.y2 = y + height;
+			/* whole window, in window coords */
+			rect.x1 = 0;
+			rect.y1 = 0;
+			rect.x2 = winWidth;
+			rect.y2 = winHeight;
 			CurrentClipRects = &rect;
 			CurrentClipRectsCount = 1;
 		}
 
-    crLockMutex(&vnc_spu.lock);
+		/* read back just the visible regions */
+		for (i = 0; i < CurrentClipRectsCount; i++) {
+			BoxPtr r = CurrentClipRects + i;     /* in window coords! */
+			int width = r->x2 - r->x1;
+			int height = r->y2 - r->y1;
+			int srcx = r->x1;                    /* in window coords */
+			int srcy = winHeight - r->y2;        /* in window coords, y=0=bottom */
+			int destx = scrx + r->x1;            /* in screen coords */
+			int desty = scry + r->y1;            /* in screen coords, y=0=top */
+			ReadbackRegion(destx, desty, srcx, srcy, width, height);
+		}
+
+		/* translate cliprects to screen coords for the VNC server */
+		for (i = 0; i < CurrentClipRectsCount; i++) {
+			BoxPtr r = CurrentClipRects + i;
+			r->x1 += scrx;
+			r->y1 += scry;
+			r->x2 += scrx;
+			r->y2 += scry;
+		}
 
 		/* append this dirty rect to all clients' pending lists */
+    crLockMutex(&vnc_spu.lock);
 		aio_walk_slots(fn_host_add_client_rect, TYPE_CL_SLOT);
-
     crUnlockMutex(&vnc_spu.lock);
 
 		/* reset/clear to be safe */
@@ -227,14 +262,6 @@ vncspuSwapBuffers(GLint win, GLint flags)
 																				win, GL_INT, 2, size);
 	vnc_spu.super.GetChromiumParametervCR(GL_WINDOW_POSITION_CR,
 																				win, GL_INT, 2, pos);
-	/*
-	crDebug("%s %d x %d at %d, %d", __FUNCTION__, size[0], size[1], pos[0], pos[1]);
-	*/
-	/*
-	 * XXX if window pos/size changes, compute difference and tell
-	 * vnc server that that region is dirty. - Jul 21, 2005
-	 */
-	/* XXX swap, then readback from front???  - July 21, 2005 */
 	DoReadback(pos[0], pos[1], size[0], size[1]);
 	vnc_spu.super.SwapBuffers(win, flags);
 }
