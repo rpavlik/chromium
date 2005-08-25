@@ -292,6 +292,7 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 	crStatePixelZoom(oldZoomX, oldZoomY);
 }
 
+
 void TILESORTSPU_APIENTRY
 tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 											 GLenum format, GLenum type, GLvoid *pixels)
@@ -299,18 +300,15 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 	GET_CONTEXT(ctx);
 	WindowInfo *winInfo = thread->currentContext->currentWindow;
 	CRCurrentState *c = &(ctx->current);
-	CRPixelPackState *p = &(ctx->client.pack);
 	CRViewportState *v = &(ctx->viewport);
 	unsigned char *data_ptr;
-	GLfloat screen_bbox[8];
 	int i, stride;
 	int bytes_per_pixel = 0;
-	CRrecti rect, isect;
-	int len = 44 + sizeof(CRNetworkPointer);
-	int offset;
+	int len = 48 + sizeof(CRNetworkPointer);
 	int zoomedWidth, zoomedHeight;
 	GLenum hint;
 
+	/* Start with basic error checking */
 	if (c->inBeginEnd)
 	{
 		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "glReadPixels" );
@@ -323,11 +321,23 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 		return;
 	}
 
-	if (!c->rasterValid)
-	{
+	if (format == GL_STENCIL_INDEX && ctx->limits.stencilBits == 0) {
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "glReadPixels" );
+		return;
+	}
+	if (format ==  GL_DEPTH_COMPONENT && ctx->limits.depthBits == 0) {
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "glReadPixels" );
 		return;
 	}
 
+	bytes_per_pixel = crPixelSize(format, type);
+	if (bytes_per_pixel < 0) {
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
+								 "ReadPixels(format=0x%x, type=0x%x)", format, type);
+		return;
+	}
+
+	/* Tweak the pixel zoom */
 	if (tilesort_spu.scaleImages) {
 		/* compute adjusted x, y, width, height */
 		zoomedWidth = (int) (width * winInfo->widthScale + 0.5);
@@ -341,196 +351,100 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 		zoomedHeight = height;
 	}
 
-	/* min x, y, z, w */
-	screen_bbox[0] = (c->rasterAttrib[VERT_ATTRIB_POS][0])/v->viewportW;
-	screen_bbox[1] = (c->rasterAttrib[VERT_ATTRIB_POS][1])/v->viewportH;
-	screen_bbox[2] = 0.0;
-	screen_bbox[3] = 1.0;
-	/* max x, y, z, w */
-	screen_bbox[4] = (c->rasterAttrib[VERT_ATTRIB_POS][0] + width)/v->viewportW;
-	screen_bbox[5] = (c->rasterAttrib[VERT_ATTRIB_POS][1] + height)/v->viewportH;
-	screen_bbox[6] = 0.0;
-	screen_bbox[7] = 1.0;
-
-	/* map from [0, 1] to [-1, 1] */
-	screen_bbox[0] *= 2.0f;
-	screen_bbox[1] *= 2.0f;
-	screen_bbox[4] *= 2.0f;
-	screen_bbox[5] *= 2.0f;
-
-	screen_bbox[0] -= 1.0f;
-	screen_bbox[1] -= 1.0f;
-	screen_bbox[4] -= 1.0f;
-	screen_bbox[5] -= 1.0f;
-
-	hint = thread->currentContext->providedBBOX;
-	tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT, 8, screen_bbox);
-	tilesortspuFlush( thread );
-
-	switch ( type )
+	/* compute/set bounding box */
 	{
-#ifdef CR_OPENGL_VERSION_1_2
-	  case GL_UNSIGNED_BYTE_3_3_2:
-	  case GL_UNSIGNED_BYTE_2_3_3_REV:
-#endif
-	  case GL_UNSIGNED_BYTE:
-	  case GL_BYTE:
-			bytes_per_pixel = 1;
-			break;
+		const GLfloat *rastPos = c->rasterAttrib[VERT_ATTRIB_POS];
+		GLfloat screen_bbox[8];
 
-#ifdef CR_OPENGL_VERSION_1_2
-	  case GL_UNSIGNED_SHORT_5_6_5:
-	  case GL_UNSIGNED_SHORT_5_6_5_REV:
-	  case GL_UNSIGNED_SHORT_5_5_5_1:
-	  case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-	  case GL_UNSIGNED_SHORT_4_4_4_4:
-	  case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-#endif
-	  case GL_UNSIGNED_SHORT:
-	  case GL_SHORT:
-			bytes_per_pixel = 2;
-			break;
+		/* min x, y, z, w */
+		screen_bbox[0] = (rastPos[0]) / v->viewportW;
+		screen_bbox[1] = (rastPos[1]) / v->viewportH;
+		screen_bbox[2] = 0.0;
+		screen_bbox[3] = 1.0;
+		/* max x, y, z, w */
+		screen_bbox[4] = (rastPos[0] + width) / v->viewportW;
+		screen_bbox[5] = (rastPos[1] + height) / v->viewportH;
+		screen_bbox[6] = 0.0;
+		screen_bbox[7] = 1.0;
 
-#ifdef CR_OPENGL_VERSION_1_2
-	  case GL_UNSIGNED_INT_8_8_8_8:
-	  case GL_UNSIGNED_INT_8_8_8_8_REV:
-	  case GL_UNSIGNED_INT_10_10_10_2:
-	  case GL_UNSIGNED_INT_2_10_10_10_REV:
-#endif
-	  case GL_UNSIGNED_INT:
-	  case GL_INT:
-	  case GL_FLOAT:
-			bytes_per_pixel = 4;
-			break;
+		/* map x,y from [0, 1] to [-1, 1] */
+		screen_bbox[0] = screen_bbox[0] * 2.0f - 1.0f;
+		screen_bbox[1] = screen_bbox[1] * 2.0f - 1.0f;
+		screen_bbox[4] = screen_bbox[4] * 2.0f - 1.0f;
+		screen_bbox[5] = screen_bbox[5] * 2.0f - 1.0f;
 
-	  default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM,
-									 "ReadPixels(type=0x%x)", type );
-			return;
+		hint = thread->currentContext->providedBBOX;
+		tilesortspu_ChromiumParametervCR(GL_SCREEN_BBOX_CR, GL_FLOAT,
+																		 8, screen_bbox);
+		tilesortspuFlush( thread );
 	}
 
-	switch ( format )
-	{
-	  case GL_COLOR_INDEX:
-			break;
-	  case GL_STENCIL_INDEX:
-			if (ctx->limits.stencilBits == 0)
-			{
-				crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "glReadPixels" );
-				return;
-			}
-			break;
-	  case GL_DEPTH_COMPONENT:
-			if (ctx->limits.depthBits == 0)
-			{
-				crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION, "glReadPixels" );
-				return;
-			}
-			break;
-	  case GL_RED:
-	  case GL_GREEN:
-	  case GL_BLUE:
-	  case GL_ALPHA:
-	  case GL_INTENSITY:
-	  case GL_LUMINANCE:
-			break;
-
-	  case GL_LUMINANCE_ALPHA:
-			bytes_per_pixel *= 2;
-			break;
-
-	  case GL_RGB:
-			bytes_per_pixel *= 3;
-			break;
-
-	  case GL_RGBA:
-			bytes_per_pixel *= 4;
-			break;
-
-	  default:
-			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM,
-										"ReadPixels(format=0x%x)", format );
-	}
-
-	/* Build the rectangle here to save the addition each time */
-	rect.x1 = x;
-	rect.y1 = y;
-	rect.x2 = x + width;  /** XXX \todo zoomedWidth, someday */
-	rect.y2 = y + height;
-	stride  = width * bytes_per_pixel;
-
+	/*
+	 * Loop over servers.  Compute intersection of ReadPixels region with
+	 * the servers' extents.  Adjust ReadPixels and pixel packing parameters
+	 * to read just the sub-region from each intersecting server.
+	 */
 	thread->currentContext->readPixelsCount = 0;
 	for ( i = 0; i < tilesort_spu.num_servers; i++ )
 	{
+		CRPixelPackState packing;
+		const CRrecti *extent;
 		int new_width, new_height, new_x, new_y, bytes_per_row;
-		CRPackBuffer *buffer = &(thread->buffer[i]);
 
-		/* Grab current server's boundaries */
-		isect = winInfo->server[i].extents[0];  /* x1,y1,x2,y2 */
+		/* Server[i]'s tile region (XXX we should loop over extents) */
+		extent = winInfo->server[i].extents + 0;  /* x1,y1,x2,y2 */
 
-		/* Reset rectangle to current boundary for server */
-		if ( isect.x1 < rect.x1 ) isect.x1 = rect.x1;
-		if ( isect.y1 < rect.y1 ) isect.y1 = rect.y1;
-		if ( isect.x2 > rect.x2 ) isect.x2 = rect.x2;
-		if ( isect.y2 > rect.y2 ) isect.y2 = rect.y2;
+		/* init vars */
+		packing = ctx->client.pack; /* copy struct */
+		packing.rowLength = width;
+		new_x = x;
+		new_y = y;
+		new_width = width;
+		new_height = height;
 
-		/* Don't bother with this server if we're out of bounds */
-		if (!( isect.x2 > isect.x1 && isect.y2 > isect.y1 ))
-			continue;
+		/* compute intersection of tile region and readpixels region */
+		if (ComputeSubImage(&new_x, &new_y, &new_width, &new_height,
+												&packing.skipPixels, &packing.skipRows,
+												1.0F, 1.0F, extent))
+		{
+			CRPackBuffer *buffer = &(thread->buffer[i]);
 
-		/* We've got one in the pot ! */
-		thread->currentContext->readPixelsCount++;
+			/* adjust position by this tile's origin (relative to window) */
+			new_x -= extent->x1;
+			new_y -= extent->y1;
 
-		/* Build new ReadPixels parameters */
-		new_width  = isect.x2 - isect.x1;
-		new_height = isect.y2 - isect.y1;
-		new_x      = isect.x1 - winInfo->server[i].extents[0].x1;
-		new_y      = isect.y1 - winInfo->server[i].extents[0].y1;
+			/* We've got one in the pot ! */
+			thread->currentContext->readPixelsCount++;
 
-		bytes_per_row = new_width * bytes_per_pixel;
+			bytes_per_row = new_width * bytes_per_pixel;
 
-		/* 
-		 * FIXME - this is brought from the pack SPU
-		 * needs tweaking for the tilesort SPU.
-		 */
-#if 0
-		if (p->alignment != 1) {
-			GLint remainder = bytes_per_row % p->alignment;
-		 	if (remainder)
-				stride = bytes_per_row + (p->alignment - remainder);
-		}
-#endif
-		
-		/* Calculate X offset */
-		offset = (isect.x1 - x) * bytes_per_pixel;
-		/* Calculate Y offset */
-		offset += ((isect.y1 - y) * stride);
-
-		/* Munge the per server packing structures */
-		data_ptr = buffer->data_current; 
-		if (!crPackCanHoldOpcode( 1, len ) )
- 		{ 
-			tilesortspuFlush( thread );
+			/* Build the network message */
+			/* XXX try to use the crPackReadPixels function here instead someday! */
 			data_ptr = buffer->data_current; 
-			CRASSERT( crPackCanHoldOpcode( 1, len ) );
-		}
-		buffer->data_current += len;
-		WRITE_DATA( 0,  GLint,  new_x );
-		WRITE_DATA( 4,  GLint,  new_y );
-		WRITE_DATA( 8,  GLsizei,  new_width );
-		WRITE_DATA( 12, GLsizei,  new_height );
-		WRITE_DATA( 16, GLenum, format );
-		WRITE_DATA( 20, GLenum, type );
-		WRITE_DATA( 24, GLint,  stride );
-		WRITE_DATA( 28, GLint, p->alignment );
-		WRITE_DATA( 32, GLint, p->skipRows );
-		WRITE_DATA( 36, GLint, p->skipPixels );
-		WRITE_DATA( 40, GLint, bytes_per_row );
-		WRITE_DATA( 44, GLint, p->rowLength);
-		WRITE_NETWORK_POINTER( 48, (char *) pixels + offset );
-		*(buffer->opcode_current--) = (unsigned char) CR_READPIXELS_OPCODE;
+			if (!crPackCanHoldOpcode( 1, len ) )
+			{ 
+				tilesortspuFlush( thread );
+				data_ptr = buffer->data_current; 
+				CRASSERT( crPackCanHoldOpcode( 1, len ) );
+			}
+			buffer->data_current += len;
+			WRITE_DATA( 0,  GLint,  new_x );
+			WRITE_DATA( 4,  GLint,  new_y );
+			WRITE_DATA( 8,  GLsizei,  new_width );
+			WRITE_DATA( 12, GLsizei,  new_height );
+			WRITE_DATA( 16, GLenum, format );
+			WRITE_DATA( 20, GLenum, type );
+			WRITE_DATA( 24, GLint, stride ); /* not really used! */
+			WRITE_DATA( 28, GLint, packing.alignment );
+			WRITE_DATA( 32, GLint, packing.skipRows );
+			WRITE_DATA( 36, GLint, packing.skipPixels );
+			WRITE_DATA( 40, GLint, bytes_per_row );
+			WRITE_DATA( 44, GLint, packing.rowLength);
+			WRITE_NETWORK_POINTER( 48, pixels );
+			*(buffer->opcode_current--) = (unsigned char) CR_READPIXELS_OPCODE;
 
-		tilesortspuSendServerBuffer( i );
+			tilesortspuSendServerBuffer( i );
+		}
 	}
 
 	/* Ensure all readpixel buffers are on the way !! */
@@ -551,7 +465,9 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 }
 
 
-void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type )
+void TILESORTSPU_APIENTRY
+tilesortspu_CopyPixels( GLint x, GLint y, GLsizei width, GLsizei height,
+												GLenum type )
 {
 	GET_CONTEXT(ctx);
 	WindowInfo *winInfo = thread->currentContext->currentWindow;
@@ -560,12 +476,16 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei widt
 	CRPixelPackState pack, unpack;
 	GLfloat origZoomX, origZoomY;
 	GLenum dlMode = thread->currentContext->displayListMode;
+
 	if (dlMode != GL_FALSE) {
-	    /* just creating or compiling display lists */
-	    if (tilesort_spu.lazySendDLists) crDLMCompileCopyPixels(x, y, width, height, type);
-	    else if (tilesort_spu.swap) crPackCopyPixelsSWAP(x, y, width, height, type);
-	    else crPackCopyPixels(x, y, width, height, type);
-	    return;
+		/* just creating or compiling display lists */
+		if (tilesort_spu.lazySendDLists)
+			crDLMCompileCopyPixels(x, y, width, height, type);
+		else if (tilesort_spu.swap)
+			crPackCopyPixelsSWAP(x, y, width, height, type);
+		else
+			crPackCopyPixels(x, y, width, height, type);
+		return;
 	}
 
 	if (!c->rasterValid)
@@ -609,21 +529,26 @@ void TILESORTSPU_APIENTRY tilesortspu_CopyPixels( GLint x, GLint y, GLsizei widt
 	 * are enabled, they'll be applied twice: during readback and drawing.
 	 */
 	switch (type) {
-		case GL_COLOR:
-			tilesortspu_ReadPixels(x,y,width,height,GL_RGBA,GL_UNSIGNED_BYTE,buffer);
-			tilesortspu_DrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,buffer);
-			break;
-		case GL_DEPTH:
-			tilesortspu_ReadPixels(x,y,width,height,GL_DEPTH_COMPONENT,GL_FLOAT,buffer);
-			tilesortspu_DrawPixels(width,height,GL_DEPTH_COMPONENT,GL_FLOAT,buffer);
-			return;
-		case GL_STENCIL:
-			tilesortspu_ReadPixels(x,y,width,height,GL_STENCIL_INDEX,GL_UNSIGNED_BYTE,buffer);
-			tilesortspu_DrawPixels(width,height,GL_STENCIL_INDEX,GL_UNSIGNED_BYTE,buffer);
-			return;
-		default:
-			crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glCopyPixels(type)");
-			return;
+	case GL_COLOR:
+		tilesortspu_ReadPixels(x, y, width, height,
+													 GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+		tilesortspu_DrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+		break;
+	case GL_DEPTH:
+		tilesortspu_ReadPixels(x, y, width, height,
+													 GL_DEPTH_COMPONENT, GL_FLOAT, buffer);
+		tilesortspu_DrawPixels(width, height,
+													 GL_DEPTH_COMPONENT, GL_FLOAT, buffer);
+		return;
+	case GL_STENCIL:
+		tilesortspu_ReadPixels(x, y, width, height,
+													 GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, buffer);
+		tilesortspu_DrawPixels(width, height,
+													 GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, buffer);
+		return;
+	default:
+		crStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glCopyPixels(type)");
+		return;
 	}
 
 	/* restore zoom */
