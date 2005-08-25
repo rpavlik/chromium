@@ -55,8 +55,9 @@ static int crSizeOfType( GLenum type )
 }
 
 
-/*
- * Return bytes per pixel for the given format/type combination.
+/**
+ * Compute bytes per pixel for the given format/type combination.
+ * \return bytes per pixel or -1 for invalid format or type, 0 for bitmap data.
  */
 int crPixelSize( GLenum format, GLenum type )
 {
@@ -100,7 +101,10 @@ int crPixelSize( GLenum format, GLenum type )
 			bytes = 4;
 			break;
 		default: 
+			/*
 			crError( "Unknown pixel type in crPixelSize: 0x%x", (unsigned int) type );
+			*/
+			return -1;
 	}
 
 	switch (format) {
@@ -133,7 +137,10 @@ int crPixelSize( GLenum format, GLenum type )
 			bytes *= 4;
 			break;
 		default:
+			/*
 			crError( "Unknown pixel format in crPixelSize: 0x%x", (unsigned int) format );
+			*/
+			return -1;
 	}
 
 	return bytes;
@@ -1237,9 +1244,10 @@ swap4(GLuint *ui, GLuint n)
 }
 
 
-/*
+/**
  * Return number of bytes of storage needed to accomodate an
  * image with the given format, type, and size.
+ * \return size in bytes or -1 if bad format or type
  */
 unsigned int crImageSize( GLenum format, GLenum type, GLsizei width, GLsizei height )
 {
@@ -1258,9 +1266,10 @@ unsigned int crImageSize( GLenum format, GLenum type, GLsizei width, GLsizei hei
 	return bytes;
 }
 
-/*
+/**
  * Return number of bytes of storage needed to accomodate a
  * 3D texture with the give format, type, and size.
+ * \return size in bytes or -1 if bad format or type
  */
 unsigned int crTextureSize( GLenum format, GLenum type, GLsizei width, GLsizei height, GLsizei depth )
 {
@@ -1348,6 +1357,8 @@ void crPixelCopy2D( GLsizei width, GLsizei height,
 		CRASSERT(dstType != GL_BITMAP);
 		srcBytesPerPixel = crPixelSize( srcFormat, srcType );
 		dstBytesPerPixel = crPixelSize( dstFormat, dstType );
+		if (srcBytesPerPixel < 0 || dstBytesPerPixel < 0)
+			return;
 
 		/* Stride between rows (in bytes) */
 		if (srcPacking->rowLength > 0)
