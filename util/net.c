@@ -930,7 +930,6 @@ crNetRecvReadPixels( const CRMessageReadPixels *rp, unsigned int len )
    else {
       /* need special packing */
       CRPixelPackState packing;
-      packing.rowLength = 0;
       packing.skipRows = rp->skipRows;
       packing.skipPixels = rp->skipPixels;
       packing.alignment = rp->alignment;
