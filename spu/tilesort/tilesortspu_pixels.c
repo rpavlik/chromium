@@ -396,11 +396,18 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 
 		/* init vars */
 		packing = ctx->client.pack; /* copy struct */
-		packing.rowLength = width;
+		if (packing.rowLength == 0)
+			packing.rowLength = width;
 		new_x = x;
 		new_y = y;
 		new_width = width;
 		new_height = height;
+
+		/*
+		crDebug("%d:  Pre: x=%d y=%d w=%d h=%d skipP=%d skipR=%d rowLen=%d", i,
+						new_x, new_y, new_width, new_height, packing.skipPixels,
+						packing.skipRows, packing.rowLength);
+		*/
 
 		/* compute intersection of tile region and readpixels region */
 		if (ComputeSubImage(&new_x, &new_y, &new_width, &new_height,
@@ -412,6 +419,12 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 			/* adjust position by this tile's origin (relative to window) */
 			new_x -= extent->x1;
 			new_y -= extent->y1;
+
+			/*
+			crDebug("%d: Post: x=%d y=%d w=%d h=%d skipP=%d skipR=%d, rowLen=%d", i,
+							new_x, new_y, new_width, new_height, packing.skipPixels,
+							packing.skipRows, packing.rowLength);
+			*/
 
 			/* We've got one in the pot ! */
 			thread->currentContext->readPixelsCount++;
