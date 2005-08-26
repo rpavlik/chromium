@@ -148,27 +148,44 @@ ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
 		vnc_spu.super.PixelStorei(GL_PACK_SKIP_PIXELS, scrx);
 		vnc_spu.super.PixelStorei(GL_PACK_SKIP_ROWS, scryFlipped);
 		vnc_spu.super.PixelStorei(GL_PACK_ROW_LENGTH, vnc_spu.screen_width);
-		vnc_spu.super.ReadPixels(winx, winy, width, height,
-														 GL_BGRA, GL_UNSIGNED_BYTE,
-														 vnc_spu.screen_buffer);
+		if (vnc_spu.pixel_size == 24) {
+			vnc_spu.super.ReadPixels(winx, winy, width, height,
+															 GL_BGR, GL_UNSIGNED_BYTE,
+															 vnc_spu.screen_buffer);
+		}
+		else {
+			vnc_spu.super.ReadPixels(winx, winy, width, height,
+															 GL_BGRA, GL_UNSIGNED_BYTE,
+															 vnc_spu.screen_buffer);
+		}
 	}
 #else
 	{
 		GLubyte *buffer;
 		GLubyte *src, *dst;
 		int i;
+		int pixelBytes;
 
 		buffer = (GLubyte *) crAlloc(width * height * 4);
-		vnc_spu.super.ReadPixels(winx, winy, width, height,
-														 GL_BGRA, GL_UNSIGNED_BYTE, buffer);
+
+		if (vnc_spu.pixel_size == 24) {
+			pixelBytes = 3;
+			vnc_spu.super.ReadPixels(winx, winy, width, height,
+															 GL_BGR, GL_UNSIGNED_BYTE, buffer);
+		}
+		else {
+			pixelBytes = 4;
+			vnc_spu.super.ReadPixels(winx, winy, width, height,
+															 GL_BGRA, GL_UNSIGNED_BYTE, buffer);
+		}
 
 		/* copy/flip */
-		src = buffer + (height - 1) * width * 4; /* top row */
-		dst = vnc_spu.screen_buffer + (vnc_spu.screen_width * scry + scrx) * 4;
+		src = buffer + (height - 1) * width * pixelBytes; /* top row */
+		dst = vnc_spu.screen_buffer + (vnc_spu.screen_width * scry + scrx) * pixelBytes;
 		for (i = 0; i < height; i++) {
-			crMemcpy(dst, src, width * 4);
-			src -= width * 4;
-			dst += vnc_spu.screen_width * 4;
+			crMemcpy(dst, src, width * pixelBytes);
+			src -= width * pixelBytes;
+			dst += vnc_spu.screen_width * pixelBytes;
 		}
 		crFree(buffer);
 	}

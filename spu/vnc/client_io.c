@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.5 2005-08-16 19:10:35 brianp Exp $
+ * $Id: client_io.c,v 1.6 2005-08-26 19:17:33 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -348,9 +348,11 @@ static void rf_client_encodings_data(void)
     if (!preferred_enc_set) {
       if ( enc == RFB_ENCODING_RAW ||
            enc == RFB_ENCODING_HEXTILE ||
+           enc == RFB_ENCODING_RAW24 ||
            enc == RFB_ENCODING_TIGHT ) {
         cl->enc_prefer = enc;
         preferred_enc_set = 1;
+        log_write(LL_DETAIL, "Prefer encoding 0x%x", enc);
       }
     }
     if (enc >= 0 && enc < NUM_ENCODINGS) {
@@ -390,7 +392,7 @@ static void rf_client_encodings_data(void)
 
   log_write(LL_DEBUG, "Encoding list set by %s", cur_slot->name);
   if (cl->enc_prefer == RFB_ENCODING_RAW) {
-    log_write(LL_WARN, "Using raw encoding for client %s",
+    log_write(LL_DETAIL, "Using raw encoding for client %s",
               cur_slot->name);
   } else if (cl->enc_prefer == RFB_ENCODING_TIGHT) {
     log_write(LL_DETAIL, "Using Tight encoding for client %s",
@@ -398,6 +400,20 @@ static void rf_client_encodings_data(void)
   } else if (cl->enc_prefer == RFB_ENCODING_HEXTILE) {
     log_write(LL_DETAIL, "Using Hextile encoding for client %s",
               cur_slot->name);
+  } else if (cl->enc_prefer == RFB_ENCODING_RAW24) {
+    if (vnc_spu.pixel_size == 0 || vnc_spu.pixel_size == 24) {
+       /* not set, or already 24bpp */
+      vnc_spu.pixel_size = 24;
+      log_write(LL_DETAIL, "Using Raw24 encoding for client %s",
+                cur_slot->name);
+    }
+    else if (vnc_spu.pixel_size == 32) {
+      /* revert to regular 32bpp raw */
+      cl->enc_prefer = RFB_ENCODING_RAW;
+      log_write(LL_DETAIL, "Using Raw (32) encoding for client %s",
+                cur_slot->name);
+    }
+
   }
   aio_setread(rf_client_msg, NULL, 1);
 }
@@ -862,15 +878,18 @@ static void send_update(void)
     rect.y = REGION_RECTS(&cl->pending_region)[i].y1;
     rect.w = REGION_RECTS(&cl->pending_region)[i].x2 - rect.x;
     rect.h = REGION_RECTS(&cl->pending_region)[i].y2 - rect.y;
-    log_write(LL_DEBUG, "Sending rectangle %dx%d at %d,%d to %s",
+    log_write(LL_DEBUG, "Sending rectangle %dx%d at %d,%d to %s enc 0x%x",
               (int)rect.w, (int)rect.h, (int)rect.x, (int)rect.y,
-              cur_slot->name);
+              cur_slot->name, cl->enc_prefer);
 
     if (cl->enc_prefer == RFB_ENCODING_TIGHT && cl->enable_lastrect) {
       /* Use Tight encoding */
       rect.enc = RFB_ENCODING_TIGHT;
       rfb_encode_tight(cl, &rect);
       continue;                 /* Important! */
+    } else if (cl->enc_prefer == RFB_ENCODING_RAW24) {
+      rect.enc = RFB_ENCODING_RAW24;
+      block = rfb_encode_raw24_block(cl, &rect);
     } else if ( cl->enc_prefer != RFB_ENCODING_RAW &&
                 cl->enc_enable[RFB_ENCODING_HEXTILE] ) {
       /* Use Hextile encoding */

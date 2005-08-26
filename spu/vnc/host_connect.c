@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: host_connect.c,v 1.1 2004-12-14 15:39:50 brianp Exp $
+ * $Id: host_connect.c,v 1.2 2005-08-26 19:17:33 brianp Exp $
  * Connecting to a VNC host
  */
 
@@ -458,6 +458,7 @@ static void rf_host_set_formats(void)
   log_write(LL_DEBUG, "Sending SetEncodings message");
   aio_write(NULL, setenc_msg, setenc_msg_size);
 
+#if !CHROMIUM
   /* If there was no local framebuffer yet, start listening for client
      connections, assuming we are mostly ready to serve clients. */
   if (g_framebuffer == NULL) {
@@ -469,6 +470,7 @@ static void rf_host_set_formats(void)
       return;
     }
   }
+#endif
 
   host_activate();
 }

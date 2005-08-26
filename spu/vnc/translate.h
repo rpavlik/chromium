@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: translate.h,v 1.1 2004-12-14 15:39:50 brianp Exp $
+ * $Id: translate.h,v 1.2 2005-08-26 19:17:33 brianp Exp $
  * Pixel format translation.
  */
 
@@ -33,5 +33,7 @@ void transfunc_null(void *dst_buf, FB_RECT *r, void *table);
 void transfunc8(void *dst_buf, FB_RECT *r, void *table);
 void transfunc16(void *dst_buf, FB_RECT *r, void *table);
 void transfunc32(void *dst_buf, FB_RECT *r, void *table);
+
+void transfunc_null24(void *dst_buf, FB_RECT *r, void *table);
 
 #endif /* _REFLIB_TRANSLATE_H */

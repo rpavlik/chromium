@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: translate.c,v 1.1 2004-12-14 15:39:50 brianp Exp $
+ * $Id: translate.c,v 1.2 2005-08-26 19:17:33 brianp Exp $
  * Pixel format translation.
  */
 
@@ -235,3 +235,30 @@ DEFINE_TRANSFUNC_ALT(8)
 DEFINE_TRANSFUNC_ALT(16)
 DEFINE_TRANSFUNC_ALT(32)
 
+
+/**
+ * Pack 24bpp framebuffer data into 24bpp message
+ */
+void transfunc_null24(void *dst_buf, FB_RECT *r, void *table)
+{
+  const CARD8 *fb_ptr;
+  CARD8 *dst_ptr = (CARD8 *) dst_buf;
+  const int w = r->w, h = r->h;
+  int i;
+  /* CHROMIUM */
+  CARD32 *g_framebuffer;
+  CARD16 g_fb_width, g_fb_height;
+  g_framebuffer = GetFrameBuffer(&g_fb_width, &g_fb_height);
+
+  assert(RASTER_BOTTOM_TO_TOP==1);/*XXX FIX*/
+  /*assert(vnc_spu.pixel_size == 24);*/
+
+  fb_ptr = (CARD8 *) g_framebuffer
+     + ((g_fb_height - 1 - r->y) * g_fb_width + r->x) * 3;
+
+  for (i = 0; i < h; i++) {
+    memcpy(dst_ptr, fb_ptr, w * 3);
+    dst_ptr += w * 3;
+    fb_ptr -= g_fb_width * 3;
+  }
+}

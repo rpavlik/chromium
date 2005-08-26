@@ -10,10 +10,11 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode.c,v 1.2 2005-08-16 17:27:28 brianp Exp $
+ * $Id: encode.c,v 1.3 2005-08-26 19:17:33 brianp Exp $
  * Encoding screen rectangles.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -151,6 +152,28 @@ AIO_BLOCK *rfb_encode_raw_block(CL_SLOT *cl, FB_RECT *r)
     put_rect_header(block->data, r);
     (*cl->trans_func)(&block->data[12], r, cl->trans_table);
     block->data_size = 12 + r->w * r->h * (cl->format.bits_pixel / 8);
+  }
+
+  return block;
+}
+
+/*
+ * Raw24 encoder
+ */
+
+AIO_BLOCK *rfb_encode_raw24_block(CL_SLOT *cl, FB_RECT *r)
+{
+  AIO_BLOCK *block;
+
+  /* bpp should be 32, but we'll only send 24 */
+  assert(cl->format.bits_pixel == 32);
+  /*assert(vnc_spu.pixel_size == 24);*/
+
+  block = malloc(sizeof(AIO_BLOCK) + 12 + r->w * r->h * 3);
+  if (block) {
+    put_rect_header(block->data, r);
+    transfunc_null24(&block->data[12], r, cl->trans_table);
+    block->data_size = 12 + r->w * r->h * 3;
   }
 
   return block;

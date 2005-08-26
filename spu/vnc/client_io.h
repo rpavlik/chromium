@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.h,v 1.2 2005-08-11 20:10:33 brianp Exp $
+ * $Id: client_io.h,v 1.3 2005-08-26 19:17:33 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -42,7 +42,7 @@ typedef struct _CL_SLOT {
 
   CARD16 temp_count;
   unsigned char auth_challenge[16];
-  unsigned char enc_prefer;
+  unsigned int enc_prefer;
   unsigned char enc_enable[NUM_ENCODINGS];
   int compress_level;
   int jpeg_quality;

@@ -56,6 +56,7 @@ typedef struct {
 	int max_update_rate;
 
 	GLubyte *screen_buffer;
+	int pixel_size;               /* 24 or 32 */
 	CRHashTable *windowTable;
 	WindowInfo *currentWindow;
 

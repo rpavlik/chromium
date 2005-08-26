@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: rfblib.h,v 1.2 2005-08-11 20:10:33 brianp Exp $
+ * $Id: rfblib.h,v 1.3 2005-08-26 19:17:33 brianp Exp $
  * RFB protocol definitions
  */
 
@@ -138,6 +138,8 @@ typedef struct _RFB_SCREEN_INFO {
 
 #define RFB_ENCODING_LASTRECT       0xFFFFFF20
 #define RFB_ENCODING_NEWFBSIZE      0xFFFFFF21
+
+#define RFB_ENCODING_RAW24          0xFFFFFF2E
 
 /*
  * Hextile encoding
