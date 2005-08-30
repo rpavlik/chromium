@@ -2179,7 +2179,7 @@ miTranslateRegion(pReg, x, y)
     }
 }
 
-#if !CHROMIUM
+#ifndef CHROMIUM
 Bool
 miRegionDataCopy(
     register RegionPtr dst,
@@ -2265,7 +2265,7 @@ miRegionNotEmpty(pReg)
     return(!REGION_NIL(pReg));
 }
 
-#if !CHROMIUM
+#ifndef CHROMIUM
 Bool
 miRegionBroken(RegionPtr pReg)
 {
@@ -2411,7 +2411,7 @@ static void QuickSortSpans(
     returns the number of new, clipped scanlines.
 */
 
-#if !CHROMIUM
+#ifndef CHROMIUM
 int
 miClipSpans(
     RegionPtr		    prgnDst,
@@ -2529,7 +2529,7 @@ miClipSpans(
 }
 #endif
 
-#if !CHROMIUM
+#ifndef CHROMIUM
 /* find the band in a region with the most rectangles */
 static int
 miFindMaxBand(prgn)

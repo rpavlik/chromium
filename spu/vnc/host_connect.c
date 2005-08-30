@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: host_connect.c,v 1.2 2005-08-26 19:17:33 brianp Exp $
+ * $Id: host_connect.c,v 1.3 2005-08-30 18:13:33 brianp Exp $
  * Connecting to a VNC host
  */
 
@@ -75,7 +75,7 @@ void set_host_encodings(int request_tight, int tight_level)
 /*
  * Connect to a remote RFB host
  */
-#if !CHROMIUM
+#ifndef CHROMIUM
 int connect_to_host(char *host_info_file, int cl_listen_port)
 {
   int host_fd;
@@ -458,7 +458,7 @@ static void rf_host_set_formats(void)
   log_write(LL_DEBUG, "Sending SetEncodings message");
   aio_write(NULL, setenc_msg, setenc_msg_size);
 
-#if !CHROMIUM
+#ifndef CHROMIUM
   /* If there was no local framebuffer yet, start listening for client
      connections, assuming we are mostly ready to serve clients. */
   if (g_framebuffer == NULL) {
