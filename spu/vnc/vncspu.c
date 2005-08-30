@@ -238,8 +238,22 @@ ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
  * Then, update the dirty rectangle info.
  */
 static void
-DoReadback(int scrx, int scry, int winWidth, int winHeight)
+DoReadback(WindowInfo *window)
 {
+	int size[2], pos[2];
+	int scrx, scry, winWidth, winHeight;
+
+	/* get window size and position (in screen coords) */
+	vnc_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
+																				window->id, GL_INT, 2, size);
+	vnc_spu.super.GetChromiumParametervCR(GL_WINDOW_POSITION_CR,
+																				window->id, GL_INT, 2, pos);
+
+	scrx = pos[0];
+	scry = pos[1];
+	winWidth = size[0];
+	winHeight = size[1];
+
 	/* check/alloc the screen buffer now */
 	if (!vnc_spu.screen_buffer) {
 		vnc_spu.screen_buffer = (GLubyte *)
@@ -310,19 +324,6 @@ DoReadback(int scrx, int scry, int winWidth, int winHeight)
 }
 
 
-static void VNCSPU_APIENTRY
-vncspuSwapBuffers(GLint win, GLint flags)
-{
-	int size[2], pos[2];
-	vnc_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-																				win, GL_INT, 2, size);
-	vnc_spu.super.GetChromiumParametervCR(GL_WINDOW_POSITION_CR,
-																				win, GL_INT, 2, pos);
-	DoReadback(pos[0], pos[1], size[0], size[1]);
-	vnc_spu.super.SwapBuffers(win, flags);
-}
-
-
 /**
  * Given an integer window ID, return the WindowInfo.  Create a new
  * WindowInfo for new ID.
@@ -336,6 +337,7 @@ LookupWindow(GLint win, GLint nativeWindow)
 		/* create new */
 		window = (WindowInfo *) crCalloc(sizeof(WindowInfo));
 		crHashtableAdd(vnc_spu.windowTable, win, window);
+		window->id = win;
 	}
 
 	if (window->nativeWindow != nativeWindow && nativeWindow != 0) {
@@ -344,6 +346,39 @@ LookupWindow(GLint win, GLint nativeWindow)
 	}
 
 	return window;
+}
+
+
+static void VNCSPU_APIENTRY
+vncspuSwapBuffers(GLint win, GLint flags)
+{
+	WindowInfo *window = LookupWindow(win, 0);
+	if (window) {
+		DoReadback(window);
+	}
+	else {
+		crWarning("VNC SPU: SwapBuffers called for invalid window id");
+	}
+	vnc_spu.super.SwapBuffers(win, flags);
+}
+
+
+/**
+ * For both glFlush and glFinish.
+ * Update VNC data if single-buffered.
+ */
+static void VNCSPU_APIENTRY
+vncspuFinish(void)
+{
+	GLboolean db;
+	vnc_spu.self.GetBooleanv(GL_DOUBLEBUFFER, &db);
+	if (!db) {
+		/* single buffered: update VNC info */
+		WindowInfo *window = vnc_spu.currentWindow;
+		if (window) {
+			DoReadback(window);
+		}
+	}
 }
 
 
@@ -368,5 +403,7 @@ vncspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
 SPUNamedFunctionTable _cr_vnc_table[] = {
 	{"SwapBuffers", (SPUGenericFunction) vncspuSwapBuffers},
 	{"MakeCurrent", (SPUGenericFunction) vncspuMakeCurrent},
+	{"Finish", (SPUGenericFunction) vncspuFinish},
+	{"Flush", (SPUGenericFunction) vncspuFinish},
 	{ NULL, NULL }
 };
