@@ -45,6 +45,7 @@
  * Per window info
  */
 typedef struct {
+	GLint id;             /* my id */
 	GLint nativeWindow;
 } WindowInfo;
 
