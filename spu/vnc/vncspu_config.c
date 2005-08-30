@@ -41,7 +41,7 @@ static void set_max_update_rate(VncSPU *vnc_spu, const char *response)
  * option, type, nr, default, min, max, title, callback
  */
 SPUOptions vncSPUOptions[] = {
-	{ "server_port", CR_INT, 1, "5905", NULL, NULL,
+	{ "server_port", CR_INT, 1, "-1", NULL, NULL,
 		"VNC Server Port Number", (SPUOptionCB) set_server_port },
 	{ "screen_size", CR_INT, 2, "[1024, 768]", "[1, 1]", NULL,
 		"Screen Size", (SPUOptionCB) set_screen_size },

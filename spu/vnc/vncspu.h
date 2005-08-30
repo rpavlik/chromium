@@ -34,6 +34,14 @@
 
 
 /**
+ * We have a range of ports that we try to use.
+ * Need this to support multiple, simultaneous SPUs running on one host.
+ */
+#define FIRST_SERVER_PORT  5905
+#define NUM_SERVER_PORTS     10
+
+
+/**
  * Per window info
  */
 typedef struct {
@@ -61,6 +69,7 @@ typedef struct {
 	WindowInfo *currentWindow;
 
 	CRmutex lock;
+	CRcondition cond;
 
 #if defined(HAVE_XCLIPLIST_EXT)
 	Display *dpy;
@@ -83,5 +92,7 @@ extern void vncspuGatherConfiguration( void );
 extern void vncspuStartServerThread(void);
 
 extern void vncspuInitialize(void);
+
+extern void vncspuSendVncStartUpMsg(int port);
 
 #endif /* VNC_SPU_H */

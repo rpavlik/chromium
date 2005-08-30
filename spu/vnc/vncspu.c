@@ -13,12 +13,16 @@
 #include "rfblib.h"
 #include "reflector.h"
 #include "region.h"
+#include "host_connect.h"
 
 
 
 #if defined(HAVE_VNC_EXT)
-static void
-SendVncStartUpMsg(void)
+/**
+ * \param port  my VNC server port for clients to connect to.
+ */
+void
+vncspuSendVncStartUpMsg(int serverPort)
 {
 	if (vnc_spu.haveVncExt) {
 		VncConnectionList *vnclist;
@@ -26,11 +30,12 @@ SendVncStartUpMsg(void)
 
 		vnclist = XVncListConnections(vnc_spu.dpy, &num_conn);
 		crDebug("VNC SPU: Found %d open VNC connection(s)", num_conn);
+
 		for (i = 0; i < num_conn; i++) {
-			int serverPort = vnc_spu.server_port;
 			int mothershipPort = 2;
 			CRASSERT(vnclist->ipaddress);
-			crDebug("VNC SPU: Sending ChromiumStart message to VNC server 0x%x", vnclist[i].ipaddress);
+			crDebug("VNC SPU: Sending ChromiumStart message to VNC server 0x%x:"
+							" use port %d", vnclist[i].ipaddress, serverPort);
 			XVncChromiumStart(vnc_spu.dpy, vnclist[i].ipaddress,
 												serverPort, mothershipPort);
 		}
@@ -42,8 +47,7 @@ SendVncStartUpMsg(void)
 void
 vncspuInitialize(void)
 {
-#if defined(HAVE_XCLIPLIST_EXT)
-	int eventBase, errorBase;
+#if defined(HAVE_XCLIPLIST_EXT) || defined(HAVE_VNC_EXT)
 	char *dpyStr = NULL;
 
 	vnc_spu.dpy = XOpenDisplay(NULL);
@@ -52,25 +56,36 @@ vncspuInitialize(void)
 
 	CRASSERT(vnc_spu.dpy);
 	dpyStr = DisplayString(vnc_spu.dpy);
+#endif
 
-	vnc_spu.haveXClipListExt = XClipListQueryExtension(vnc_spu.dpy, &eventBase,
-																										 &errorBase);
-	if (vnc_spu.haveXClipListExt) {
-		crDebug("VNC SPU: XClipList extension present on %s", dpyStr);
+	/*
+	 * XClipList extension - get clip rects for an X window.
+	 */
+#if defined(HAVE_XCLIPLIST_EXT)
+	{
+		 int eventBase, errorBase;
+		 vnc_spu.haveXClipListExt = XClipListQueryExtension(vnc_spu.dpy,
+																												&eventBase,
+																												&errorBase);
+		 if (vnc_spu.haveXClipListExt) {
+				crDebug("VNC SPU: XClipList extension present on %s", dpyStr);
+		 }
+		 else {
+				crWarning("VNC SPU: The display %s doesn't support the XClipList extension", dpyStr);
+		 }
+		 /* Note: not checking XClipList extension version at this time */
 	}
-	else {
-		crWarning("VNC SPU: The display %s doesn't support the XClipList extension", dpyStr);
-	}
-	/* Note: not checking XClipList extension version at this time */
 #endif /* HAVE_XCLIPLIST_EXT */
 
+	/*
+	 * XClipList extension - get clip rects for an X window.
+	 */
 #if defined(HAVE_VNC_EXT)
 	{
 		int major, minor;
 		vnc_spu.haveVncExt = XVncQueryExtension(vnc_spu.dpy, &major, &minor);
 		if (vnc_spu.haveVncExt) {
 			crDebug("VNC SPU: XVnc extension present on %s", dpyStr);
-			SendVncStartUpMsg();
 		}
 		else {
 			crWarning("VNC SPU: The display %s doesn't support the VNC extension", dpyStr);
@@ -85,6 +100,7 @@ void
 vncspuStartServerThread(void)
 {
 	crInitMutex(&vnc_spu.lock);
+	crInitCondition(&vnc_spu.cond);
 
 	{
 #ifdef WINDOWS
@@ -95,6 +111,28 @@ vncspuStartServerThread(void)
 		int id = pthread_create(&th, NULL, vnc_main, NULL);
 		(void) id;
 #endif
+
+		if (vnc_spu.server_port == -1) {
+			/* Wait until the child thread has successfully allocated a port
+			 * for clients to connect to.
+			 */
+			crLockMutex(&vnc_spu.lock);
+			while (vnc_spu.server_port == -1) {
+				crWaitCondition(&vnc_spu.cond, &vnc_spu.lock);
+			}
+			crUnlockMutex(&vnc_spu.lock);
+		}
+
+		crDebug("VNC SPU: VNC Server port: %d", vnc_spu.server_port);
+
+		/*
+		 * OK, we know our VNC server's port now.  Use the libVncExt library
+		 * call to tell the VNC server to send the ChromiumStart message to
+		 * all attached viewers.  Upon getting that message the viewers will
+		 * connect the VNC server thread which we just started.
+		 */
+		CRASSERT(vnc_spu.server_port != -1);
+		vncspuSendVncStartUpMsg(vnc_spu.server_port);
 	}
 }
 
@@ -145,6 +183,7 @@ ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
 		const int scryFlipped = vnc_spu.screen_height - (scry + height);
 
 		/* pack to dest coordinate */
+		vnc_spu.super.PixelStorei(GL_PACK_ALIGNMENT, 1);
 		vnc_spu.super.PixelStorei(GL_PACK_SKIP_PIXELS, scrx);
 		vnc_spu.super.PixelStorei(GL_PACK_SKIP_ROWS, scryFlipped);
 		vnc_spu.super.PixelStorei(GL_PACK_ROW_LENGTH, vnc_spu.screen_width);

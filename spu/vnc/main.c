@@ -10,10 +10,11 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: main.c,v 1.1 2004-12-14 15:39:50 brianp Exp $
+ * $Id: main.c,v 1.2 2005-08-30 17:47:19 brianp Exp $
  * Main module
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -168,12 +169,47 @@ int main(int argc, char **argv)
     }
 
     /* Main work */
-    opt_cl_listen_port = vnc_spu.server_port;
-    if (wait_for_client(opt_cl_listen_port)) {
-      if (write_pid_file()) {
-        /*set_control_signals()*/
-        aio_mainloop();
-        remove_pid_file();
+    if (vnc_spu.server_port == -1)
+    {
+      /* Try a series of port numbers until we find one that's free
+       * for us.  Then, signal our parent thread that the port number
+       * is available.
+       */
+      int i;
+      for (i = 0; i < NUM_SERVER_PORTS; i++) {
+        int p = FIRST_SERVER_PORT + i;
+	if (wait_for_client(p)) {
+	  /* OK, we've got our port number now.  So signal parent thread. */
+	  crLockMutex(&vnc_spu.lock);
+	  vnc_spu.server_port = p;
+	  opt_cl_listen_port = vnc_spu.server_port;
+	  crSignalCondition(&vnc_spu.cond);
+	  crUnlockMutex(&vnc_spu.lock);
+
+	  if (write_pid_file()) {
+	    /*set_control_signals()*/
+	    aio_mainloop();
+	    remove_pid_file();
+	  }
+	  break;
+	}
+      }
+      if (i == NUM_SERVER_PORTS) {
+	log_write(LL_ERROR, "Unable to find a free port in the range"
+		  " %d through %d",
+		  FIRST_SERVER_PORT, FIRST_SERVER_PORT + NUM_SERVER_PORTS - 1);
+	exit(1);
+      }
+    }
+    else {
+      /* user-configured port number */
+      opt_cl_listen_port = vnc_spu.server_port;
+      if (wait_for_client(opt_cl_listen_port)) {
+	if (write_pid_file()) {
+	  /*set_control_signals()*/
+	  aio_mainloop();
+	  remove_pid_file();
+	}
       }
     }
 
