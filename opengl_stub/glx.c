@@ -361,7 +361,7 @@ glXCreateContext(Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct)
 {
 	char dpyName[MAX_DPY_NAME];
 	ContextInfo *context;
-	int visBits = 0;
+	int visBits = CR_RGB_BIT | CR_DOUBLE_BIT | CR_DEPTH_BIT; /* default vis */
 
 	stubInit();
 
@@ -379,10 +379,6 @@ glXCreateContext(Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct)
 			if (v) {
 				visBits = v->visBits;
 				/*crDebug("%s visBits=0x%x", __FUNCTION__, visBits);*/
-			}
-			else {
-				visBits = CR_RGB_BIT | CR_DOUBLE_BIT | CR_DEPTH_BIT;
-				/*crDebug("%s default visBits=0x%x", __FUNCTION__, visBits);*/
 			}
 
 			/*crDebug("ComputeVisBits(0x%x) = 0x%x", (int)vis->visual->visualid, visBits);*/
