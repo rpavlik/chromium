@@ -302,7 +302,7 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 	CRCurrentState *c = &(ctx->current);
 	CRViewportState *v = &(ctx->viewport);
 	unsigned char *data_ptr;
-	int i, stride;
+	int i, stride = 0;
 	int bytes_per_pixel = 0;
 	int len = 48 + sizeof(CRNetworkPointer);
 	int zoomedWidth, zoomedHeight;

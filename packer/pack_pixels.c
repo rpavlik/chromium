@@ -70,8 +70,9 @@ void PACK_APIENTRY crPackReadPixels( GLint x, GLint y, GLsizei width,
 
 	bytes_per_pixel = crPixelSize(format, type);
 	if (bytes_per_pixel <= 0) {
-		__PackError(__LINE__, __FILE__, GL_INVALID_ENUM,
-								"crPackReadPixels(format 0x%x or type 0x%x)", format, type);
+		char string[80];
+		snprintf(string, 80, "crPackReadPixels(format 0x%x or type 0x%x)", format, type);
+		__PackError(__LINE__, __FILE__, GL_INVALID_ENUM, string);
 		return;
 	}
 
