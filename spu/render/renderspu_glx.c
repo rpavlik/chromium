@@ -1247,8 +1247,7 @@ renderspu_SystemWindowSize( WindowInfo *window, GLint w, GLint h )
 		/* resizing a pbuffer */
 		if (render_spu.pbufferWidth != 0 || render_spu.pbufferHeight != 0) {
 			/* size limit check */
-			if (w > render_spu.pbufferWidth != 0 ||
-					h > render_spu.pbufferHeight != 0) {
+			if (w > render_spu.pbufferWidth || h > render_spu.pbufferHeight) {
 				crWarning("Render SPU: Request for %d x %d pbuffer is larger than "
 									"the configured size of %d x %d. ('pbuffer_size')",
 									w, h, render_spu.pbufferWidth, render_spu.pbufferHeight);
