@@ -172,7 +172,7 @@ int crPixelSize( GLenum format, GLenum type )
  * GLfloat[][4] depending on whether the format is for colors.
  */
 static void
-get_row(const GLubyte *src, GLenum srcFormat, GLenum srcType,
+get_row(const char *src, GLenum srcFormat, GLenum srcType,
 		GLsizei width, GLfloat *tmpRow)
 {
 	const GLbyte *bSrc = (GLbyte *) src;
@@ -1433,13 +1433,13 @@ void crPixelCopy2D( GLsizei width, GLsizei height,
 		else
 		{
 			/* need to do format and/or type conversion */
-			GLubyte *swapRow = NULL;
+			char *swapRow = NULL;
 			GLfloat *tmpRow = crAlloc( 4 * width * sizeof(GLfloat) );
 			if (!tmpRow)
 				crError("Out of memory in crPixelCopy2D");
 
 			if (srcPacking->swapBytes) {
-				swapRow = (GLubyte *) crAlloc(width * srcBytesPerPixel);
+				swapRow = (char *) crAlloc(width * srcBytesPerPixel);
 				if (!swapRow) {
 					crError("Out of memory in crPixelCopy2D");
 				}
