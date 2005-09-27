@@ -411,7 +411,7 @@ void enableTex(void)
 def makeStripeImage(f):
 	f.write( """
 
-int mid1,mid2,mid3;
+static GLuint mid1,mid2,mid3;
 
 void makeStripeImage( GLubyte *stripeImage)
 {  
@@ -447,7 +447,7 @@ void makeStripeImage( GLubyte *stripeImage)
 def makeGenTexture(f):
 	f.write( """
 
-int sid1,sid2,sid3;
+static GLuint sid1,sid2,sid3;
 
 void genTexture( GLubyte *stripeImage)
 {  
