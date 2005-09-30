@@ -63,6 +63,7 @@ typedef struct {
 	int server_port;
 	int screen_width, screen_height;
 	int max_update_rate;
+	char display_string[1000];
 
 	GLubyte *screen_buffer;
 	int pixel_size;               /* 24 or 32 */

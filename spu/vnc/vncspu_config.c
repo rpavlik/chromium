@@ -8,6 +8,7 @@
 
 #include "cr_mothership.h"
 #include "cr_string.h"
+#include "cr_environment.h"
 
 
 /**
@@ -73,6 +74,22 @@ void vncspuGatherConfiguration( void )
 	crMothershipIdentifySPU( conn, vnc_spu.id );
 
 	crSPUGetMothershipParams( conn, &vnc_spu, vncSPUOptions );
+
+	/* We need to use the same display as the Render SPU, from which we're
+	 * derived.
+	 */
+	if (!crMothershipGetSPUParam(conn, vnc_spu.display_string,
+															 "display_string"))
+	{
+		const char *display = crGetenv("DISPLAY");
+		if (display)
+			crStrncpy(vnc_spu.display_string,
+								display, sizeof(vnc_spu.display_string));
+		else
+			crStrcpy(vnc_spu.display_string, ""); /* empty string */
+	}
+	CRASSERT(crStrlen(vnc_spu.display_string)
+					 < (int) sizeof(vnc_spu.display_string));
 
 	crMothershipDisconnect( conn );
 }

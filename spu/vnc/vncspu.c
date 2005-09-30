@@ -50,7 +50,7 @@ vncspuInitialize(void)
 #if defined(HAVE_XCLIPLIST_EXT) || defined(HAVE_VNC_EXT)
 	char *dpyStr = NULL;
 
-	vnc_spu.dpy = XOpenDisplay(NULL);
+	vnc_spu.dpy = XOpenDisplay(vnc_spu.display_string);
 	if (!vnc_spu.dpy)
 		vnc_spu.dpy = XOpenDisplay(":0");
 
