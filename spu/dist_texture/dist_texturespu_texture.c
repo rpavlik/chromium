@@ -264,10 +264,8 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 				}
 #else
 				if ( ! check_match( f, "P6" ) ) { close( f ) ; return ; }
-				if ( read_int( f, &tmp ) ) { close( f ) ; return ; }
-				width = (GLsizei) tmp;
-				if ( read_int( f, &tmp ) ) { close( f ) ; return ; }
-				height = (GLsizei) tmp;
+				if ( read_int( f, &width ) ) { close( f ) ; return ; }
+				if ( read_int( f, &height ) ) { close( f ) ; return ; }
 				if ( read_int( f, &tmp ) ) { close( f ) ; return ; }
 				if ( tmp != 255 ) {
 					crWarning( "PPM file isn't GL_UNSIGNED_BYTE format" ) ;
@@ -275,7 +273,25 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 					return ;
 				}
 #endif
-				calc_padded_size( width, height, &paddedWidth, &paddedHeight ) ;
+				if (border > 0)
+				{
+				  calc_padded_size (width - 2 * border, 
+						    height - 2 * border,
+						    &paddedWidth,
+						    &paddedHeight);
+				  if ((paddedWidth == width - 2 * border) &&
+				      (paddedHeight == height - 2 * border))
+				  {
+				    paddedWidth += 2 * border;
+				    paddedHeight += 2 * border;
+				  }
+				}
+				else 
+				{
+				  calc_padded_size( width, height, 
+						    &paddedWidth, 
+						    &paddedHeight ) ;
+				}
 				i = paddedWidth*paddedHeight*3 ;
 				if ( ! buffer ) {
 					bufferSize = i ;
