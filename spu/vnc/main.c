@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: main.c,v 1.3 2005-10-03 14:53:49 brianp Exp $
+ * $Id: main.c,v 1.4 2005-10-03 17:00:39 brianp Exp $
  * Main module
  */
 
@@ -533,7 +533,7 @@ static int init_screen_info(void)
   /* Set the initial desktop name */
 #if CHROMIUM
   g_screen_info.name = (CARD8 *) strdup("VNC SPU");
-  g_screen_info.name_length = (CARD32) strlen(g_screen_info.name);
+  g_screen_info.name_length = (CARD32) strlen((char *) g_screen_info.name);
 #else
   g_screen_info.name_length = 1;
   g_screen_info.name = malloc(2);
