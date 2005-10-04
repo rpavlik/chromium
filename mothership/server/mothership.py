@@ -1493,7 +1493,10 @@ class CR:
 
 	def do_faker( self, sock, args ):
 		"""do_faker(sock, args)
-		Maps the incoming "faker" app to a previously-defined node."""
+		Maps the incoming "faker" app to a previously-defined node.  I.e.
+		crappfakers identify themselves to the mothership with this message.
+		Will return to the crappfaker the command line arguments for starting
+		the OpenGL application."""
 		self.MatchNode( "faker", sock, args)
 
 	def do_vncserver( self, sock, args ):
@@ -1575,9 +1578,8 @@ class CR:
 
 	def do_opengldll( self, sock, args ):
 		"""do_opengldll(sock, args)
-		XXX Is this documentation right??!  Not sure. (ahern)
-		Identifies the application node in the graph.
-		Also, return the client's SPU chain."""
+		The OpenGL faker library (libcrfaker.so) identifies itself to the
+		mothership with this message.  Returns the client's SPU chain."""
 		(id_string, hostname) = args.split( " " )
 		app_id = int(id_string)
 		for node in self.nodes:
@@ -1590,6 +1592,8 @@ class CR:
 					sock.Success( spuchain )
 					sock.node = node
 					return
+		# If you get this error message and don't know why, check if there's
+		# a stale mothership process still running.
 		sock.Failure( SockWrapper.UNKNOWNHOST, "Never heard of OpenGL DLL for application %d" % app_id )
 
 	def do_spu( self, sock, args ):
