@@ -198,4 +198,5 @@ crPackCanHoldBoundedBuffer
 crPackNumData
 crPackErrorFunction
 cr_packer_globals
+_PackerTSD
 """
