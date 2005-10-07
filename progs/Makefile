@@ -13,6 +13,7 @@ SUBDIRS = \
 	bboxtest \
 	city \
 	cubes \
+	disttexture \
 	dlisttest \
 	extensions \
 	fonttest \
