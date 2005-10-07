@@ -641,11 +641,18 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 	CRASSERT(tobj);
 	CRASSERT(tl);
 
-	if (IsProxyTarget(target))
+	/* compute size of image buffer */
+	if (is_distrib) {
+		tl->bytes = crStrlen((char *) pixels) + 1;
+	}
+	else if (IsProxyTarget(target)) {
 		tl->bytes = 0;
-	else
+	}
+	else {
 		tl->bytes = crImageSize(format, type, width, height);
+	}
 
+	/* allocate the image buffer and fill it */
 	if (tl->bytes)
 	{
 		/* this is not a proxy texture target so alloc storage */
@@ -685,7 +692,7 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 	if (width && height)
 	{
 		if (is_distrib)
-			tl->bytesPerPixel = 3;
+			tl->bytesPerPixel = 3; /* only support GL_RGB */
 		else
 			tl->bytesPerPixel = tl->bytes / (width * height);
 	}
