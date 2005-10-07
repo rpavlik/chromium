@@ -1,3 +1,10 @@
+/**
+ ** NOTE: there's some code in the cr/packer/pack_texture.c
+ ** and state_tracker/state_teximage.c files related to this!!!!!
+ ** Be sure you're aware of what's going on there if you change anything here!
+ */
+
+
 #ifndef WINDOWS
 #include <unistd.h>
 #endif
@@ -15,15 +22,18 @@
 
 #include "dist_texturespu.h"
 
+/* why is this initalized here? */
 static char ppmHeader[]      = "P6\n000000 000000\n255\n" ;
+
 static char ppmHeaderTempl[] = "P6\n%d %d\n255\n" ;
-static GLubyte* buffer ;
-static int bufferSize ;
+static GLubyte* buffer = NULL;
+static int bufferSize = 0;
+
 #if 0
 static int complaint = 0 ;
 
 /* complain when complaint is 0 or a power of 2 */
-static int complain_now()
+static int complain_now(void)
 {
 	int n = complaint ;
 	while ( n && (!( n & 1 )) )
@@ -33,6 +43,7 @@ static int complain_now()
 	return 1 ;
 }
 #endif
+
 
 static int next_power_of_two( int n )
 {
@@ -47,17 +58,22 @@ static int next_power_of_two( int n )
 	return power ;
 }
 
+
 static void calc_padded_size( int w, int h, int* pw, int* ph )
 {
 	*pw = next_power_of_two( w ) ;
 	*ph = next_power_of_two( h ) ;
 }
 
+
+static int
+check_match(
 #ifdef WINDOWS
-static int check_match( HFILE file, char* compare )
+						HFILE file,
 #else
-static int check_match( int file, char* compare )
+						int file,
 #endif
+						const char *compare )
 {
 #ifdef WINDOWS
 	int _readbytes;
@@ -78,6 +94,7 @@ static int check_match( int file, char* compare )
 	return 1 ;
 }
 
+
 #ifdef WINDOWS
 static void skip_line( HFILE file )
 #else
@@ -96,6 +113,7 @@ static void skip_line( int file )
 		;
 	return ;
 }
+
 
 #ifdef WINDOWS
 static int read_int( HFILE file, int* number )
@@ -140,18 +158,36 @@ static int read_int( int file, int* number )
 	/*return -1 ;*/
 }
 
-static void pad_buffer_texture( GLubyte* dst, const GLubyte* src, int w, int h, int pw, int ph )
+
+/**
+ * Copy texture data from src to dst.
+ * \param w  width of image (and source image row stride), in pixels
+ * \param h  height of image, in pixels
+ * \param pw  destination image row stride, in pixels
+ * \param ph  not used
+ */
+static void
+pad_buffer_texture( GLubyte *dst, const GLubyte *src,
+										int w, int h, int pw, int ph )
 {
 	int i ;
+	CRASSERT(pw >= w);
 	for (i=0; i<h; i++)
 		crMemcpy( (void*) &dst[ 3*i*pw ], (void*) &src[ 3*i*w ], 3*w ) ;
 }
 
+
+/**
+ * Read 
+ */
+static void
+pad_file_texture( GLubyte* dst,
 #ifdef WINDOWS
-static void pad_file_texture( GLubyte* dst, HFILE file, int w, int h, int pw, int ph)
+									HFILE file,
 #else
-static void pad_file_texture( GLubyte* dst, int file, int w, int h, int pw, int ph )
+									int file,
 #endif
+									int w, int h, int pw, int ph)
 {
 #ifdef WINDOWS
 	int _readbytes;
@@ -165,6 +201,8 @@ static void pad_file_texture( GLubyte* dst, int file, int w, int h, int pw, int 
 #endif
 }
 
+
+
 #if 0
 static void pad_gzfile_texture( GLubyte* dst, gzFile file, int w, int h, int pw, int ph )
 {
@@ -174,32 +212,29 @@ static void pad_gzfile_texture( GLubyte* dst, gzFile file, int w, int h, int pw,
 }
 #endif /* 0 */
 
-void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D( 
-		GLenum target,
-		GLint level,
-		GLint internalformat,
-		GLsizei width,
-		GLsizei height,
-		GLint border,
-		GLenum format,
-		GLenum type,
-		const GLvoid *pixels )
+
+void DIST_TEXTURESPU_APIENTRY
+dist_textureTexImage2D(GLenum target, GLint level, GLint internalformat,
+											 GLsizei width,	GLsizei height,	GLint border,
+											 GLenum format, GLenum type, const GLvoid *pixels)
 {
 	if ( type != GL_TRUE && type != GL_FALSE ) {
+		/* ordinary glTexImage2D call - pass through as-is */
 		dist_texture_spu.child.TexImage2D(target, level, internalformat,
 						  width, height, border, format,
 						  type, pixels ) ;
 		return ;
-	} else {
+	}
+	else {
 #ifdef WINDOWS
-		int writing = (type == GL_TRUE) ?
+		const int writing = (type == GL_TRUE) ?
 				( OF_WRITE | OF_CREATE) :
 				OF_READ ;
 		HFILE f;
 		LPOFSTRUCT OpenBuff = NULL;
 		int _writebytes;
 #else
-		int writing = (type == GL_TRUE) ?
+		const int writing = (type == GL_TRUE) ?
 				( O_WRONLY | O_CREAT | O_TRUNC | O_NDELAY ) :
 				O_RDONLY ;
 		int f ;
@@ -210,8 +245,13 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 		int paddedWidth = 0;
 		int paddedHeight = 0;
 
-		assert( pixels ) ;
+		CRASSERT( pixels );
+		if (format != GL_RGB) {
+			crError("dist_texture SPU: only supported format is GL_RGB.");
+			return;
+		}
 
+		/* Open the named file, for either reading or writing */
 		filenameLength = crStrlen( pixels ) ;
 #ifdef WINDOWS
 		f = OpenFile( pixels, OpenBuff, writing );
@@ -223,8 +263,10 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 			crWarning( "Could not open file <%s>", (char*)pixels ) ;
 			return ;
 		}
+
 		switch (type) {
 			case GL_TRUE:
+				/* Write-file mode */
 				i=sprintf( ppmHeader, ppmHeaderTempl, width, height );
 #ifdef WINDOWS
 				WriteFile( (HANDLE) f, ppmHeader, i, &_writebytes, NULL ) ;
@@ -240,7 +282,7 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 					break ;
 				}
 				tmp = 0 ;
-				i = paddedWidth*paddedHeight*3 ;
+				i = paddedWidth * paddedHeight * 3 ;
 				if ( ! buffer ) {
 					bufferSize = i ;
 					buffer = crAlloc( bufferSize ) ;
@@ -248,10 +290,18 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 					bufferSize = i ;
 					crRealloc( (void **)&buffer, bufferSize ) ;
 				}
-				pad_buffer_texture( buffer, (const GLubyte *) pixels + filenameLength + 1,
-						width, height, paddedWidth, paddedHeight ) ;
+
+				/* Copy image data into the buffer, after the filename */
+				pad_buffer_texture(buffer,
+													 (const GLubyte *) pixels + filenameLength + 1,
+													 width, height, paddedWidth, paddedHeight ) ;
 				break ;
 			case GL_FALSE:
+				/* Read-file mode.
+				 * pixels points to zero-terminated filename.
+				 * The width and height function parameters are not used because we'll
+				 * get the image size from the file.
+				 */
 #ifdef WINDOWS
 				if ( ! check_match( f, "P6" ) ) { CloseHandle( (HANDLE) f ) ; return ; }
 				if ( read_int( f, &width ) ) { CloseHandle( (HANDLE) f ) ; return ; }
@@ -300,10 +350,11 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 					bufferSize = i ;
 					crRealloc( (void **)&buffer, bufferSize ) ;
 				}
-				pad_file_texture( buffer, f, width, height, paddedWidth, paddedHeight ) ;
-				break ;
+				/* read the image data into the texture buffer */
+				pad_file_texture(buffer, f, width, height, paddedWidth, paddedHeight);
+				break;
 			default:
-				crError( "Can't touch this." ) ;
+				crError("Invalid type in dist_texture glTexImage2D.");
 		}
 #ifdef WINDOWS
 		CloseHandle( (HANDLE) f );
@@ -311,16 +362,24 @@ void DIST_TEXTURESPU_APIENTRY dist_textureTexImage2D(
 		close( f ) ;
 #endif
 
-		if ( (type == GL_TRUE) && tmp )
-			/* no need to generate padded texture, since width & height are powers of 2 */
+		if ( (type == GL_TRUE) && tmp ) {
+			/* Write-file mode.
+			 * No need to generate padded texture, since width & height
+			 * are powers of 2.
+			 */
 			dist_texture_spu.child.TexImage2D(target, level, internalformat,
-			       			  width, height, border, format,
-						  GL_UNSIGNED_BYTE, (GLubyte*) pixels + filenameLength + 1 ) ;
-		else
-			/* had to generate padded texture */
+																			width, height, border, format,
+																			GL_UNSIGNED_BYTE,
+																			(GLubyte*) pixels + filenameLength + 1);
+		}
+		else {
+			/* Read-file mode.
+			 * Had to generate padded texture.
+			 */
 			dist_texture_spu.child.TexImage2D(target, level, internalformat,
-			       			  paddedWidth, paddedHeight, border, format,
-						  GL_UNSIGNED_BYTE, buffer ) ;
-		/*free( buffer ) ;*/
+																				paddedWidth, paddedHeight,
+																				border, format,
+																				GL_UNSIGNED_BYTE, buffer);
+		}
 	}
 }
