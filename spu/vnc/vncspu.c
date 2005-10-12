@@ -75,6 +75,8 @@ vncspuInitialize(void)
 		 }
 		 /* Note: not checking XClipList extension version at this time */
 	}
+#else
+	crWarning("VNC SPU: Not compiled with HAVE_XCLIPLIST_EXT=1");
 #endif /* HAVE_XCLIPLIST_EXT */
 
 	/*
@@ -90,8 +92,9 @@ vncspuInitialize(void)
 		else {
 			crWarning("VNC SPU: The display %s doesn't support the VNC extension", dpyStr);
 		}
-			
 	}
+#else
+	crWarning("VNC SPU: Not compiled with HAVE_VNC_EXT=1");
 #endif /* HAVE_VNC_EXT */
 }
 
