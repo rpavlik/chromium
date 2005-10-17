@@ -235,6 +235,8 @@ crHullInteriorBox(const double *pnts, int npnts, double *bbox)
 	const double *p0, *p1;
 	double v[2], A, B, vnew[2], vlow[2];
 
+	vlow[0] = vlow[1] = 0.0;
+
 	hull = (int *) crAlloc((npnts + 1) * sizeof(int));
 
 	/* find the lowest */
