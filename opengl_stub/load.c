@@ -170,6 +170,9 @@ static void stubExitHandler(void)
 	/* kill the mothership we spawned earlier */
 	if (stub.mothershipPID)
 		crKill(stub.mothershipPID);
+	else {
+		/* send 'exit' message to mothership */
+	}
 
 	stubSPUTearDown();
 }
@@ -237,6 +240,64 @@ static void stubInitVars(void)
 	(void) stubExitHandler;
 	(void) stubSignalHandler;
 #endif
+}
+
+
+/**
+ * Return a free port number for the mothership to use, or -1 if we
+ * can't find one.
+ */
+static int
+GenerateMothershipPort(void)
+{
+	const int MAX_PORT = 10100;
+	struct sockaddr_in servaddr;
+	int so_reuseaddr = 1;
+	int sock, k;
+	unsigned short port;
+
+	/* generate initial port number randomly */
+	crRandAutoSeed();
+	port = (unsigned short) crRandInt(10001, MAX_PORT);
+
+#ifdef WINDOWS
+	/* XXX should implement a free port check here */
+	return port;
+#else
+	/*
+	 * See if this port number really is free, try another if needed.
+	 */
+
+	/* create socket */
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+	CRASSERT(sock > 2);
+
+	/* deallocate socket/port when we exit */
+	k = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
+								 (char *) &so_reuseaddr, sizeof(so_reuseaddr));
+	CRASSERT(k == 0);
+
+	/* initialize the servaddr struct */
+	crMemset(&servaddr, 0, sizeof(servaddr) );
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	while (port < MAX_PORT) {
+		/* Bind to the given port number, return -1 if we fail */
+		servaddr.sin_port = htons((unsigned short) port);
+		k = bind(sock, (struct sockaddr *) &servaddr, sizeof(servaddr));
+		if (k) {
+			/* failed to create port. try next one. */
+			port++;
+		}
+		else {
+			/* free the socket/port now so mothership can make it */
+			close(sock);
+			return port;
+		}
+	}
+#endif /* WINDOWS */
+	return -1;
 }
 
 
@@ -352,8 +413,11 @@ StartMothership(void)
 		else if (crStrcmp(args[i], "%m") == 0) {
 			/* generate random port for mothership */
 			char portString[10];
-			crRandAutoSeed();
-			mothershipPort = crRandInt(10001, 10100);
+			mothershipPort = GenerateMothershipPort();
+			if (mothershipPort < 0) {
+				crError("Unable to allocate a port for mothership");
+				return 0;
+			}
 			sprintf(portString, "%d", mothershipPort);
 			argv[arg++] = portString;
 		}
