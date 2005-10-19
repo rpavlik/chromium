@@ -149,6 +149,16 @@ GetFrameBuffer(CARD16 *w, CARD16 *h)
 }
 
 
+CARD32
+GetSerialNumber(void)
+{
+	if (vnc_spu.currentWindow)
+		return vnc_spu.currentWindow->frameCounter;
+	else
+		return 0;
+}
+
+
 /* data used in callback called by aio_walk_slots(). */
 static BoxPtr CurrentClipRects = NULL;
 static int CurrentClipRectsCount = 0;
@@ -357,6 +367,7 @@ vncspuSwapBuffers(GLint win, GLint flags)
 {
 	WindowInfo *window = LookupWindow(win, 0);
 	if (window) {
+		window->frameCounter++;
 		DoReadback(window);
 	}
 	else {

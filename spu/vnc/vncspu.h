@@ -47,6 +47,7 @@
 typedef struct {
 	GLint id;             /* my id */
 	GLint nativeWindow;
+	GLuint frameCounter;
 } WindowInfo;
 
 
@@ -72,7 +73,6 @@ typedef struct {
 
 	CRmutex lock;
 	CRcondition cond;
-
 #if defined(HAVE_XCLIPLIST_EXT) || defined(HAVE_VNC_EXT)
 	Display *dpy;
 	int haveXClipListExt;
