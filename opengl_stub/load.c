@@ -251,9 +251,6 @@ static int
 GenerateMothershipPort(void)
 {
 	const int MAX_PORT = 10100;
-	struct sockaddr_in servaddr;
-	int so_reuseaddr = 1;
-	int sock, k;
 	unsigned short port;
 
 	/* generate initial port number randomly */
@@ -267,33 +264,38 @@ GenerateMothershipPort(void)
 	/*
 	 * See if this port number really is free, try another if needed.
 	 */
+	{
+		struct sockaddr_in servaddr;
+		int so_reuseaddr = 1;
+		int sock, k;
 
-	/* create socket */
-	sock = socket(AF_INET, SOCK_STREAM, 0);
-	CRASSERT(sock > 2);
+		/* create socket */
+		sock = socket(AF_INET, SOCK_STREAM, 0);
+		CRASSERT(sock > 2);
 
-	/* deallocate socket/port when we exit */
-	k = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
-								 (char *) &so_reuseaddr, sizeof(so_reuseaddr));
-	CRASSERT(k == 0);
+		/* deallocate socket/port when we exit */
+		k = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
+									 (char *) &so_reuseaddr, sizeof(so_reuseaddr));
+		CRASSERT(k == 0);
 
-	/* initialize the servaddr struct */
-	crMemset(&servaddr, 0, sizeof(servaddr) );
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+		/* initialize the servaddr struct */
+		crMemset(&servaddr, 0, sizeof(servaddr) );
+		servaddr.sin_family = AF_INET;
+		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	while (port < MAX_PORT) {
-		/* Bind to the given port number, return -1 if we fail */
-		servaddr.sin_port = htons((unsigned short) port);
-		k = bind(sock, (struct sockaddr *) &servaddr, sizeof(servaddr));
-		if (k) {
-			/* failed to create port. try next one. */
-			port++;
-		}
-		else {
-			/* free the socket/port now so mothership can make it */
-			close(sock);
-			return port;
+		while (port < MAX_PORT) {
+			/* Bind to the given port number, return -1 if we fail */
+			servaddr.sin_port = htons((unsigned short) port);
+			k = bind(sock, (struct sockaddr *) &servaddr, sizeof(servaddr));
+			if (k) {
+				/* failed to create port. try next one. */
+				port++;
+			}
+			else {
+				/* free the socket/port now so mothership can make it */
+				close(sock);
+				return port;
+			}
 		}
 	}
 #endif /* WINDOWS */
