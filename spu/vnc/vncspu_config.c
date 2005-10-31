@@ -16,6 +16,7 @@
  */
 static void setDefaults( void )
 {
+	vnc_spu.pixel_size = 32;
 }
 
 
