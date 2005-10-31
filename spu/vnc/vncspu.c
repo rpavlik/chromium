@@ -9,11 +9,21 @@
 #include "cr_mem.h"
 #include "cr_threads.h"
 #include "vncspu.h"
+
+#if defined(HAVE_XCLIPLIST_EXT)
+#include <X11/extensions/Xcliplist.h>
+#endif
+
+#if defined(HAVE_VNC_EXT)
+#include <X11/extensions/vnc.h>
+#endif
+
 #include "async_io.h"
 #include "rfblib.h"
 #include "reflector.h"
 #include "region.h"
 #include "host_connect.h"
+#include "client_io.h"
 
 
 

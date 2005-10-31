@@ -84,20 +84,28 @@ SOFTWARE.
 #endif
 typedef int Bool;
 
+#ifndef _XCLIPLIST_H_
 typedef struct _Box {
     short x1, y1, x2, y2;
 } BoxRec, *BoxPtr;
+#endif
 
+#ifndef XPROTOSTRUCTS_H
 typedef struct _xPoint {
     INT16 x, y;
 } xPoint, *xPointPtr;
+#endif
 
 typedef xPoint DDXPointRec, *DDXPointPtr;
 
+#ifndef XPROTOSTRUCTS_H
 typedef struct _xRectangle {
     INT16 x, y;
     CARD16 width, height;
 } xRectangle, *xRectanglePtr;
+#else
+typedef xRectangle *xRectanglePtr;
+#endif
 
 /* 
  *   clip region

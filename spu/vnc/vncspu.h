@@ -19,17 +19,9 @@
 #include "cr_threads.h"
 #include "rfblib.h"
 #include "async_io.h"
-#include "client_io.h"
-#include "region.h"
 
-#if defined(HAVE_XCLIPLIST_EXT)
+#if defined(HAVE_XCLIPLIST_EXT) || defined(HAVE_VNC_EXT)
 #include <X11/Xlib.h>
-#define _XCLIPLIST_SERVER_
-#include <X11/extensions/Xcliplist.h>
-#endif
-
-#if defined(HAVE_VNC_EXT)
-#include <X11/extensions/vnc.h>
 #endif
 
 
