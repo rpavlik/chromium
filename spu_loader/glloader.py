@@ -127,7 +127,7 @@ __findSystemLib( const char *provided_system_path, char *lib )
 		 */
 		crStrcpy(system_path, "/usr/lib");
 #if !defined(OSF1)
-		if (sizeof(void *) == 8) {
+		if (sizeof(void *) == 8 && FileExists("/usr/lib64", lib)) {
 			crStrcat(system_path, "64");
 		}
 #endif
