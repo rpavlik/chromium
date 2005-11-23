@@ -78,12 +78,19 @@ InitConnection(CRConnection *conn, const char *protocol, unsigned int mtu)
 		crDevnullInit(cr_net.recv_list, cr_net.close_list, mtu);
 		crDevnullConnection(conn);
 	}
-	else if (!crStrcmp(protocol, "file") ||
-					 !crStrcmp(protocol, "swapfile"))
+	else if (!crStrcmp(protocol, "file"))
 	{
 		cr_net.use_file++;
 		crFileInit(cr_net.recv_list, cr_net.close_list, mtu);
 		crFileConnection(conn);
+	}
+	else if (!crStrcmp(protocol, "swapfile"))
+	{
+		/* file with byte-swapping */
+		cr_net.use_file++;
+		crFileInit(cr_net.recv_list, cr_net.close_list, mtu);
+		crFileConnection(conn);
+		conn->swap = 1;
 	}
 	else if (!crStrcmp(protocol, "tcpip"))
 	{
@@ -257,10 +264,6 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 
 	/* now, just dispatch to the appropriate protocol's initialization functions. */
 	InitConnection(conn, protocol, mtu);
-	/* special case */
-	if (!crStrcmp(protocol, "swapfile")) {
-		conn->swap = 1;
-	}
 
 	if (!crNetConnect( conn ))
 	{
@@ -345,6 +348,13 @@ crNetAcceptClient( const char *protocol, const char *hostname,
 			crError( "Malformed URL: \"%s\"", protocol );
 		}
 		conn->hostname = crStrdup( filename );
+		/* At this point, protocol will be something like "file:///tmp/foo".
+		 * change protocol to be exactly "file" or "swapfile" here.
+		 */
+		if (protocol[0] == 'f')
+			protocol = "file";
+		else
+			protocol = "swapfile";
 	}
 
 	/* call the protocol-specific init routines */
