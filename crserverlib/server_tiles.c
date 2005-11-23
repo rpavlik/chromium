@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <stdlib.h>
 #include "server.h"
 #include "cr_mothership.h"
 #include "cr_mem.h"
@@ -526,7 +527,12 @@ crServerGetTileInfoFromMothership( CRConnection *conn, CRMuralInfo *mural )
 	{
 		crInfo("It looks like there are nothing but file clients."
 					 "  That suits me just fine.");
-		CRASSERT(mural->numExtents > 0);
+		if (mural->numExtents <= 0) {
+			crInfo("No tile information was found (when using file: clients).");
+			crInfo("Add a node.AddTile() line in your configuration script.");
+			exit(0);
+		}
+
 		/* Set mural size equal to extent 0's image window size */
 		mural->width = (mural->extents[0].imagewindow.x2 -
 										mural->extents[0].imagewindow.x1);
