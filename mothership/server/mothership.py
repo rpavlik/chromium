@@ -958,6 +958,7 @@ class CR:
 			if PORT == -1:
 				# Port was not specified.  Get it from
 				# CRMOTHERSHIP environment variable if possible..
+				PORT = DefaultMothershipPort  # default value
 				if os.environ.has_key('CRMOTHERSHIP'):
 					motherString = os.environ['CRMOTHERSHIP']
 					loc = string.find(motherString,':')
@@ -968,11 +969,6 @@ class CR:
 						except Exception, val:
 							CRInfo("Could not parse port number from <%s>: %s"%(motherString,val))
 							CRInfo("Using default PORT!")
-							PORT = DefaultMothershipPort
-					else:
-						PORT = DefaultMothershipPort # default value
-				else:
-					PORT = DefaultMothershipPort  # default value
 
 			for res in socket.getaddrinfo(None, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
 				(af, socktype, proto, canonname, sa) = res
@@ -1038,6 +1034,9 @@ class CR:
 				if os.environ.has_key('CRSIGNAL'):
 					needToSignal = 1
 
+				# Begin main mothership loop here.  Accept new connections
+				# from Chromium components and process configuration/etc
+				# requests.
 				while 1:
 					# We can only safely signal the mothership when all the
 					# dynamic nodes have been resolved; this is because the
@@ -1061,8 +1060,12 @@ class CR:
 						else:
 							# process request from established connection
 							self.ProcessRequest( self.wrappers[sock] )
+					#end for
+				# end while
+			# endfor
 
-			Fatal( "Couldn't find local TCP port (make sure that another mothership isn't already running)")
+			# if we get here we weren't able to create the mothership's port
+			Fatal( "Couldn't find/create local TCP port (make sure that another mothership isn't already running)")
 		except KeyboardInterrupt:
 			try:
 				for sock in self.all_sockets:
@@ -1852,7 +1855,7 @@ class CR:
 		sock.Success( tiles )
 
 	def do_serverdisplaytiles( self, sock, args ):
-		"""do_servertiles(sock, args)
+		"""do_serverdisplaytiles(sock, args)
 		Sends the defined tiles for a server."""
 		if sock.node == None or not isinstance(sock.node,CRNetworkNode):
 			sock.Failure( SockWrapper.UNKNOWNSERVER, "You can't ask for tiles without telling me what server you are!" )
