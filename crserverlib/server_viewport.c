@@ -60,7 +60,7 @@ crServerConvertToOutput( const CRrecti *imagewindow,
  * Need to call this when either the viewport or mural is changed.
  */
 void
-crServerComputeViewportBounds( CRViewportState *v, CRMuralInfo *mural )
+crServerComputeViewportBounds(const CRViewportState *v, CRMuralInfo *mural)
 {
 	static GLuint serialNo = 1;
 	int i;
