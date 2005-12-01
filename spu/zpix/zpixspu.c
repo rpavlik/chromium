@@ -14,6 +14,16 @@
 typedef unsigned long ulong;
 #endif
 
+/* There are old versions of zlib floating around that don't have
+ * the compress2() and uncompress() functions.
+ */
+#if defined(ZLIB_VERNUM) && (ZLIB_VERNUM >= 0x1210)
+#define HAVE_GOOD_ZLIB 1
+#else
+#define HAVE_GOOD_ZLIB 0
+#endif
+
+
 
 /*
  * local functions and data
@@ -286,9 +296,13 @@ zpixspuDrawPixels(GLsizei width, GLsizei height,
 			unsigned long zliblen;
 			int rc;
 			zliblen = (unsigned long) zlen;
+#if HAVE_GOOD_ZLIB
 			rc = compress2(zpix_spu.zBuf[FBtype], &zliblen,
 										 zpix_spu.b.dBuf[FBtype], plen, zpix_spu.ztype_parm);
-
+#else
+			crError("ZPix SPU wasn't compiled with a modern zlib!");
+			rc = 1;
+#endif
 			if (Z_OK != rc)
 				crError("zpixDrawpixels: zlib compress2 rc = %d", rc);
 
@@ -643,8 +657,14 @@ zpixspuZPixCR(GLsizei width, GLsizei height, GLenum format, GLenum type,
 			zliblen = (unsigned long) zlen;
 			zldlen = (unsigned long) dlen;
 
+#if HAVE_GOOD_ZLIB
 			rc = uncompress(zpix_spu.b.dBuf[FBtype], &zldlen, zpixels, zliblen);
-
+#else
+			crError("ZPix SPU wasn't compiled with a modern zlib!");
+			(void) zldlen;
+			(void) zliblen;
+			rc = 1;
+#endif
 			if (Z_OK != rc)
 				crError("zpixZPix: zlib uncompress failure, rc = %d", rc);
 		}
