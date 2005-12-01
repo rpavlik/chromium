@@ -60,8 +60,8 @@ crPackTexImage2D(GLenum target, GLint level,
 {
 	unsigned char *data_ptr;
 	int packet_length;
-	int isnull = (pixels == NULL);
-	int is_distrib = ((type == GL_TRUE) || (type == GL_FALSE));
+	const int isnull = (pixels == NULL);
+	const int is_distrib = ((type == GL_TRUE) || (type == GL_FALSE));
 	int distrib_buf_len = 0;
 
 	packet_length =
@@ -76,6 +76,12 @@ crPackTexImage2D(GLenum target, GLint level,
 	{
 		if (is_distrib)
 		{
+			/* Pixels is a zero-terminated filename, followed by the usual image
+			 * data if type == GL_TRUE.
+			 * Also note that the image data can't have any unusual pixel packing
+			 * parameters.
+			 */
+			CRASSERT(format == GL_RGB);
 			distrib_buf_len = crStrlen(pixels) + 1 +
 				((type == GL_TRUE) ? width * height * 3 : 0);
 			packet_length += distrib_buf_len;
@@ -105,8 +111,13 @@ crPackTexImage2D(GLenum target, GLint level,
 		}
 		else
 		{
-			crPixelCopy2D(width, height, (void *) (data_ptr + 36), format, type, NULL,	/* dst */
-										pixels, format, type, unpackstate);	/* src */
+			crPixelCopy2D(width, height,
+										(void *) (data_ptr + 36), /* dest image addr */
+										format, type,             /* dest image format/type */
+										NULL,	/* dst packing (use default params) */
+										pixels,       /* src image addr */
+										format, type, /* src image format/type */
+										unpackstate);	/* src packing */
 		}
 	}
 
