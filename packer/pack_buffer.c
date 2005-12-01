@@ -462,7 +462,16 @@ void crPackFree( void *packet )
 
 void crNetworkPointerWrite( CRNetworkPointer *dst, void *src )
 {
+	/* init CRNetworkPointer with invalid values */
 	dst->ptrAlign[0] = 0xDeadBeef;
 	dst->ptrAlign[1] = 0xCafeBabe;
+	/* copy the pointer's value into the CRNetworkPointer */
 	crMemcpy( dst, &src, sizeof(src) );
+
+	/* if either assertion fails, it probably means that a packer function
+	 * (which returns a value) was called without setting up the writeback
+	 * pointer, or something like that.
+	 */
+	CRASSERT(dst->ptrAlign[0] != 0xffffffff);
+	CRASSERT(dst->ptrAlign[0] != 0xDeadBeef);
 }
