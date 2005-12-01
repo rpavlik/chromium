@@ -9,6 +9,8 @@
 #include "state.h"
 #include "state/cr_statetypes.h"
 #include "cr_extstring.h"
+#include "cr_mem.h"
+#include "cr_string.h"
 
 
 const GLubyte * STATE_APIENTRY crStateGetString( GLenum name )
@@ -29,8 +31,16 @@ const GLubyte * STATE_APIENTRY crStateGetString( GLenum name )
 			/* This shouldn't normally be queried - the relevant SPU should
 			 * catch this query and do all the extension string merging/mucking.
 			 */
-			return (const GLubyte *) crExtensions;
-			/*return g->limits.extensions;  OLD colde */
+			{
+				static char *extensions = NULL;
+				if (!extensions) {
+					extensions = crAlloc(crStrlen(crExtensions) + crStrlen(crChromiumExtensions) + 2);
+					crStrcpy(extensions, crExtensions);
+					crStrcpy(extensions, " ");
+					crStrcat(extensions, crChromiumExtensions);
+				}
+				return (const GLubyte *) extensions;
+			}
 #if defined(CR_ARB_vertex_program) || defined(CR_ARB_fragment_program)
    	case GL_PROGRAM_ERROR_STRING_ARB:
 			return g->program.errorString;
@@ -42,5 +52,4 @@ const GLubyte * STATE_APIENTRY crStateGetString( GLenum name )
 	}
 
 	(void) crAppOnlyExtensions;  /* silence warnings */
-	(void) crChromiumExtensions;
 }
