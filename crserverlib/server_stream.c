@@ -182,9 +182,6 @@ static RunQueue *__getNextClient(void)
 						crNetRecv();
 					}
 				}
-				/*
-				crError( "DEADLOCK! (numClients=%d qSize=%d)", cr_server.numClients, QueueSize() );
-				*/
 			}
 		}
 		/* no one had any work, get some! */
@@ -193,6 +190,7 @@ static RunQueue *__getNextClient(void)
 	/* UNREACHED */
 	/* return NULL; */
 }
+
 
 void crServerSerializeRemoteStreams(void)
 {
@@ -229,8 +227,6 @@ void crServerSerializeRemoteStreams(void)
 			 * the network too quickly */
 			len = crNetPeekMessage( cr_server.curClient->conn, &msg );
 			if (len == 0) {
-#if 1
-				/* new code path */
 				if (cr_server.curClient->currentCtx &&
 						(cr_server.curClient->currentCtx->lists.currentIndex != 0 ||
 						 cr_server.curClient->currentCtx->current.inBeginEnd ||
@@ -240,11 +236,6 @@ void crServerSerializeRemoteStreams(void)
 					 * glBeginQuery/EndQuery sequence.
 					 * We can't context switch because that'll screw things up.
 					 */
-					/*
-					printf("currentIndex=%d inBeginEnd=%d\n",
-								 cr_server.curClient->currentCtx->lists.currentIndex,
-								 cr_server.curClient->currentCtx->current.inBeginEnd);
-					*/
 					CRASSERT(!q->blocked);
 					crNetRecv();
 					continue;
@@ -254,10 +245,6 @@ void crServerSerializeRemoteStreams(void)
 					/* get next client */
 					break;
 				}
-#else
-				/* old code path */
-				break;
-#endif
 			}
 			else {
 				/*
@@ -343,6 +330,7 @@ void crServerSerializeRemoteStreams(void)
 		cr_server.run_queue = cr_server.run_queue->next;
 	}
 }
+
 
 int crServerRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
