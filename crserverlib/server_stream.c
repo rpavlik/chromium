@@ -192,9 +192,13 @@ static RunQueue *__getNextClient(void)
 }
 
 
-void crServerSerializeRemoteStreams(void)
+/**
+ * Main crserver loop.  Service connections from all connected clients.
+ */
+void
+crServerSerializeRemoteStreams(void)
 {
-	for (;;)
+	while (1)
 	{
 		RunQueue *q = __getNextClient();
 		CRMessage *msg;
@@ -205,18 +209,17 @@ void crServerSerializeRemoteStreams(void)
 
 		cr_server.curClient = q->client;
 
-		for( ;; )
+		/* service current client as long as we can */
+		while (1)
 		{
 			unsigned int len;
 
-			/* Check the current clients connection status, as
-			 * there's the potential we make spin in the new
-			 * code path, when terminating a client connection. */
+			/* Check if the current client connection has gone away */
 			if (!cr_server.curClient->conn || cr_server.curClient->conn->type == CR_NO_CONNECTION) {
  				crServerDeleteFromRunQueue( cr_server.curClient );
-				/* Now check the run_queue, and if we've
-				 * no run_queue return, but break and get
-				 * the next client if we're still here */
+				/* Check run queue.  If empty, we have no clients, so return.
+				 * otherwise, break/continue with the next client.
+				 */
 				if (cr_server.run_queue)
 					break;
 				else
@@ -247,9 +250,7 @@ void crServerSerializeRemoteStreams(void)
 				}
 			}
 			else {
-				/*
-				printf("got %d bytes\n", len);
-				*/
+				/*crDebug("got %d bytes", len);*/
 			}
 
 			CRASSERT(len > 0);
@@ -326,9 +327,13 @@ void crServerSerializeRemoteStreams(void)
 			{
 				break;
 			}
-		}
+
+		} /* client service loop */
+
+		/* advance to next client */
 		cr_server.run_queue = cr_server.run_queue->next;
-	}
+
+	} /* loop over all clients/queues */
 }
 
 
