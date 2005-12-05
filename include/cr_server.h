@@ -179,7 +179,11 @@ typedef struct {
 } CRServer;
 
 
+extern void crServerInit( int argc, char *argv[] );
 extern int CRServerMain( int argc, char *argv[] );
+extern void crServerServiceClients(void);
+extern void crServerAddNewClient(void);
+extern SPU* crServerHeadSPU(void);
 
 
 #ifdef __cplusplus

@@ -28,12 +28,27 @@
  * Chromium consists of all the top-level files in the cr
  * directory.  The core module basically takes care of API dispatch,
  * and OpenGL state management.
- *
- *
+ */
+
+
+/**
+ * CRServer global data
  */
 CRServer cr_server;
 
-int tearingdown = 0;
+int tearingdown = 0; /* can't be static */
+
+
+/**
+ * Return pointer to server's first SPU.
+ */
+SPU*
+crServerHeadSPU(void)
+{
+	 return cr_server.head_spu;
+}
+
+
 
 static void DeleteBarrierCallback( void *data )
 {
@@ -117,7 +132,11 @@ crPrintHelp(void)
 }
 
 
-int CRServerMain( int argc, char *argv[] )
+/**
+ * Do CRServer initializations.  After this, we can begin servicing clients.
+ */
+void
+crServerInit(int argc, char *argv[])
 {
 	int i;
 	unsigned int j;
@@ -207,6 +226,14 @@ int CRServerMain( int argc, char *argv[] )
 
 	cr_server.barriers = crAllocHashtable();
 	cr_server.semaphores = crAllocHashtable();
+}
+
+
+
+int
+CRServerMain(int argc, char *argv[])
+{
+	crServerInit(argc, argv);
 
 	crServerSerializeRemoteStreams();
 
@@ -216,11 +243,3 @@ int CRServerMain( int argc, char *argv[] )
 
 	return 0;
 }
-
-
-#if 0
-int main( int argc, char *argv[] )
-{
-	return CRServerMain( argc, argv );
-}
-#endif
