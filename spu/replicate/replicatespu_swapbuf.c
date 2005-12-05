@@ -69,7 +69,6 @@ replicatespu_SwapBuffers( GLint window, GLint flags )
 				/* Request writeback.
 				 */
 				thread->writeback = 1;
-				crDebug("Replicate SPU Swapbuffers: Send writeback");
 				if (replicate_spu.swap)
 					crPackWritebackSWAP( &thread->writeback );
 				else
@@ -79,7 +78,6 @@ replicatespu_SwapBuffers( GLint window, GLint flags )
 				/* Make sure writeback from previous frame has been 
 				 * received.
 				 */
-				crDebug("Replicate SPU Swapbuffers: Receive writeback");
 				while (thread->writeback)
 				{
 					/* detected disconnection during swapbuffers, drop the writeback wait */
