@@ -140,12 +140,41 @@ char *crTCPIPErrorString( int err )
 #endif /* WINDOWS */
 
 
+/*
+ * Socket callbacks.  When a socket is created or destroyed we will
+ * call these callback functions.
+ * XXX Currently only implemented for TCP/IP.
+ * XXX Maybe have lists of callbacks?
+ */
+static CRSocketCallbackProc SocketCreateCallback = NULL;
+static CRSocketCallbackProc SocketDestroyCallback = NULL;
+
+void
+crRegisterSocketCallback(int mode, CRSocketCallbackProc proc)
+{
+	if (mode == CR_SOCKET_CREATE) {
+		SocketCreateCallback = proc;
+	}
+	else if (mode == CR_SOCKET_DESTROY) {
+		SocketDestroyCallback = proc;
+	}
+	else {
+		crError("Invalid crRegisterSocketCallbac mode=%d", mode);
+	}
+}
+
+
+
 void crCloseSocket( CRSocket sock )
 {
 	int fail;
 
 	if (sock <= 0)
 		return;
+
+	if (SocketDestroyCallback) {
+		SocketDestroyCallback(CR_SOCKET_DESTROY, sock);
+	}
 
 #ifdef WINDOWS
 	fail = ( closesocket( sock ) != 0 );
@@ -484,6 +513,10 @@ crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 		crError( "Couldn't accept client: %s", crTCPIPErrorString( err ) );
 	}
 	
+	if (SocketCreateCallback) {
+		SocketCreateCallback(CR_SOCKET_CREATE, conn->tcp_socket);
+	}
+
 #ifndef ADDRINFO
 	sin_addr = ((struct sockaddr_in *) &addr)->sin_addr;
 	host = gethostbyaddr( (char *) &sin_addr, sizeof( sin_addr), AF_INET );
@@ -1141,6 +1174,10 @@ crTCPIPDoConnect( CRConnection *conn )
 		return 0;
 	}
 
+	if (SocketCreateCallback) {
+		SocketCreateCallback(CR_SOCKET_CREATE, conn->tcp_socket);
+	}
+
 	/* Set up the socket the way *we* want. */
 	spankSocket( conn->tcp_socket );
 
@@ -1241,6 +1278,10 @@ crTCPIPDoConnect( CRConnection *conn )
 			continue;
 		}
 
+		if (SocketCreateCallback) {
+			SocketCreateCallback(CR_SOCKET_CREATE, conn->tcp_socket);
+		}
+
 		err = 1;
 		setsockopt(conn->tcp_socket, SOL_SOCKET, SO_REUSEADDR,  &err, sizeof(int));
 
@@ -1326,9 +1367,9 @@ crTCPIPDoDisconnect( CRConnection *conn )
 }
 
 
-/*
+/**
  * Initialize a CRConnection for tcp/ip.  This is called via the
- * crNetAcceptClient() and crNetConnectToServer() functions.
+ * InitConnection() function (and from the UDP module).
  */
 void
 crTCPIPConnection( CRConnection *conn )

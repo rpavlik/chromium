@@ -256,6 +256,15 @@ void crNetSetNodeRange( const char *low_node, const char *high_node );
 void crNetSetKey( const unsigned char* key, const int keyLength );
 
 
+/*
+ * Socket callback facility
+ */
+#define CR_SOCKET_CREATE 1
+#define CR_SOCKET_DESTROY 2
+typedef void (*CRSocketCallbackProc)(int mode, int socket);
+extern void crRegisterSocketCallback(int mode, CRSocketCallbackProc proc);
+
+
 #ifdef __cplusplus
 }
 #endif
