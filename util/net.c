@@ -1102,7 +1102,7 @@ crNetGetMessage( CRConnection *conn, CRMessage **message )
 
 
 /**
- * Read a \n-terminated string from a socket.  Replace the \n with \0.
+ * Read a \n-terminated string from a connection.  Replace the \n with \0.
  * Useful for reading from the mothership.
  * \note This is an extremely inefficient way to read a string!
  *
