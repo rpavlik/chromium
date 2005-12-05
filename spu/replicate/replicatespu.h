@@ -81,6 +81,7 @@ typedef struct {
 
 	/* Config options */
 	int render_to_crut_window;
+	int sync_on_swap;
 
 	CRNetServer rserver[CR_MAX_REPLICANTS];
 

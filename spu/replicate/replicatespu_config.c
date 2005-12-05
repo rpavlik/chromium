@@ -29,9 +29,18 @@ render_to_crut_window( ReplicateSPU *replicate_spu, const char *response )
 }
 
 
+static void
+set_sync_on_swap(ReplicateSPU *replicate_spu, const char *response)
+{
+	sscanf(response, "%d", &(replicate_spu->sync_on_swap));
+}
+
+
 SPUOptions replicateSPUOptions[] = {
 	{ "render_to_crut_window", CR_BOOL, 1, "0", NULL, NULL,
 		"Render to CRUT window", (SPUOptionCB) render_to_crut_window },
+	{ "sync_on_swap", CR_BOOL, 1, "1", NULL, NULL,
+		"Sync on SwapBuffers", (SPUOptionCB) set_sync_on_swap },
 
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
