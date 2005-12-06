@@ -16,6 +16,58 @@
 #include <X11/Xmd.h>
 #include <X11/extensions/vnc.h>
 
+
+
+/**
+ * This is called periodically to see if we have received any Xvnc
+ * events from the X servers' VNC modules.
+ */
+void
+replicatespuCheckVncEvents(void)
+{
+	if (replicate_spu.glx_display) {
+		while (XPending(replicate_spu.glx_display)) {
+#if 0
+			int VncConn = replicate_spu.VncEventsBase + XVncConnected;
+			int VncDisconn = replicate_spu.VncEventsBase + XVncDisconnected;
+#endif
+			int VncChromiumConn = replicate_spu.VncEventsBase + XVncChromiumConnected;
+			XEvent event;
+		
+			XNextEvent (replicate_spu.glx_display, &event);
+
+#if 0
+			if (event.type == VncConn) {
+				crWarning("Replicate SPU: Received VncConn");
+			} 
+			else
+#endif
+			if (event.type == VncChromiumConn) {
+				XVncConnectedEvent *e = (XVncConnectedEvent*) &event;
+				struct in_addr addr;
+
+				addr.s_addr = e->ipaddress;
+				crWarning("ReplicateSPU: someone just connected!\n");
+
+				if (e->ipaddress) {
+					replicatespuReplicate(e->ipaddress);
+				}
+				else {
+					crWarning("Replicate SPU: Someone connected, but with no ipaddress?");
+				}
+			} 
+#if 0
+			else
+			if (event.type == VncDisconn) {
+				crWarning("Replicate SPU: Received VncDisconn");
+			}
+#endif
+		}
+	}
+}
+
+
+
 #if 0
 static void replicatespuDebugOpcodes( CRPackBuffer *pack )
 {
@@ -72,6 +124,7 @@ static void TextureObjDiffCallback( unsigned long key, void *data1, void *data2 
 													 GL_TRUE /* always dirty */);
 }
 
+
 void replicatespuRePositionWindow(WindowInfo *winInfo)
 {
 	Window root;
@@ -104,7 +157,20 @@ void replicatespuRePositionWindow(WindowInfo *winInfo)
 	XSetErrorHandler( old_xerror_handler );
 }
 
-static void replicatespuReCreateWindows(unsigned long key, void *data1, void *data2)
+
+/**
+ * Used by the following two crHashTableWalk callbacks.
+ * They need to know which replicant/server we're talking to.
+ */
+static int ServerIndex = -1;
+
+
+/**
+ * Callback called by crHashTableWalk() below.
+ * Used to create viewer-side windows for all the application windows.
+ */
+static void
+replicatespuReCreateWindows(unsigned long key, void *data1, void *data2)
 {
 	ThreadInfo *thread = (ThreadInfo *) data2;
 	WindowInfo *winInfo = (WindowInfo *) data1;
@@ -115,37 +181,48 @@ static void replicatespuReCreateWindows(unsigned long key, void *data1, void *da
 	unsigned int width, height, bw, d;
 	XWindowAttributes winAtt;
 
+	CRASSERT(ServerIndex >= 0);
+
+	/**
+	 * Get application window's attributes
+	 */
 	old_xerror_handler = XSetErrorHandler( x11_error_handler );
-
 	XSync(replicate_spu.glx_display, 0);
-	XGetGeometry(replicate_spu.glx_display, (Window)winInfo->nativeWindow, &root, &x, &y, &width, &height, &bw, &d );
-
-	XGetWindowAttributes(replicate_spu.glx_display, (Window)winInfo->nativeWindow, &winAtt);
-
+	XGetGeometry(replicate_spu.glx_display, (Window)winInfo->nativeWindow,
+							 &root, &x, &y, &width, &height, &bw, &d );
+	XGetWindowAttributes(replicate_spu.glx_display,
+											 (Window) winInfo->nativeWindow, &winAtt);
 	XSetErrorHandler( old_xerror_handler );
-	
-	if (caught_x11_error) {
-		caught_x11_error = 0;
-	}
+	caught_x11_error = 0;
 
+	/*
+	 * Create the server-side window
+	 */
 	if (replicate_spu.swap)
 		crPackWindowCreateSWAP( replicate_spu.dpyName, winInfo->visBits, &window, &writeback);
 	else
 		crPackWindowCreate( replicate_spu.dpyName, winInfo->visBits, &window, &writeback);
 
-	replicatespuFlush( (void *)thread );
+	replicatespuFlushOne(thread, ServerIndex);
 
 	/* Get return value */
 	while (writeback) {
 		crNetRecv();
 	}
-
 	if (replicate_spu.swap)
 		window = (GLint) SWAP32(window);
 
-	if (window < 0)
-		crError("FAILED REPLICATION WINDOWCREATE\n");
+	/* save the server-side window ID */
+	winInfo->id[ServerIndex] = window;
 
+	if (window < 0) {
+		crWarning("Replicate SPU: failed to create server-side window");
+		return;
+	}
+
+	/*
+	 * If the app window is not visible, hide the server-side window too.
+	 */
 	if (winAtt.map_state == IsUnviewable) 
 	{
 		if (replicate_spu.swap)
@@ -153,31 +230,49 @@ static void replicatespuReCreateWindows(unsigned long key, void *data1, void *da
 		else
 			crPackWindowShow( window, GL_FALSE );
 		
-		replicatespuFlush( (void *)thread );
+		replicatespuFlushOne(thread, ServerIndex);
 	}
 }
 
-static void replicatespuRePositionWindows(unsigned long key, void *data1, void *data2)
+
+/**
+ * Callback called from crHashTableWalk() from in
+ * replicatespuReplicate() to update window sizes.
+ */
+static void
+replicatespuResizeWindows(unsigned long key, void *data1, void *data2)
 {
 	ThreadInfo *thread = (ThreadInfo *) data2;
 	WindowInfo *winInfo = (WindowInfo *) data1;
 
+	CRASSERT(ServerIndex >= 0);
+
 	if (winInfo->width > 0) {
 		if (replicate_spu.swap)
-			crPackWindowSizeSWAP( winInfo->id, winInfo->width, winInfo->height );
+			crPackWindowSizeSWAP( winInfo->id[ServerIndex], winInfo->width, winInfo->height );
 		else
-			crPackWindowSize( winInfo->id, winInfo->width, winInfo->height );
+			crPackWindowSize( winInfo->id[ServerIndex], winInfo->width, winInfo->height );
 
-		replicatespuFlush( (void *)thread );
+		replicatespuFlushOne(thread, ServerIndex);
 	}
 
+	/* XXX what's this for? */
 #if 1
 	if (winInfo->nativeWindow)
 		replicatespuRePositionWindow(winInfo);
 #endif
 }
 
-void replicatespuReplicateCreateContext(int ipaddress) 
+
+
+/**
+ * This is the main routine responsible for replicating our GL state
+ * for a new VNC viewer.  Called when we detect that a new VNC viewer
+ * has been started.
+ * \param ipaddress  the IP address where the new viewer is running.
+ */
+void
+replicatespuReplicate(int ipaddress) 
 {
 	GET_THREAD(thread);
 	struct in_addr addr;
@@ -185,7 +280,8 @@ void replicatespuReplicateCreateContext(int ipaddress)
 	char *ipstring;
 	int r_slot;
 	int slot;
-	int writeback = 1;
+
+	crDebug("Enter replicatespuReplicate(ipaddress=0x%x)", ipaddress);
 
 	replicatespuFlush( (void *)thread );
 
@@ -193,14 +289,22 @@ void replicatespuReplicateCreateContext(int ipaddress)
 	crLockMutex(&_ReplicateMutex);
 #endif
 
+	/*
+	 * find empty slot
+	 */
 	for (r_slot = 1; r_slot < CR_MAX_REPLICANTS; r_slot++) {
-		if (!replicate_spu.rserver[r_slot].conn || replicate_spu.rserver[r_slot].conn->type == CR_NO_CONNECTION)
+		if (!replicate_spu.rserver[r_slot].conn ||
+				replicate_spu.rserver[r_slot].conn->type == CR_NO_CONNECTION)
 			break;
 	}
 	if (r_slot == CR_MAX_REPLICANTS) {
-		crWarning("UNABLE TO CONNECT CLIENT - NO MORE REPLICANT SLOTS\n");
+		crWarning("Replicate SPU: no more replicant slots available");
 		return;
 	}
+
+	/**
+	 ** OK, now rserver[r_slot] is free for use.
+	 **/
 
 	if (replicate_spu.vncAvailable) {
 		/* Find the mothership port that we're using and pass it to
@@ -211,13 +315,15 @@ void replicatespuReplicateCreateContext(int ipaddress)
 		const char *mothershipURL;
 		unsigned short mothershipPort;
 		mothershipURL = crGetenv("CRMOTHERSHIP");
-		crParseURL(mothershipURL, protocol, hostname, &mothershipPort,
-							 DEFAULT_MOTHERSHIP_PORT);
+		crDebug("CRMOTHERSHIP env var = %s", mothershipURL);
+		if (mothershipURL)
+			crParseURL(mothershipURL, protocol, hostname, &mothershipPort,
+								 DEFAULT_MOTHERSHIP_PORT);
+		else
+			mothershipPort = DEFAULT_MOTHERSHIP_PORT;
 		XVncChromiumStart(replicate_spu.glx_display, ipaddress,
 											CHROMIUM_START_PORT + r_slot, mothershipPort);
 	}
-
-	thread->broadcast = 0;
 
 	addr.s_addr = ipaddress;
 	ipstring = inet_ntoa(addr);
@@ -229,125 +335,146 @@ void replicatespuReplicateCreateContext(int ipaddress)
 	/* connect to the remote VNC server */
 	replicate_spu.rserver[r_slot].name = crStrdup( replicate_spu.name );
 	replicate_spu.rserver[r_slot].buffer_size = replicate_spu.buffer_size;
-	replicate_spu.rserver[r_slot].conn = crNetConnectToServer( hosturl, CHROMIUM_START_PORT + r_slot, replicate_spu.rserver[r_slot].buffer_size, 1);
+	replicate_spu.rserver[r_slot].conn
+		= crNetConnectToServer( hosturl, CHROMIUM_START_PORT + r_slot,
+														replicate_spu.rserver[r_slot].buffer_size, 1);
 
-	/* hijack the current connection */
-	thread->server.conn = replicate_spu.rserver[r_slot].conn;
+	/*
+	 * Create server-side windows by walking table of app windows
+	 */
+	ServerIndex = r_slot;
+	crHashtableWalk(replicate_spu.windowTable, replicatespuReCreateWindows, thread);
+	ServerIndex = -1;
 
-/* WindowCreate */
-	crHashtableWalk( replicate_spu.windowTable, replicatespuReCreateWindows, thread);
-
+	/*
+	 * Create server-side rendering context for each app rendering context.
+	 */
 	for (slot = 0; slot < replicate_spu.numContexts; slot++) {
-	    if (replicate_spu.context[slot].State != NULL) {
-		CRContext *temp_c;
-		GLint return_val = 0;
+		if (replicate_spu.context[slot].State != NULL) {
+			CRContext *temp_c;
+			GLint visBits = replicate_spu.context[slot].visBits;
+			GLint return_val = 0;
+			int writeback;
 
-/* CreateContext */
-		writeback = 1;
+			/* Send CreateContext */
+			if (replicate_spu.swap)
+				crPackCreateContextSWAP( replicate_spu.dpyName, visBits, &return_val, &writeback);
+			else
+				crPackCreateContext( replicate_spu.dpyName, visBits, &return_val, &writeback);
+			
+			replicatespuFlushOne(thread, r_slot);
 
-		if (replicate_spu.swap)
-			crPackCreateContextSWAP( replicate_spu.dpyName, replicate_spu.context[slot].visBits, &return_val, &writeback);
-		else
-			crPackCreateContext( replicate_spu.dpyName, replicate_spu.context[slot].visBits, &return_val, &writeback);
+			/* Get return value */
+			writeback = 1;
+			while (writeback)
+				crNetRecv();
+			if (replicate_spu.swap)
+				return_val = (GLint) SWAP32(return_val);
 
-		replicatespuFlush( (void *)thread );
+			if (!return_val) {
+				crWarning("Replicate SPU: CreateContext failed");
+				continue;
+			}
 
-		/* Get return value */
-		while (writeback) {
-			crNetRecv();
-		}
+			/* Fill in the new context info */
+			temp_c = crStateCreateContext(NULL, replicate_spu.context[slot].visBits);
 
-		if (replicate_spu.swap)
-			return_val = (GLint) SWAP32(return_val);
+			replicate_spu.context[slot].rserverCtx[r_slot] = return_val;
 
-		if (!return_val)
-			crError("FAILED REPLICATION CREATECONTEXT %d\n",return_val);
-		/* Fill in the new context info */
-		temp_c = crStateCreateContext(NULL, replicate_spu.context[slot].visBits);
+			/* MakeCurrent */
+			/* XXX WHY ARE we making current here??? */
+			/*if (replicate_spu.context[slot].currentWindow)*/
+			{
+				int serverWindow;
+				if (replicate_spu.context[slot].currentWindow)
+					serverWindow = replicate_spu.context[slot].currentWindow->id[r_slot];
+				else
+					serverWindow = 0;
 
-		replicate_spu.context[slot].rserverCtx[r_slot] = return_val;
+				if (replicate_spu.swap)
+					crPackMakeCurrentSWAP( serverWindow, 0, return_val );
+				else
+					crPackMakeCurrent( serverWindow, 0, return_val );
+			}
 
-/* MakeCurrent */
-		if (replicate_spu.swap)
-			crPackMakeCurrentSWAP( replicate_spu.context[slot].currentWindow, 0, return_val );
-		else
-			crPackMakeCurrent( replicate_spu.context[slot].currentWindow, 0, return_val );
+			replicatespuFlushOne(thread, r_slot);
 
-		replicatespuFlush( (void *)thread );
-
-/* Diff Context */
+			/* Diff Context */
 #if 0
-		crDebug("BEFORE CONTEXT DIFF\n");
-		replicatespuDebugOpcodes( &thread->packer->buffer );
+			crDebug("BEFORE CONTEXT DIFF\n");
+			replicatespuDebugOpcodes( &thread->packer->buffer );
 #endif
 #if 1
-		/* Recreate all the textures */
-		{
-			unsigned int u;
-			CRTextureState *to = &(replicate_spu.context[slot].State->texture);
-			crHashtableWalk(to->idHash, TextureObjDiffCallback, temp_c);
+			/* Recreate all the textures */
+			{
+				unsigned int u;
+				CRTextureState *to = &(replicate_spu.context[slot].State->texture);
+				crHashtableWalk(to->idHash, TextureObjDiffCallback, temp_c);
 
-		/* Now troll the currentTexture bindings too.  
-		 * Note that the callback function
-	 	 * is set up to be called from a hashtable walk 
-		 * (so it takes a key), so when
-	 	 * we call it directly, we pass in a dummy key.
-	 	 */
+				/* Now troll the currentTexture bindings too.  
+				 * Note that the callback function
+				 * is set up to be called from a hashtable walk 
+				 * (so it takes a key), so when
+				 * we call it directly, we pass in a dummy key.
+				 */
 #define DUMMY_KEY 0
-			for (u = 0; u < temp_c->limits.maxTextureUnits; u++) {
-				TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture1D, (void *)temp_c );
-				TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture2D, (void *)temp_c );
-				TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture3D, (void *)temp_c );
-				TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTextureCubeMap, (void *)temp_c );
+				for (u = 0; u < temp_c->limits.maxTextureUnits; u++) {
+					TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture1D, (void *)temp_c );
+					TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture2D, (void *)temp_c );
+					TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture3D, (void *)temp_c );
+					TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTextureCubeMap, (void *)temp_c );
+				}
 			}
-		}
 #endif
-		crStateDiffContext( temp_c, replicate_spu.context[slot].State );
+			crStateDiffContext( temp_c, replicate_spu.context[slot].State );
+
 #if 0
-		crDebug("AFTER CONTEXT DIFF\n");
-		replicatespuDebugOpcodes( &thread->packer->buffer );
+			crDebug("AFTER CONTEXT DIFF\n");
+			replicatespuDebugOpcodes( &thread->packer->buffer );
 #endif
-		replicatespuFlush( (void *)thread );
 
-		/* Send over all the display lists for this context. The temporary
-		 * context should have all the client information needed, so that
-		 * we can restore correct client state after we're done.
-		 */
-		crDLMSetupClientState(&replicate_spu.diff_dispatch);
-		crDLMSendAllDLMLists(replicate_spu.context[slot].displayListManager, 
-			&replicate_spu.diff_dispatch);
-		crDLMRestoreClientState(&temp_c->client, &replicate_spu.diff_dispatch);
+			replicatespuFlushOne(thread, r_slot);
 
-		replicatespuFlush( (void *)thread );
+			/* Send over all the display lists for this context. The temporary
+			 * context should have all the client information needed, so that
+			 * we can restore correct client state after we're done.
+			 */
+			crDLMSetupClientState(&replicate_spu.diff_dispatch);
+			crDLMSendAllDLMLists(replicate_spu.context[slot].displayListManager, 
+													 &replicate_spu.diff_dispatch);
+			crDLMRestoreClientState(&temp_c->client, &replicate_spu.diff_dispatch);
+			
+			replicatespuFlushOne(thread, r_slot);
 
-/* DestroyContext (only the temporary one) */
-		crStateDestroyContext( temp_c );
+			/* DestroyContext (only the temporary one) */
+			crStateDestroyContext( temp_c );
 
-	    }
+		}
 	}
 
 
-/* MakeCurrent, the current context */
+	/* MakeCurrent, the current context */
 	if (thread->currentContext) {
+		int serverWindow = thread->currentContext->currentWindow->id[r_slot];
+		int serverContext = thread->currentContext->rserverCtx[r_slot];
 		if (replicate_spu.swap)
-			crPackMakeCurrentSWAP( thread->currentContext->currentWindow, 0, thread->currentContext->rserverCtx[r_slot] );
+			crPackMakeCurrentSWAP(serverWindow, 0, serverContext);
 	 	else
-			crPackMakeCurrent( thread->currentContext->currentWindow, 0, thread->currentContext->rserverCtx[r_slot] );
+			crPackMakeCurrent(serverWindow, 0, serverContext);
 
 		crStateMakeCurrent( thread->currentContext->State );
 	}
 
-	replicatespuFlush( (void *)thread );
+	replicatespuFlushOne(thread, r_slot);
 
-	crHashtableWalk( replicate_spu.windowTable, replicatespuRePositionWindows, thread);
+	/*
+	 * Set window sizes
+	 */
+	ServerIndex = r_slot;
+	crHashtableWalk(replicate_spu.windowTable, replicatespuResizeWindows, thread);
+	ServerIndex = -1;
 
-	replicatespuFlush( (void *)thread );
-
-	/* Put back original server connection */
-	thread->server.conn = replicate_spu.rserver[0].conn;
-	thread->broadcast = 1;
-
-	crDebug("Replicate SPU: leaving replicatespuReplicateCreateContext");
+	crDebug("Replicate SPU: leaving replicatespuReplicate");
 
 #ifdef CHROMIUM_THREADSAFE_notyet
 	crUnlockMutex(&_ReplicateMutex);

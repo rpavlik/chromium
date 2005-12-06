@@ -10,32 +10,40 @@
 #include "cr_string.h"
 #include "replicatespu_proto.h"
 
+
+/**
+ * Get extension string from first active server.
+ */
 static const GLubyte *
 GetExtensions(void)
 {
+	int i;
 	GLubyte return_value[10*1000];
 	const GLubyte *extensions, *ext;
 	GET_THREAD(thread);
-	int writeback = 1;
 
-	thread->broadcast = 0;
+	return_value[0] = 0; /* null-terminate */
 
-	if (replicate_spu.swap)
-	{
-		crPackGetStringSWAP( GL_EXTENSIONS, return_value, &writeback );
+	/* iterate backward to prefer "real" servers over default/dummy/0 server */
+	for (i = CR_MAX_REPLICANTS - 1; i >= 0; i--) {
+		if (replicate_spu.rserver[i].conn &&
+				replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
+			int writeback = 1;
+
+			if (replicate_spu.swap)
+				crPackGetStringSWAP( GL_EXTENSIONS, return_value, &writeback );
+			else
+				crPackGetString( GL_EXTENSIONS, return_value, &writeback );
+
+			replicatespuFlushOne(thread, i);
+
+			while (writeback)
+				crNetRecv();
+
+			CRASSERT(crStrlen((char *)return_value) < 10*1000);
+			break;
+		}
 	}
-	else
-	{
-		crPackGetString( GL_EXTENSIONS, return_value, &writeback );
-	}
-	replicatespuFlush( (void *) thread );
-
-	while (writeback)
-		crNetRecv();
-
-	thread->broadcast = 1;
-
-	CRASSERT(crStrlen((char *)return_value) < 10*1000);
 
 	/* OK, we got the result from the server.  Now we have to
 	 * intersect is with the set of extensions that Chromium understands

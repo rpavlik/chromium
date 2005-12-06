@@ -14,39 +14,26 @@
 void REPLICATESPU_APIENTRY
 replicatespu_SwapBuffers( GLint window, GLint flags )
 {
+	int i;
 	GET_THREAD(thread);
 	WindowInfo *winInfo
 		= (WindowInfo *) crHashtableSearch( replicate_spu.windowTable, window );
 
-	if (!replicate_spu.sync_on_swap) {
-		/* no swapbuffers sync */
+	replicatespuFlush( (void *) thread );
+
+	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
+		if (replicate_spu.rserver[i].conn == NULL ||
+				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+			continue;
+
 		if (replicate_spu.swap)
-			crPackSwapBuffersSWAP( winInfo->id, flags );
+			crPackSwapBuffersSWAP( winInfo->id[i], flags );
 		else
-			crPackSwapBuffers( winInfo->id, flags );
-		replicatespuFlush( (void *) thread );
-	}
-	else {
-		/* do synchronization - prevents lots of frames from getting queued up */
-		int i;
+			crPackSwapBuffers( winInfo->id[i], flags );
 
-		replicatespuFlush( (void *) thread );
+		replicatespuFlushOne(thread, i);
 
-		thread->broadcast = 0; /* turn broadcast off */
-
-		for (i = 0; i < CR_MAX_REPLICANTS; i++) {
-			if (replicate_spu.rserver[i].conn == NULL ||
-					replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
-					continue;
-			thread->server.conn = replicate_spu.rserver[i].conn;
-
-			if (replicate_spu.swap)
-				crPackSwapBuffersSWAP( winInfo->id, flags );
-			else
-				crPackSwapBuffers( winInfo->id, flags );
-
-			replicatespuFlush( (void *) thread );
-
+		if (replicate_spu.sync_on_swap) {
 			/* This won't block unless there has been more than 1 frame
 			 * since we received a writeback acknowledgement.  In the
 			 * normal case there's no performance penalty for doing this
@@ -64,35 +51,25 @@ replicatespu_SwapBuffers( GLint window, GLint flags )
 			 * overriden to always set the value to zero when the
 			 * reply is received, rather than decrementing it: 
 			 */
-			switch( thread->writeback ) {
-			case 0:
-				/* Request writeback.
-				 */
-				thread->writeback = 1;
+			if (winInfo->writeback == 0) {
+				/* Request writeback */
+				winInfo->writeback = 1;
 				if (replicate_spu.swap)
-					crPackWritebackSWAP( &thread->writeback );
+					crPackWritebackSWAP( &winInfo->writeback );
 				else
-					crPackWriteback( &thread->writeback );
-				break;
-			case 1:
-				/* Make sure writeback from previous frame has been 
-				 * received.
-				 */
-				while (thread->writeback)
-				{
-					/* detected disconnection during swapbuffers, drop the writeback wait */
-					if (thread->server.conn->type == CR_NO_CONNECTION)
-						thread->writeback = 0;
+					crPackWriteback( &winInfo->writeback );
+			}
+			else {
+				/* Make sure writeback from previous frame has been received. */
+				while (winInfo->writeback) {
+					/* detected disconnect during swapbuffers, drop the writeback wait */
+					if (replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+						winInfo->writeback = 0;
 					else
 						crNetRecv();
 				}
-				break;
 			}
-		}
 
-		thread->server.conn = replicate_spu.rserver[0].conn;
-
-		thread->broadcast = 1; /* turn broadcast back on */
-
-	} /* sync */
+		} /* if sync */
+	} /* loop */
 }

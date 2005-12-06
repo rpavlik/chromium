@@ -41,7 +41,6 @@ ThreadInfo *replicatespuNewThread( unsigned long id )
 
 	thread->id = id;
 	thread->currentContext = NULL;
-	thread->broadcast = 1;
 
 	/* connect to the server */
 	thread->server.name = crStrdup( replicate_spu.name );
@@ -83,7 +82,13 @@ ThreadInfo *replicatespuNewThread( unsigned long id )
 	return thread;
 }
 
-static void replicatespuStartVnc( void )
+
+/**
+ * Determine if the X VNC extension is available.
+ * Get list of clients/viewers attached, and replicate to them.
+ */
+static void
+replicatespuStartVnc( void )
 {
 	VncConnectionList *vnclist;
 	int num_conn;
@@ -130,7 +135,7 @@ static void replicatespuStartVnc( void )
 			addr.s_addr = vnclist->ipaddress;
 
 			if (vnclist->ipaddress) {
-				replicatespuReplicateCreateContext(vnclist->ipaddress);
+				replicatespuReplicate(vnclist->ipaddress);
 			} else {
 				crWarning("Replicate SPU: vnclist with no ipaddress ???????????.");
 			}
@@ -141,10 +146,11 @@ static void replicatespuStartVnc( void )
 }
 
 
-GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLint visual )
+GLint REPLICATESPU_APIENTRY
+replicatespu_CreateContext( const char *dpyName, GLint visual )
 {
 	static int done = 0;
-	int writeback = 1;
+	int writeback;
 	GLint serverCtx = (GLint) -1;
 	int slot;
 	char headspuname[10];
@@ -163,8 +169,6 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 		CRASSERT(replicate_spu.glx_display);
 	}
 
-	replicate_spu.thread[0].broadcast = 0;
-
 	crPackSetContext( replicate_spu.thread[0].packer );
 
 	if (replicate_spu.swap)
@@ -175,27 +179,27 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 	{
 		crPackGetChromiumParametervCR( GL_HEAD_SPU_NAME_CR, 0, GL_BYTE, 6, headspuname, &writeback );
 	}
-	replicatespuFlush( &(replicate_spu.thread[0]) );
+	replicatespuFlushOne( &(replicate_spu.thread[0]), 0);
+	writeback = 1;
 	while (writeback)
 		crNetRecv();
 
-	writeback = 1;
 
-	/* Pack the command */
+	/* Pack the CreateContext command */
 	if (replicate_spu.swap)
 		crPackCreateContextSWAP( dpyName, visual, &serverCtx, &writeback );
 	else
 		crPackCreateContext( dpyName, visual, &serverCtx, &writeback );
 
 	/* Flush buffer and get return value */
-	replicatespuFlush( &(replicate_spu.thread[0]) );
-
+	replicatespuFlushOne( &(replicate_spu.thread[0]), 0);
+	writeback = 1;
 	while (writeback)
 		crNetRecv();
-
 	if (replicate_spu.swap) {
 		serverCtx = (GLint) SWAP32(serverCtx);
 	}
+
 	if (serverCtx < 0) {
 #ifdef CHROMIUM_THREADSAFE_notyet
 		crUnlockMutex(&_ReplicateMutex);
@@ -254,8 +258,6 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 						 &(replicate_spu.thread[0].packer->current) );
 #endif
 
-	replicate_spu.thread[0].broadcast = 1;
-
 	(void) done;
 #if 0
 	if (!done) {
@@ -265,20 +267,13 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 #endif
 	{
 		unsigned int i;
-		int r_writeback = 1;
-		GLint rserverCtx = (GLint) -1;
-
-		replicate_spu.thread[0].broadcast = 0;
 
 		for (i = 1; i < CR_MAX_REPLICANTS; i++) {
+			int r_writeback = 1, rserverCtx = -1;
 
-			if (replicate_spu.rserver[i].conn == NULL || replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+			if (replicate_spu.rserver[i].conn == NULL ||
+					replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
 				continue;
-
-			r_writeback = 1;
-			rserverCtx = (GLint) -1;
-
-			replicate_spu.thread[0].server.conn = replicate_spu.rserver[i].conn;
 
 			if (replicate_spu.swap)
 				crPackCreateContextSWAP( dpyName, visual, &rserverCtx, &r_writeback );
@@ -286,14 +281,12 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 				crPackCreateContext( dpyName, visual, &rserverCtx, &r_writeback );
 
 			/* Flush buffer and get return value */
-			replicatespuFlush( &(replicate_spu.thread[0]) );
+			replicatespuFlushOne( &(replicate_spu.thread[0]), i );
 
 			while (r_writeback)
 				crNetRecv();
-
-			if (replicate_spu.swap) {
+			if (replicate_spu.swap)
 				rserverCtx = (GLint) SWAP32(rserverCtx);
-			}
 
 			if (rserverCtx < 0) {
 #ifdef CHROMIUM_THREADSAFE_notyet
@@ -304,13 +297,8 @@ GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLi
 			}
 
 			replicate_spu.context[slot].rserverCtx[i] = rserverCtx;
-			
-			/* restore it */
-			replicate_spu.thread[0].server.conn = replicate_spu.rserver[0].conn;
 		}
 	}
-
-	replicate_spu.thread[0].broadcast = 1;
 
 	if (!crStrcmp( headspuname, "nop" ))
 		replicate_spu.NOP = 0;
@@ -340,25 +328,18 @@ void REPLICATESPU_APIENTRY replicatespu_DestroyContext( GLint ctx )
 
 	replicatespuFlush( (void *)thread );
 
-	thread->broadcast = 0;
-
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
-
-		if (replicate_spu.rserver[i].conn == NULL || replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
-				continue;
-		thread->server.conn = replicate_spu.rserver[i].conn;
-
+		if (replicate_spu.rserver[i].conn == NULL ||
+				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+			continue;
 
 		if (replicate_spu.swap)
 			crPackDestroyContextSWAP( context->rserverCtx[i] );
 		else
 			crPackDestroyContext( context->rserverCtx[i] );
 
-		replicatespuFlush( (void *)thread );
+		replicatespuFlushOne(thread, i);
 	}
-
-	thread->server.conn = replicate_spu.rserver[0].conn;
-	thread->broadcast = 1;
 
 	crStateDestroyContext( context->State );
 
@@ -382,7 +363,8 @@ void REPLICATESPU_APIENTRY replicatespu_DestroyContext( GLint ctx )
 }
 
 
-void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
+void REPLICATESPU_APIENTRY
+replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 {
 	GLint *rserverCtx;
 	ContextInfo *newCtx;
@@ -405,6 +387,7 @@ void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeW
 	CRASSERT(thread);
 	CRASSERT(thread->packer);
 
+	/* XXX shouldn't this just be done once? */
 	replicatespuStartVnc( );
 
 	if (ctx) {
@@ -415,8 +398,7 @@ void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeW
 
 		newCtx = &replicate_spu.context[slot];
 
-		newCtx->currentWindow = winInfo->id;
-
+		newCtx->currentWindow = winInfo;
 
 		if (replicate_spu.render_to_crut_window && !nativeWindow) {
 			char response[8096];
@@ -432,8 +414,18 @@ void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeW
 		}
 
 		if (replicate_spu.glx_display && winInfo && winInfo->nativeWindow != nativeWindow) {
-			/* tell VNC to monitor this window id, for window moves */
-			XVncChromiumMonitor( replicate_spu.glx_display, winInfo->id, nativeWindow );
+			/* Tell VNC to monitor the nativeWindow X window for moves/resizes.
+			 * When the server-side VNC module notices such changes, it'll
+			 * send an rfbChromiumMoveResizeWindow message to the VNC viewer.
+			 */
+			int i;
+			for (i = 0; i < CR_MAX_REPLICANTS; i++) {
+				if (winInfo->id[i] >= 0) {
+					XVncChromiumMonitor( replicate_spu.glx_display,
+															 winInfo->id[i], nativeWindow );
+				}
+			}
+
 			winInfo->nativeWindow = nativeWindow;
 
 			replicatespuRePositionWindow(winInfo);
@@ -454,25 +446,31 @@ void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeW
 	/*
 	 * Send the MakeCurrent to all crservers (vnc viewers)
 	 */
-	thread->broadcast = 0;
-
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
 
-		if (replicate_spu.rserver[i].conn == NULL || replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+		if (replicate_spu.rserver[i].conn == NULL ||
+				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
 				continue;
-		thread->server.conn = replicate_spu.rserver[i].conn;
-
 
 		if (replicate_spu.swap)
-			crPackMakeCurrentSWAP( winInfo->id, nativeWindow, rserverCtx[i] );
+			crPackMakeCurrentSWAP( winInfo->id[i], nativeWindow, rserverCtx[i] );
 		else
-			crPackMakeCurrent( winInfo->id, nativeWindow, rserverCtx[i] );
+			crPackMakeCurrent( winInfo->id[i], nativeWindow, rserverCtx[i] );
 
-		replicatespuFlush( (void *)thread );
+		if (show_window) {
+			/* We may find that the window was mapped before we
+			 * called MakeCurrent, if that's the case then ensure
+			 * the remote end gets the WindowShow event */
+			if (winInfo->viewable) {
+				if (replicate_spu.swap)
+					crPackWindowShowSWAP( winInfo->id[i], GL_TRUE );
+				else
+					crPackWindowShow( winInfo->id[i], GL_TRUE );
+			}
+		}
+
+		replicatespuFlushOne(thread, i);
 	}
-
-	thread->server.conn = replicate_spu.rserver[0].conn;
-	thread->broadcast = 1;
 
 	if (ctx) {
 		crStateMakeCurrent( newCtx->State );
@@ -485,21 +483,7 @@ void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeW
 
 	thread->currentContext = newCtx;
 
-	if (show_window) {
-		/* We may find that the window was mapped before we
-		 * called MakeCurrent, if that's the case then ensure
-		 * the remote end gets the WindowShow event */
-		if (winInfo->viewable) 
-		{
-			if (replicate_spu.swap)
-				crPackWindowShowSWAP( winInfo->id, GL_TRUE );
-			else
-				crPackWindowShow( winInfo->id, GL_TRUE );
-		}
-
-		replicatespuFlush( (void *)thread );
-	}
-
+	/* DEBUG */
 	{
 		GET_THREAD(t);
 		(void) t;

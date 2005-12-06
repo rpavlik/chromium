@@ -4,17 +4,10 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "cr_mem.h"
 #include "cr_spu.h"
 #include "cr_glstate.h"
 #include "replicatespu.h"
-#include "cr_packfunctions.h"
-#include <stdio.h>
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <X11/Xmd.h>
-#include <X11/extensions/vnc.h>
 
 extern SPUNamedFunctionTable _cr_replicate_table[];
 

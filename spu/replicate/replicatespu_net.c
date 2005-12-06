@@ -4,71 +4,47 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "cr_pack.h"
 #include "cr_mem.h"
 #include "cr_net.h"
-#include "cr_pixeldata.h"
-#include "cr_protocol.h"
 #include "cr_error.h"
 #include "replicatespu.h"
-#include "replicatespu_proto.h"
 
-#include <X11/Xmd.h>
-#include <X11/extensions/vnc.h>
 
-static void replicatespuWriteback( CRMessageWriteback *wb )
+static void
+replicatespuWriteback( CRMessageWriteback *wb )
 {
 	int *writeback;
 	crMemcpy( &writeback, &(wb->writeback_ptr), sizeof( writeback ) );
 	*writeback = 0;
 }
 
-/**
- * XXX Note that this routine is identical to crNetRecvReadback except
- * we set *writeback=0 instead of decrementing it.  Hmmm.
- */
-static void replicatespuReadback( CRMessageReadback *rb, unsigned int len )
-{
-	/* minus the header, the destination pointer, 
-	 * *and* the implicit writeback pointer at the head. */
 
-	int payload_len = len - sizeof( *rb );
-	int *writeback;
-	void *dest_ptr; 
-	crMemcpy( &writeback, &(rb->writeback_ptr), sizeof( writeback ) );
-	crMemcpy( &dest_ptr, &(rb->readback_ptr), sizeof( dest_ptr ) );
-	CRASSERT(writeback);
-	*writeback = 0;
-	crMemcpy( dest_ptr, ((char *)rb) + sizeof(*rb), payload_len );
-}
-
-static void replicatespuReadPixels( CRMessageReadPixels *rp, unsigned int len )
+static void
+replicatespuReadPixels( CRMessageReadPixels *rp, unsigned int len )
 {
 	crNetRecvReadPixels(rp, len);
 	--replicate_spu.ReadPixels;
 }
 
+
 static int
 replicatespuReceiveData( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
-	switch( msg->header.type )
-	{
+	(void) conn;
+
+	switch (msg->header.type) {
 		case CR_MESSAGE_READ_PIXELS:
 			replicatespuReadPixels( &(msg->readPixels), len );
-			break;
+			return 1; /* handled */
 		case CR_MESSAGE_WRITEBACK:
 			replicatespuWriteback( &(msg->writeback) );
-			break;
-		case CR_MESSAGE_READBACK:
-			replicatespuReadback( &(msg->readback), len );
-			break;
+			return 1; /* handled */
 		default:
-			/*crWarning( "Why is the pack SPU getting a message of type 0x%x?", msg->type ); */
-			return 0; /* NOT HANDLED */
+			;
 	}
-	(void) len;	
-	return 1; /* HANDLED */
+	return 0; /* not handled */
 }
+
 
 static CRMessageOpcodes *
 __prependHeader( CRPackBuffer *buf, unsigned int *len, unsigned int senderID )
@@ -105,49 +81,53 @@ __prependHeader( CRPackBuffer *buf, unsigned int *len, unsigned int senderID )
 	return hdr;
 }
 
-static void replicatespuCheckVncEvents(void)
+
+/**
+ * Flush buffered commands, sending them to just one server
+ */
+void
+replicatespuFlushOne(ThreadInfo *thread, int server)
 {
-	if (replicate_spu.glx_display) {
-		while (XPending(replicate_spu.glx_display)) {
-#if 0
-			int VncConn = replicate_spu.VncEventsBase + XVncConnected;
-			int VncDisconn = replicate_spu.VncEventsBase + XVncDisconnected;
-#endif
-			int VncChromiumConn = replicate_spu.VncEventsBase + XVncChromiumConnected;
-			XEvent event;
-		
-			XNextEvent (replicate_spu.glx_display, &event);
+	unsigned int len;
+	CRMessageOpcodes *hdr;
+	CRPackBuffer *buf;
+	CRConnection *conn;
 
-#if 0
-			if (event.type == VncConn) {
-				crWarning("GOT CONNECTION!!!!\n");
-			} 
-			else
-#endif
-			if (event.type == VncChromiumConn) {
-				XVncConnectedEvent *e = (XVncConnectedEvent*) &event;
-				struct in_addr addr;
+	CRASSERT(server >= 0);
+	CRASSERT(server < CR_MAX_REPLICANTS);
+	CRASSERT(thread);
+	buf = &(thread->buffer);
+	CRASSERT(buf);
+	CRASSERT(buf->pack);
 
-				addr.s_addr = e->ipaddress;
-				crWarning("ReplicateSPU: someone just connected!\n");
-				if (e->ipaddress) {
-					replicatespuReplicateCreateContext(e->ipaddress);
-				} else {
-					crWarning("Replicate SPU: Someone connected, but with no ipaddress ???????????\n");
-				}
-			} 
-#if 0
-			else
-			if (event.type == VncDisconn) {
-				crWarning("GOT DISCONNECTION!!!!\n");
-			}
-#endif
-		}
+	crPackReleaseBuffer( thread->packer );
+
+	if ( buf->opcode_current == buf->opcode_start ) {
+		/* XXX these calls seem to help, but might be appropriate */
+		crPackSetBuffer( thread->packer, buf );
+		crPackResetPointers(thread->packer);
+		return;
 	}
+
+	hdr = __prependHeader( buf, &len, 0 );
+
+	conn = replicate_spu.rserver[server].conn;
+	CRASSERT(conn);
+	CRASSERT(conn->type != CR_NO_CONNECTION);
+
+	crNetSend( conn, NULL, hdr, len );
+
+	/* The network may have found a new mtu */
+	buf->mtu = thread->server.conn->mtu;
+
+	crPackSetBuffer( thread->packer, buf );
+
+	crPackResetPointers(thread->packer);
 }
 
+
 /*
- * This is called from either the Pack SPU and the packer library whenever
+ * This is called from either the Replicate SPU and the packer library whenever
  * we need to send a data buffer to the server.
  */
 void replicatespuFlush(void *arg )
@@ -189,7 +169,7 @@ void replicatespuFlush(void *arg )
 
 	/* Send pack buffer to the primary connection, but if it's the nopspu
 	 * we can drop it on the floor, but not if we've turned off broadcast */
-	if (replicate_spu.NOP || !thread->broadcast) {
+	if (replicate_spu.NOP) {
 		if ( buf->holds_BeginEnd )
 			crNetBarf( thread->server.conn, NULL, hdr, len );
 		else
@@ -199,7 +179,8 @@ void replicatespuFlush(void *arg )
 	/* Now send it to all our replicants */
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) 
 	{
-		if (thread->broadcast && (replicate_spu.rserver[i].conn && replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION))
+		if (replicate_spu.rserver[i].conn &&
+				replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION)
 		{
 			if ( buf->holds_BeginEnd )
 				crNetBarf( replicate_spu.rserver[i].conn, NULL, hdr, len );
@@ -222,8 +203,6 @@ void replicatespuFlush(void *arg )
 	 */
 	if (replicate_spu.vncAvailable)
 		replicatespuCheckVncEvents();
-
-	(void) arg;
 }
 
 
@@ -276,19 +255,20 @@ void replicatespuHuge( CROpcode opcode, void *buf )
 
 	/* Send pack buffer to the primary connection, but if it's the nopspu
 	 * we can drop it on the floor, but not if we've turned off broadcast */
-	if (replicate_spu.NOP || !thread->broadcast) {
+	if (replicate_spu.NOP) {
 		crNetSend( thread->server.conn, NULL, src, len );
 	}
 
 	/* Now send it to all our replicants */
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) 
 	{
-		if (thread->broadcast && (replicate_spu.rserver[i].conn && replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION))
+		if (replicate_spu.rserver[i].conn && replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION)
 		{
 			crNetSend( replicate_spu.rserver[i].conn, NULL, src, len );
 		}
 	}
 }
+
 
 void replicatespuConnectToServer( CRNetServer *server )
 {

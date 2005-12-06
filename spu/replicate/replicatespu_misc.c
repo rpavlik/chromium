@@ -47,62 +47,51 @@ GLint REPLICATESPU_APIENTRY replicatespu_RenderMode( GLenum mode )
 
 void REPLICATESPU_APIENTRY replicatespu_Finish( void )
 {
-	int writeback;
 	unsigned int i;
 	GET_THREAD(thread);
 
 	replicatespuFlush( (void *) thread );
 
-	thread->broadcast = 0;
-
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
-		writeback = 0;
-		if (replicate_spu.rserver[i].conn && replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
-			thread->server.conn = replicate_spu.rserver[i].conn;
-			writeback = 1;
+		int writeback = 1;
 
-			if (replicate_spu.swap)
-			{
-				crPackFinishSWAP(  );
-				crPackWritebackSWAP( &writeback );
-			}
-			else
-			{
-				crPackFinish(  );
-				crPackWriteback( &writeback );
-			}
-			replicatespuFlush( (void *) thread );
-			while (writeback)
-				crNetRecv();
+		if (!replicate_spu.rserver[i].conn ||
+				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+			continue;
+
+		if (replicate_spu.swap) {
+			crPackFinishSWAP();
+			crPackWritebackSWAP( &writeback );
 		}
+		else {
+			crPackFinish();
+			crPackWriteback( &writeback );
+		}
+
+		replicatespuFlushOne(thread, i);
+
+		while (writeback)
+			crNetRecv();
 	}
-
-	thread->server.conn = replicate_spu.rserver[0].conn;
-
-	thread->broadcast = 1;
 }
 
 
-GLint REPLICATESPU_APIENTRY replicatespu_WindowCreate( const char *dpyName, GLint visBits )
+
+GLint REPLICATESPU_APIENTRY
+replicatespu_WindowCreate( const char *dpyName, GLint visBits )
 {
 	unsigned int i;
-	int writeback;
-	GLint return_val;
 	static GLint freeWinID = 400;
 	WindowInfo *winInfo = (WindowInfo *) crCalloc(sizeof(WindowInfo));
 	GET_THREAD(thread);
-#if 0
-	ThreadInfo *thread = &(replicate_spu.thread[0]);
-#endif
-
-	if (thread)
-		replicatespuFlush( (void *) thread );
-
-	if (!thread)
-		thread = replicatespuNewThread( crThreadID() );
 
 	if (!winInfo)
 		return -1;
+
+	if (thread)
+		replicatespuFlush( (void *) thread );
+	else
+		thread = replicatespuNewThread( crThreadID() );
 
 	replicatespuFlush( (void *) thread );
 	crPackSetContext( thread->packer );
@@ -111,78 +100,75 @@ GLint REPLICATESPU_APIENTRY replicatespu_WindowCreate( const char *dpyName, GLin
 	crLockMutex(&_ReplicateMutex);
 #endif
 
-	thread->broadcast = 0;
-
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
-		writeback = 0;
-		return_val = -1;
-
-		if (replicate_spu.rserver[i].conn && replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
-
-			thread->server.conn = replicate_spu.rserver[i].conn;
-			writeback = 1;
+		if (replicate_spu.rserver[i].conn &&
+				replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
+			int writeback = 1;
+			int return_val = -1;
 
 			if (replicate_spu.swap)
-			{
 				crPackWindowCreateSWAP( dpyName, visBits, &return_val, &writeback );
-			}
 			else
-			{
 				crPackWindowCreate( dpyName, visBits, &return_val, &writeback );
-			}
-			replicatespuFlush( (void *) thread );
+
+			replicatespuFlushOne(thread, i);
 
 			while (writeback)
 				crNetRecv();
 
 			if (replicate_spu.swap)
-			{
 				return_val = (GLint) SWAP32(return_val);
-			}
 
-			if (i == 0) {
-				winInfo->id = return_val;
-				winInfo->visBits = visBits;
-				winInfo->width = 0;
-				winInfo->height = 0;
-				winInfo->nativeWindow = 0;
-				winInfo->viewable = GL_FALSE; 
+			if (return_val < 0)
+				crWarning("Replicate SPU: server %d returned window id -1", i);
 
-				crHashtableAdd(replicate_spu.windowTable, freeWinID, winInfo);
-			}
+			/* XXX temp */
+			crDebug("Replicate SPU: Window create, server %d returned %d", i, return_val);
+			winInfo->id[i] = return_val;
+		}
+		else {
+			winInfo->id[i] = -1;
 		}
 	}
 
-	thread->broadcast = 1;
-	thread->server.conn = replicate_spu.rserver[0].conn;
+	winInfo->visBits = visBits;
+	winInfo->width = 0;
+	winInfo->height = 0;
+	winInfo->nativeWindow = 0;
+	winInfo->viewable = GL_FALSE; 
+
+	crHashtableAdd(replicate_spu.windowTable, freeWinID, winInfo);
 
 #ifdef CHROMIUM_THREADSAFE_notyet
 	crUnlockMutex(&_ReplicateMutex);
 #endif
 
-	if (winInfo->id != -1) {
-		crDebug("Replicate SPU: CreateWindow returning ID %d", freeWinID);
-		return freeWinID++;
-	}
-	else
-		return -1;
+	return freeWinID++;
 }
 
-void REPLICATESPU_APIENTRY replicatespu_WindowSize( GLint win, GLint w, GLint h )
+
+void REPLICATESPU_APIENTRY
+replicatespu_WindowSize( GLint win, GLint w, GLint h )
 {
 	WindowInfo *winInfo = (WindowInfo *) crHashtableSearch( replicate_spu.windowTable, win );
 	GET_THREAD(thread);
+	int i;
 
 	winInfo->width = w;
 	winInfo->height = h;
 
-	if (replicate_spu.swap)
-	{
-		crPackWindowSizeSWAP( winInfo->id, w, h );
-	}
-	else
-	{
-		crPackWindowSize( winInfo->id, w, h );
-	}
 	replicatespuFlush( (void *) thread );
+
+	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
+		if (!replicate_spu.rserver[i].conn ||
+				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+			continue;
+
+		if (replicate_spu.swap)
+			crPackWindowSizeSWAP( winInfo->id[i], w, h );
+		else
+			crPackWindowSize( winInfo->id[i], w, h );
+
+		replicatespuFlushOne(thread, i);
+	}
 }

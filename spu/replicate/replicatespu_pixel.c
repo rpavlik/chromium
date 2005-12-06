@@ -10,25 +10,29 @@
 #include "replicatespu.h"
 #include "replicatespu_proto.h"
 
-void REPLICATESPU_APIENTRY replicatespu_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels )
+
+void REPLICATESPU_APIENTRY
+replicatespu_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
+												 GLenum format, GLenum type, GLvoid *pixels )
 {
 	GET_THREAD(thread);
 	unsigned int i;
 	ContextInfo *ctx = thread->currentContext;
 	CRClientState *clientState = &(ctx->State->client);
-	int writeback;
 
-	/* flush any pending data, before broadcast unset */
 	replicatespuFlush( (void *) thread );
 
 	replicate_spu.ReadPixels++;
 
-	thread->broadcast = 0;
+	/*
+	 * Only send ReadPixels to one server, the first active one we find.
+	 */
 
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
 		/* hijack the current packer context */
-		if (replicate_spu.rserver[i].conn && replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
-			thread->server.conn = replicate_spu.rserver[i].conn;
+		if (replicate_spu.rserver[i].conn &&
+				replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
+			int writeback;
 
 			if (replicate_spu.swap)
 			{
@@ -40,14 +44,13 @@ void REPLICATESPU_APIENTRY replicatespu_ReadPixels( GLint x, GLint y, GLsizei wi
 				crPackReadPixels( x, y, width, height, format, type, pixels,
 							&(clientState->pack), &writeback );
 			}
-			replicatespuFlush( (void *) thread );
+			replicatespuFlushOne(thread, i);
 
 			while (replicate_spu.ReadPixels) 
 				crNetRecv();
 
-			thread->server.conn = replicate_spu.rserver[0].conn;
+			/* Only need pixels from one server - all done now */
+			return;
 		}
 	}
-
-	thread->broadcast = 1;
 }

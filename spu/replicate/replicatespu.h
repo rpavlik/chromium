@@ -21,6 +21,8 @@
 #include "cr_dlm.h"
 #include "state/cr_client.h"
 
+#define CHROMIUM_START_PORT 7000
+
 #define CR_MAX_REPLICANTS 10
 
 typedef struct thread_info_t ThreadInfo;
@@ -28,17 +30,13 @@ typedef struct context_info_t ContextInfo;
 typedef struct window_info_t WindowInfo;
 
 struct window_info_t {
-	GLint id;
+	GLint id[CR_MAX_REPLICANTS]; /* server-side ID */
 	GLint visBits;
-
 	GLint width, height;
-
 	GLint nativeWindow;
-	
 	GLboolean viewable;
+	int writeback;  /* for swapbuffers throttling */
 };
-
-#define CHROMIUM_START_PORT 7000
 
 struct thread_info_t {
 	unsigned long id;
@@ -50,15 +48,13 @@ struct thread_info_t {
 	int BeginEndState;
 	ContextInfo *currentContext;
 	CRPackContext *packer;
-	int writeback;
-	unsigned int broadcast;
 };
 
 struct context_info_t {
 	CRContext *State; 
 	GLint serverCtx;         /* context ID returned by server */
 	GLint visBits;
-	GLint currentWindow;
+	WindowInfo *currentWindow;
 	GLint rserverCtx[CR_MAX_REPLICANTS];
 	CRDLM *displayListManager;
 	CRDLMContextState *dlmState;
@@ -87,8 +83,8 @@ typedef struct {
 
 	CRHashTable *windowTable;
 
-	int vncAvailable;
-	int NOP;
+	int vncAvailable; /* is the VNC X extension available? */
+	int NOP;        /* Is the 0th server's SPU a NOP SPU? */
 	int StartedVnc;
 
 	char *name;
@@ -119,11 +115,13 @@ extern void replicatespuCreateFunctions( void );
 extern void replicatespuGatherConfiguration( const SPU *child_spu );
 extern void replicatespuConnectToServer( CRNetServer *server );
 extern void replicatespuFlush( void *arg );
+extern void replicatespuFlushOne(ThreadInfo *thread, int server);
 extern void replicatespuHuge( CROpcode opcode, void *buf );
-extern void replicatespuReplicateCreateContext( int ipaddress );
+extern void replicatespuReplicate( int ipaddress );
 extern void replicatespuRePositionWindow(WindowInfo *winInfo);
 extern void replicatespuCreateDiffAPI( void );
 extern void replicatespuCreateStateAPI( void );
+extern void replicatespuCheckVncEvents(void);
 
 extern ThreadInfo *replicatespuNewThread( unsigned long id );
 
