@@ -81,6 +81,7 @@ typedef struct {
 	CRNetServer rserver[CR_MAX_REPLICANTS];
 
 	CRHashTable *windowTable;
+	CRHashTable *contextTable;
 
 	int vncAvailable; /* is the VNC X extension available? */
 	int NOP;        /* Is the 0th server's SPU a NOP SPU? */
@@ -91,9 +92,6 @@ typedef struct {
 
 	int numThreads;
 	ThreadInfo thread[MAX_THREADS];
-
-	int numContexts;
-	ContextInfo context[CR_MAX_CONTEXTS];
 
 	CRDLM *displayListManager;  /* shared by all contexts */
 } ReplicateSPU;

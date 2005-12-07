@@ -14,9 +14,6 @@
 static void
 setDefaults( void )
 {
-	crMemZero(replicate_spu.context, CR_MAX_CONTEXTS * sizeof(ContextInfo));
-	replicate_spu.numContexts = 0;
-
 	crMemZero(replicate_spu.thread, MAX_THREADS * sizeof(ThreadInfo));
 	replicate_spu.numThreads = 0;
 }

@@ -47,8 +47,9 @@ replicateSPUInit( int id, SPU *child, SPU *self,
 
 	replicatespuGatherConfiguration( child );
 
-	/* Init window hash tables */
+	/* Init window/context hash tables */
 	replicate_spu.windowTable = crAllocHashtable();
+	replicate_spu.contextTable = crAllocHashtable();
 
 	/* This connects to the server, sets up the packer, etc. */
 	thread = replicatespuNewThread( crThreadID() );

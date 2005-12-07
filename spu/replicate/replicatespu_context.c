@@ -149,11 +149,12 @@ replicatespuStartVnc( void )
 GLint REPLICATESPU_APIENTRY
 replicatespu_CreateContext( const char *dpyName, GLint visual )
 {
+	static GLint freeCtxID = MAGIC_OFFSET;
 	static int done = 0;
 	int writeback;
 	GLint serverCtx = (GLint) -1;
-	int slot;
 	char headspuname[10];
+	ContextInfo *context;
 
 	replicatespuFlush( &(replicate_spu.thread[0]) );
 
@@ -204,19 +205,14 @@ replicatespu_CreateContext( const char *dpyName, GLint visual )
 #ifdef CHROMIUM_THREADSAFE_notyet
 		crUnlockMutex(&_ReplicateMutex);
 #endif
-		crWarning("Replicate SPU: Failure in replicatespu_CreateContext");
+		crWarning("Replicate SPU: Failure in CreateContext");
 		return -1;  /* failed */
 	}
 
-	/* find an empty context slot */
-	for (slot = 0; slot < replicate_spu.numContexts; slot++) {
-		if (!replicate_spu.context[slot].State) {
-			/* found empty slot */
-			break;
-		}
-	}
-	if (slot == replicate_spu.numContexts) {
-		replicate_spu.numContexts++;
+	context = (ContextInfo *) crCalloc(sizeof(ContextInfo));
+	if (!context) {
+		crWarning("Replicate SPU: Out of memory in CreateContext");
+		return -1;
 	}
 
 	/* The first slot (slot 0) gets its own display list manager.
@@ -239,20 +235,20 @@ replicatespu_CreateContext( const char *dpyName, GLint visual )
 	}
 
 	/* Fill in the new context info */
-	replicate_spu.context[slot].State = crStateCreateContext(NULL, visual);
-	replicate_spu.context[slot].serverCtx = serverCtx;
-	replicate_spu.context[slot].rserverCtx[0] = serverCtx;
-	replicate_spu.context[slot].visBits = visual;
-	replicate_spu.context[slot].currentWindow = 0; /* not bound */
-	replicate_spu.context[slot].dlmState
+	context->State = crStateCreateContext(NULL, visual);
+	context->serverCtx = serverCtx;
+	context->rserverCtx[0] = serverCtx;
+	context->visBits = visual;
+	context->currentWindow = 0; /* not bound */
+	context->dlmState
 		= crDLMNewContext(replicate_spu.displayListManager);
-	replicate_spu.context[slot].displayListMode = GL_FALSE; /* not compiling */
-	replicate_spu.context[slot].displayListIdentifier = 0;
+	context->displayListMode = GL_FALSE; /* not compiling */
+	context->displayListIdentifier = 0;
 
 #if 0
 	/* Set the Current pointers now.... */
-	crStateSetCurrentPointers( replicate_spu.context[slot].State,
-						 &(replicate_spu.thread[0].packer->current) );
+	crStateSetCurrentPointers( context->State,
+														 &(replicate_spu.thread[0].packer->current) );
 #endif
 
 	(void) done;
@@ -293,9 +289,10 @@ replicatespu_CreateContext( const char *dpyName, GLint visual )
 				return -1;  /* failed */
 			}
 
-			replicate_spu.context[slot].rserverCtx[i] = rserverCtx;
+			context->rserverCtx[i] = rserverCtx;
 		}
 	}
+
 
 	if (!crStrcmp( headspuname, "nop" ))
 		replicate_spu.NOP = 0;
@@ -306,23 +303,24 @@ replicatespu_CreateContext( const char *dpyName, GLint visual )
 	crUnlockMutex(&_ReplicateMutex);
 #endif
 
-	return MAGIC_OFFSET + slot;
+	crHashtableAdd(replicate_spu.contextTable, freeCtxID, context);
+
+	return freeCtxID++;
 }
 
 
-void REPLICATESPU_APIENTRY replicatespu_DestroyContext( GLint ctx )
+void REPLICATESPU_APIENTRY
+replicatespu_DestroyContext( GLint ctx )
 {
-	const int slot = ctx - MAGIC_OFFSET;
 	unsigned int i;
-	ContextInfo *context;
+	ContextInfo *context = (ContextInfo *) crHashtableSearch(replicate_spu.contextTable, ctx);
 	GET_THREAD(thread);
 
-	if (slot < 0 || slot >= replicate_spu.numContexts) {
+	if (!context) {
 		crWarning("Replicate SPU: DestroyContext, bad context %d", ctx);
+		return;
 	}
 	CRASSERT(thread);
-
-	context = &(replicate_spu.context[slot]);
 
 	replicatespuFlush( (void *)thread );
 
@@ -357,6 +355,8 @@ void REPLICATESPU_APIENTRY replicatespu_DestroyContext( GLint ctx )
 		crStateMakeCurrent( NULL );
 		crDLMSetCurrentState(NULL);
 	}
+
+	crHashtableDelete(replicate_spu.contextTable, ctx, crFree);
 }
 
 
@@ -392,14 +392,21 @@ replicatespuEndMonitorWindow(WindowInfo *winInfo)
 }
 
 
+
 /**
  * Callback called by crHashtableWalk() below.
  */
 static void
+destroyContextCallback(unsigned long key, void *data1, void *data2)
+{
+	if (key >= 1) {
+		replicatespu_DestroyContext((GLint) key);
+	}
+}
+
+static void
 destroyWindowCallback(unsigned long key, void *data1, void *data2)
 {
-	WindowInfo *winInfo = (WindowInfo *) data1;
-	CRASSERT(winInfo);
 	if (key >= 1) {
 		replicatespu_WindowDestroy((GLint) key);
 	}
@@ -409,12 +416,7 @@ destroyWindowCallback(unsigned long key, void *data1, void *data2)
 void
 replicatespuDestroyAllWindowsAndContexts(void)
 {
-	int i;
-	for (i = 0; i < replicate_spu.numContexts; i++) {
-		if (replicate_spu.context[i].State)
-			replicatespu_DestroyContext(MAGIC_OFFSET + i);
-	}
-
+	crHashtableWalk(replicate_spu.contextTable, destroyContextCallback, NULL);
 	crHashtableWalk(replicate_spu.windowTable, destroyWindowCallback, NULL);
 }
 
@@ -424,10 +426,10 @@ void REPLICATESPU_APIENTRY
 replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 {
 	GLint *rserverCtx;
-	ContextInfo *newCtx;
 	unsigned int i;
 	unsigned int show_window = 0;
 	WindowInfo *winInfo = (WindowInfo *) crHashtableSearch( replicate_spu.windowTable, window );
+	ContextInfo *newCtx = (ContextInfo *) crHashtableSearch( replicate_spu.contextTable, ctx );
 	GET_THREAD(thread);
 
 	if (!winInfo) {
@@ -447,13 +449,7 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 	/* XXX shouldn't this just be done once? */
 	replicatespuStartVnc( );
 
-	if (ctx) {
-		const int slot = ctx - MAGIC_OFFSET;
-
-		CRASSERT(slot >= 0);
-		CRASSERT(slot < replicate_spu.numContexts);
-
-		newCtx = &replicate_spu.context[slot];
+	if (newCtx) {
 
 		newCtx->currentWindow = winInfo;
 
@@ -519,7 +515,7 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 		replicatespuFlushOne(thread, i);
 	}
 
-	if (ctx) {
+	if (newCtx) {
 		crStateMakeCurrent( newCtx->State );
 		crDLMSetCurrentState(newCtx->dlmState);
 	}

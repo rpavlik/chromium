@@ -156,6 +156,8 @@ replicatespu_WindowDestroy(GLint win)
 
 	replicatespuFlush( (void *) thread );
 
+	replicatespuEndMonitorWindow(winInfo);
+
 	if (winInfo) {
 		for (i = 0; i < CR_MAX_REPLICANTS; i++) {
 			if (!replicate_spu.rserver[i].conn ||
@@ -171,7 +173,7 @@ replicatespu_WindowDestroy(GLint win)
 		}
 	}
 
-	replicatespuEndMonitorWindow(winInfo);
+	crHashtableDelete(replicate_spu.windowTable, win, crFree);
 }
 
 

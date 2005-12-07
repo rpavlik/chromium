@@ -170,7 +170,7 @@ static int ServerIndex = -1;
  * Used to create viewer-side windows for all the application windows.
  */
 static void
-replicatespuReCreateWindows(unsigned long key, void *data1, void *data2)
+replicatespuReplicateWindows(unsigned long key, void *data1, void *data2)
 {
 	ThreadInfo *thread = (ThreadInfo *) data2;
 	WindowInfo *winInfo = (WindowInfo *) data1;
@@ -264,6 +264,114 @@ replicatespuResizeWindows(unsigned long key, void *data1, void *data2)
 }
 
 
+/**
+ * Replicate our contexts on a new server (indicated by ServerIndex).
+ */
+static void
+replicatespuReplicateContexts(unsigned long key, void *data1, void *data2)
+{
+	ThreadInfo *thread = (ThreadInfo *) data2;
+	ContextInfo *context = (ContextInfo *) data1;
+	CRContext *temp_c;
+	GLint return_val = 0;
+	int writeback;
+
+	if (!context->State) /* XXX need this */
+		return;
+
+	/* Send CreateContext */
+	if (replicate_spu.swap)
+		crPackCreateContextSWAP( replicate_spu.dpyName, context->visBits, &return_val, &writeback);
+	else
+		crPackCreateContext( replicate_spu.dpyName, context->visBits, &return_val, &writeback);
+			
+	replicatespuFlushOne(thread, ServerIndex);
+
+	/* Get return value */
+	writeback = 1;
+	while (writeback)
+		crNetRecv();
+	if (replicate_spu.swap)
+		return_val = (GLint) SWAP32(return_val);
+
+	if (return_val <= 0) {
+		crWarning("Replicate SPU: CreateContext failed");
+		return;
+	}
+
+	/* Fill in the new context info */
+	temp_c = crStateCreateContext(NULL, context->visBits);
+
+	context->rserverCtx[ServerIndex] = return_val;
+
+	/* MakeCurrent */
+	/* XXX Why are we making current here??? */
+	{
+		int serverWindow;
+		if (context->currentWindow)
+			serverWindow = context->currentWindow->id[ServerIndex];
+		else
+			serverWindow = 0;
+
+		if (replicate_spu.swap)
+			crPackMakeCurrentSWAP( serverWindow, 0, return_val );
+		else
+			crPackMakeCurrent( serverWindow, 0, return_val );
+	}
+
+	replicatespuFlushOne(thread, ServerIndex);
+
+	/* Diff Context */
+#if 0
+	crDebug("BEFORE CONTEXT DIFF\n");
+	replicatespuDebugOpcodes( &thread->packer->buffer );
+#endif
+#if 1
+	/* Recreate all the textures */
+	{
+		unsigned int u;
+		CRTextureState *to = &(context->State->texture);
+		crHashtableWalk(to->idHash, TextureObjDiffCallback, temp_c);
+
+		/* Now troll the currentTexture bindings too.  
+		 * Note that the callback function
+		 * is set up to be called from a hashtable walk 
+		 * (so it takes a key), so when
+		 * we call it directly, we pass in a dummy key.
+		 */
+#define DUMMY_KEY 0
+		for (u = 0; u < temp_c->limits.maxTextureUnits; u++) {
+			TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture1D, (void *)temp_c );
+			TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture2D, (void *)temp_c );
+			TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture3D, (void *)temp_c );
+			TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTextureCubeMap, (void *)temp_c );
+		}
+	}
+#endif
+	crStateDiffContext( temp_c, context->State );
+
+#if 0
+	crDebug("AFTER CONTEXT DIFF\n");
+	replicatespuDebugOpcodes( &thread->packer->buffer );
+#endif
+
+	replicatespuFlushOne(thread, ServerIndex);
+
+	/* Send over all the display lists for this context. The temporary
+	 * context should have all the client information needed, so that
+	 * we can restore correct client state after we're done.
+	 */
+	crDLMSetupClientState(&replicate_spu.diff_dispatch);
+	crDLMSendAllDLMLists(replicate_spu.displayListManager, 
+											 &replicate_spu.diff_dispatch);
+	crDLMRestoreClientState(&temp_c->client, &replicate_spu.diff_dispatch);
+			
+	replicatespuFlushOne(thread, ServerIndex);
+
+	/* DestroyContext (only the temporary one) */
+	crStateDestroyContext( temp_c );
+}
+
 
 /**
  * This is the main routine responsible for replicating our GL state
@@ -279,7 +387,6 @@ replicatespuReplicate(int ipaddress)
 	char *hosturl;
 	char *ipstring;
 	int r_slot;
-	int slot;
 
 	crDebug("Enter replicatespuReplicate(ipaddress=0x%x)", ipaddress);
 
@@ -340,118 +447,13 @@ replicatespuReplicate(int ipaddress)
 														replicate_spu.rserver[r_slot].buffer_size, 1);
 
 	/*
-	 * Create server-side windows by walking table of app windows
+	 * Create server-side windows and contexts by walking tables of app windows
+	 * and contexts.
 	 */
 	ServerIndex = r_slot;
-	crHashtableWalk(replicate_spu.windowTable, replicatespuReCreateWindows, thread);
+	crHashtableWalk(replicate_spu.windowTable, replicatespuReplicateWindows, thread);
+	crHashtableWalk(replicate_spu.contextTable, replicatespuReplicateContexts, thread);
 	ServerIndex = -1;
-
-	/*
-	 * Create server-side rendering context for each app rendering context.
-	 */
-	for (slot = 0; slot < replicate_spu.numContexts; slot++) {
-		if (replicate_spu.context[slot].State != NULL) {
-			CRContext *temp_c;
-			GLint visBits = replicate_spu.context[slot].visBits;
-			GLint return_val = 0;
-			int writeback;
-
-			/* Send CreateContext */
-			if (replicate_spu.swap)
-				crPackCreateContextSWAP( replicate_spu.dpyName, visBits, &return_val, &writeback);
-			else
-				crPackCreateContext( replicate_spu.dpyName, visBits, &return_val, &writeback);
-			
-			replicatespuFlushOne(thread, r_slot);
-
-			/* Get return value */
-			writeback = 1;
-			while (writeback)
-				crNetRecv();
-			if (replicate_spu.swap)
-				return_val = (GLint) SWAP32(return_val);
-
-			if (!return_val) {
-				crWarning("Replicate SPU: CreateContext failed");
-				continue;
-			}
-
-			/* Fill in the new context info */
-			temp_c = crStateCreateContext(NULL, replicate_spu.context[slot].visBits);
-
-			replicate_spu.context[slot].rserverCtx[r_slot] = return_val;
-
-			/* MakeCurrent */
-			/* XXX WHY ARE we making current here??? */
-			/*if (replicate_spu.context[slot].currentWindow)*/
-			{
-				int serverWindow;
-				if (replicate_spu.context[slot].currentWindow)
-					serverWindow = replicate_spu.context[slot].currentWindow->id[r_slot];
-				else
-					serverWindow = 0;
-
-				if (replicate_spu.swap)
-					crPackMakeCurrentSWAP( serverWindow, 0, return_val );
-				else
-					crPackMakeCurrent( serverWindow, 0, return_val );
-			}
-
-			replicatespuFlushOne(thread, r_slot);
-
-			/* Diff Context */
-#if 0
-			crDebug("BEFORE CONTEXT DIFF\n");
-			replicatespuDebugOpcodes( &thread->packer->buffer );
-#endif
-#if 1
-			/* Recreate all the textures */
-			{
-				unsigned int u;
-				CRTextureState *to = &(replicate_spu.context[slot].State->texture);
-				crHashtableWalk(to->idHash, TextureObjDiffCallback, temp_c);
-
-				/* Now troll the currentTexture bindings too.  
-				 * Note that the callback function
-				 * is set up to be called from a hashtable walk 
-				 * (so it takes a key), so when
-				 * we call it directly, we pass in a dummy key.
-				 */
-#define DUMMY_KEY 0
-				for (u = 0; u < temp_c->limits.maxTextureUnits; u++) {
-					TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture1D, (void *)temp_c );
-					TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture2D, (void *)temp_c );
-					TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture3D, (void *)temp_c );
-					TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTextureCubeMap, (void *)temp_c );
-				}
-			}
-#endif
-			crStateDiffContext( temp_c, replicate_spu.context[slot].State );
-
-#if 0
-			crDebug("AFTER CONTEXT DIFF\n");
-			replicatespuDebugOpcodes( &thread->packer->buffer );
-#endif
-
-			replicatespuFlushOne(thread, r_slot);
-
-			/* Send over all the display lists for this context. The temporary
-			 * context should have all the client information needed, so that
-			 * we can restore correct client state after we're done.
-			 */
-			crDLMSetupClientState(&replicate_spu.diff_dispatch);
-			crDLMSendAllDLMLists(replicate_spu.displayListManager, 
-													 &replicate_spu.diff_dispatch);
-			crDLMRestoreClientState(&temp_c->client, &replicate_spu.diff_dispatch);
-			
-			replicatespuFlushOne(thread, r_slot);
-
-			/* DestroyContext (only the temporary one) */
-			crStateDestroyContext( temp_c );
-
-		}
-	}
-
 
 	/* MakeCurrent, the current context */
 	if (thread->currentContext) {
