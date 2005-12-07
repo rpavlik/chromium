@@ -224,21 +224,18 @@ replicatespu_CreateContext( const char *dpyName, GLint visual )
 	 * This isn't great behavior, but it matches Chromium's default
 	 * behaviors.
 	 */
-	if (slot == 0) {
-		replicate_spu.context[slot].displayListManager = 
-			crDLMNewDLM(0, NULL);
-		if (!replicate_spu.context[slot].displayListManager) {
+	if (!replicate_spu.displayListManager) {
+		replicate_spu.displayListManager = crDLMNewDLM(0, NULL);
+		if (!replicate_spu.displayListManager) {
 			crWarning("replicatespu_CreateContext: could not initialize DLM");
 		}
 	}
 	else {
-		replicate_spu.context[slot].displayListManager = 
-			replicate_spu.context[0].displayListManager;
 		/* Let the DLM know that a second context is using the
 		 * same display list manager, so it can manage when its
 		 * resources are released.
 		 */
-		crDLMUseDLM(replicate_spu.context[slot].displayListManager);
+		crDLMUseDLM(replicate_spu.displayListManager);
 	}
 
 	/* Fill in the new context info */
@@ -247,8 +244,8 @@ replicatespu_CreateContext( const char *dpyName, GLint visual )
 	replicate_spu.context[slot].rserverCtx[0] = serverCtx;
 	replicate_spu.context[slot].visBits = visual;
 	replicate_spu.context[slot].currentWindow = 0; /* not bound */
-	replicate_spu.context[slot].dlmState = crDLMNewContext(
-			replicate_spu.context[slot].displayListManager);
+	replicate_spu.context[slot].dlmState
+		= crDLMNewContext(replicate_spu.displayListManager);
 	replicate_spu.context[slot].displayListMode = GL_FALSE; /* not compiling */
 	replicate_spu.context[slot].displayListIdentifier = 0;
 
@@ -351,9 +348,8 @@ void REPLICATESPU_APIENTRY replicatespu_DestroyContext( GLint ctx )
 	 * will track its uses and will only release the resources
 	 * when the last user has relinquished it.
 	 */
-	crDLMFreeDLM(context->displayListManager);
+	crDLMFreeDLM(replicate_spu.displayListManager);
 	crDLMFreeContext(context->dlmState);
-	context->displayListManager = NULL;
 	context->dlmState = NULL;
 
 	if (thread->currentContext == context) {
@@ -416,7 +412,7 @@ replicatespuDestroyAllWindowsAndContexts(void)
 	int i;
 	for (i = 0; i < replicate_spu.numContexts; i++) {
 		if (replicate_spu.context[i].State)
-			replicatespu_DestroyContext(MAGIC_OFFSET + i); /*replicate_spu.context[i].serverCtx);*/
+			replicatespu_DestroyContext(MAGIC_OFFSET + i);
 	}
 
 	crHashtableWalk(replicate_spu.windowTable, destroyWindowCallback, NULL);

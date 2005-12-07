@@ -440,7 +440,7 @@ replicatespuReplicate(int ipaddress)
 			 * we can restore correct client state after we're done.
 			 */
 			crDLMSetupClientState(&replicate_spu.diff_dispatch);
-			crDLMSendAllDLMLists(replicate_spu.context[slot].displayListManager, 
+			crDLMSendAllDLMLists(replicate_spu.displayListManager, 
 													 &replicate_spu.diff_dispatch);
 			crDLMRestoreClientState(&temp_c->client, &replicate_spu.diff_dispatch);
 			

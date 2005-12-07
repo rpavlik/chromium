@@ -56,7 +56,6 @@ struct context_info_t {
 	GLint visBits;
 	WindowInfo *currentWindow;
 	GLint rserverCtx[CR_MAX_REPLICANTS];
-	CRDLM *displayListManager;
 	CRDLMContextState *dlmState;
 	GLenum displayListMode;
 	GLuint displayListIdentifier;
@@ -95,6 +94,8 @@ typedef struct {
 
 	int numContexts;
 	ContextInfo context[CR_MAX_CONTEXTS];
+
+	CRDLM *displayListManager;  /* shared by all contexts */
 } ReplicateSPU;
 
 extern ReplicateSPU replicate_spu;
