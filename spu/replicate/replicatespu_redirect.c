@@ -179,6 +179,7 @@ replicatespuReplicateWindows(unsigned long key, void *data1, void *data2)
 	Window root;
 	int x, y;
 	unsigned int width, height, bw, d;
+	GLboolean unviewable = GL_FALSE;
 	XWindowAttributes winAtt;
 
 	CRASSERT(ServerIndex >= 0);
@@ -193,6 +194,9 @@ replicatespuReplicateWindows(unsigned long key, void *data1, void *data2)
 	XGetWindowAttributes(replicate_spu.glx_display,
 											 (Window) winInfo->nativeWindow, &winAtt);
 	XSetErrorHandler( old_xerror_handler );
+	if (!caught_x11_error) {
+		 unviewable = (winAtt.map_state == IsUnviewable);
+	}
 	caught_x11_error = 0;
 
 	/*
@@ -228,7 +232,7 @@ replicatespuReplicateWindows(unsigned long key, void *data1, void *data2)
 	/*
 	 * If the app window is not visible, hide the server-side window too.
 	 */
-	if (winAtt.map_state == IsUnviewable) 
+	if (unviewable)
 	{
 		if (replicate_spu.swap)
 			crPackWindowShowSWAP( window, GL_FALSE );
