@@ -76,6 +76,20 @@ void REPLICATESPU_APIENTRY replicatespu_Finish( void )
 }
 
 
+void REPLICATESPU_APIENTRY replicatespu_Flush( void )
+{
+	GET_THREAD(thread);
+	if (replicate_spu.swap)
+	{
+		crPackFlushSWAP();
+	}
+	else
+	{
+		crPackFlush();
+	}
+	replicatespuFlush( (void *) thread );
+}
+
 
 GLint REPLICATESPU_APIENTRY
 replicatespu_WindowCreate( const char *dpyName, GLint visBits )

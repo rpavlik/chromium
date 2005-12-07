@@ -57,6 +57,7 @@ GetString
 ChromiumParametervCR
 RenderMode
 Finish
+Flush
 WindowCreate
 WindowDestroy
 WindowSize
