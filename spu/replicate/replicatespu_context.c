@@ -339,8 +339,6 @@ replicatespu_DestroyContext( GLint ctx )
 
 	crStateDestroyContext( context->State );
 
-	context->State = NULL;
-	context->serverCtx = 0;
 	/* Although we only allocate a display list manager once,
 	 * we free it every time; this is okay since the DLM itself
 	 * will track its uses and will only release the resources
@@ -348,13 +346,15 @@ replicatespu_DestroyContext( GLint ctx )
 	 */
 	crDLMFreeDLM(replicate_spu.displayListManager);
 	crDLMFreeContext(context->dlmState);
-	context->dlmState = NULL;
 
 	if (thread->currentContext == context) {
 		thread->currentContext = NULL;
 		crStateMakeCurrent( NULL );
 		crDLMSetCurrentState(NULL);
 	}
+
+	/* zero, just to be safe */
+	crMemZero(context, sizeof(ContextInfo));
 
 	crHashtableDelete(replicate_spu.contextTable, ctx, crFree);
 }
