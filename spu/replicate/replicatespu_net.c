@@ -169,7 +169,7 @@ void replicatespuFlush(void *arg )
 
 	/* Send pack buffer to the primary connection, but if it's the nopspu
 	 * we can drop it on the floor, but not if we've turned off broadcast */
-	if (replicate_spu.NOP) {
+	if (1/*replicate_spu.NOP*/) {
 		if ( buf->holds_BeginEnd )
 			crNetBarf( thread->server.conn, NULL, hdr, len );
 		else
@@ -255,7 +255,7 @@ void replicatespuHuge( CROpcode opcode, void *buf )
 
 	/* Send pack buffer to the primary connection, but if it's the nopspu
 	 * we can drop it on the floor, but not if we've turned off broadcast */
-	if (replicate_spu.NOP) {
+	if (1/*replicate_spu.NOP*/) {
 		crNetSend( thread->server.conn, NULL, src, len );
 	}
 
