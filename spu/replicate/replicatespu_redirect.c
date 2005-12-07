@@ -215,10 +215,15 @@ replicatespuReplicateWindows(unsigned long key, void *data1, void *data2)
 	/* save the server-side window ID */
 	winInfo->id[ServerIndex] = window;
 
+	crDebug("Replicate SPU: created server-side window %d", window);
+
 	if (window < 0) {
 		crWarning("Replicate SPU: failed to create server-side window");
 		return;
 	}
+
+	XVncChromiumMonitor(replicate_spu.glx_display,
+											window, winInfo->nativeWindow);
 
 	/*
 	 * If the app window is not visible, hide the server-side window too.
