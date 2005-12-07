@@ -148,6 +148,35 @@ replicatespu_WindowCreate( const char *dpyName, GLint visBits )
 
 
 void REPLICATESPU_APIENTRY
+replicatespu_WindowDestroy(GLint win)
+{
+	WindowInfo *winInfo = (WindowInfo *) crHashtableSearch( replicate_spu.windowTable, win );
+	GET_THREAD(thread);
+	int i;
+
+	replicatespuFlush( (void *) thread );
+
+	if (winInfo) {
+		for (i = 0; i < CR_MAX_REPLICANTS; i++) {
+			if (!replicate_spu.rserver[i].conn ||
+					replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+				continue;
+
+			if (replicate_spu.swap)
+				crPackWindowDestroySWAP( winInfo->id[i] );
+			else
+				crPackWindowDestroy( winInfo->id[i] );
+
+			replicatespuFlushOne(thread, i);
+		}
+	}
+
+	replicatespuEndMonitorWindow(winInfo);
+}
+
+
+
+void REPLICATESPU_APIENTRY
 replicatespu_WindowSize( GLint win, GLint w, GLint h )
 {
 	WindowInfo *winInfo = (WindowInfo *) crHashtableSearch( replicate_spu.windowTable, win );

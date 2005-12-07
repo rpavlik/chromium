@@ -123,6 +123,11 @@ extern void replicatespuCreateDiffAPI( void );
 extern void replicatespuCreateStateAPI( void );
 extern void replicatespuCheckVncEvents(void);
 
+extern void replicatespuBeginMonitorWindow(WindowInfo *winInfo);
+extern void replicatespuEndMonitorWindow(WindowInfo *winInfo);
+extern void replicatespuDestroyAllWindowsAndContexts(void);
+
+
 extern ThreadInfo *replicatespuNewThread( unsigned long id );
 
 extern GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLint visual );

@@ -74,11 +74,14 @@ replicateSPUSelfDispatch(SPUDispatchTable *self)
 	crSPUCopyDispatchTable( &(replicate_spu.self), self );
 }
 
+
 static int
 replicateSPUCleanup(void)
 {
+	replicatespuDestroyAllWindowsAndContexts();
 	return 1;
 }
+
 
 extern SPUOptions replicateSPUOptions[];
 

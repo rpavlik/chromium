@@ -7,6 +7,7 @@ Flush
 Finish
 CreateContext
 WindowCreate
+WindowDestroy
 WindowSize
 MakeCurrent
 DestroyContext

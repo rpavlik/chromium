@@ -320,8 +320,9 @@ void REPLICATESPU_APIENTRY replicatespu_DestroyContext( GLint ctx )
 	ContextInfo *context;
 	GET_THREAD(thread);
 
-	CRASSERT(slot >= 0);
-	CRASSERT(slot < replicate_spu.numContexts);
+	if (slot < 0 || slot >= replicate_spu.numContexts) {
+		crWarning("Replicate SPU: DestroyContext, bad context %d", ctx);
+	}
 	CRASSERT(thread);
 
 	context = &(replicate_spu.context[slot]);
@@ -361,6 +362,66 @@ void REPLICATESPU_APIENTRY replicatespu_DestroyContext( GLint ctx )
 		crDLMSetCurrentState(NULL);
 	}
 }
+
+
+/**
+ * Tell VNC server to begin monitoring the nativeWindow X window for
+ * moves/resizes.
+ * When the server-side VNC module notices such changes, it'll
+ * send an rfbChromiumMoveResizeWindow message to the VNC viewer.
+ */
+void
+replicatespuBeginMonitorWindow(WindowInfo *winInfo)
+{
+	int i;
+	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
+		if (winInfo->id[i] >= 0) {
+			XVncChromiumMonitor(replicate_spu.glx_display,
+													winInfo->id[i], winInfo->nativeWindow);
+		}
+	}
+}
+
+
+/**
+ * Tell VNC server to stop monitoring an X window.
+ */
+void
+replicatespuEndMonitorWindow(WindowInfo *winInfo)
+{
+	const int crServerWindow = 0;
+	/* only need to send one of these */
+	XVncChromiumMonitor(replicate_spu.glx_display,
+											crServerWindow, winInfo->nativeWindow);
+}
+
+
+/**
+ * Callback called by crHashtableWalk() below.
+ */
+static void
+destroyWindowCallback(unsigned long key, void *data1, void *data2)
+{
+	WindowInfo *winInfo = (WindowInfo *) data1;
+	CRASSERT(winInfo);
+	if (key >= 1) {
+		replicatespu_WindowDestroy((GLint) key);
+	}
+}
+
+
+void
+replicatespuDestroyAllWindowsAndContexts(void)
+{
+	int i;
+	for (i = 0; i < replicate_spu.numContexts; i++) {
+		if (replicate_spu.context[i].State)
+			replicatespu_DestroyContext(MAGIC_OFFSET + i); /*replicate_spu.context[i].serverCtx);*/
+	}
+
+	crHashtableWalk(replicate_spu.windowTable, destroyWindowCallback, NULL);
+}
+
 
 
 void REPLICATESPU_APIENTRY
@@ -413,23 +474,13 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 			crMothershipDisconnect(conn);
 		}
 
-		if (replicate_spu.glx_display && winInfo && winInfo->nativeWindow != nativeWindow) {
-			/* Tell VNC to monitor the nativeWindow X window for moves/resizes.
-			 * When the server-side VNC module notices such changes, it'll
-			 * send an rfbChromiumMoveResizeWindow message to the VNC viewer.
-			 */
-			int i;
-			for (i = 0; i < CR_MAX_REPLICANTS; i++) {
-				if (winInfo->id[i] >= 0) {
-					XVncChromiumMonitor( replicate_spu.glx_display,
-															 winInfo->id[i], nativeWindow );
-				}
-			}
-
+		if (replicate_spu.glx_display
+				&& winInfo
+				&& winInfo->nativeWindow != nativeWindow)
+		{
 			winInfo->nativeWindow = nativeWindow;
-
+			replicatespuBeginMonitorWindow(winInfo);
 			replicatespuRePositionWindow(winInfo);
-
 			show_window = 1;
 		}
 

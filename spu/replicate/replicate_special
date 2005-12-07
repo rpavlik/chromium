@@ -58,6 +58,7 @@ ChromiumParametervCR
 RenderMode
 Finish
 WindowCreate
+WindowDestroy
 WindowSize
 
 # replicatespu_swapbuf.c
