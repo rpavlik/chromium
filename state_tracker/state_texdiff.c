@@ -515,6 +515,7 @@ int crStateTextureCheckDirtyImages(CRContext *from, CRContext *to, GLenum target
 	CRbitvalue *bitID;
 	CRTextureObj *tobj   = NULL;
 	int maxLevel = 0, i;
+	int face, numFaces;
 
 	CRASSERT(to);
 	CRASSERT(from);
@@ -566,23 +567,11 @@ int crStateTextureCheckDirtyImages(CRContext *from, CRContext *to, GLenum target
 		return 0;
 	}
 
-	for (i = 0; i < maxLevel; i++) {
-		if (CHECKDIRTY(tobj->level[i].dirty, bitID))
-			return 1;
-	}
+	numFaces = (target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
 
-	if (target == GL_TEXTURE_CUBE_MAP) {
+	for (face = 0; face < numFaces; face++) {
 		for (i = 0; i < maxLevel; i++) {
-			/* check -X, +Y, -Y, etc images */
-			if (CHECKDIRTY(tobj->negativeXlevel[i].dirty, bitID))
-				return 1;
-			if (CHECKDIRTY(tobj->positiveYlevel[i].dirty, bitID))
-				return 1;
-			if (CHECKDIRTY(tobj->negativeYlevel[i].dirty, bitID))
-				return 1;
-			if (CHECKDIRTY(tobj->positiveZlevel[i].dirty, bitID))
-				return 1;
-			if (CHECKDIRTY(tobj->negativeZlevel[i].dirty, bitID))
+			if (CHECKDIRTY(tobj->level[face][i].dirty, bitID))
 				return 1;
 		}
 	}
@@ -668,12 +657,14 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 	if (alwaysDirty || CHECKDIRTY(tobj->imageBit, bitID)) 
 	{
 		int lvl;
+		int face;
+
 		switch (tobj->target)
 		{
 			case GL_TEXTURE_1D:
 				for (lvl = 0; lvl <= from->maxLevel; lvl++) 
 				{
-					CRTextureLevel *tl = &(tobj->level[lvl]);
+					CRTextureLevel *tl = &(tobj->level[0][lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID)) 
 					{
 						if (tl->generateMipmap) {
@@ -706,7 +697,7 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 			case GL_TEXTURE_2D:
 				for (lvl = 0; lvl <= from->maxLevel; lvl++) 
 				{
-					CRTextureLevel *tl = &(tobj->level[lvl]);
+					CRTextureLevel *tl = &(tobj->level[0][lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID)) 
 					{
 						if (tl->generateMipmap) {
@@ -738,7 +729,7 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 			case GL_TEXTURE_3D:
 				for (lvl = 0; lvl <= from->max3DLevel; lvl++) 
 				{
-					CRTextureLevel *tl = &(tobj->level[lvl]);
+					CRTextureLevel *tl = &(tobj->level[0][lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID)) 
 				 	{
 						if (tl->generateMipmap) {
@@ -773,8 +764,7 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 				/* only one level */
 				for (lvl = 0; lvl <= from->maxRectLevel; lvl++) 
 				{
-					CRTextureLevel *tl;
-					tl = &(tobj->level[lvl]);
+					CRTextureLevel *tl = &(tobj->level[0][lvl]);
 					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID))
 					{
 						if (tl->compressed) {
@@ -802,178 +792,40 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 #endif
 #ifdef CR_ARB_texture_cube_map
 			case GL_TEXTURE_CUBE_MAP_ARB:
-				for (lvl = 0; lvl <= from->maxCubeMapLevel; lvl++) 
+				for (face = 0; face < 6; face++)
 				{
-					CRTextureLevel *tl;
-					/* Positive X */
-					tl = &(tobj->level[lvl]);
-					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID))
+					const GLenum target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
+					for (lvl = 0; lvl <= from->maxCubeMapLevel; lvl++) 
 					{
-						if (tl->generateMipmap) {
-							diff_api.TexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
-																		 GL_GENERATE_MIPMAP_SGIS, 1);
+						CRTextureLevel *tl = &(tobj->level[face][lvl]);
+						if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID))
+						{
+							if (tl->generateMipmap) {
+								diff_api.TexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
+																			 GL_GENERATE_MIPMAP_SGIS, 1);
+							}
+							if (tl->compressed) {
+								diff_api.CompressedTexImage2DARB(target,
+																								 lvl, tl->internalFormat,
+																								 tl->width, tl->height,
+																								 tl->border, tl->bytes, tl->img);
+							}
+							else {
+								/* alignment must be one */
+								diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+								diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+								diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+								diff_api.TexImage2D(target, lvl,
+																		tl->internalFormat,
+																		tl->width, tl->height, tl->border,
+																		tl->format, tl->type, tl->img);
+							}
+							if (!alwaysDirty)
+								CLEARDIRTY(tl->dirty, nbitID);
 						}
-						if (tl->compressed) {
-							diff_api.CompressedTexImage2DARB(GL_TEXTURE_CUBE_MAP_POSITIVE_X,
-																							 lvl, tl->internalFormat,
-																							 tl->width, tl->height,
-																							 tl->border, tl->bytes, tl->img);
-						}
-						else {
-							/* alignment must be one */
-							diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-							diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-							diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-							diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
-							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, lvl,
-																	tl->internalFormat,
-																	tl->width, tl->height, tl->border,
-																	tl->format, tl->type, tl->img);
-						}
-						if (!alwaysDirty)
-							CLEARDIRTY(tl->dirty, nbitID);
-					}
-					/* Negative X */
-					tl = &(tobj->negativeXlevel[lvl]);
-					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID))
-					{
-						if (tl->generateMipmap) {
-							diff_api.TexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
-																		 GL_GENERATE_MIPMAP_SGIS, 1);
-						}
-						if (tl->compressed) {
-							diff_api.CompressedTexImage2DARB(GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
-																							 lvl, tl->internalFormat,
-																							 tl->width, tl->height,
-																							 tl->border, tl->bytes, tl->img);
-						}
-						else {
-							/* alignment must be one */
-							diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-							diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-							diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-							diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
-							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, lvl,
-																	tl->internalFormat,
-																	tl->width, tl->height, tl->border,
-																	tl->format, tl->type, tl->img);
-						}
-						if (!alwaysDirty)
-							CLEARDIRTY(tl->dirty, nbitID);
-					}
-					/* Positive Y */
-					tl = &(tobj->positiveYlevel[lvl]);
-					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID)) 
-					{
-						if (tl->generateMipmap) {
-							diff_api.TexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
-																		 GL_GENERATE_MIPMAP_SGIS, 1);
-						}
-						if (tl->compressed) {
-							diff_api.CompressedTexImage2DARB(GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
-																							 lvl, tl->internalFormat,
-																							 tl->width, tl->height,
-																							 tl->border, tl->bytes, tl->img);
-						}
-						else {
-							/* alignment must be one */
-							diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-							diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-							diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-							diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
-							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, lvl,
-																	tl->internalFormat,
-																	tl->width, tl->height, tl->border,
-																	tl->format, tl->type, tl->img);
-						}
-						if (!alwaysDirty)
-							CLEARDIRTY(tl->dirty, nbitID);
-					}
-					/* Negative Y */
-					tl = &(tobj->negativeYlevel[lvl]);
-					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID))
-					{
-						if (tl->generateMipmap) {
-							diff_api.TexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
-																		 GL_GENERATE_MIPMAP_SGIS, 1);
-						}
-						if (tl->compressed) {
-							diff_api.CompressedTexImage2DARB(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
-																							 lvl, tl->internalFormat,
-																							 tl->width, tl->height,
-																							 tl->border, tl->bytes, tl->img);
-						}
-						else {
-							/* alignment must be one */
-							diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-							diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-							diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-							diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
-							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, lvl,
-																	tl->internalFormat,
-																	tl->width, tl->height, tl->border,
-																	tl->format, tl->type, tl->img);
-						}
-						if (!alwaysDirty)
-							CLEARDIRTY(tl->dirty, nbitID);
-					}
-					/* Positive Z */
-					tl = &(tobj->positiveZlevel[lvl]);
-					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID))
-					{
-						if (tl->generateMipmap) {
-							diff_api.TexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
-																		 GL_GENERATE_MIPMAP_SGIS, 1);
-						}
-						if (tl->compressed) {
-							diff_api.CompressedTexImage2DARB(GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
-																							 lvl, tl->internalFormat,
-																							 tl->width, tl->height,
-																							 tl->border, tl->bytes, tl->img);
-						}
-						else {
-							/* alignment must be one */
-							diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-							diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-							diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-							diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
-							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, lvl,
-																	tl->internalFormat,
-																	tl->width, tl->height, tl->border,
-																	tl->format, tl->type, tl->img);
-						}
-						if (!alwaysDirty)
-							CLEARDIRTY(tl->dirty, nbitID);
-					}
-					/* Negative Z */
-					tl = &(tobj->negativeZlevel[lvl]);
-					if (alwaysDirty || CHECKDIRTY(tl->dirty, bitID))
-					{
-						if (tl->generateMipmap) {
-							diff_api.TexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
-																		 GL_GENERATE_MIPMAP_SGIS, 1);
-						}
-						if (tl->compressed) {
-							diff_api.CompressedTexImage2DARB(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
-																							 lvl, tl->internalFormat,
-																							 tl->width, tl->height,
-																							 tl->border, tl->bytes, tl->img);
-						}
-						else {
-							/* alignment must be one */
-							diff_api.PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-							diff_api.PixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-							diff_api.PixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-							diff_api.PixelStorei(GL_UNPACK_ALIGNMENT, 1);
-							diff_api.TexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, lvl,
-																	tl->internalFormat,
-																	tl->width, tl->height, tl->border,
-																	tl->format, tl->type, tl->img);
-						}
-						if (!alwaysDirty)
-							CLEARDIRTY(tl->dirty, nbitID);
-					}
-				}
+					} /* for lvl */
+				}  /* for face */
 				break;
 #endif
 			default:

@@ -108,28 +108,13 @@ generate_mipmap(CRTextureObj *tobj, GLenum target)
 	CRTextureLevel *levels;
 	GLint level, width, height, depth;
 
-	switch (target) {
-		case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-			levels = tobj->level;
-			break;
-		case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-			levels = tobj->negativeXlevel;
-			break;
-		case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-			levels = tobj->positiveYlevel;
-			break;
-		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-			levels = tobj->negativeYlevel;
-			break;
-		case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-			levels = tobj->positiveZlevel;
-			break;
-		case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-			levels = tobj->negativeZlevel;
-			break;
-		default:
-			levels = tobj->level;
-	}
+        if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
+            target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) {
+          levels = tobj->level[target - GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB];
+        }
+        else {
+          levels = tobj->level[0];
+        }
 
 	width = levels[tobj->baseLevel].width;
 	height = levels[tobj->baseLevel].height;
@@ -178,27 +163,27 @@ crStateGetTextureObjectAndImage(CRContext *g, GLenum texTarget, GLint level,
 	switch (texTarget) {
 		case GL_TEXTURE_1D:
 			*obj = unit->currentTexture1D;
-			*img = unit->currentTexture1D->level + level;
+			*img = unit->currentTexture1D->level[0] + level;
 			return;
 		case GL_PROXY_TEXTURE_1D:
 			*obj = &(t->proxy1D);
-			*img = t->proxy1D.level + level;
+			*img = t->proxy1D.level[0] + level;
 			return;
 		case GL_TEXTURE_2D:
 			*obj = unit->currentTexture2D;
-			*img = unit->currentTexture2D->level + level;
+			*img = unit->currentTexture2D->level[0] + level;
 			return;
 		case GL_PROXY_TEXTURE_2D:
 			*obj = &(t->proxy2D);
-			*img = t->proxy2D.level + level;
+			*img = t->proxy2D.level[0] + level;
 			return;
 		case GL_TEXTURE_3D:
 			*obj = unit->currentTexture3D;
-			*img = unit->currentTexture3D->level + level;
+			*img = unit->currentTexture3D->level[0] + level;
 			return;
 		case GL_PROXY_TEXTURE_3D:
 			*obj = &(t->proxy3D);
-			*img = t->proxy3D.level + level;
+			*img = t->proxy3D.level[0] + level;
 			return;
 		default:
 			 /* fall-through */
@@ -210,11 +195,11 @@ crStateGetTextureObjectAndImage(CRContext *g, GLenum texTarget, GLint level,
 		switch (texTarget) {
 			case GL_PROXY_TEXTURE_RECTANGLE_NV:
 				*obj = &(t->proxyRect);
-				*img = t->proxyRect.level + level;
+				*img = t->proxyRect.level[0] + level;
 				return;
 			case GL_TEXTURE_RECTANGLE_NV:
 				*obj = unit->currentTextureRect;
-				*img = unit->currentTextureRect->level + level;
+				*img = unit->currentTextureRect->level[0] + level;
 				return;
 			default:
 			 /* fall-through */
@@ -228,7 +213,7 @@ crStateGetTextureObjectAndImage(CRContext *g, GLenum texTarget, GLint level,
 		switch (texTarget) {
 			case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
 				*obj = &(t->proxyCubeMap);
-				*img = t->proxyCubeMap.level + level;
+				*img = t->proxyCubeMap.level[0] + level;
 				return;
 			case GL_TEXTURE_CUBE_MAP_ARB:
 				*obj = unit->currentTextureCubeMap;
@@ -236,27 +221,27 @@ crStateGetTextureObjectAndImage(CRContext *g, GLenum texTarget, GLint level,
 				return;
 			case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
 				*obj = unit->currentTextureCubeMap;
-				*img = unit->currentTextureCubeMap->level + level;
+				*img = unit->currentTextureCubeMap->level[0] + level;
 				return;
 			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
 				*obj = unit->currentTextureCubeMap;
-				*img = unit->currentTextureCubeMap->negativeXlevel + level;
+				*img = unit->currentTextureCubeMap->level[1] + level;
 				return;
 			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
 				*obj = unit->currentTextureCubeMap;
-				*img = unit->currentTextureCubeMap->positiveYlevel + level;
+				*img = unit->currentTextureCubeMap->level[2] + level;
 				return;
 			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
 				*obj = unit->currentTextureCubeMap;
-				*img = unit->currentTextureCubeMap->negativeYlevel + level;
+				*img = unit->currentTextureCubeMap->level[3] + level;
 				return;
 			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
 				*obj = unit->currentTextureCubeMap;
-				*img = unit->currentTextureCubeMap->positiveZlevel + level;
+				*img = unit->currentTextureCubeMap->level[4] + level;
 				return;
 			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
 				*obj = unit->currentTextureCubeMap;
-				*img = unit->currentTextureCubeMap->negativeZlevel + level;
+				*img = unit->currentTextureCubeMap->level[5] + level;
 				return;
 			default:
 			 /* fall-through */
@@ -824,7 +809,7 @@ crStateTexSubImage1D(GLenum target, GLint level, GLint xoffset,
 	CRTextureBits *tb = &(sb->texture);
 	CRTextureUnit *unit = t->unit + t->curTextureUnit;
 	CRTextureObj *tobj = unit->currentTexture1D;
-	CRTextureLevel *tl = tobj->level + level;
+	CRTextureLevel *tl = tobj->level[0] + level;
 
 	FLUSH();
 
@@ -935,7 +920,7 @@ crStateTexSubImage3D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
 	CRTextureBits *tb = &(sb->texture);
 	CRTextureUnit *unit = t->unit + t->curTextureUnit;
 	CRTextureObj *tobj = unit->currentTexture3D;
-	CRTextureLevel *tl = tobj->level + level;
+	CRTextureLevel *tl = tobj->level[0] + level;
 	GLubyte *subimg = NULL;
 	GLubyte *img = NULL;
 	GLubyte *src;
@@ -1239,7 +1224,7 @@ crStateCompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
 	CRTextureBits *tb = &(sb->texture);
 	CRTextureUnit *unit = t->unit + t->curTextureUnit;
 	CRTextureObj *tobj = unit->currentTexture1D;
-	CRTextureLevel *tl = tobj->level + level;
+	CRTextureLevel *tl = tobj->level[0] + level;
 
 	FLUSH();
 
@@ -1285,7 +1270,7 @@ crStateCompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
 	CRTextureBits *tb = &(sb->texture);
 	CRTextureUnit *unit = t->unit + t->curTextureUnit;
 	CRTextureObj *tobj = unit->currentTexture1D;
-	CRTextureLevel *tl = tobj->level + level;
+	CRTextureLevel *tl = tobj->level[0] + level;
 
 	FLUSH();
 
@@ -1335,7 +1320,7 @@ crStateCompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
 	CRTextureBits *tb = &(sb->texture);
 	CRTextureUnit *unit = t->unit + t->curTextureUnit;
 	CRTextureObj *tobj = unit->currentTexture1D;
-	CRTextureLevel *tl = tobj->level + level;
+	CRTextureLevel *tl = tobj->level[0] + level;
 
 	FLUSH();
 

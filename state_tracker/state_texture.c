@@ -213,8 +213,7 @@ crStateTextureInitTextureObj(CRContext *ctx, CRTextureObj *tobj,
 														 GLuint name, GLenum target)
 {
 	const CRTextureState *t = &(ctx->texture);
-	CRTextureLevel *tl;
-	int i, k;
+	int i, face;
 
 	tobj->borderColor.r = 0.0f;
 	tobj->borderColor.g = 0.0f;
@@ -235,40 +234,26 @@ crStateTextureInitTextureObj(CRContext *ctx, CRTextureObj *tobj,
 	tobj->target        = target;
 	tobj->name          = name;
 
-#define INIT_LEVELS(ARRAY)											\
-	tobj->ARRAY = (CRTextureLevel *) crAlloc(sizeof(CRTextureLevel)	\
-												 * (t->maxLevel + 1));				\
-	if (!tobj->ARRAY)															\
-		return; /* out of memory */									\
-	for (i = 0; i <= t->maxLevel; i++)						\
-	{																							\
-		tl                = &(tobj->ARRAY[i]);			\
-		tl->compressed    = GL_FALSE;								\
-		tl->bytes         = 0;											\
-		tl->img           = NULL;										\
-		tl->width         = 0;											\
-		tl->height        = 0;											\
-		tl->depth         = 0;											\
-		tl->border        = 0;											\
-		tl->internalFormat= GL_ONE;									\
-		tl->bytesPerPixel = 0;											\
-		tl->format        = GL_RGBA;								\
-		tl->type          = GL_UNSIGNED_BYTE;				\
-		crStateTextureInitTextureFormat( tl, tl->internalFormat );			\
-		for (k = 0; k < CR_MAX_BITARRAY; k++)														\
-			tl->dirty[k]     = 0;  /* By default this level is ignored.*/	\
+	CRASSERT(t->maxLevel);
+
+	/* XXX don't always need all six faces */
+	for (face = 0; face < 6; face++) {
+		/* allocate array of mipmap levels */
+		tobj->level[face] = (CRTextureLevel *)
+			crCalloc(sizeof(CRTextureLevel) * (t->maxLevel + 1));
+
+		if (!tobj->level[face])
+			return; /* out of memory */
+
+		/* init non-zero fields */
+		for (i = 0; i <= t->maxLevel; i++) {
+			CRTextureLevel *tl = &(tobj->level[face][i]);
+			tl->internalFormat = GL_ONE;
+			tl->format = GL_RGBA;
+			tl->type = GL_UNSIGNED_BYTE;
+			crStateTextureInitTextureFormat( tl, tl->internalFormat );
+		}
 	}
-
-	INIT_LEVELS(level);
-
-#ifdef CR_ARB_texture_cube_map
-	INIT_LEVELS(negativeXlevel);
-	INIT_LEVELS(positiveYlevel);
-	INIT_LEVELS(negativeYlevel);
-	INIT_LEVELS(positiveZlevel);
-	INIT_LEVELS(negativeZlevel);
-#endif
-
 
 #ifdef CR_EXT_texture_filter_anisotropic
 	tobj->maxAnisotropy = 1.0f;
@@ -620,45 +605,21 @@ crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj, int updateHash)
 	/* Free the texture images */
 	for (face = 0; face < 6; face++) {
 		CRTextureLevel *levels = NULL;
-		 switch (face) {
-		 case 0:
-			 levels = tobj->level;
-			 break;
-		 case 1:
-			 levels = tobj->negativeXlevel;
-			 break;
-		 case 2:
-			 levels = tobj->positiveYlevel;
-			 break;
-		 case 3:
-			 levels = tobj->negativeYlevel;
-			 break;
-		 case 4:
-			 levels = tobj->positiveZlevel;
-			 break;
-		 case 5:
-			 levels = tobj->negativeZlevel;
-			 break;
-		 }
-		 if (levels) {
-			 /* free all mipmap levels for this face */
-			 for (k = 0; k <= t->maxLevel; k++) {
-				 CRTextureLevel *tl = levels + k;
-				 if (tl->img) {
-					 crFree(tl->img);
+		levels = tobj->level[face];
+		if (levels) {
+			/* free all mipmap levels for this face */
+			for (k = 0; k <= t->maxLevel; k++) {
+				CRTextureLevel *tl = levels + k;
+				if (tl->img) {
+					crFree(tl->img);
 					 tl->img = NULL;
 					 tl->bytes = 0;
-				 }
-			 }
-			 crFree(levels);
-		 }
+				}
+			}
+			crFree(levels);
+		}
+		tobj->level[face] = NULL;
 	}
-	tobj->negativeXlevel = NULL;
-	tobj->positiveYlevel = NULL;
-	tobj->negativeYlevel = NULL;
-	tobj->positiveZlevel = NULL;
-	tobj->negativeZlevel = NULL;
-	tobj->level = NULL;
 }
 
 

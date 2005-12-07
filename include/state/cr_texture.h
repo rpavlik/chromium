@@ -53,14 +53,7 @@ typedef struct {
 	GLuint                 name;
 
 	/* The mipmap levels */
-	CRTextureLevel        *level;
-#ifdef CR_ARB_texture_cube_map
-	CRTextureLevel        *negativeXlevel;
-	CRTextureLevel        *positiveYlevel;
-	CRTextureLevel        *negativeYlevel;
-	CRTextureLevel        *positiveZlevel;
-	CRTextureLevel        *negativeZlevel;
-#endif
+	CRTextureLevel        *level[6];  /* 6 cube faces */
 
 	GLcolorf               borderColor;
 	GLenum                 minFilter, magFilter;
