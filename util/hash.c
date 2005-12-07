@@ -346,7 +346,7 @@ void crFreeHashtable( CRHashTable *hash, CRHashtableCallback deleteFunc )
 void crHashtableWalk( CRHashTable *hash, CRHashtableWalkCallback walkFunc , void *dataPtr2)
 {
 	int i;
-	CRHashNode *entry;
+	CRHashNode *entry, *next;
 
 	if (!hash)
 		return;
@@ -356,10 +356,12 @@ void crHashtableWalk( CRHashTable *hash, CRHashtableWalkCallback walkFunc , void
 		entry = hash->buckets[i];
 		while (entry) 
 		{
+			/* save next ptr here, in case walkFunc deletes this entry */
+			next = entry->next;
 			if (entry->data && walkFunc) {
 				(*walkFunc)( entry->key, entry->data, dataPtr2 );
 			}
-			entry = entry->next;
+			entry = next;
 		}
 	}
 }
