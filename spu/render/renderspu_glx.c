@@ -434,9 +434,9 @@ renderspu_SystemInitVisual( VisualInfo *visual )
 		/* Issue both debug and warning messages to make sure the
 		 * message gets noticed!
 		 */
-		crDebug("Render SPU: display string looks like a proxy server!");
+		crDebug("Render SPU: display string looks like a proxy X server!");
 		crDebug("Render SPU: This is usually a problem!");
-		crWarning("Render SPU: display string looks like a proxy server!");
+		crWarning("Render SPU: display string looks like a proxy X server!");
 		crWarning("Render SPU: This is usually a problem!");
 	}
 
@@ -475,8 +475,8 @@ renderspu_SystemInitVisual( VisualInfo *visual )
 		if (!visual->visual) {
 			char s[1000];
 			renderspuMakeVisString( visual->visAttribs, s );
-			crWarning( "Render SPU: Display %s doesn't have the necessary visual: %s",
-								 dpyName, s );
+			crWarning("Render SPU: Display %s doesn't have the necessary visual: %s",
+								dpyName, s );
 			XCloseDisplay(visual->dpy);
 			return GL_FALSE;
 		}
@@ -487,8 +487,6 @@ renderspu_SystemInitVisual( VisualInfo *visual )
 		crDebug( "Render SPU: Turning on XSynchronize" );
 		XSynchronize( visual->dpy, True );
 	}
-
-	crDebug( "Render SPU: Looks like we have GLX" );
 
 	if (visual->visual) {
 			crDebug( "Render SPU: Chose visual id=0x%x: RGBA=(%d,%d,%d,%d) Z=%d"
@@ -968,12 +966,11 @@ renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
 	}
 
 	is_direct = render_spu.ws.glXIsDirect( visual->dpy, context->context );
-	if (visual->visual)
-		crDebug( "Render SPU: Created %s context (%d) on display %s, Xvisual 0x%x",
-						 is_direct ? "DIRECT" : "INDIRECT",
-						 context->id,
-						 DisplayString(visual->dpy),
-						 (int) visual->visual->visual->visualid );
+	crDebug("Render SPU: Created %s context (%d) on display %s for visAttribs 0x%x",
+					is_direct ? "DIRECT" : "INDIRECT",
+					context->id,
+					DisplayString(visual->dpy),
+					visual->visAttribs);
 
 	if ( render_spu.force_direct && !is_direct )
 	{
@@ -1199,9 +1196,10 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 			b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
 																				window->window, context->context );
 			if (!b) {
-				crWarning("glXMakecurrent(%p, 0x%x, %p) failed!",
+				crWarning("glXMakeCurrent(%p, 0x%x, %p) failed! (winId %d, ctxId %d)",
 									window->visual->dpy,
-									(int) window->window, (void *) context->context );
+									(int) window->window, (void *) context->context,
+									window->id, context->id );
 			}
 			/*CRASSERT(b);*/
 		}
