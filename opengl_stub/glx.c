@@ -1060,3 +1060,62 @@ void glXSelectEvent(Display *dpy, GLXDrawable draw, unsigned long event_mask)
 
 #endif /* GLX_EXTRAS */
 
+
+#ifdef GLX_SGIX_video_resize
+/* more dummy funcs.  These help when linking with older GLUTs */
+
+int glXBindChannelToWindowSGIX(Display *dpy, int scrn, int chan, Window w)
+{
+	(void) dpy;
+	(void) scrn;
+	(void) chan;
+	(void) w;
+	return 0;
+}
+
+int glXChannelRectSGIX(Display *dpy, int scrn, int chan, int x , int y, int w, int h)
+{
+	(void) dpy;
+	(void) scrn;
+	(void) chan;
+	(void) x;
+	(void) y;
+	(void) w;
+	(void) h;
+	return 0;
+}
+
+int glXQueryChannelRectSGIX(Display *dpy, int scrn, int chan, int *x, int *y, int *w, int *h)
+{
+	(void) dpy;
+	(void) scrn;
+	(void) chan;
+	(void) x;
+	(void) y;
+	(void) w;
+	(void) h;
+	return 0;
+}
+
+int glXQueryChannelDeltasSGIX(Display *dpy, int scrn, int chan, int *dx, int *dy, int *dw, int *dh)
+{
+	(void) dpy;
+	(void) scrn;
+	(void) chan;
+	(void) dx;
+	(void) dy;
+	(void) dw;
+	(void) dh;
+	return 0;
+}
+
+int glXChannelRectSyncSGIX(Display *dpy, int scrn, int chan, GLenum synctype)
+{
+	(void) dpy;
+	(void) scrn;
+	(void) chan;
+	(void) synctype;
+	return 0;
+}
+
+#endif /* GLX_SGIX_video_resize */
