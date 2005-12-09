@@ -54,6 +54,7 @@ typedef struct {
 
 	GLboolean viewportValidated;
 
+	int spuWindow;                     /**< the SPU's corresponding window ID */
 } CRMuralInfo;
 
 /**
@@ -64,6 +65,7 @@ typedef struct {
 	int number;        /**< each client gets an integer ID, starting at zero */
 	CRConnection *conn;       /**< network connection from the client */
 
+	GLint currentContextNumber;
 	CRContext *currentCtx;
 	GLint currentWindow;
 	CRMuralInfo *currentMural;
@@ -144,6 +146,7 @@ typedef struct {
 	int vpProjectionMatrixParameter;
 	const char *vpProjectionMatrixVariable;
 	int stereoView;
+	int vncMode;   /* cmd line option */
 	/*@}*/
 	/** view_matrix config */
 	/*@{*/
