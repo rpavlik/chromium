@@ -73,7 +73,6 @@ crServerGatherConfiguration(char *mothership)
 	int high_context = CR_QUADRICS_DEFAULT_HIGH_CONTEXT;
 	char *low_node = "none";
 	char *high_node = "none";
-	const char *newserver;
 	unsigned char key[16]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	char hostname[1024];
 	char **clientchain, **clientlist;
@@ -103,13 +102,9 @@ crServerGatherConfiguration(char *mothership)
 		crError("CRServer: Couldn't get my own hostname?");
 	}
 
-	/* The VNC viewer would set this env var if we (this crserver) is
-	 * starting up in response to starting a new 3D app.
-	 */
-	newserver = crGetenv("CRNEWSERVER");
-
 	/* Identify ourselves to the mothership */
-	if (newserver) {
+	if (cr_server.vncMode) {
+		/* we're running inside a vnc viewer */
 		if (!crMothershipSendString( conn, response, "vncserver %s", hostname ))
 			crError( "Bad Mothership response: %s", response );
 	}
@@ -191,11 +186,10 @@ crServerGatherConfiguration(char *mothership)
 	  words = crStrSplit(response, ",");
 	  
 	  a = 0;
-	  while (words[a] != NULL && a<sizeof(key))
-	    {
-	      key[a]= crStrToInt(words[a]);
-	      a++;
-	    }
+	  while (words[a] != NULL && a < sizeof(key)) {
+			key[a]= crStrToInt(words[a]);
+			a++;
+		}
 	  
 	  crFreeStrings(words);
 	}
@@ -351,7 +345,8 @@ crServerGatherConfiguration(char *mothership)
 	/*
 	 * Get a list of all the clients talking to me.
 	 */
-	if (newserver) {
+	if (cr_server.vncMode) {
+		/* we're inside a vnc viewer */
 		if (!crMothershipSendString( conn, response, "getvncclient %s", hostname ))
 			crError( "Bad Mothership response: %s", response );
 	}

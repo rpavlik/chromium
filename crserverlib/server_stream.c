@@ -8,6 +8,7 @@
 #include "cr_unpack.h"
 #include "cr_error.h"
 #include "cr_mem.h"
+#include "server_dispatch.h"
 
 #if 0
 static int QueueSize( void )
@@ -347,7 +348,25 @@ crServerServiceClient(const RunQueue *qEntry)
 		 * to handle the situation gracefully.  (This is currently
 		 * the case with the "tilesort" SPU.)
 		 */
+
+#if 0
 		crStateMakeCurrent( cr_server.curClient->currentCtx );
+#else
+		crStateMakeCurrent( cr_server.curClient->currentCtx );
+
+		/* Check if the current window is the one that the client wants to
+		 * draw into.  If not, dispatch a MakeCurrent to active the proper
+		 * window.
+		 */
+		if (cr_server.curClient) {
+			 int clientWindow = cr_server.curClient->currentWindow;
+			 int clientContext = cr_server.curClient->currentContextNumber;
+			 if (clientWindow && clientWindow != cr_server.currentWindow) {
+				 crServerDispatchMakeCurrent(clientWindow, 0, clientContext);
+				 CRASSERT(cr_server.currentWindow == clientWindow);
+			 }
+		}
+#endif
 
 		/* Force scissor, viewport and projection matrix update in
 		 * crServerSetOutputBounds().

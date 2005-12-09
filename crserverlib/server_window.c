@@ -7,14 +7,30 @@
 #include "server.h"
 #include "server_dispatch.h"
 #include "cr_mem.h"
+#include "cr_rand.h"
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchWindowDestroy( GLint window );
+
+/**
+ * Generate a new window ID.
+ */
+static GLint
+generateID(void)
+{
+	static GLboolean firstCall = GL_TRUE;
+	if (firstCall) {
+		crRandAutoSeed();
+		firstCall = GL_FALSE;
+	}
+	return crRandInt(20000, 50000); /* XXX FIX */
+}
+
 
 
 GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName, GLint visBits )
 {
 	CRMuralInfo *mural;
 	GLint windowID = -1;
+	GLint spuWindow;
 	GLint dims[2];
 
 	if (cr_server.sharedWindows) {
@@ -45,14 +61,19 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName
 	}
 
 	/*
-	 * Have first SPU make a new window, get initial size.
+	 * Have first SPU make a new window.
 	 */
-	windowID = cr_server.head_spu->dispatch_table.WindowCreate( dpyName, visBits );
-	crDebug("CRServer: client %d created new window %d", cr_server.curClient->number, windowID);
-	if (windowID < 0)
-		return windowID; /* error case */
-	crServerReturnValue( &windowID, sizeof(windowID) ); /* real return value */
-	cr_server.head_spu->dispatch_table.GetChromiumParametervCR(GL_WINDOW_SIZE_CR, windowID, GL_INT, 2, dims);
+	spuWindow = cr_server.head_spu->dispatch_table.WindowCreate( dpyName, visBits );
+	crDebug("CRServer: client %d created new window %d",
+					cr_server.curClient->number, spuWindow);
+
+	if (spuWindow < 0) {
+		crServerReturnValue( &spuWindow, sizeof(spuWindow) );
+		return spuWindow;
+	}
+
+	/* get initial window size */
+	cr_server.head_spu->dispatch_table.GetChromiumParametervCR(GL_WINDOW_SIZE_CR, spuWindow, GL_INT, 2, dims);
 
 	/*
 	 * Create a new mural for the new window.
@@ -73,16 +94,18 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName
 		mural->underlyingDisplay[2] = dims[0];
 		mural->underlyingDisplay[3] = dims[1];
 
+		mural->spuWindow = spuWindow;
 		crServerInitializeTiling(mural);
-		/* hash tables are indexed by window ID */
+
+		/* generate ID for this new window/mural (special-case for file conns) */
+		if (cr_server.curClient->conn->type == CR_FILE)
+			windowID = spuWindow;
+		else
+			windowID = generateID();
 		crHashtableAdd(cr_server.muralTable, windowID, mural);
 	}
-	else {
-		/* out of memory */
-		return -1;
-	}
 
-	if (cr_server.sharedWindows) {
+	if (windowID != -1 && cr_server.sharedWindows) {
 		int pos;
 		for (pos = 0; pos < CR_MAX_WINDOWS; pos++) {
 			if (cr_server.curClient->windowList[pos] == 0) {
@@ -92,17 +115,28 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName
 		}
 	}
 
-	return windowID; /* WILL PROBABLY BE IGNORED */
+	crServerReturnValue( &windowID, sizeof(windowID) );
+	return windowID;
 }
 
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchWindowDestroy( GLint window )
+void SERVER_DISPATCH_APIENTRY
+crServerDispatchWindowDestroy( GLint window )
 {
-	cr_server.head_spu->dispatch_table.WindowDestroy( window );
+  CRMuralInfo *mural;
+
+	mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
+	if (!mural) {
+		 crWarning("CRServer: invalid window %d passed to WindowDestroy()", window);
+		 return;
+	}
+
+	cr_server.head_spu->dispatch_table.WindowDestroy( mural->spuWindow );
 }
 
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchWindowSize( GLint window, GLint width, GLint height )
+void SERVER_DISPATCH_APIENTRY
+crServerDispatchWindowSize( GLint window, GLint width, GLint height )
 {
   CRMuralInfo *mural;
 
@@ -115,5 +149,48 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchWindowSize( GLint window, GLint wi
 	mural->underlyingDisplay[3] = height;
 	crServerInitializeTiling(mural);
 
-	cr_server.head_spu->dispatch_table.WindowSize(window, width, height);
+	cr_server.head_spu->dispatch_table.WindowSize(mural->spuWindow, width, height);
+}
+
+
+void SERVER_DISPATCH_APIENTRY
+crServerDispatchWindowPosition( GLint window, GLint x, GLint y )
+{
+  CRMuralInfo *mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
+	if (!mural) {
+		 crWarning("CRServer: invalid window %d passed to WindowPosition()", window);
+		 return;
+	}
+#if 0 /* don't believe this is needed */
+	mural->underlyingDisplay[0] = x;
+	mural->underlyingDisplay[1] = y;
+	crServerInitializeTiling(mural);
+#endif
+	cr_server.head_spu->dispatch_table.WindowPosition(mural->spuWindow, x, y);
+}
+
+
+
+void SERVER_DISPATCH_APIENTRY
+crServerDispatchWindowShow( GLint window, GLint state )
+{
+  CRMuralInfo *mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
+	if (!mural) {
+		 crWarning("CRServer: invalid window %d passed to WindowShow()", window);
+		 return;
+	}
+	cr_server.head_spu->dispatch_table.WindowShow(mural->spuWindow, state);
+}
+
+
+GLint
+crServerSPUWindowID(GLint serverWindow)
+{
+  CRMuralInfo *mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, serverWindow);
+	if (!mural) {
+		 crWarning("CRServer: invalid window %d passed to crServerSPUWindowID()",
+							 serverWindow);
+		 return -1;
+	}
+	return mural->spuWindow;
 }

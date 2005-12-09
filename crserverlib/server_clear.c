@@ -72,8 +72,18 @@ static void __draw_poly(CRPoly *p)
 }
 
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchSwapBuffers( GLint window, GLint flags )
+void SERVER_DISPATCH_APIENTRY
+crServerDispatchSwapBuffers( GLint window, GLint flags )
 {
+  CRMuralInfo *mural;
+
+	mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
+	if (!mural) {
+		 crWarning("CRServer: invalid window %d passed to SwapBuffers()", window);
+		 return;
+	}
+
+
 	if (cr_server.only_swap_once)
 	{
 		/* NOTE: we only do the clear for the _last_ client in the list.
@@ -273,5 +283,5 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchSwapBuffers( GLint window, GLint f
 	if (!cr_server.clients[0].conn->actual_network && window == MAGIC_OFFSET)
 		window = 0;
 
-	cr_server.head_spu->dispatch_table.SwapBuffers( window, flags );
+	cr_server.head_spu->dispatch_table.SwapBuffers( mural->spuWindow, flags );
 }

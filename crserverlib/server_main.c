@@ -164,6 +164,10 @@ crServerInit(int argc, char *argv[])
 			cr_server.tcpip_port = crStrToInt(argv[i+1]);
 			i++;
 		}
+		else if (!crStrcmp( argv[i], "-vncmode" ))
+		{
+			cr_server.vncMode = 1;
+		}
 		else if (!crStrcmp( argv[i], "-help" ))
 		{
 			crPrintHelp();

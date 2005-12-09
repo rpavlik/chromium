@@ -78,7 +78,10 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchDestroyContext( GLint ctx )
 	const int ctxPos = ctx - MAGIC_OFFSET;
 	CRContext *crCtx;
 
-	CRASSERT(ctxPos >= 0);
+	if (ctxPos < 0 || ctxPos >= CR_MAX_CONTEXTS) {
+		crWarning("CRServer: DestroyContext invalid context %d", ctx);
+		return;
+	}
 
 	crCtx = cr_server.context[ctxPos];
 	if (crCtx) {
@@ -87,19 +90,21 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchDestroyContext( GLint ctx )
 	}
 
 	/* If we delete our current context, default back to the null context */
-	if (cr_server.curClient->currentCtx == crCtx)
+	if (cr_server.curClient->currentCtx == crCtx) {
+		cr_server.curClient->currentContextNumber = -1;
 		cr_server.curClient->currentCtx = cr_server.DummyContext;
+	}
 }
 
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint nativeWindow, GLint context )
+void SERVER_DISPATCH_APIENTRY
+crServerDispatchMakeCurrent( GLint window, GLint nativeWindow, GLint context )
 {
 	CRMuralInfo *mural;
-	int ctxPos;
 	CRContext *ctx;
 
 	if (context >= 0 && window >= 0) {
-		ctxPos = context - MAGIC_OFFSET;
+		int ctxPos = context - MAGIC_OFFSET;
 		CRASSERT(ctxPos >= 0);
 		CRASSERT(ctxPos < CR_MAX_CONTEXTS);
 
@@ -116,16 +121,28 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 
 		/* Update the state tracker's current context */
 		ctx = cr_server.context[ctxPos];
+		if (!ctx) {
+			crWarning("CRserver: NULL context in MakeCurrent %d", context);
+			return;
+		}
 	}
 	else {
 		ctx = cr_server.DummyContext;
 		window = -1;
 		mural = NULL;
+		return;
 	}
 
+	/*
+	crDebug("**** %s client %d  curCtx=%d curWin=%d", __func__,
+					cr_server.curClient->number, ctxPos, window);
+	*/
+	cr_server.curClient->currentContextNumber = context;
 	cr_server.curClient->currentCtx = ctx;
 	cr_server.curClient->currentMural = mural;
 	cr_server.curClient->currentWindow = window;
+
+	CRASSERT(cr_server.curClient->currentCtx);
 
 	/* This is a hack to force updating the 'current' attribs */
 	crStateUpdateColorBits();
@@ -144,9 +161,14 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 		}
 	}
 
-	if (cr_server.firstCallMakeCurrent ||
+	/*
+	crDebug("**** %s  currentWindow %d  newWindow %d", __func__,
+					cr_server.currentWindow, window);
+	*/
+
+	if (1/*cr_server.firstCallMakeCurrent ||
 			cr_server.currentWindow != window ||
-			cr_server.currentNativeWindow != nativeWindow) {
+			cr_server.currentNativeWindow != nativeWindow*/) {
 		/* Since the cr server serialized all incoming contexts/clients into
 		 * one output stream of GL commands, we only need to call the head
 		 * SPU's MakeCurrent() function once.
@@ -154,7 +176,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchMakeCurrent( GLint window, GLint n
 		 * MakeCurrent() calls sometimes.  The same GL context will always be
 		 * used though.
 		 */
-		cr_server.head_spu->dispatch_table.MakeCurrent( window, nativeWindow, cr_server.SpuContext );
+		cr_server.head_spu->dispatch_table.MakeCurrent( mural->spuWindow,
+																										nativeWindow,
+																										cr_server.SpuContext );
 		cr_server.firstCallMakeCurrent = GL_FALSE;
 		cr_server.currentWindow = window;
 		cr_server.currentNativeWindow = nativeWindow;

@@ -90,6 +90,8 @@ DestroyContext
 WindowCreate
 WindowDestroy
 WindowSize
+WindowPosition
+WindowShow
 ReadPixels
 GetChromiumParametervCR
 ChromiumParametervCR

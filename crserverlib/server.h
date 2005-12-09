@@ -70,4 +70,6 @@ void crComputeKnockoutGeom(double *quads, int nquad, int my_quad_idx, CRPoly **r
 
 int crServerGetCurrentEye(void);
 
+GLint crServerSPUWindowID(GLint serverWindow);
+
 #endif /* CR_SERVER_H */
