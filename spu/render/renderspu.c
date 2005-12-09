@@ -268,6 +268,11 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 	window->id = render_spu.window_id;
 	render_spu.window_id++;
 
+	window->x = render_spu.defaultX;
+	window->y = render_spu.defaultY;
+	window->width  = render_spu.defaultWidth;
+	window->height = render_spu.defaultHeight;
+
 	if ((render_spu.render_to_app_window || render_spu.render_to_crut_window) && !crGetenv("CRNEWSERVER"))
 		showIt = 0;
 	else
@@ -299,9 +304,12 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 	/* Have GLX/WGL/AGL create the window */
 	if (!renderspu_SystemCreateWindow( visual, showIt, window ))
 	{
+		crFree(window);
 		crWarning( "Render SPU: Couldn't create a window, renderspu_SystemCreateWindow failed" );
 		return -1;
 	}
+
+	CRASSERT(window->visual == visual);
 
 	return window->id;
 }
@@ -313,6 +321,7 @@ static void RENDER_APIENTRY renderspuWindowDestroy( GLint win )
 	window = (WindowInfo *) crHashtableSearch(render_spu.windowTable, win);
 	if (window) {
 		renderspu_SystemDestroyWindow( window );
+		/* remove window info from hash table, and free it */
 		crHashtableDelete(render_spu.windowTable, win, crFree);
 	}
 	else {

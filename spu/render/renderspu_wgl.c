@@ -42,7 +42,6 @@ void renderspu_SystemDestroyWindow( WindowInfo *window )
 	DestroyWindow( window->visual->hWnd );
 	window->visual->hWnd = NULL;
 	window->visual = NULL;
-	window->width = window->height = 0;
 }
 
 static LONG WINAPI
@@ -309,10 +308,6 @@ GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, Wi
 	int       window_plus_caption_height;
 
 	window->visual = visual;
-	window->x = render_spu.defaultX;
-	window->y = render_spu.defaultY;
-	window->width  = render_spu.defaultWidth;
-	window->height = render_spu.defaultHeight;
 	window->nativeWindow = 0;
 
 	if ( render_spu.use_L2 )

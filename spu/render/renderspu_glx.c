@@ -592,16 +592,13 @@ createWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
 	XEvent               event;
 	XTextProperty        text_prop;
 	XClassHint          *class_hints = NULL;
+	Window               parent;
 	char                *name;
 	unsigned long        flags;
 	unsigned int vncWin;
 
 	CRASSERT(visual);
 	window->visual = visual;
-	window->x = render_spu.defaultX;
-	window->y = render_spu.defaultY;
-	window->width  = render_spu.defaultWidth;
-	window->height = render_spu.defaultHeight;
 	window->nativeWindow = 0;
 
 #ifdef USE_OSMESA
@@ -640,6 +637,9 @@ createWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
 		window->width  = xwa.width;
 		window->height = xwa.height;
 	}
+
+	CRASSERT(window->width >= 1);
+	CRASSERT(window->height >= 1);
 
 	/*
 	 * Get a colormap.
@@ -687,23 +687,16 @@ createWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window )
 	 * NOTE: This is crufty, and will do for now. FIXME.
 	 */
 	vncWin = crStrToInt( crGetenv("CRVNCWINDOW") );
+	if (vncWin)
+		parent = (Window) vncWin;
+	else
+		parent = RootWindow(dpy, visual->visual->screen);
 
-	if (vncWin) {
-		window->window = XCreateWindow(dpy, (Window) vncWin,
-																	 window->x, window->y,
-																	 window->width, window->height,
-																	 0, visual->visual->depth, InputOutput,
-																	 visual->visual->visual, flags, &swa);
-	}
-	else {
-		window->window = XCreateWindow(dpy,
-																	 RootWindow(dpy, visual->visual->screen),
-																	 window->x, window->y,
-																	 window->width, window->height,
-																	 0, visual->visual->depth, InputOutput,
-																	 visual->visual->visual, flags, &swa);
-	}
-
+	window->window = XCreateWindow(dpy, parent,
+																 window->x, window->y,
+																 window->width, window->height,
+																 0, visual->visual->depth, InputOutput,
+																 visual->visual->visual, flags, &swa);
 	if (!window->window) {
 		crWarning( "Render SPU: unable to create window" );
 		return GL_FALSE;
@@ -920,7 +913,6 @@ renderspu_SystemDestroyWindow( WindowInfo *window )
 	}
 	window->visual = NULL;
 	window->window = 0;
-	window->width = window->height = 0;
 }
 
 
@@ -1082,7 +1074,6 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 			crDebug("Render SPU: MakeCurrent visual mismatch (win(%d) bits:0x%x != ctx(%d) bits:0x%x); remaking window.",
 							window->id, window->visual->visAttribs,
 							context->id, context->visual->visAttribs);
-			/*return; this sometimes works */
 			/*
 			 * XXX have to revisit this issue!!!
 			 *

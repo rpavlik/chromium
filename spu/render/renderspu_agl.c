@@ -386,10 +386,6 @@ renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt,
 	CRASSERT(window);
 
 	window->visual  = visual;
-	window->x		= render_spu.defaultX;
-	window->y		= render_spu.defaultY;
-	window->width   = render_spu.defaultWidth;
-	window->height  = render_spu.defaultHeight;
 	window->nativeWindow = NULL;
 
 	if ( render_spu.use_L2 ) {
@@ -506,7 +502,6 @@ renderspu_SystemDestroyWindow( WindowInfo *window )
 
 	window->visual = NULL;
 	window->window = NULL;
-	window->width = window->height = 0;
 }
 
 
