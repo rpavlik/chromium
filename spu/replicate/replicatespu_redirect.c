@@ -27,7 +27,7 @@ replicatespuCheckVncEvents(void)
 {
 	if (replicate_spu.glx_display) {
 		while (XPending(replicate_spu.glx_display)) {
-#if 0
+#if 1
 			int VncConn = replicate_spu.VncEventsBase + XVncConnected;
 			int VncDisconn = replicate_spu.VncEventsBase + XVncDisconnected;
 #endif
@@ -35,19 +35,9 @@ replicatespuCheckVncEvents(void)
 			XEvent event;
 		
 			XNextEvent (replicate_spu.glx_display, &event);
-
-#if 0
-			if (event.type == VncConn) {
-				crWarning("Replicate SPU: Received VncConn");
-			} 
-			else
-#endif
 			if (event.type == VncChromiumConn) {
 				XVncConnectedEvent *e = (XVncConnectedEvent*) &event;
-				struct in_addr addr;
-
-				addr.s_addr = e->ipaddress;
-				crWarning("ReplicateSPU: someone just connected!\n");
+				crWarning("ReplicateSPU: new viewer detected.");
 
 				if (e->ipaddress) {
 					replicatespuReplicate(e->ipaddress);
@@ -56,9 +46,11 @@ replicatespuCheckVncEvents(void)
 					crWarning("Replicate SPU: Someone connected, but with no ipaddress?");
 				}
 			} 
-#if 0
-			else
-			if (event.type == VncDisconn) {
+#if 1
+			else if (event.type == VncConn) {
+				crWarning("Replicate SPU: Received VncConn");
+			} 
+			else if (event.type == VncDisconn) {
 				crWarning("Replicate SPU: Received VncDisconn");
 			}
 #endif
