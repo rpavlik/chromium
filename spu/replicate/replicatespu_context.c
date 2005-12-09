@@ -90,10 +90,6 @@ ThreadInfo *replicatespuNewThread( unsigned long id )
 static void
 replicatespuStartVnc( void )
 {
-	VncConnectionList *vnclist;
-	int num_conn;
-	int i;
-	struct in_addr addr;
 	int maj, min;
 
 #ifdef CHROMIUM_THREADSAFE_notyet
@@ -124,6 +120,9 @@ replicatespuStartVnc( void )
 	}
 
 	if (replicate_spu.vncAvailable) {
+		VncConnectionList *vnclist;
+		int num_conn;
+		int i;
 
 		replicate_spu.VncEventsBase = XVncGetEventBase(replicate_spu.glx_display);
 		XVncSelectNotify(replicate_spu.glx_display, 1);
@@ -131,16 +130,12 @@ replicatespuStartVnc( void )
 		vnclist = XVncListConnections(replicate_spu.glx_display, &num_conn);
 		crDebug("Replicate SPU: Found %d open VNC connections", num_conn);
 		for (i = 0; i < num_conn; i++) {
-
-			addr.s_addr = vnclist->ipaddress;
-
-			if (vnclist->ipaddress) {
-				replicatespuReplicate(vnclist->ipaddress);
-			} else {
-				crWarning("Replicate SPU: vnclist with no ipaddress ???????????.");
+			if (vnclist[i].ipaddress) {
+				replicatespuReplicate(vnclist[i].ipaddress);
 			}
-
-			vnclist++;
+			else {
+				crWarning("Replicate SPU: vnc client connection with no ipaddress!");
+			}
 		}
 	}
 }
@@ -400,6 +395,7 @@ static void
 destroyContextCallback(unsigned long key, void *data1, void *data2)
 {
 	if (key >= 1) {
+		crDebug("Replicate SPU: %s %d\n", __func__, (int) key);
 		replicatespu_DestroyContext((GLint) key);
 	}
 }
@@ -408,6 +404,7 @@ static void
 destroyWindowCallback(unsigned long key, void *data1, void *data2)
 {
 	if (key >= 1) {
+		crDebug("Replicate SPU: %s %d\n", __func__, (int) key);
 		replicatespu_WindowDestroy((GLint) key);
 	}
 }
@@ -453,6 +450,7 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 
 		newCtx->currentWindow = winInfo;
 
+		/* XXX not sure this is needed anymore */
 		if (replicate_spu.render_to_crut_window && !nativeWindow) {
 			char response[8096];
 			CRConnection *conn = crMothershipConnect();
@@ -495,10 +493,11 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
 				continue;
 
+		/* Note: app's native window ID not needed on server side; pass zero */
 		if (replicate_spu.swap)
-			crPackMakeCurrentSWAP( winInfo->id[i], nativeWindow, rserverCtx[i] );
+			crPackMakeCurrentSWAP( winInfo->id[i], 0, rserverCtx[i] );
 		else
-			crPackMakeCurrent( winInfo->id[i], nativeWindow, rserverCtx[i] );
+			crPackMakeCurrent( winInfo->id[i], 0, rserverCtx[i] );
 
 		if (show_window) {
 			/* We may find that the window was mapped before we
