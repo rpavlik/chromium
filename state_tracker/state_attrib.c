@@ -1160,7 +1160,8 @@ void crStateAttribSwitch( CRAttribBits *bb, CRbitvalue *bitID,
 	CRAttribState *from = &(fromCtx->attrib);
 	if (to->attribStackDepth != 0 || from->attribStackDepth != 0)
 	{
-		crError( "Trying to switch contexts when the attribte stacks weren't zero.  Currently, this is not supported." );
+		crWarning( "Trying to switch contexts when the attribute stacks "
+							 "weren't empty.  Currently, this is not supported." );
 	}
 	(void) bb;
 	(void) bitID;
