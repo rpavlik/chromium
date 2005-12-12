@@ -86,15 +86,17 @@ ThreadInfo *replicatespuNewThread( unsigned long id )
 /**
  * Determine if the X VNC extension is available.
  * Get list of clients/viewers attached, and replicate to them.
+ * Can't call this until we have any X display name (see CreateContext).
  */
 static void
-replicatespuStartVnc( void )
+replicatespuStartVnc(const char *dpyName)
 {
 	int maj, min;
 
 #ifdef CHROMIUM_THREADSAFE_notyet
 	crLockMutex(&_ReplicateMutex);
 #endif
+
 	if (replicate_spu.StartedVnc) {
 #ifdef CHROMIUM_THREADSAFE_notyet
 		crUnlockMutex(&_ReplicateMutex);
@@ -102,20 +104,31 @@ replicatespuStartVnc( void )
 		return;
 	}
 
-	replicate_spu.StartedVnc = 1;
-
 #ifdef CHROMIUM_THREADSAFE_notyet
 	crUnlockMutex(&_ReplicateMutex);
 #endif
 
+	/* Open the named display */
+	if (!replicate_spu.glx_display) {
+		replicate_spu.glx_display = XOpenDisplay(dpyName);
+		crWarning("Replicate SPU: Unable to open X display %s", dpyName);
+		if (!replicate_spu.glx_display) {
+			/* Try local display */
+			replicate_spu.glx_display = XOpenDisplay(":0");
+		}
+		if (!replicate_spu.glx_display) {
+			crError("Replicate SPU: Unable to open X display :0");
+		}
+	}
+
+	CRASSERT(replicate_spu.glx_display);
 
 	/* NOTE: should probably check the major/minor version too!! */
-	CRASSERT(replicate_spu.glx_display);
 	if (!XVncQueryExtension(replicate_spu.glx_display, &maj, &min)) {
-		crWarning("Replicate SPU: VNC extension is not available.");
+		crWarning("Replicate SPU: X server VNC extension is not available.");
 		replicate_spu.vncAvailable = GL_FALSE;
 	} else {
-		crWarning("Replicate SPU: VNC extension available.");
+		crWarning("Replicate SPU: X server VNC extension available.");
 		replicate_spu.vncAvailable = GL_TRUE;
 	}
 
@@ -138,32 +151,29 @@ replicatespuStartVnc( void )
 			}
 		}
 	}
+
+	replicate_spu.StartedVnc = 1;
 }
+
 
 
 GLint REPLICATESPU_APIENTRY
 replicatespu_CreateContext( const char *dpyName, GLint visual )
 {
 	static GLint freeCtxID = MAGIC_OFFSET;
-	static int done = 0;
 	int writeback;
 	GLint serverCtx = (GLint) -1;
 	char headspuname[10];
 	ContextInfo *context;
+	unsigned int i;
 
 	replicatespuFlush( &(replicate_spu.thread[0]) );
 
 #ifdef CHROMIUM_THREADSAFE_notyet
 	crLockMutex(&_ReplicateMutex);
 #endif
-	if (!replicate_spu.glx_display) {
-		replicate_spu.glx_display = XOpenDisplay(dpyName);
-		if (!replicate_spu.glx_display) {
-			/* Try local display */
-			replicate_spu.glx_display = XOpenDisplay(":0");
-		}
-		CRASSERT(replicate_spu.glx_display);
-	}
+
+	replicatespuStartVnc(dpyName);
 
 	crPackSetContext( replicate_spu.thread[0].packer );
 
@@ -246,46 +256,35 @@ replicatespu_CreateContext( const char *dpyName, GLint visual )
 														 &(replicate_spu.thread[0].packer->current) );
 #endif
 
-	(void) done;
-#if 0
-	if (!done) {
-		replicatespuStartVnc( dpyName );
-		done = 1;
-	} else
-#endif
-	{
-		unsigned int i;
+	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
+		int r_writeback = 1, rserverCtx = -1;
 
-		for (i = 1; i < CR_MAX_REPLICANTS; i++) {
-			int r_writeback = 1, rserverCtx = -1;
+		if (replicate_spu.rserver[i].conn == NULL ||
+				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+			continue;
 
-			if (replicate_spu.rserver[i].conn == NULL ||
-					replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
-				continue;
+		if (replicate_spu.swap)
+			crPackCreateContextSWAP( dpyName, visual, &rserverCtx, &r_writeback );
+		else
+			crPackCreateContext( dpyName, visual, &rserverCtx, &r_writeback );
 
-			if (replicate_spu.swap)
-				crPackCreateContextSWAP( dpyName, visual, &rserverCtx, &r_writeback );
-			else
-				crPackCreateContext( dpyName, visual, &rserverCtx, &r_writeback );
+		/* Flush buffer and get return value */
+		replicatespuFlushOne( &(replicate_spu.thread[0]), i );
 
-			/* Flush buffer and get return value */
-			replicatespuFlushOne( &(replicate_spu.thread[0]), i );
+		while (r_writeback)
+			crNetRecv();
+		if (replicate_spu.swap)
+			rserverCtx = (GLint) SWAP32(rserverCtx);
 
-			while (r_writeback)
-				crNetRecv();
-			if (replicate_spu.swap)
-				rserverCtx = (GLint) SWAP32(rserverCtx);
-
-			if (rserverCtx < 0) {
+		if (rserverCtx < 0) {
 #ifdef CHROMIUM_THREADSAFE_notyet
-				crUnlockMutex(&_ReplicateMutex);
+			crUnlockMutex(&_ReplicateMutex);
 #endif
-				crError("Failure in replicatespu_CreateContext");
-				return -1;  /* failed */
-			}
-
-			context->rserverCtx[i] = rserverCtx;
+			crError("Failure in replicatespu_CreateContext");
+			return -1;  /* failed */
 		}
+
+		context->rserverCtx[i] = rserverCtx;
 	}
 
 
@@ -443,11 +442,7 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 	CRASSERT(thread);
 	CRASSERT(thread->packer);
 
-	/* XXX shouldn't this just be done once? */
-	replicatespuStartVnc( );
-
 	if (newCtx) {
-
 		newCtx->currentWindow = winInfo;
 
 		/* XXX not sure this is needed anymore */
