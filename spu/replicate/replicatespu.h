@@ -79,6 +79,7 @@ typedef struct {
 	int sync_on_swap;
 
 	CRNetServer rserver[CR_MAX_REPLICANTS];
+	int ipnumbers[CR_MAX_REPLICANTS];
 
 	CRHashTable *windowTable;
 	CRHashTable *contextTable;

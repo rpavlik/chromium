@@ -20,7 +20,7 @@
 
 /**
  * This is called periodically to see if we have received any Xvnc
- * events from the X servers' VNC modules.
+ * events from the X server's VNC module.
  */
 void
 replicatespuCheckVncEvents(void)
@@ -48,7 +48,9 @@ replicatespuCheckVncEvents(void)
 			} 
 #if 1
 			else if (event.type == VncConn) {
-				crWarning("Replicate SPU: Received VncConn");
+				XVncConnectedEvent *e = (XVncConnectedEvent*) &event;
+				crWarning("Replicate SPU: Received VncConn from IP 0x%x",
+									(int) e->ipaddress);
 			} 
 			else if (event.type == VncDisconn) {
 				crWarning("Replicate SPU: Received VncDisconn");
@@ -387,7 +389,7 @@ replicatespuReplicate(int ipaddress)
 	struct in_addr addr;
 	char *hosturl;
 	char *ipstring;
-	int r_slot;
+	int i, r_slot;
 
 	crDebug("Enter replicatespuReplicate(ipaddress=0x%x)", ipaddress);
 
@@ -414,6 +416,19 @@ replicatespuReplicate(int ipaddress)
 	 ** OK, now rserver[r_slot] is free for use.
 	 **/
 
+	/*
+	 * At this time, we can only support one VNC viewer per host.
+	 */
+	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
+		 if (replicate_spu.ipnumbers[i] == ipaddress &&
+				 replicate_spu.rserver[i].conn &&
+				 replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
+				crWarning("Replicate SPU: Can't connect to multiple VNC viewers on one host.");
+				return;
+		 }
+	}
+	replicate_spu.ipnumbers[r_slot] = ipaddress;
+
 	if (replicate_spu.vncAvailable) {
 		/* Find the mothership port that we're using and pass it to
 		 * along to the VNC server.  The VNC server will, in turn, pass it
@@ -429,6 +444,8 @@ replicatespuReplicate(int ipaddress)
 								 DEFAULT_MOTHERSHIP_PORT);
 		else
 			mothershipPort = DEFAULT_MOTHERSHIP_PORT;
+		crDebug("Replicate SPU: Sending ChromiumStart msg to VNC server, port =%d",
+						CHROMIUM_START_PORT + r_slot);
 		XVncChromiumStart(replicate_spu.glx_display, ipaddress,
 											CHROMIUM_START_PORT + r_slot, mothershipPort);
 	}
@@ -438,7 +455,8 @@ replicatespuReplicate(int ipaddress)
 	hosturl = crAlloc(crStrlen(ipstring) + 9);
 	sprintf(hosturl, "tcpip://%s", ipstring);
 
-	crDebug("Replicate SPU attaching to %s",hosturl);
+	crDebug("Replicate SPU attaching to %s on port %d",
+					hosturl, CHROMIUM_START_PORT + r_slot);
 
 	/* connect to the remote VNC server */
 	replicate_spu.rserver[r_slot].name = crStrdup( replicate_spu.name );
