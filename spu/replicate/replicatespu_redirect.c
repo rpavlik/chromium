@@ -377,6 +377,22 @@ replicatespuReplicateContexts(unsigned long key, void *data1, void *data2)
 
 
 /**
+ * Send an OpenGL glFlush command to the named server.
+ * This is just used to test if a CRConnection is really valid.
+ */
+static void
+FlushConnection(int i)
+{
+	GET_THREAD(thread);
+	if (replicate_spu.swap)
+		crPackFlushSWAP();
+	else
+		crPackFlush();
+	replicatespuFlushOne(thread, i);
+}
+
+
+/**
  * This is the main routine responsible for replicating our GL state
  * for a new VNC viewer.  Called when we detect that a new VNC viewer
  * has been started.
@@ -420,19 +436,30 @@ replicatespuReplicate(int ipaddress)
 	 * At this time, we can only support one VNC viewer per host.
 	 */
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
-		 if (replicate_spu.ipnumbers[i] == ipaddress &&
-				 replicate_spu.rserver[i].conn &&
-				 replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
-				crWarning("Replicate SPU: Can't connect to multiple VNC viewers on one host.");
-				return;
-		 }
+		if (replicate_spu.ipnumbers[i] == ipaddress) {
+			CRConnection *conn = replicate_spu.rserver[i].conn;
+			/* If the connection appears to be active, it may actually be a dangling
+			 * connection.  Try flushing it now.  If flushing fails, the connection
+			 * type will definitely be CR_NO_CONNECTION (which we test below).
+			 */
+			if (conn) {
+				if (conn->type != CR_NO_CONNECTION) {
+					FlushConnection(i);
+				}
+				if (conn->type != CR_NO_CONNECTION) {
+					crWarning("Replicate SPU: Can't connect to multiple VNC viewers on one host.");
+					return;
+				}
+			}
+		}
 	}
+
 	replicate_spu.ipnumbers[r_slot] = ipaddress;
 
 	if (replicate_spu.vncAvailable) {
-		/* Find the mothership port that we're using and pass it to
-		 * along to the VNC server.  The VNC server will, in turn, pass it
-		 * on to the VNC viewer and chromium module.
+		/* Find the mothership port that we're using and pass it along to the
+		 * VNC server.  The VNC server will, in turn, pass it on to the new VNC
+		 * viewer and chromium server.
 		 */
 		char protocol[100], hostname[1000];
 		const char *mothershipURL;
