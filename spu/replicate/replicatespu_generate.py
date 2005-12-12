@@ -101,6 +101,10 @@ for func_name in keys:
 		if apiutil.SetsClientState(func_name):
 			needPack = 0
 
+	# Need to special-case glMaterial* calls
+	if func_name[0:8] == "Material":
+		needTrackState = 1
+		
 	# If we have a trivial implementation (i.e. we need no special processing,
 	# so that the function can be handled completely with crPack), bail out.
 	# The appropriate crPack functions will be installed in the SPU instead.
