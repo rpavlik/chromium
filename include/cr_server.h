@@ -21,6 +21,7 @@ extern "C" {
 #endif
 
 #define CR_MAX_WINDOWS 100
+#define CR_MAX_CLIENTS 20
 
 typedef struct {
 	CRrecti imagewindow;    /**< coordinates in mural space */
@@ -60,11 +61,10 @@ typedef struct {
 /**
  * A client is basically an upstream Cr Node (connected via mothership)
  */
-typedef struct {
+typedef struct _crclient {
 	int spu_id;        /**< id of the last SPU in the client's SPU chain */
-	int number;        /**< each client gets an integer ID, starting at zero */
 	CRConnection *conn;       /**< network connection from the client */
-
+	int number;        /**< a unique number for each client */
 	GLint currentContextNumber;
 	CRContext *currentCtx;
 	GLint currentWindow;
@@ -86,7 +86,6 @@ typedef struct CRPoly_t {
 typedef struct RunQueue_t {
 	CRClient *client;
 	int blocked;
-	int number;             /**< corresponds to client->number */
 	struct RunQueue_t *next;
 	struct RunQueue_t *prev;
 } RunQueue;
@@ -94,9 +93,9 @@ typedef struct RunQueue_t {
 typedef struct {
 	unsigned short tcpip_port;
 
-	unsigned int numClients;
-	CRClient *clients;  /**< array [numClients] */
-	CRClient *curClient;  /**< points into clients[] array */
+	int numClients;
+	CRClient *clients[CR_MAX_CLIENTS];  /**< array [numClients] */
+	CRClient *curClient;
 	CRCurrentStatePointers current;
 
 	GLboolean firstCallCreateContext;
@@ -105,6 +104,8 @@ typedef struct {
 	GLint currentNativeWindow;
 
 	CRHashTable *muralTable;  /**< hash table where all murals are stored */
+
+	int client_spu_id;
 
 	int mtu;
 	int buffer_size;
@@ -121,7 +122,7 @@ typedef struct {
 	int SpuContext; /**< Rendering context for the head SPU */
 	int SpuContextVisBits; /**< Context's visual attributes */
 
-	CRContext *context[CR_MAX_CONTEXTS]; /**< XXX replace with hash table someday*/
+	CRHashTable *contextTable;  /**< hash table for rendering contexts */
 	CRContext *DummyContext;    /**< used when no other bound context */
 
 	CRHashTable *programTable;  /**< for vertex programs */
@@ -187,6 +188,7 @@ extern int CRServerMain( int argc, char *argv[] );
 extern void crServerServiceClients(void);
 extern void crServerAddNewClient(void);
 extern SPU* crServerHeadSPU(void);
+extern void crServerSetPort(int port);
 
 
 #ifdef __cplusplus
