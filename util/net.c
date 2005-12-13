@@ -915,7 +915,7 @@ crNetRecvReadback( CRMessageReadback *rb, unsigned int len )
 
 /**
  * This is used by the SPUs that do packing (such as Pack, Tilesort and
- * Replicate) to process ReadPixels messaages.  We can't call this directly
+ * Replicate) to process ReadPixels messages.  We can't call this directly
  * from the message loop below because the SPU's have other housekeeping
  * to do for ReadPixels (such as decrementing counters).
  */
