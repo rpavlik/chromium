@@ -425,7 +425,7 @@ crServerGetTileInfoFromMothership( CRConnection *conn, CRMuralInfo *mural )
 	}
 
 
-	if (cr_server.clients[0].spu_id != -1) /* out-of-nowhere file client */
+	if (cr_server.clients[0]->spu_id != -1) /* out-of-nowhere file client */
 	{
 		/* Sigh -- the servers need to know how big the whole mural is if we're 
 		 * doing tiling, so they can compute their base projection.  For now, 
@@ -439,7 +439,7 @@ crServerGetTileInfoFromMothership( CRConnection *conn, CRMuralInfo *mural )
 		int num_servers, i;
 		char **serverchain;
 
-		crMothershipIdentifySPU(conn, cr_server.clients[0].spu_id);
+		crMothershipIdentifySPU(conn, cr_server.clients[0]->spu_id);
 		crMothershipGetServers(conn, response);
 
 		/* crMothershipGetServers() response is of the form
@@ -451,8 +451,7 @@ crServerGetTileInfoFromMothership( CRConnection *conn, CRMuralInfo *mural )
 
 		if (num_servers == 0)
 		{
-			crError("No servers specified for SPU %d?!",
-							cr_server.clients[0].spu_id);
+			crError("No servers specified for SPU %d?!", cr_server.clients[0]->spu_id);
 		}
 
 		for (i = 0; i < num_servers; i++)

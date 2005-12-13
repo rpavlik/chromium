@@ -26,7 +26,8 @@ generateID(void)
 
 
 
-GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName, GLint visBits )
+GLint SERVER_DISPATCH_APIENTRY
+crServerDispatchWindowCreate( const char *dpyName, GLint visBits )
 {
 	CRMuralInfo *mural;
 	GLint windowID = -1;
@@ -34,8 +35,8 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName
 	GLint dims[2];
 
 	if (cr_server.sharedWindows) {
-		int pos;
-		unsigned int j;
+		int pos, j;
+
 		/* find empty position in my (curclient) windowList */
 		for (pos = 0; pos < CR_MAX_WINDOWS; pos++) {
 			if (cr_server.curClient->windowList[pos] == 0) {
@@ -49,12 +50,13 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName
 
 		/* Look if any other client has a window for this slot */
 		for (j = 0; j < cr_server.numClients; j++) {
-			if (cr_server.clients[j].windowList[pos] != 0) {
+			if (cr_server.clients[j]->windowList[pos] != 0) {
 				/* use that client's window */
-				windowID = cr_server.clients[j].windowList[pos];
+				windowID = cr_server.clients[j]->windowList[pos];
 				cr_server.curClient->windowList[pos] = windowID;
 				crServerReturnValue( &windowID, sizeof(windowID) ); /* real return value */
-				crDebug("CRServer: client %d sharing window %d", cr_server.curClient->number, windowID);
+				crDebug("CRServer: client %p sharing window %d",
+								cr_server.curClient, windowID);
 				return windowID;
 			}
 		}
@@ -64,9 +66,6 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName
 	 * Have first SPU make a new window.
 	 */
 	spuWindow = cr_server.head_spu->dispatch_table.WindowCreate( dpyName, visBits );
-	crDebug("CRServer: client %d created new window %d",
-					cr_server.curClient->number, spuWindow);
-
 	if (spuWindow < 0) {
 		crServerReturnValue( &spuWindow, sizeof(spuWindow) );
 		return spuWindow;
@@ -105,6 +104,9 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchWindowCreate( const char *dpyName
 		crHashtableAdd(cr_server.muralTable, windowID, mural);
 	}
 
+	crDebug("CRServer: client %p created new window %d (SPU window %d)",
+					cr_server.curClient, windowID, spuWindow);
+
 	if (windowID != -1 && cr_server.sharedWindows) {
 		int pos;
 		for (pos = 0; pos < CR_MAX_WINDOWS; pos++) {
@@ -131,6 +133,7 @@ crServerDispatchWindowDestroy( GLint window )
 		 return;
 	}
 
+	crDebug("CRServer: Destroying window %d (spu window %d)", window, mural->spuWindow);
 	cr_server.head_spu->dispatch_table.WindowDestroy( mural->spuWindow );
 }
 
@@ -140,6 +143,7 @@ crServerDispatchWindowSize( GLint window, GLint width, GLint height )
 {
   CRMuralInfo *mural;
 
+	/*	crDebug("CRServer: Window %d size %d x %d", window, width, height);*/
 	mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
 	if (!mural) {
 		 crWarning("CRServer: invalid window %d passed to WindowSize()", window);
@@ -157,6 +161,7 @@ void SERVER_DISPATCH_APIENTRY
 crServerDispatchWindowPosition( GLint window, GLint x, GLint y )
 {
   CRMuralInfo *mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
+	/*	crDebug("CRServer: Window %d pos %d, %d", window, x, y);*/
 	if (!mural) {
 		 crWarning("CRServer: invalid window %d passed to WindowPosition()", window);
 		 return;

@@ -58,10 +58,15 @@ static void DeleteBarrierCallback( void *data )
 }
 
 
+static void deleteContextCallback( void *data )
+{
+	CRContext *c = (CRContext *) data;
+	crStateDestroyContext(c);
+}
+
+
 static void crServerTearDown( void )
 {
-	unsigned int i;
-
 	/* avoid a race condition */
 	if (tearingdown)
 		return;
@@ -70,19 +75,8 @@ static void crServerTearDown( void )
 
 	crStateSetCurrent( NULL );
 
-	/* Free all context info */
-	for (i = 0; i < CR_MAX_CONTEXTS; i++) {
-		if (cr_server.context[i] != NULL) {
-			crStateDestroyContext( cr_server.context[i] );
-			cr_server.context[i] = NULL;
-		}
-	}
-
 	cr_server.curClient = NULL;
 	cr_server.run_queue = NULL;
-
-	crFree( cr_server.clients );
-	cr_server.clients = NULL;
 
 	crFree( cr_server.overlap_intens );
 	cr_server.overlap_intens = NULL;
@@ -94,6 +88,9 @@ static void crServerTearDown( void )
 	/* Deallocate all barriers */
 	crFreeHashtable(cr_server.barriers, DeleteBarrierCallback);
 	cr_server.barriers = NULL;
+
+	/* Free all context info */
+	crFreeHashtable(cr_server.contextTable, deleteContextCallback);
 
 	/* Free vertex programs */
 	crFreeHashtable(cr_server.programTable, crFree);
@@ -120,6 +117,14 @@ static void crServerCleanup( int sigio )
 }
 
 
+void
+crServerSetPort(int port)
+{
+	cr_server.tcpip_port = port;
+}
+
+
+
 static void
 crPrintHelp(void)
 {
@@ -139,7 +144,6 @@ void
 crServerInit(int argc, char *argv[])
 {
 	int i;
-	unsigned int j;
 	char *mothership = NULL;
 	CRMuralInfo *defaultMural;
 
@@ -213,14 +217,10 @@ crServerInit(int argc, char *argv[])
 	/*
 	 * Default context
 	 */
+	cr_server.contextTable = crAllocHashtable();
 	cr_server.DummyContext = crStateCreateContext( &cr_server.limits,
 																								 CR_RGB_BIT | CR_DEPTH_BIT );
 	cr_server.curClient->currentCtx = cr_server.DummyContext;
-
-	for (j = 0 ; j < cr_server.numClients ; j++)
-	{
-		crServerAddToRunQueue( &cr_server.clients[j] );
-	}
 
 	crServerInitDispatch();
 	crStateDiffAPI( &(cr_server.head_spu->dispatch_table) );

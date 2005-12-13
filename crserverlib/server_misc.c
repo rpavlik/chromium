@@ -54,7 +54,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchGetChromiumParametervCR(GLenum tar
 void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
 {
 	CRMuralInfo *mural = cr_server.curClient->currentMural;
-	static unsigned int gather_connect_count = 0;
+	static int gather_connect_count = 0;
 
 	switch (target) {
 	case GL_SET_MAX_VIEWPORT_CR:
@@ -87,11 +87,8 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 		break;
 
 	case GL_GATHER_DRAWPIXELS_CR:
-		if ((cr_server.only_swap_once) && 
-			(cr_server.curClient != cr_server.clients+cr_server.numClients-1))   
-		{
+		if (cr_server.only_swap_once && cr_server.curClient != cr_server.clients[0])
 			break;
-		}
 		cr_server.head_spu->dispatch_table.ChromiumParametervCR( target, type, count, values );
 		break;
 
@@ -102,7 +99,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 		 * in the readback spu
 		 */
 		gather_connect_count++;
-		if ((cr_server.only_swap_once) && (gather_connect_count != cr_server.numClients)) 
+		if (cr_server.only_swap_once && (gather_connect_count != cr_server.numClients)) 
 		{
 			break;
 		}

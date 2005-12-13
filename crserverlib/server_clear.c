@@ -25,7 +25,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchClear( GLenum mask )
 		 * It's pretty likely that the last client will be active.
 		 */
 		if ((mask & GL_COLOR_BUFFER_BIT) &&
-			(cr_server.curClient != &(cr_server.clients[cr_server.numClients - 1])))
+			(cr_server.curClient != cr_server.clients[cr_server.numClients - 1]))
 		   return;
 	}
 
@@ -91,7 +91,7 @@ crServerDispatchSwapBuffers( GLint window, GLint flags )
 		 * be idle and never call glClear at all.  See threadtest.c
 		 * It's pretty likely that the last client will be active.
 		 */
-		if (cr_server.curClient != &(cr_server.clients[cr_server.numClients - 1]))
+		if (cr_server.curClient != cr_server.clients[cr_server.numClients - 1])
 		{
 			return;
 		}
@@ -280,7 +280,7 @@ crServerDispatchSwapBuffers( GLint window, GLint flags )
 	}
 
 	/* Check if using a file network */
-	if (!cr_server.clients[0].conn->actual_network && window == MAGIC_OFFSET)
+	if (!cr_server.clients[0]->conn->actual_network && window == MAGIC_OFFSET)
 		window = 0;
 
 	cr_server.head_spu->dispatch_table.SwapBuffers( mural->spuWindow, flags );

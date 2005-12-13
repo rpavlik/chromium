@@ -1,19 +1,37 @@
 /* Copyright (c) 2001, Stanford University
-	All rights reserved.
-
-	See the file LICENSE.txt for information on redistributing this software. */
+ * All rights reserved.
+ *
+ * See the file LICENSE.txt for information on redistributing this software.
+ */
 	
 #include "cr_spu.h"
 #include "chromium.h"
 #include "cr_error.h"
 #include "cr_net.h"
+#include "cr_rand.h"
 #include "server_dispatch.h"
 #include "server.h"
 
-
-GLint SERVER_DISPATCH_APIENTRY crServerDispatchCreateContext( const char *dpyName, GLint visualBits )
+/**
+ * Generate a new window ID.
+ */
+static GLint
+generateID(void)
 {
-	GLint i, retVal = 0, ctxPos = -1;
+	static GLboolean firstCall = GL_TRUE;
+	if (firstCall) {
+		crRandAutoSeed();
+		firstCall = GL_FALSE;
+	}
+	return crRandInt(20000, 50000); /* XXX FIX */
+}
+
+
+GLint SERVER_DISPATCH_APIENTRY
+crServerDispatchCreateContext( const char *dpyName, GLint visualBits )
+{
+	GLint retVal = -1;
+	CRContext *newCtx;
 
 	/* Since the Cr server serialized all incoming clients/contexts into
 	 * one outgoing GL stream, we only need to create one context for the
@@ -48,24 +66,14 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchCreateContext( const char *dpyNam
 		}
 	}
 
-	/* find an empty position in the context[] array */
-	for (i = 0; i < CR_MAX_CONTEXTS; i++) {
-		if (cr_server.context[i] == NULL) {
-			ctxPos = i;
-			break;
-		}
-	}
-
-	if (ctxPos >= 0) {
-		/* Now create a new state-tracker context and initialize the
-		 * dispatch function pointers.
-		 */
-		CRContext *newCtx = crStateCreateContext( &cr_server.limits, visualBits );
-		if (newCtx) {
-			cr_server.context[ctxPos] = newCtx;
-			crStateSetCurrentPointers( newCtx, &(cr_server.current) );
-			retVal = MAGIC_OFFSET + ctxPos;
-		}
+	/* Now create a new state-tracker context and initialize the
+	 * dispatch function pointers.
+	 */
+	newCtx = crStateCreateContext( &cr_server.limits, visualBits );
+	if (newCtx) {
+		crStateSetCurrentPointers( newCtx, &(cr_server.current) );
+		retVal = generateID();
+		crHashtableAdd(cr_server.contextTable, retVal, newCtx);
 	}
 
 	crServerReturnValue( &retVal, sizeof(retVal) );
@@ -75,19 +83,15 @@ GLint SERVER_DISPATCH_APIENTRY crServerDispatchCreateContext( const char *dpyNam
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchDestroyContext( GLint ctx )
 {
-	const int ctxPos = ctx - MAGIC_OFFSET;
 	CRContext *crCtx;
 
-	if (ctxPos < 0 || ctxPos >= CR_MAX_CONTEXTS) {
+	crCtx = (CRContext *) crHashtableSearch(cr_server.contextTable, ctx);
+	if (!crCtx) {
 		crWarning("CRServer: DestroyContext invalid context %d", ctx);
 		return;
 	}
 
-	crCtx = cr_server.context[ctxPos];
-	if (crCtx) {
-		crStateDestroyContext( crCtx );
-		cr_server.context[ctxPos] = NULL;
-	}
+	crStateDestroyContext( crCtx );
 
 	/* If we delete our current context, default back to the null context */
 	if (cr_server.curClient->currentCtx == crCtx) {
@@ -104,13 +108,9 @@ crServerDispatchMakeCurrent( GLint window, GLint nativeWindow, GLint context )
 	CRContext *ctx;
 
 	if (context >= 0 && window >= 0) {
-		int ctxPos = context - MAGIC_OFFSET;
-		CRASSERT(ctxPos >= 0);
-		CRASSERT(ctxPos < CR_MAX_CONTEXTS);
-
 		mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
 		if (!mural && window == MAGIC_OFFSET &&
-				!cr_server.clients[0].conn->actual_network) {
+				!cr_server.clients[0]->conn->actual_network) {
 			/* We're reading from a file and not a real network connection so
 			 * we have to fudge the window id here.
 			 */
@@ -120,7 +120,7 @@ crServerDispatchMakeCurrent( GLint window, GLint nativeWindow, GLint context )
 		CRASSERT(mural);
 
 		/* Update the state tracker's current context */
-		ctx = cr_server.context[ctxPos];
+		ctx = (CRContext *) crHashtableSearch(cr_server.contextTable, context);
 		if (!ctx) {
 			crWarning("CRserver: NULL context in MakeCurrent %d", context);
 			return;

@@ -19,8 +19,6 @@
 static void
 setDefaults(void)
 {
-	unsigned int i;
-
 	if (!cr_server.tcpip_port)
 		cr_server.tcpip_port = DEFAULT_SERVER_PORT;
 	cr_server.run_queue = NULL;
@@ -49,9 +47,6 @@ setDefaults(void)
 	crMatrixInit(&cr_server.projectionMatrix[0]);
 	crMatrixInit(&cr_server.projectionMatrix[1]);
 	cr_server.currentEye = -1;
-
-	for (i = 0; i < CR_MAX_CONTEXTS; i++)
-		cr_server.context[i] = NULL;
 }
 
 void
@@ -76,7 +71,6 @@ crServerGatherConfiguration(char *mothership)
 	unsigned char key[16]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	char hostname[1024];
 	char **clientchain, **clientlist;
-	int numClients;
 
 	defaultMural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, 0);
 	CRASSERT(defaultMural);
@@ -363,33 +357,36 @@ crServerGatherConfiguration(char *mothership)
 	 * Example: "3 tcpip 1,gm 2,via 10"
 	 */
 	clientchain = crStrSplitn(response, " ", 1);
-	numClients = crStrToInt(clientchain[0]);
-	if (numClients == 0)
+	cr_server.numClients = crStrToInt(clientchain[0]);
+	if (cr_server.numClients == 0)
 	{
 		crError("I have no clients!  What's a poor server to do?");
 	}
 	clientlist = crStrSplit(clientchain[1], ",");
 
-	cr_server.numClients = numClients;
-
 	/*
-	 * Allocate and initialize the cr_server.clients[] array.
+	 * Connect to initial set of clients.
 	 * Call crNetAcceptClient() for each client.
 	 * Also, look for a client that's _not_ using the file: protocol.
 	 */
-	cr_server.clients = (CRClient *) crCalloc(sizeof(CRClient) * numClients);
-	for (i = 0; i < numClients; i++)
+	for (i = 0; i < cr_server.numClients; i++)
 	{
-		CRClient *client = &cr_server.clients[i];
-		client->number = i;
-		sscanf(clientlist[i], "%s %d", cr_server.protocol, &(client->spu_id));
-		client->conn = crNetAcceptClient(cr_server.protocol, NULL,
-																		 cr_server.tcpip_port, cr_server.mtu, 1);
+		CRClient *newClient = (CRClient *) crCalloc(sizeof(CRClient));
+		sscanf(clientlist[i], "%s %d", cr_server.protocol, &(newClient->spu_id));
+		newClient->conn = crNetAcceptClient(cr_server.protocol, NULL,
+																				cr_server.tcpip_port,
+																				cr_server.mtu, 1);
+		crServerAddToRunQueue(newClient);
+
+		cr_server.clients[i] = newClient;
 	}
 
 	/* set default client and mural */
-	cr_server.curClient = &cr_server.clients[0];
-	cr_server.curClient->currentMural = defaultMural;
+	if (cr_server.numClients > 0) {
+		 cr_server.curClient = cr_server.clients[0];
+		 cr_server.curClient->currentMural = defaultMural;
+		 cr_server.client_spu_id =cr_server.clients[0]->spu_id;
+	}
 
 	crFreeStrings(clientchain);
 	crFreeStrings(clientlist);

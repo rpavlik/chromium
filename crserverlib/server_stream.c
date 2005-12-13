@@ -10,95 +10,97 @@
 #include "cr_mem.h"
 #include "server_dispatch.h"
 
-#if 0
-static int QueueSize( void )
-{
-		RunQueue *q = cr_server.run_queue;
-		RunQueue *qStart = cr_server.run_queue;
-		int count = 0;
 
-		do {
-				count++;
-				q = q->next;
-		} while (q != qStart);
-		return count;
-}
-#endif
-
-/*
- * Add another client to the server's list.
- * XXX remove similar, redundant code in server_config.c
+/**
+ * Accept a new client connection, create a new CRClient and add to run queue.
  */
 void
 crServerAddNewClient(void)
 {
-	CRClient *newClient;
-	int n = -1;
+	CRClient *newClient = (CRClient *) crCalloc(sizeof(CRClient));
 
-	/* Save current client number */
-	if (cr_server.curClient)
-		n = cr_server.curClient->number;
+	if (newClient) {
+		newClient->spu_id = cr_server.client_spu_id;
+		newClient->conn = crNetAcceptClient( cr_server.protocol, NULL,
+																				 cr_server.tcpip_port,
+																				 cr_server.mtu, 1 );
+		newClient->currentCtx = cr_server.DummyContext;
 
-	/* Reallocate cr_server.clients[] array.
-	* This messes up all our pointers..... So we need to fix them up..
-	*/
-	crRealloc((void **)&cr_server.clients, sizeof(*cr_server.clients) * (cr_server.numClients + 1));
+		/* add to array */
+		cr_server.clients[cr_server.numClients++] = newClient;
 
-	/* Fix up our current client with the realloc'ed data */
-	if (n == -1)
-		cr_server.curClient = &cr_server.clients[0]; /* the new client */
-	else
-		cr_server.curClient = &cr_server.clients[n];
-
-	/* now we can allocate our new client data */
-	newClient = &(cr_server.clients[cr_server.numClients]);
-	crMemZero(newClient, sizeof(CRClient));
-
-	/* 
-	 * Because we've Realloced the client data above, the run_queue's pointers
-	 * are no longer valid.  Re-init the run_queue's client pointers here.
-	 */
-	if (cr_server.run_queue) {
-		RunQueue *q = cr_server.run_queue;
-		RunQueue *qStart = cr_server.run_queue;
-		do {
-			q->client = &cr_server.clients[q->number];
-			q = q->next;
-		} while (q != qStart);
+		crServerAddToRunQueue( newClient );
 	}
-
-	newClient->number = cr_server.numClients;
-	newClient->spu_id = cr_server.clients[0].spu_id;
-	newClient->conn = crNetAcceptClient( cr_server.protocol, NULL, cr_server.tcpip_port, cr_server.mtu, 1 );
-	newClient->currentCtx = cr_server.DummyContext;
-
-	crServerAddToRunQueue( newClient );
-
-	cr_server.numClients++;
 }
+
+
+/**
+ * Check if client is in the run queue.
+ */
+static GLboolean
+FindClientInQueue(CRClient *client)
+{
+	RunQueue *q = cr_server.run_queue;
+	while (q) {
+		if (q->client == client) {
+			return 1;
+		}
+		q = q->next;
+		if (q == cr_server.run_queue)
+			return 0; /* back head */
+	}
+	return 0;
+}
+
+
+#if 0
+static int
+PrintQueue(void)
+{
+	RunQueue *q = cr_server.run_queue;
+	int count = 0;
+	crDebug("Queue entries:");
+	while (q) {
+		count++;
+		crDebug("Entry: %p  client: %p", q, q->client);
+		q = q->next;
+		if (q == cr_server.run_queue)
+			return count;
+	}
+	return count;
+}
+#endif
 
 
 void crServerAddToRunQueue( CRClient *client )
 {
+	static int clientId = 1;
 	RunQueue *q = (RunQueue *) crAlloc( sizeof( *q ) );
-	static int totalAdded = 0;
 
-	totalAdded++;
-	crDebug( "Adding to the run queue: client=%p number=%d count=%d",
-					 (void *)client, client->number, totalAdded );
+	/* give this client a unique number if needed */
+	if (!client->number) {
+		client->number = clientId++;
+	}
 
-	q->number = client->number;
+	crDebug("Adding client %p to the run queue", client);
+
+	if (FindClientInQueue(client)) {
+		crError("CRServer: client %p already in the queue!", client);
+	}
+
 	q->client = client;
 	q->blocked = 0;
 
 	if (!cr_server.run_queue)
 	{
+		/* adding to empty queue */
 		cr_server.run_queue = q;
 		q->next = q;
 		q->prev = q;
 	}
 	else
 	{
+		/* insert in doubly-linked list */
 		q->next = cr_server.run_queue->next;
 		cr_server.run_queue->next->prev = q;
 
@@ -107,8 +109,30 @@ void crServerAddToRunQueue( CRClient *client )
 	}
 }
 
-static void crServerDeleteFromRunQueue( CRClient *client )
+
+
+static void crServerDeleteClient( CRClient *client )
 {
+	int i, j;
+
+	crDebug("Deleting client %p", client);
+
+	if (!FindClientInQueue(client)) {
+		crError("CRServer: client %p not found in the queue!", client);
+	}
+
+	/* remove from clients[] array */
+	for (i = 0; i < cr_server.numClients; i++) {
+		if (cr_server.clients[i] == client) {
+			/* found it */
+			for (j = i; j < cr_server.numClients - 1; j++)
+				cr_server.clients[j] = cr_server.clients[j + 1];
+			cr_server.numClients--;
+			break;
+		}
+	}
+
+	/* remove from the run queue */
 	if (cr_server.run_queue)
 	{
 		RunQueue *q = cr_server.run_queue;
@@ -116,17 +140,15 @@ static void crServerDeleteFromRunQueue( CRClient *client )
 		do {
 			if (q->client == client)
 			{
-				crDebug("Deleting client %d from the run queue.", client->number);
 				/* this test seems a bit excessive */
 				if ((q->next == q->prev) && (q->next == q) && (cr_server.run_queue == q))
 				{
 					/* We're removing/deleting the only client */
-					CRASSERT(cr_server.numClients == 1);
+					CRASSERT(cr_server.numClients == 0);
 					crFree(q);
 					cr_server.run_queue = NULL;
 					cr_server.curClient = NULL;
-					/* XXX we're not really exiting??? */
-					crDebug("Empty run queue!");
+					crDebug("Last client deleted - empty run queue.");
 					/* XXX add a config option to specify whether the crserver
 					 * should exit when there's no more clients.
 					 */
@@ -142,12 +164,15 @@ static void crServerDeleteFromRunQueue( CRClient *client )
 					q->next->prev = q->prev;
 					crFree(q);
 				}
-				cr_server.numClients--;
-				return;
+				break;
 			}
 			q = q->next;
 		} while (q != qStart);
 	}
+
+	crMemZero(client, sizeof(CRClient)); /* just to be safe */
+
+	crFree(client);
 }
 
 
@@ -172,7 +197,8 @@ getNextClient(GLboolean block)
 
  			if (!cr_server.run_queue->client->conn
 					|| cr_server.run_queue->client->conn->type == CR_NO_CONNECTION) {
- 				crServerDeleteFromRunQueue( cr_server.run_queue->client );
+				crDebug("Delete client %p at %d", cr_server.run_queue->client, __LINE__);
+ 				crServerDeleteClient( cr_server.run_queue->client );
 				start = cr_server.run_queue;
 			}
  
@@ -203,9 +229,9 @@ getNextClient(GLboolean block)
 				 /* XXX crError is fatal?  Should this be an info/warning msg? */
 				crError( "crserver: DEADLOCK! (numClients=%d, all blocked)",
 								 cr_server.numClients );
-				if (cr_server.numClients < cr_server.maxBarrierCount) {
+				if (cr_server.numClients < (int) cr_server.maxBarrierCount) {
 					crError("Waiting for more clients!!!");
-					while (cr_server.numClients < cr_server.maxBarrierCount) {
+					while (cr_server.numClients < (int) cr_server.maxBarrierCount) {
 						crNetRecv();
 					}
 				}
@@ -273,7 +299,8 @@ crServerServiceClient(const RunQueue *qEntry)
 		/* Check if the current client connection has gone away */
 		if (!cr_server.curClient->conn
 				|| cr_server.curClient->conn->type == CR_NO_CONNECTION) {
-			crServerDeleteFromRunQueue( cr_server.curClient );
+			crDebug("Delete client %p at %d", cr_server.run_queue->client, __LINE__);
+			crServerDeleteClient( cr_server.curClient );
 			return CLIENT_GONE;
 		}
 
