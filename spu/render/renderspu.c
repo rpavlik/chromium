@@ -655,7 +655,7 @@ static void RENDER_APIENTRY renderspuChromiumParameterfCR(GLenum target, GLfloat
 
 static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
 {
-	unsigned int client_num;
+	int client_num;
 	unsigned short port;
 	CRMessage *msg, pingback;
 	unsigned char *privbuf = NULL;
@@ -677,11 +677,11 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 
 			for (client_num=0; client_num< render_spu.server->numClients; client_num++)
 			{
-				switch (render_spu.server->clients[client_num].conn->type)
+				switch (render_spu.server->clients[client_num]->conn->type)
 				{
 					case CR_TCPIP:
 						crDebug("AcceptClient from %s on %d", 
-							render_spu.server->clients[client_num].conn->hostname, render_spu.gather_port);
+							render_spu.server->clients[client_num]->conn->hostname, render_spu.gather_port);
 						render_spu.gather_conns[client_num] = 
 								crNetAcceptClient("tcpip", NULL, port, 1024*1024,  1);
 						break;
