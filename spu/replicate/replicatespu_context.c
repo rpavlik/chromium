@@ -356,13 +356,14 @@ replicatespu_DestroyContext( GLint ctx )
 
 
 /**
- * Tell VNC server to begin monitoring the nativeWindow X window for
- * moves/resizes.
+ * Tell VNC server to begin monitoring the application's X window for
+ * moves/resizes/destroy/clipping.
  * When the server-side VNC module notices such changes, it'll
- * send an rfbChromiumMoveResizeWindow message to the VNC viewer.
+ * send an rfbChromiumMoveResizeWindow/etc message to the VNC viewer(s).
+ * The VNC server will be able to detect when the X window is destroyed too.
  */
-void
-replicatespuBeginMonitorWindow(WindowInfo *winInfo)
+static void
+replicatespuMonitorWindow(WindowInfo *winInfo)
 {
 	int i;
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
@@ -372,20 +373,6 @@ replicatespuBeginMonitorWindow(WindowInfo *winInfo)
 		}
 	}
 }
-
-
-/**
- * Tell VNC server to stop monitoring an X window.
- */
-void
-replicatespuEndMonitorWindow(WindowInfo *winInfo)
-{
-	const int crServerWindow = 0;
-	/* only need to send one of these */
-	XVncChromiumMonitor(replicate_spu.glx_display,
-											crServerWindow, winInfo->nativeWindow);
-}
-
 
 
 /**
@@ -463,7 +450,7 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 				&& winInfo->nativeWindow != nativeWindow)
 		{
 			winInfo->nativeWindow = nativeWindow;
-			replicatespuBeginMonitorWindow(winInfo);
+			replicatespuMonitorWindow(winInfo);
 			replicatespuRePositionWindow(winInfo);
 			show_window = 1;
 		}

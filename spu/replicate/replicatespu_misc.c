@@ -170,20 +170,18 @@ replicatespu_WindowDestroy(GLint win)
 
 	replicatespuFlush( (void *) thread );
 
-	replicatespuEndMonitorWindow(winInfo);
-
 	if (winInfo) {
 		for (i = 0; i < CR_MAX_REPLICANTS; i++) {
 			if (!replicate_spu.rserver[i].conn ||
 					replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
 				continue;
 
-			crDebug("Replicate SPU: Sending destroy window %d to %d",
-							winInfo->id[i], i );
 			if (replicate_spu.swap)
 				crPackWindowDestroySWAP( winInfo->id[i] );
 			else
 				crPackWindowDestroy( winInfo->id[i] );
+
+			winInfo->id[i] = -1; /* just to be safe */
 
 			replicatespuFlushOne(thread, i);
 		}
