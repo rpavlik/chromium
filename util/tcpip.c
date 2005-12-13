@@ -469,7 +469,7 @@ crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 		}
 		freeaddrinfo(res);
 		if (!cur)
-			crError( "Couldn't find local TCP port %s", port_s);
+			crError( "Couldn't find/bind local TCP port %s", port_s);
 #endif
 	}
 	
@@ -563,6 +563,7 @@ crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 		conn->krecv_buf_size = 0;	
 	}
 #endif
+
 	crDebug( "Accepted connection from \"%s\".", conn->hostname );
 }
 
@@ -667,7 +668,6 @@ __tcpip_dead_connection( CRConnection *conn )
 {
 	crDebug( "Dead connection (sock=%d, host=%s), removing from pool",
   				   conn->tcp_socket, conn->hostname );
-  
 	/* remove from connection pool */
 	crTCPIPDoDisconnect( conn );
 }
@@ -1003,6 +1003,7 @@ crTCPIPRecv( void )
 			slen = sizeof( s );
 			/* Check that the socket is REALLY connected */
 			/* Doesn't this call introduce some inefficiency??? (BP) */
+#if 0 /* Disabled on Dec 13 2005 by BrianP - seems to cause trouble */
 			if (getpeername(sock, (struct sockaddr *) &s, &slen) < 0) {
 				/* Another kludge.....
 				 * If we disconnect a socket without writing
@@ -1020,6 +1021,7 @@ crTCPIPRecv( void )
 				FD_CLR(sock, &read_fds);
 				msock = sock;
 			}
+#endif
 			/* 
 			 * Nope, that last socket we've just caught in
 			 * the connecting phase. We've probably found
@@ -1351,10 +1353,14 @@ crTCPIPDoDisconnect( CRConnection *conn )
 			none_left = 0; /* found a live connection */
 	}
 
+#if 0 /* disabled on 13 Dec 2005 by BrianP - this prevents future client
+			 * connections after the last one goes away.
+			 */
 	if (none_left && cr_tcpip.server_sock != -1)
 	{
 		crDebug("Closing master socket (probably quitting).");
 		crCloseSocket( cr_tcpip.server_sock );
+		cr_tcpip.server_sock = -1;
 #ifdef CHROMIUM_THREADSAFE
 		crFreeMutex(&cr_tcpip.mutex);
 		crFreeMutex(&cr_tcpip.recvmutex);
@@ -1364,6 +1370,7 @@ crTCPIPDoDisconnect( CRConnection *conn )
 		last_port = 0;
 		cr_tcpip.initialized = 0;
 	}
+#endif
 }
 
 
