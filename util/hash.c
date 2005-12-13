@@ -327,6 +327,10 @@ void crFreeHashtable( CRHashTable *hash, CRHashtableCallback deleteFunc )
 		if ( hash->buckets[i] ) 
 		{
 			if (hash->buckets[i]->data && deleteFunc) {
+				/* Clear the key in case crHashtableDelete() is called
+				 * from this callback.
+				 */
+				hash->buckets[i]->key = 0;
 				(*deleteFunc)( hash->buckets[i]->data );
 			}
 			crFree( hash->buckets[i] );
