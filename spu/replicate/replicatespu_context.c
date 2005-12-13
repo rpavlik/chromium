@@ -150,6 +150,7 @@ replicatespuStartVnc(const char *dpyName)
 				crWarning("Replicate SPU: vnc client connection with no ipaddress!");
 			}
 		}
+
 	}
 
 	replicate_spu.StartedVnc = 1;
@@ -394,7 +395,6 @@ static void
 destroyContextCallback(unsigned long key, void *data1, void *data2)
 {
 	if (key >= 1) {
-		crDebug("Replicate SPU: %s %d\n", __func__, (int) key);
 		replicatespu_DestroyContext((GLint) key);
 	}
 }
@@ -403,7 +403,6 @@ static void
 destroyWindowCallback(unsigned long key, void *data1, void *data2)
 {
 	if (key >= 1) {
-		crDebug("Replicate SPU: %s %d\n", __func__, (int) key);
 		replicatespu_WindowDestroy((GLint) key);
 	}
 }
@@ -412,8 +411,8 @@ destroyWindowCallback(unsigned long key, void *data1, void *data2)
 void
 replicatespuDestroyAllWindowsAndContexts(void)
 {
-	crHashtableWalk(replicate_spu.contextTable, destroyContextCallback, NULL);
 	crHashtableWalk(replicate_spu.windowTable, destroyWindowCallback, NULL);
+	crHashtableWalk(replicate_spu.contextTable, destroyContextCallback, NULL);
 }
 
 

@@ -178,6 +178,8 @@ replicatespu_WindowDestroy(GLint win)
 					replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
 				continue;
 
+			crDebug("Replicate SPU: Sending destroy window %d to %d",
+							winInfo->id[i], i );
 			if (replicate_spu.swap)
 				crPackWindowDestroySWAP( winInfo->id[i] );
 			else
@@ -216,4 +218,14 @@ replicatespu_WindowSize( GLint win, GLint w, GLint h )
 
 		replicatespuFlushOne(thread, i);
 	}
+}
+
+
+void REPLICATESPU_APIENTRY
+replicatespu_GenTextures( GLsizei n, GLuint * textures )
+{
+	/* Don't get IDs from the crservers since different servers will
+	 * return different IDs.
+	 */
+	crStateGenTextures(n, textures);
 }
