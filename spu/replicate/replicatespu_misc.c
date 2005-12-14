@@ -227,3 +227,30 @@ replicatespu_GenTextures( GLsizei n, GLuint * textures )
 	 */
 	crStateGenTextures(n, textures);
 }
+
+
+/**
+ * Special case just to call Flush at end.
+ * Since glClear is typically called at the start of a frame, it's a good
+ * time to do a flush to detect any broken connections.  This helps to prevent
+ * us from getting into the middle of a Begin/End primitive before detecting
+ * a broken connection.
+ */
+void REPLICATESPU_APIENTRY
+replicatespu_Clear( GLbitfield mask )
+{
+	GET_THREAD(thread);
+	if (thread->currentContext->displayListMode != GL_FALSE) {
+		crDLMCompileClear(mask);
+	}
+	if (replicate_spu.swap)
+	{
+		crPackClearSWAP(mask);
+	}
+	else
+	{
+		crPackClear(mask);
+	}
+	replicatespuFlush(thread);
+}
+

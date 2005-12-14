@@ -61,6 +61,7 @@ Flush
 WindowCreate
 WindowDestroy
 WindowSize
+Clear
 
 # replicatespu_swapbuf.c
 SwapBuffers
