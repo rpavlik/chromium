@@ -208,7 +208,8 @@ stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
  * CreateContext() function too.
  */
 ContextInfo *
-stubNewContext( const char *dpyName, GLint visBits, ContextType type )
+stubNewContext( const char *dpyName, GLint visBits, ContextType type,
+								GLint shareCtx )
 {
 	GLint spuContext = -1;
 	ContextInfo *context;
@@ -235,6 +236,9 @@ stubNewContext( const char *dpyName, GLint visBits, ContextType type )
 	context->currentDrawable = NULL;
 	crStrncpy(context->dpyName, dpyName, MAX_DPY_NAME);
 	context->dpyName[MAX_DPY_NAME-1] = 0;
+
+	context->share = (ContextInfo *)
+		crHashtableSearch(stub.contextTable, (unsigned long) shareCtx);
 
 	crHashtableAdd(stub.contextTable, context->id, (void *) context);
 

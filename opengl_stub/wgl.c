@@ -256,7 +256,7 @@ HGLRC WINAPI wglCreateContext_prox( HDC hdc )
 	if (stub.haveNativeOpenGL)
 		desiredVisual |= ComputeVisBits( hdc );
 
-	context = stubNewContext(dpyName, desiredVisual, UNDECIDED);
+	context = stubNewContext(dpyName, desiredVisual, UNDECIDED, 0);
 	if (!context)
 		return 0;
 

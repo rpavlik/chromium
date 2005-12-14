@@ -395,14 +395,13 @@ glXCreateContext(Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct)
 		}
 	}
 
-	context = stubNewContext(dpyName, visBits, UNDECIDED);
+	context = stubNewContext(dpyName, visBits, UNDECIDED, (GLint) share);
 	if (!context)
 		return 0;
 
 	context->dpy = dpy;
 	context->visual = vis;
 	context->direct = direct;
-	context->share = (ContextInfo *) crHashtableSearch(stub.contextTable, (unsigned long) share);
 
 	return (GLXContext) context->id;
 }
