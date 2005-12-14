@@ -67,7 +67,8 @@ static GLuint TranslateProgramID( GLuint id )
 }
 
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchNewList( GLuint list, GLenum mode )
+void SERVER_DISPATCH_APIENTRY
+crServerDispatchNewList( GLuint list, GLenum mode )
 {
 	if (mode == GL_COMPILE_AND_EXECUTE)
 		crWarning("using glNewList(GL_COMPILE_AND_EXECUTE) can confuse the crserver");
@@ -77,7 +78,9 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchNewList( GLuint list, GLenum mode 
 	cr_server.head_spu->dispatch_table.NewList( list, mode );
 }
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchCallList( GLuint list )
+
+void SERVER_DISPATCH_APIENTRY
+crServerDispatchCallList( GLuint list )
 {
 	list = TranslateListID( list );
 
@@ -109,9 +112,121 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchCallList( GLuint list )
 	}
 }
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchCallLists( GLsizei n, GLenum type, const GLvoid *lists )
+
+/**
+ * Translate an array of display list IDs from various datatypes to GLuint
+ * IDs while adding the per-client offset.
+ */
+static void
+TranslateListIDs(GLsizei n, GLenum type, const GLvoid *lists, GLuint *newLists)
 {
-	/* XXX not sure what to do here, in terms of ID translation */
+	int offset = cr_server.curClient->number * 100000;
+	GLsizei i;
+	switch (type) {
+	case GL_UNSIGNED_BYTE:
+		{
+			const GLubyte *src = (const GLubyte *) lists;
+			for (i = 0; i < n; i++) {
+				newLists[i] = src[i] + offset;
+			}
+		}
+		break;
+	case GL_BYTE:
+		{
+			const GLbyte *src = (const GLbyte *) lists;
+			for (i = 0; i < n; i++) {
+				newLists[i] = src[i] + offset;
+			}
+		}
+		break;
+	case GL_UNSIGNED_SHORT:
+		{
+			const GLushort *src = (const GLushort *) lists;
+			for (i = 0; i < n; i++) {
+				newLists[i] = src[i] + offset;
+			}
+		}
+		break;
+	case GL_SHORT:
+		{
+			const GLshort *src = (const GLshort *) lists;
+			for (i = 0; i < n; i++) {
+				newLists[i] = src[i] + offset;
+			}
+		}
+		break;
+	case GL_UNSIGNED_INT:
+		{
+			const GLuint *src = (const GLuint *) lists;
+			for (i = 0; i < n; i++) {
+				newLists[i] = src[i] + offset;
+			}
+		}
+		break;
+	case GL_INT:
+		{
+			const GLint *src = (const GLint *) lists;
+			for (i = 0; i < n; i++) {
+				newLists[i] = src[i] + offset;
+			}
+		}
+		break;
+	case GL_FLOAT:
+		{
+			const GLfloat *src = (const GLfloat *) lists;
+			for (i = 0; i < n; i++) {
+				newLists[i] = (GLuint) src[i] + offset;
+			}
+		}
+		break;
+	case GL_2_BYTES:
+		{
+			const GLubyte *src = (const GLubyte *) lists;
+			for (i = 0; i < n; i++) {
+				newLists[i] = (src[i*2+0] * 256 +
+											 src[i*2+1]) + offset;
+			}
+		}
+		break;
+	case GL_3_BYTES:
+		{
+			const GLubyte *src = (const GLubyte *) lists;
+			for (i = 0; i < n; i++) {
+				newLists[i] = (src[i*3+0] * 256 * 256 +
+											 src[i*3+1] * 256 +
+											 src[i*3+2]) + offset;
+			}
+		}
+		break;
+	case GL_4_BYTES:
+		{
+			const GLubyte *src = (const GLubyte *) lists;
+			for (i = 0; i < n; i++) {
+				newLists[i] = (src[i*4+0] * 256 * 256 * 256 +
+											 src[i*4+1] * 256 * 256 +
+											 src[i*4+2] * 256 +
+											 src[i*4+3]) + offset;
+			}
+		}
+		break;
+	default:
+		crWarning("CRServer: invalid display list datatype 0x%x", type);
+	}
+}
+
+
+void SERVER_DISPATCH_APIENTRY
+crServerDispatchCallLists( GLsizei n, GLenum type, const GLvoid *lists )
+{
+	if (!cr_server.sharedDisplayLists) {
+		/* need to translate IDs */
+		GLuint *newLists = (GLuint *) crAlloc(n * sizeof(GLuint));
+		if (newLists) {
+			TranslateListIDs(n, type, lists, newLists);
+		}
+		lists = newLists;
+		type = GL_UNSIGNED_INT;
+	}
 
 	if (cr_server.curClient->currentCtx->lists.mode == 0) {
 		/* we're not compiling, so execute the list now */
@@ -139,7 +254,12 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchCallLists( GLsizei n, GLenum type,
 		/* we're compiling glCallList into another list - just pass it through */
 		cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
 	}
+
+	if (!cr_server.sharedDisplayLists) {
+		crFree((void *) lists);  /* malloc'd above */
+	}
 }
+
 
 GLboolean SERVER_DISPATCH_APIENTRY crServerDispatchIsList( GLuint list )
 {
