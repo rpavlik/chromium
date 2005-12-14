@@ -49,11 +49,12 @@ replicatespuCheckVncEvents(void)
 #if 1
 			else if (event.type == VncConn) {
 				XVncConnectedEvent *e = (XVncConnectedEvent*) &event;
-				crWarning("Replicate SPU: Received VncConn from IP 0x%x",
-									(int) e->ipaddress);
+				crWarning("Replicate SPU: Received VncConn from IP 0x%x, sock %d",
+									(int) e->ipaddress, (int) e->connected);
 			} 
 			else if (event.type == VncDisconn) {
-				crWarning("Replicate SPU: Received VncDisconn");
+				XVncDisconnectedEvent *e = (XVncDisconnectedEvent*) &event;
+				crWarning("Replicate SPU: Received VncDisconn, sock %d", (int) e->connected);
 			}
 #endif
 		}
@@ -96,26 +97,60 @@ static int x11_error_handler( Display *dpy, XErrorEvent *ev )
 }
 
 
-/*
+/**
  * Called from crHashtableWalk().  Basically, setup args and call
- * crStateTextureObjectDiff().
+ * crStateTextureObjectDiff().  This is used to replicate all our local
+ * texture objects on the new server.
  */
-static void TextureObjDiffCallback( unsigned long key, void *data1, void *data2 )
+static void
+TextureObjDiffCallback( unsigned long key, void *data1, void *data2 )
 {
 	CRContext *ctx = (CRContext *) data2;
 	CRTextureObj *tobj = (CRTextureObj *) data1;
-	unsigned int j = 0;
-	CRbitvalue *bitID = ctx->bitid;
-	CRbitvalue nbitID[CR_MAX_BITARRAY];
+	CRbitvalue *bitID = NULL, *nbitID = NULL; /* not used */
+	GLboolean alwaysDirty = GL_TRUE;
 
 	if (!tobj)
 		return;
 
-	for (j=0;j<CR_MAX_BITARRAY;j++)
-		nbitID[j] = ~bitID[j];
+	crStateTextureObjectDiff(ctx, bitID, nbitID, tobj, alwaysDirty);
+}
 
-	crStateTextureObjectDiff(ctx, bitID, nbitID, tobj,
-													 GL_TRUE /* always dirty */);
+
+
+static void
+replicatespuReplicateTextures(CRContext *tempState, CRContext *state)
+{
+	CRTextureState *texstate = &(state->texture);
+
+	/* use unit 0 for sending textures */
+	if (replicate_spu.swap)
+		crPackActiveTextureARBSWAP(GL_TEXTURE0);
+	else
+		crPackActiveTextureARB(GL_TEXTURE0);
+
+	crHashtableWalk(texstate->idHash, TextureObjDiffCallback, tempState);
+
+	/* restore unit 0 bindings */
+	if (replicate_spu.swap) {
+		crPackActiveTextureARBSWAP(GL_TEXTURE0);
+		crPackBindTextureSWAP(GL_TEXTURE_1D, texstate->unit[0].currentTexture1D->name);
+		crPackBindTextureSWAP(GL_TEXTURE_2D, texstate->unit[0].currentTexture2D->name);
+		crPackBindTextureSWAP(GL_TEXTURE_3D, texstate->unit[0].currentTexture3D->name);
+		crPackBindTextureSWAP(GL_TEXTURE_CUBE_MAP_ARB, texstate->unit[0].currentTextureCubeMap->name);
+		crPackBindTextureSWAP(GL_TEXTURE_RECTANGLE_NV, texstate->unit[0].currentTextureRect->name);
+	}
+	else {
+		crPackActiveTextureARB(GL_TEXTURE0);
+		crPackBindTexture(GL_TEXTURE_1D, texstate->unit[0].currentTexture1D->name);
+		crPackBindTexture(GL_TEXTURE_2D, texstate->unit[0].currentTexture2D->name);
+		crPackBindTexture(GL_TEXTURE_3D, texstate->unit[0].currentTexture3D->name);
+		crPackBindTexture(GL_TEXTURE_CUBE_MAP_ARB, texstate->unit[0].currentTextureCubeMap->name);
+		crPackBindTexture(GL_TEXTURE_RECTANGLE_NV, texstate->unit[0].currentTextureRect->name);
+	}
+
+	/* finally, set active texture unit again */
+	crPackActiveTextureARB(GL_TEXTURE0 + texstate->curTextureUnit);
 }
 
 
@@ -164,7 +199,7 @@ static int ServerIndex = -1;
  * Used to create viewer-side windows for all the application windows.
  */
 static void
-replicatespuReplicateWindows(unsigned long key, void *data1, void *data2)
+replicatespuReplicateWindow(unsigned long key, void *data1, void *data2)
 {
 	ThreadInfo *thread = (ThreadInfo *) data2;
 	WindowInfo *winInfo = (WindowInfo *) data1;
@@ -271,44 +306,48 @@ replicatespuResizeWindows(unsigned long key, void *data1, void *data2)
  * Replicate our contexts on a new server (indicated by ServerIndex).
  */
 static void
-replicatespuReplicateContexts(unsigned long key, void *data1, void *data2)
+replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
 {
 	ThreadInfo *thread = (ThreadInfo *) data2;
 	ContextInfo *context = (ContextInfo *) data1;
-	CRContext *temp_c;
+	CRContext *tempState;
 	GLint return_val = 0;
 	int writeback;
 
 	if (!context->State) /* XXX need this */
 		return;
 
-	/* Send CreateContext */
+	/*
+	 * Send CreateContext to new server and get return value
+	 */
 	if (replicate_spu.swap)
-		crPackCreateContextSWAP( replicate_spu.dpyName, context->visBits, &return_val, &writeback);
+		crPackCreateContextSWAP( replicate_spu.dpyName, context->visBits,
+														 &return_val, &writeback);
 	else
-		crPackCreateContext( replicate_spu.dpyName, context->visBits, &return_val, &writeback);
-			
+		crPackCreateContext( replicate_spu.dpyName, context->visBits,
+												 &return_val, &writeback);
 	replicatespuFlushOne(thread, ServerIndex);
-
-	/* Get return value */
 	writeback = 1;
 	while (writeback)
 		crNetRecv();
 	if (replicate_spu.swap)
 		return_val = (GLint) SWAP32(return_val);
-
 	if (return_val <= 0) {
 		crWarning("Replicate SPU: CreateContext failed");
 		return;
 	}
 
-	/* Fill in the new context info */
-	temp_c = crStateCreateContext(NULL, context->visBits);
-
 	context->rserverCtx[ServerIndex] = return_val;
 
-	/* MakeCurrent */
-	/* XXX Why are we making current here??? */
+	/*
+	 * Create a new CRContext record representing the state of the new
+	 * server (all default state).  We'll diff against this to send all the
+	 * needed state to the server.
+	 * When done, we can dispose of this context.
+	 */
+	tempState = crStateCreateContext(NULL, context->visBits);
+
+	/* Bind the remote context. The window's not really significant. */
 	{
 		int serverWindow;
 		if (context->currentWindow)
@@ -324,40 +363,11 @@ replicatespuReplicateContexts(unsigned long key, void *data1, void *data2)
 
 	replicatespuFlushOne(thread, ServerIndex);
 
-	/* Diff Context */
-#if 0
-	crDebug("BEFORE CONTEXT DIFF\n");
-	replicatespuDebugOpcodes( &thread->packer->buffer );
-#endif
-#if 1
-	/* Recreate all the textures */
-	{
-		unsigned int u;
-		CRTextureState *to = &(context->State->texture);
-		crHashtableWalk(to->idHash, TextureObjDiffCallback, temp_c);
+	/* Send state differences and all texture objects to new server */
+	crStateDiffContext( tempState, context->State );
+	replicatespuReplicateTextures(tempState, context->State);
 
-		/* Now troll the currentTexture bindings too.  
-		 * Note that the callback function
-		 * is set up to be called from a hashtable walk 
-		 * (so it takes a key), so when
-		 * we call it directly, we pass in a dummy key.
-		 */
-#define DUMMY_KEY 0
-		for (u = 0; u < temp_c->limits.maxTextureUnits; u++) {
-			TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture1D, (void *)temp_c );
-			TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture2D, (void *)temp_c );
-			TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTexture3D, (void *)temp_c );
-			TextureObjDiffCallback(DUMMY_KEY, (void *) to->unit[u].currentTextureCubeMap, (void *)temp_c );
-		}
-	}
-#endif
-	crStateDiffContext( temp_c, context->State );
-
-#if 0
-	crDebug("AFTER CONTEXT DIFF\n");
-	replicatespuDebugOpcodes( &thread->packer->buffer );
-#endif
-
+	/* need this? */
 	replicatespuFlushOne(thread, ServerIndex);
 
 	/* Send over all the display lists for this context. The temporary
@@ -367,12 +377,12 @@ replicatespuReplicateContexts(unsigned long key, void *data1, void *data2)
 	crDLMSetupClientState(&replicate_spu.diff_dispatch);
 	crDLMSendAllDLMLists(replicate_spu.displayListManager, 
 											 &replicate_spu.diff_dispatch);
-	crDLMRestoreClientState(&temp_c->client, &replicate_spu.diff_dispatch);
+	crDLMRestoreClientState(&tempState->client, &replicate_spu.diff_dispatch);
 			
 	replicatespuFlushOne(thread, ServerIndex);
 
 	/* DestroyContext (only the temporary one) */
-	crStateDestroyContext( temp_c );
+	crStateDestroyContext( tempState );
 }
 
 
@@ -497,8 +507,8 @@ replicatespuReplicate(int ipaddress)
 	 * and contexts.
 	 */
 	ServerIndex = r_slot;
-	crHashtableWalk(replicate_spu.windowTable, replicatespuReplicateWindows, thread);
-	crHashtableWalk(replicate_spu.contextTable, replicatespuReplicateContexts, thread);
+	crHashtableWalk(replicate_spu.windowTable, replicatespuReplicateWindow, thread);
+	crHashtableWalk(replicate_spu.contextTable, replicatespuReplicateContext, thread);
 	ServerIndex = -1;
 
 	/* MakeCurrent, the current context */
