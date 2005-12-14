@@ -229,7 +229,7 @@ replicatespu_CreateContext( const char *dpyName, GLint visual )
 	if (!replicate_spu.displayListManager) {
 		replicate_spu.displayListManager = crDLMNewDLM(0, NULL);
 		if (!replicate_spu.displayListManager) {
-			crWarning("replicatespu_CreateContext: could not initialize DLM");
+			crWarning("Replicate SPU: could not initialize display list manager.");
 		}
 	}
 	else {
@@ -281,7 +281,7 @@ replicatespu_CreateContext( const char *dpyName, GLint visual )
 #ifdef CHROMIUM_THREADSAFE_notyet
 			crUnlockMutex(&_ReplicateMutex);
 #endif
-			crError("Failure in replicatespu_CreateContext");
+			crWarning("Replicate SPU: CreateContext failed.");
 			return -1;  /* failed */
 		}
 
@@ -431,12 +431,13 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 	if (newCtx) {
 		newCtx->currentWindow = winInfo;
 
-		/* XXX not sure this is needed anymore */
+#if 000
+		/* This appears to be obsolete code */
 		if (replicate_spu.render_to_crut_window && !nativeWindow) {
 			char response[8096];
 			CRConnection *conn = crMothershipConnect();
 			if (!conn) {
-				crError("Couldn't connect to the mothership to get CRUT drawable-- "
+				crError("Replicate SPU: Couldn't connect to the mothership to get CRUT drawable-- "
 								"I have no idea what to do!");
 			}
 			crMothershipGetParam( conn, "crut_drawable", response );
@@ -444,6 +445,7 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 			crDebug("Replicate SPU: using CRUT drawable: 0x%x", nativeWindow);
 			crMothershipDisconnect(conn);
 		}
+#endif
 
 		if (replicate_spu.glx_display
 				&& winInfo

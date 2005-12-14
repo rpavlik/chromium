@@ -37,7 +37,7 @@ replicatespuCheckVncEvents(void)
 			XNextEvent (replicate_spu.glx_display, &event);
 			if (event.type == VncChromiumConn) {
 				XVncConnectedEvent *e = (XVncConnectedEvent*) &event;
-				crWarning("ReplicateSPU: new viewer detected.");
+				crWarning("Replicate SPU: new viewer detected.");
 
 				if (e->ipaddress) {
 					replicatespuReplicate(e->ipaddress);
@@ -407,7 +407,7 @@ replicatespuReplicate(int ipaddress)
 	char *ipstring;
 	int i, r_slot;
 
-	crDebug("Enter replicatespuReplicate(ipaddress=0x%x)", ipaddress);
+	crDebug("Replicate SPU: Enter replicatespuReplicate(ipaddress=0x%x)", ipaddress);
 
 	replicatespuFlush( (void *)thread );
 
@@ -465,13 +465,13 @@ replicatespuReplicate(int ipaddress)
 		const char *mothershipURL;
 		unsigned short mothershipPort;
 		mothershipURL = crGetenv("CRMOTHERSHIP");
-		crDebug("CRMOTHERSHIP env var = %s", mothershipURL);
+		crDebug("Replicate SPU: CRMOTHERSHIP env var = %s", mothershipURL);
 		if (mothershipURL)
 			crParseURL(mothershipURL, protocol, hostname, &mothershipPort,
 								 DEFAULT_MOTHERSHIP_PORT);
 		else
 			mothershipPort = DEFAULT_MOTHERSHIP_PORT;
-		crDebug("Replicate SPU: Sending ChromiumStart msg to VNC server, port =%d",
+		crDebug("Replicate SPU: Sending ChromiumStart msg to VNC server, port=%d",
 						CHROMIUM_START_PORT + r_slot);
 		XVncChromiumStart(replicate_spu.glx_display, ipaddress,
 											CHROMIUM_START_PORT + r_slot, mothershipPort);

@@ -54,7 +54,7 @@ replicatespuGatherConfiguration( const SPU *child_spu )
 	conn = crMothershipConnect();
 	if (!conn)
 	{
-		crError( "Couldn't connect to the mothership -- I have no idea what to do!" );
+		crError("Replicate SPU: Couldn't connect to the mothership - fatal error.");
 	}
 	crMothershipIdentifySPU( conn, replicate_spu.id );
 
@@ -72,7 +72,8 @@ replicatespuGatherConfiguration( const SPU *child_spu )
 	}
 	else
 	{
-		crError( "Bad server specification for Pack SPU %d", replicate_spu.id );
+		crError("Replicate SPU: Expected one initial server.  "
+						"Check your mothership configuration script for problems.");
 	}
 
 	replicate_spu.buffer_size = crMothershipGetMTU( conn );
