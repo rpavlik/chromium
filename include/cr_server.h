@@ -141,6 +141,7 @@ typedef struct {
 	int sharedTextureObjects;
 	int sharedPrograms;
 	int sharedWindows;
+	int uniqueWindows;
 	int localTileSpec;
 	int useDMX;
 	int overlapBlending;

@@ -83,7 +83,7 @@ typedef struct {
 /**
  * Context Info
  */
-typedef struct {
+typedef struct _ContextInfo {
 	int id; /**< integer context ID */
 	VisualInfo *visual;
 	GLboolean everCurrent;
@@ -96,6 +96,7 @@ typedef struct {
 #elif defined(GLX)
 	GLXContext context;
 #endif
+	struct _ContextInfo *shared;
 } ContextInfo;
 
 /**
@@ -212,7 +213,7 @@ extern void renderspu_GCWindow(void);
 extern int renderspuCreateFunctions( SPUNamedFunctionTable table[] );
 
 extern GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits );
-extern GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyname, GLint visBits );
+extern GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyname, GLint visBits, GLint shareCtx );
 extern void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GLint ctx);
 extern void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags );
 

@@ -267,6 +267,10 @@ crServerGatherConfiguration(char *mothership)
 	{
 		cr_server.sharedWindows = crStrToInt(response);
 	}
+	if (crMothershipGetServerParam(conn, response, "unique_window_ids"))
+	{
+		cr_server.uniqueWindows = crStrToInt(response);
+	}
 	if (crMothershipGetServerParam(conn, response, "use_dmx"))
 	{
 		cr_server.useDMX = crStrToInt(response);

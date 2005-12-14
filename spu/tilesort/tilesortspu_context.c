@@ -127,7 +127,8 @@ static ThreadInfo *tilesortspuNewThread(void)
 #endif
 
 
-GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint visBits )
+GLint TILESORTSPU_APIENTRY
+tilesortspu_CreateContext( const char *dpyName, GLint visBits, GLint shareCtx )
 {
 	static GLint freeContextID = 200;
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
@@ -135,6 +136,11 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 	int i;
 
 	crDebug("Tilesort SPU: CreateContext(%s, 0x%x)", dpyName, visBits);
+
+	if (shareCtx > 0) {
+		crWarning("Tilesort SPU: Context sharing not supported yet.");
+		shareCtx = 0;
+	}
 
 	if (tilesort_spu.forceQuadBuffering && tilesort_spu.stereoMode == CRYSTAL)
 		visBits |= CR_STEREO_BIT;
@@ -242,9 +248,9 @@ GLint TILESORTSPU_APIENTRY tilesortspu_CreateContext( const char *dpyName, GLint
 		crPackSetBuffer( thread0->packer, &(thread0->buffer[i]) );
 
 		if (tilesort_spu.swap)
-			crPackCreateContextSWAP( dpyName, visBits, &return_val, &writeback);
+			crPackCreateContextSWAP( dpyName, visBits, shareCtx, &return_val, &writeback);
 		else
-			crPackCreateContext( dpyName, visBits, &return_val, &writeback );
+			crPackCreateContext( dpyName, visBits, shareCtx, &return_val, &writeback );
 
 		/* release server buffer */
 		crPackReleaseBuffer( thread0->packer );

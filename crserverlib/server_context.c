@@ -18,20 +18,31 @@
 static GLint
 generateID(void)
 {
-	static GLboolean firstCall = GL_TRUE;
-	if (firstCall) {
-		crRandAutoSeed();
-		firstCall = GL_FALSE;
+	if (cr_server.uniqueWindows) {
+		static GLboolean firstCall = GL_TRUE;
+		if (firstCall) {
+			crRandAutoSeed();
+			firstCall = GL_FALSE;
+		}
+		return crRandInt(20000, 50000); /* XXX FIX */
 	}
-	return crRandInt(20000, 50000); /* XXX FIX */
+	else {
+		static GLint freeID = 1;
+		return freeID++;
+	}
 }
 
 
 GLint SERVER_DISPATCH_APIENTRY
-crServerDispatchCreateContext( const char *dpyName, GLint visualBits )
+crServerDispatchCreateContext( const char *dpyName, GLint visualBits, GLint shareCtx )
 {
 	GLint retVal = -1;
 	CRContext *newCtx;
+
+	if (shareCtx > 0) {
+		crWarning("CRServer: context sharing not implemented.");
+		shareCtx = 0;
+	}
 
 	/* Since the Cr server serialized all incoming clients/contexts into
 	 * one outgoing GL stream, we only need to create one context for the
@@ -40,7 +51,7 @@ crServerDispatchCreateContext( const char *dpyName, GLint visualBits )
 	if (cr_server.firstCallCreateContext) {
 		cr_server.SpuContextVisBits = visualBits;
 		cr_server.SpuContext = cr_server.head_spu->dispatch_table.
-			CreateContext(dpyName, cr_server.SpuContextVisBits);
+			CreateContext(dpyName, cr_server.SpuContextVisBits, shareCtx);
 		if (cr_server.SpuContext < 0) {
 			crWarning("crServerDispatchCreateContext() failed.");
 			return -1;
@@ -58,7 +69,7 @@ crServerDispatchCreateContext( const char *dpyName, GLint visualBits )
 			cr_server.head_spu->dispatch_table.DestroyContext(cr_server.SpuContext);
 			/* create new rendering context with suitable visual */
 			cr_server.SpuContext = cr_server.head_spu->dispatch_table.
-				CreateContext(dpyName, cr_server.SpuContextVisBits);
+				CreateContext(dpyName, cr_server.SpuContextVisBits, shareCtx);
 			if (cr_server.SpuContext < 0) {
 				crWarning("crServerDispatchCreateContext() failed.");
 				return -1;

@@ -41,10 +41,15 @@ void HIDDENLINESPU_APIENTRY hiddenlinespu_MakeCurrent(GLint crWindow, GLint nati
 }
 
 
-GLint HIDDENLINESPU_APIENTRY hiddenlinespu_CreateContext( const char *dpyName, GLint visBits )
+GLint HIDDENLINESPU_APIENTRY hiddenlinespu_CreateContext( const char *dpyName, GLint visBits, GLint shareCtx )
 {
 	static int freeContext = 0;  /* unique context id generator */
 	ContextInfo *context;
+
+	if (shareCtx > 0) {
+		crWarning("Hiddenline SPU: context sharing not implemented.");
+		shareCtx = 0;
+	}
 
 	/* allocate new ContextInfo */
 	context = (ContextInfo *) crCalloc(sizeof(ContextInfo));
@@ -55,7 +60,7 @@ GLint HIDDENLINESPU_APIENTRY hiddenlinespu_CreateContext( const char *dpyName, G
 	context->packer = crPackNewContext( 0 ); /* no byte swapping */
 	/* context->pack_buffer initialized in hiddenlineProvidePackBuffer() */
 	context->ctx = crStateCreateContext( NULL, visBits );
-	context->super_context = hiddenline_spu.super.CreateContext(dpyName, visBits);
+	context->super_context = hiddenline_spu.super.CreateContext(dpyName, visBits, shareCtx);
 	context->clear_color.r = 0.0f;
 	context->clear_color.g = 0.0f;
 	context->clear_color.b = 0.0f;

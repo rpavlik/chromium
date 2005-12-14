@@ -791,13 +791,24 @@ readbackspuTweakVisBits(GLint visBits,
 
 
 static GLint READBACKSPU_APIENTRY
-readbackspuCreateContext(const char *dpyName, GLint visBits)
+readbackspuCreateContext(const char *dpyName, GLint visBits, GLint shareCtx)
 {
 	static GLint freeID = 0;
 	ContextInfo *context;
 	GLint childVisBits, superVisBits;
+	GLint childShareCtx = 0, superShareCtx = 0;
 
 	CRASSERT(readback_spu.child.BarrierCreateCR);
+
+	if (shareCtx > 0) {
+		/* translate to super/child SPU context ids */
+		context
+			= (ContextInfo *) crHashtableSearch(readback_spu.contextTable, shareCtx);
+		if (context) {
+			superShareCtx = context->renderContext;
+			childShareCtx = context->childContext;
+		}
+	}
 
 	context = (ContextInfo *) crCalloc(sizeof(ContextInfo));
 	if (!context)
@@ -809,9 +820,9 @@ readbackspuCreateContext(const char *dpyName, GLint visBits)
 	readbackspuTweakVisBits(visBits, &childVisBits, &superVisBits);
 
 	context->renderContext
-		= readback_spu.super.CreateContext(dpyName, superVisBits);
+		= readback_spu.super.CreateContext(dpyName, superVisBits, superShareCtx);
 	context->childContext
-		= readback_spu.child.CreateContext(dpyName, childVisBits);
+		= readback_spu.child.CreateContext(dpyName, childVisBits, childShareCtx);
 	context->childVisBits = childVisBits;
 	context->superVisBits = superVisBits;
 

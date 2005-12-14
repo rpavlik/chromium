@@ -16,12 +16,18 @@
 static GLint
 generateID(void)
 {
-	static GLboolean firstCall = GL_TRUE;
-	if (firstCall) {
-		crRandAutoSeed();
-		firstCall = GL_FALSE;
+	if (cr_server.uniqueWindows) {
+		static GLboolean firstCall = GL_TRUE;
+		if (firstCall) {
+			crRandAutoSeed();
+			firstCall = GL_FALSE;
+		}
+		return crRandInt(20000, 50000); /* XXX FIX */
 	}
-	return crRandInt(20000, 50000); /* XXX FIX */
+	else {
+		static GLint freeID = 1;
+		return freeID++;
+	}
 }
 
 

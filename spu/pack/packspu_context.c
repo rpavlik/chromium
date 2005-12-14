@@ -76,7 +76,8 @@ ThreadInfo *packspuNewThread( unsigned long id )
 }
 
 
-GLint PACKSPU_APIENTRY packspu_CreateContext( const char *dpyName, GLint visual )
+GLint PACKSPU_APIENTRY
+packspu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 {
 	int writeback = 1;
 	GLint serverCtx = (GLint) -1;
@@ -86,13 +87,21 @@ GLint PACKSPU_APIENTRY packspu_CreateContext( const char *dpyName, GLint visual 
 	crLockMutex(&_PackMutex);
 #endif
 
+	if (shareCtx > 0) {
+		/* translate to server ctx id */
+		shareCtx -= MAGIC_OFFSET;
+		if (shareCtx >= 0 && shareCtx < pack_spu.numContexts) {
+			shareCtx = pack_spu.context[slot].serverCtx;
+		}
+	}
+
 	crPackSetContext( pack_spu.thread[0].packer );
 
 	/* Pack the command */
 	if (pack_spu.swap)
-		crPackCreateContextSWAP( dpyName, visual, &serverCtx, &writeback );
+		crPackCreateContextSWAP( dpyName, visual, shareCtx, &serverCtx, &writeback );
 	else
-		crPackCreateContext( dpyName, visual, &serverCtx, &writeback );
+		crPackCreateContext( dpyName, visual, shareCtx, &serverCtx, &writeback );
 
 	/* Flush buffer and get return value */
 	packspuFlush( &(pack_spu.thread[0]) );

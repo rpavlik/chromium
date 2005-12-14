@@ -8308,6 +8308,7 @@ name		CreateContext
 return		GLint
 param		dpyName		const char *
 param		visual		GLint
+param		shareCtx	GLint
 category	Chromium
 props		nolist get
 chromium	extpack

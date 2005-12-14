@@ -1009,13 +1009,25 @@ binaryswapspuTweakVisBits(GLint visBits,
 
 
 static GLint BINARYSWAPSPU_APIENTRY
-binaryswapspuCreateContext(const char *dpyName, GLint visBits)
+binaryswapspuCreateContext(const char *dpyName, GLint visBits, GLint shareCtx)
 {
 	static GLint freeID = 0;
 	ContextInfo *context;
 	GLint childVisBits, superVisBits;
+	GLint childShareCtx = 0, superShareCtx = 0;
 
 	CRASSERT(binaryswap_spu.child.BarrierCreateCR);
+
+	if (shareCtx > 0) {
+		/* get child/super context IDs */
+		context =
+			(ContextInfo *) crHashtableSearch(binaryswap_spu.contextTable, shareCtx);
+		if (context) {
+			childShareCtx = context->childContext;
+			superShareCtx = context->renderContext;
+		}
+	}
+
 
 	if (freeID != 0)
 	{
@@ -1033,9 +1045,9 @@ binaryswapspuCreateContext(const char *dpyName, GLint visBits)
 	binaryswapspuTweakVisBits(visBits, &childVisBits, &superVisBits);
 
 	context->renderContext =
-		binaryswap_spu.super.CreateContext(dpyName, superVisBits);
+		binaryswap_spu.super.CreateContext(dpyName, superVisBits, superShareCtx);
 	context->childContext =
-		binaryswap_spu.child.CreateContext(dpyName, childVisBits);
+		binaryswap_spu.child.CreateContext(dpyName, childVisBits, childShareCtx);
 	context->childVisBits = childVisBits;
 	context->superVisBits = superVisBits;
 

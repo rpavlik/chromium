@@ -11,7 +11,7 @@
 #include "expandospu.h"
 
 extern GLint EXPANDOSPU_APIENTRY
-expandoCreateContext(const char *displayName, GLint visBits)
+expandoCreateContext(const char *displayName, GLint visBits, GLint shareCtx)
 {
 	ExpandoContextState *contextState;
 	GLint contextId;
@@ -24,7 +24,7 @@ expandoCreateContext(const char *displayName, GLint visBits)
 	}
 
 	/* Get an official context ID from our super */
-	contextId = expando_spu.super.CreateContext(displayName, visBits);
+	contextId = expando_spu.super.CreateContext(displayName, visBits, shareCtx);
 
 	/* Supplement that with our DLM.  In a more correct situation, we should
 	 * see if we've been called through glXCreateContext, which has a parameter

@@ -41,10 +41,10 @@ static GLint MOTIONBLURSPU_APIENTRY motionblurspuWindowCreate( const char *dpyNa
 }
 
 
-static GLint MOTIONBLURSPU_APIENTRY motionblurspuCreateContext( const char *dpyName, GLint visBits)
+static GLint MOTIONBLURSPU_APIENTRY motionblurspuCreateContext( const char *dpyName, GLint visBits, GLint shareCtx)
 {
 	/* request context with accum buffer capability */
-	return motionblur_spu.super.CreateContext(dpyName, visBits | CR_ACCUM_BIT);
+	return motionblur_spu.super.CreateContext(dpyName, visBits | CR_ACCUM_BIT, shareCtx);
 }
 
 

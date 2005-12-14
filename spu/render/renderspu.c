@@ -124,10 +124,16 @@ VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
  * Context functions
  */
 
-GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyName, GLint visBits )
+GLint RENDER_APIENTRY
+renderspuCreateContext( const char *dpyName, GLint visBits, GLint shareCtx )
 {
-	ContextInfo *context;
+	ContextInfo *context, *sharedContext = NULL;
 	VisualInfo *visual;
+
+	if (shareCtx > 0) {
+		sharedContext
+			= (ContextInfo *) crHashtableSearch(render_spu.contextTable, shareCtx);
+	}
 
 	if (!dpyName || crStrlen(render_spu.display_string)>0)
 		dpyName = render_spu.display_string;
@@ -140,6 +146,7 @@ GLint RENDER_APIENTRY renderspuCreateContext( const char *dpyName, GLint visBits
 	if (!context)
 		return -1;
 	context->id = render_spu.context_id;
+	context->shared = sharedContext;
 	if (!renderspu_SystemCreateContext( visual, context ))
 		return -1;
 

@@ -159,7 +159,7 @@ replicatespuStartVnc(const char *dpyName)
 
 
 GLint REPLICATESPU_APIENTRY
-replicatespu_CreateContext( const char *dpyName, GLint visual )
+replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 {
 	static GLint freeCtxID = MAGIC_OFFSET;
 	int writeback;
@@ -167,6 +167,11 @@ replicatespu_CreateContext( const char *dpyName, GLint visual )
 	char headspuname[10];
 	ContextInfo *context;
 	unsigned int i;
+
+	if (shareCtx > 0) {
+		crWarning("Replicate SPU: context sharing not implemented");
+		shareCtx = 0;
+	}
 
 	replicatespuFlush( &(replicate_spu.thread[0]) );
 
@@ -194,9 +199,9 @@ replicatespu_CreateContext( const char *dpyName, GLint visual )
 
 	/* Pack the CreateContext command */
 	if (replicate_spu.swap)
-		crPackCreateContextSWAP( dpyName, visual, &serverCtx, &writeback );
+		crPackCreateContextSWAP( dpyName, visual, shareCtx, &serverCtx, &writeback );
 	else
-		crPackCreateContext( dpyName, visual, &serverCtx, &writeback );
+		crPackCreateContext( dpyName, visual, shareCtx, &serverCtx, &writeback );
 
 	/* Flush buffer and get return value */
 	replicatespuFlushOne( &(replicate_spu.thread[0]), 0);
@@ -265,9 +270,9 @@ replicatespu_CreateContext( const char *dpyName, GLint visual )
 			continue;
 
 		if (replicate_spu.swap)
-			crPackCreateContextSWAP( dpyName, visual, &rserverCtx, &r_writeback );
+			crPackCreateContextSWAP( dpyName, visual, shareCtx, &rserverCtx, &r_writeback );
 		else
-			crPackCreateContext( dpyName, visual, &rserverCtx, &r_writeback );
+			crPackCreateContext( dpyName, visual, shareCtx, &rserverCtx, &r_writeback );
 
 		/* Flush buffer and get return value */
 		replicatespuFlushOne( &(replicate_spu.thread[0]), i );

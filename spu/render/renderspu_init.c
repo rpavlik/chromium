@@ -138,7 +138,7 @@ renderSPUInit( int id, SPU *child, SPU *self,
 
 	crDebug("Render SPU: Creating default context, visBits=0x%x",
 					render_spu.default_visual );
-	defaultCtx = renderspuCreateContext( NULL, render_spu.default_visual );
+	defaultCtx = renderspuCreateContext( NULL, render_spu.default_visual, 0 );
 	CRASSERT(defaultCtx == 0);
 
 	renderspuMakeCurrent( defaultWin, 0, defaultCtx );

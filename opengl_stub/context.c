@@ -214,8 +214,18 @@ stubNewContext( const char *dpyName, GLint visBits, ContextType type,
 	GLint spuContext = -1;
 	ContextInfo *context;
 
+	if (shareCtx > 0) {
+		/* translate shareCtx to a SPU context ID */
+		context = (ContextInfo *)
+			crHashtableSearch(stub.contextTable, (unsigned long) shareCtx);
+		if (context)
+			shareCtx = context->id;
+		else
+			shareCtx = 0;
+	}
+
 	if (type == CHROMIUM) {
-		spuContext = stub.spu->dispatch_table.CreateContext(dpyName, visBits);
+		spuContext = stub.spu->dispatch_table.CreateContext(dpyName, visBits, shareCtx);
 		if (spuContext < 0)
 			return NULL;
 	}
@@ -769,11 +779,12 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 			/*
 			 * Create a Chromium context.
 			 */
+			GLint shareCtx = context->share ? context->share->id : 0;
 			CRASSERT(stub.spu);
 			CRASSERT(stub.spu->dispatch_table.CreateContext);
 			context->type = CHROMIUM;
 
-			context->spuContext = stub.spu->dispatch_table.CreateContext( context->dpyName, context->visBits );
+			context->spuContext = stub.spu->dispatch_table.CreateContext( context->dpyName, context->visBits, shareCtx );
 			if (window->spuWindow == -1)
 				window->spuWindow = stub.spu->dispatch_table.WindowCreate( window->dpyName, context->visBits );
 		}

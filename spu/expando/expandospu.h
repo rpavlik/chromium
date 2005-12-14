@@ -53,7 +53,7 @@ extern void expandospuGatherConfiguration( void );
 
 extern void expando_free_context_state(void *data);
 
-extern GLint EXPANDOSPU_APIENTRY expandoCreateContext(const char *displayName, GLint visBits);
+extern GLint EXPANDOSPU_APIENTRY expandoCreateContext(const char *displayName, GLint visBits, GLint shareCtx);
 extern void EXPANDOSPU_APIENTRY expandoDestroyContext(GLint contextId);
 extern void EXPANDOSPU_APIENTRY expandoMakeCurrent(GLint crWindow, GLint nativeWindow, GLint contextId);
 extern void EXPANDOSPU_APIENTRY expandoNewList(GLuint list, GLenum mode);

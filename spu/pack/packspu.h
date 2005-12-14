@@ -84,8 +84,5 @@ extern void packspuHuge( CROpcode opcode, void *buf );
 
 extern ThreadInfo *packspuNewThread( unsigned long id );
 
-extern GLint PACKSPU_APIENTRY packspu_CreateContext( const char *dpyName, GLint visual );
-extern void PACKSPU_APIENTRY packspu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx );
-
 
 #endif /* CR_PACKSPU_H */
