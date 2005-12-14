@@ -123,8 +123,6 @@ extern void replicatespuCreateDiffAPI( void );
 extern void replicatespuCreateStateAPI( void );
 extern void replicatespuCheckVncEvents(void);
 
-extern void replicatespuBeginMonitorWindow(WindowInfo *winInfo);
-extern void replicatespuEndMonitorWindow(WindowInfo *winInfo);
 extern void replicatespuDestroyAllWindowsAndContexts(void);
 
 
