@@ -11,9 +11,6 @@
 #include "state/cr_statetypes.h"
 #include "state/cr_limits.h"
 
-#define CRTEXTURE_HASHSIZE 1047
-#define CRTEXTURE_NAMEOFFSET 4
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -160,9 +157,6 @@ typedef struct {
 } CRTextureUnit;
 
 typedef struct {
-	/* FIXME: these should be moved into a shared-context structure */
-	CRHashTable       *idHash;  /* to map IDs to CRTextureObj objects */
-
 	/* Default texture objects (name = 0) */
 	CRTextureObj base1D;
 	CRTextureObj base2D;
@@ -200,11 +194,11 @@ typedef struct {
 
 void crStateTextureInit(CRContext *ctx);
 void crStateTextureDestroy(CRContext *ctx);
-void crStateTextureFree(CRTextureState *t);
+void crStateTextureFree(CRContext *ctx);
 
 void crStateTextureInitTexture(GLuint name);
 CRTextureObj *crStateTextureAllocate(GLuint name);
-void crStateTextureDelete(GLuint name);
+	/*void crStateTextureDelete(GLuint name);*/
 CRTextureObj *crStateTextureGet(GLenum target, GLuint textureid);
 int crStateTextureGetSize(GLenum target, GLenum level);
 const GLvoid * crStateTextureGetData(GLenum target, GLenum level);
@@ -222,6 +216,9 @@ void crStateTextureObjectDiff(CRContext *fromCtx,
 															CRTextureObj *tobj, GLboolean alwaysDirty);
 
 void crStateDiffAllTextureObjects( CRContext *g, CRbitvalue *bitID );
+
+void crStateDeleteTextureObject(CRTextureObj *tobj);
+
 
 #ifdef __cplusplus
 }

@@ -606,6 +606,7 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 		from->curTextureUnit = u;
 	}
 #endif
+
 	diff_api.BindTexture( tobj->target, tobj->name );
 
 	if (alwaysDirty || CHECKDIRTY(tobj->paramsBit[u], bitID)) 
@@ -1315,7 +1316,6 @@ void
 crStateDiffAllTextureObjects( CRContext *g, CRbitvalue *bitID )
 {
 	CRbitvalue nbitID[CR_MAX_BITARRAY];
-	CRTextureState *t = &(g->texture);
 	struct callback_info info;
 	int j;
 	int origUnit, orig1D, orig2D, orig3D;
@@ -1337,7 +1337,7 @@ crStateDiffAllTextureObjects( CRContext *g, CRbitvalue *bitID )
 	diff_api.ActiveTextureARB(GL_TEXTURE0_ARB);
 
 	/* diff all the textures */
-	crHashtableWalk(t->idHash, DiffTextureObjectCallback, (void *) &info);
+	crHashtableWalk(g->shared->textureTable, DiffTextureObjectCallback, (void *) &info);
 
 	/* restore bindings */
 	diff_api.ActiveTextureARB(GL_TEXTURE0_ARB + origUnit);

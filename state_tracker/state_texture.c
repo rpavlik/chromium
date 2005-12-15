@@ -13,46 +13,20 @@
 #include "cr_version.h"
 #include "state_internals.h"
 
+
+#define MAX_MIPMAP_LEVELS 20
+
+
 #define UNUSED(x) ((void) (x))
 
-#define GET_TOBJ(tobj, state, id) 	tobj = (CRTextureObj *) crHashtableSearch(state->idHash, id);
-
-
-static void
-crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj, int updateHash);
-
-
-/* This constant makes code more readable.  UPDATE_HASH means that the
- * hash is to be updated as the texture is deleted; this is the common
- * case.  If !UPDATE_HASH is passed, the hash is not to be updated;
- * this is the case if the hashtable is currently being traversed (a
- * hash table update in this case will corrupt the traversal, and may
- * cause the crserver to die with a segmentation fault).
- */
-#define UPDATE_HASH 1
+#define GET_TOBJ(tobj, state, id) \
+  tobj = (CRTextureObj *) crHashtableSearch(g->shared->textureTable, id);
 
 
 void crStateTextureDestroy(CRContext *ctx)
 {
 	CRTextureState *t = &ctx->texture;
-
-	crStateTextureDelete_t(t, &(t->base1D), UPDATE_HASH);
-	crStateTextureDelete_t(t, &(t->base2D), UPDATE_HASH);
-#ifdef CR_OPENGL_VERSION_1_2
-	crStateTextureDelete_t(t, &(t->base3D), UPDATE_HASH);
-#endif
-#ifdef CR_ARB_texture_cube_map
-	crStateTextureDelete_t(t, &(t->baseCubeMap), UPDATE_HASH);
-#endif
-	crStateTextureDelete_t(t, &(t->proxy1D), UPDATE_HASH);
-	crStateTextureDelete_t(t, &(t->proxy2D), UPDATE_HASH);
-#ifdef CR_OPENGL_VERSION_1_2
-	crStateTextureDelete_t(t, &(t->proxy3D), UPDATE_HASH);
-#endif
-#ifdef CR_ARB_texture_cube_map
-	crStateTextureDelete_t(t, &(t->proxyCubeMap), UPDATE_HASH);
-#endif
-	crStateTextureFree( t );
+	crFree(t);
 }
 
 
@@ -82,9 +56,6 @@ void crStateTextureInit(CRContext *ctx)
 	for (i=0, a=limits->maxRectTextureSize; a; i++, a=a>>1);
 	t->maxRectLevel = i;
 #endif
-
-	/* Initalize id pool and hash table */
-	t->idHash = crAllocHashtable();
 
 	crStateTextureInitTextureObj(ctx, &(t->base1D), 0, GL_TEXTURE_1D);
 	crStateTextureInitTextureObj(ctx, &(t->base2D), 0, GL_TEXTURE_2D);
@@ -188,26 +159,6 @@ void crStateTextureInit(CRContext *ctx)
 }
 
 
-
-/* This is called for each entry in the texture object hash table */
-static void
-DeleteTextureCallback(unsigned long key, void *texObj, void *texState)
-{
-	crStateTextureDelete_t((CRTextureState *) texState,
-												 (CRTextureObj *) texObj, !UPDATE_HASH);
-	crFree(texObj);
-}
-
-
-/*
- * Free all the texture state associated with t.
- */
-void crStateTextureFree( CRTextureState *t ) 
-{
-	crHashtableWalk(t->idHash, DeleteTextureCallback, (void *)t);
-}
-
-
 void
 crStateTextureInitTextureObj(CRContext *ctx, CRTextureObj *tobj,
 														 GLuint name, GLenum target)
@@ -239,8 +190,9 @@ crStateTextureInitTextureObj(CRContext *ctx, CRTextureObj *tobj,
 	/* XXX don't always need all six faces */
 	for (face = 0; face < 6; face++) {
 		/* allocate array of mipmap levels */
+		CRASSERT(t->maxLevel < MAX_MIPMAP_LEVELS);
 		tobj->level[face] = (CRTextureLevel *)
-			crCalloc(sizeof(CRTextureLevel) * (t->maxLevel + 1));
+			crCalloc(sizeof(CRTextureLevel) * MAX_MIPMAP_LEVELS);
 
 		if (!tobj->level[face])
 			return; /* out of memory */
@@ -553,19 +505,19 @@ crStateTextureGet(GLenum target, GLuint name)
 		}
 	}
 
-	GET_TOBJ(tobj, t, name);
+	GET_TOBJ(tobj, g, name);
 
 	return tobj;
 }
 
 
 /*
- * Allocate a new texture object with the given name
+ * Allocate a new texture object with the given name.
+ * Also insert into hash table.
  */
 static CRTextureObj *
 crStateTextureAllocate_t(CRContext *ctx, GLuint name) 
 {
-	CRTextureState *t = &(ctx->texture);
 	CRTextureObj *tobj;
 
 	if (!name) 
@@ -575,7 +527,7 @@ crStateTextureAllocate_t(CRContext *ctx, GLuint name)
 	if (!tobj)
 		return NULL;
 
-	crHashtableAdd( t->idHash, name, (void *) tobj );
+	crHashtableAdd( ctx->shared->textureTable, name, (void *) tobj );
 
 	crStateTextureInitTextureObj(ctx, tobj, name, GL_NONE);
 
@@ -588,19 +540,13 @@ crStateTextureAllocate_t(CRContext *ctx, GLuint name)
  * delete the texture object itself, since it may not have been
  * dynamically allocated.
  */
-static void
-crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj, int updateHash) 
+void
+crStateDeleteTextureObject(CRTextureObj *tobj)
 {
 	int k;
 	int face;
 
-	CRASSERT(t);
 	CRASSERT(tobj);
-
-	/* remove from hash table */
-	if (t && updateHash) {
-		crHashtableDelete( t->idHash, tobj->name, NULL ); /* null callback */
-	}
 
 	/* Free the texture images */
 	for (face = 0; face < 6; face++) {
@@ -608,7 +554,7 @@ crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj, int updateHash)
 		levels = tobj->level[face];
 		if (levels) {
 			/* free all mipmap levels for this face */
-			for (k = 0; k <= t->maxLevel; k++) {
+			for (k = 0; k < MAX_MIPMAP_LEVELS; k++) {
 				CRTextureLevel *tl = levels + k;
 				if (tl->img) {
 					crFree(tl->img);
@@ -620,13 +566,14 @@ crStateTextureDelete_t(CRTextureState *t, CRTextureObj *tobj, int updateHash)
 		}
 		tobj->level[face] = NULL;
 	}
+
+	crFree(tobj);
 }
 
 
 void STATE_APIENTRY crStateGenTextures(GLsizei n, GLuint *textures) 
 {
 	CRContext *g = GetCurrentContext();
-	CRTextureState *t = &(g->texture);
 	GLint start;
 
 	FLUSH();
@@ -645,7 +592,7 @@ void STATE_APIENTRY crStateGenTextures(GLsizei n, GLuint *textures)
 		return;
 	}
 
-	start = crHashtableAllocKeys(t->idHash, n);
+	start = crHashtableAllocKeys(g->shared->textureTable, n);
 	if (start)
 	{
 		GLint i;
@@ -686,11 +633,13 @@ void STATE_APIENTRY crStateDeleteTextures(GLsizei n, const GLuint *textures)
 	{
 		GLuint name = textures[i];
 		CRTextureObj *tObj;
-		GET_TOBJ(tObj, t, name);
+		GET_TOBJ(tObj, g, name);
 		if (name && tObj)
 		{
 			GLuint u;
-			crStateTextureDelete_t(t, tObj, UPDATE_HASH);
+			/* remove from hashtable */
+			crHashtableDelete(g->shared->textureTable, name, NULL);
+
 			/* if the currentTexture is deleted, 
 			 ** reset back to the base texture.
 			 */
@@ -723,7 +672,7 @@ void STATE_APIENTRY crStateDeleteTextures(GLsizei n, const GLuint *textures)
 				}
 #endif
 			}
-			crFree(tObj);
+			crStateDeleteTextureObject(tObj);
 		}
 	}
 
@@ -862,7 +811,7 @@ void STATE_APIENTRY crStateBindTexture(GLenum target, GLuint texture)
 
 	/* texture != 0 */
 	/* Get the texture */
-	GET_TOBJ(tobj, t, texture);
+	GET_TOBJ(tobj, g, texture);
 	if (!tobj)
 	{
 		tobj = crStateTextureAllocate_t(g, texture);
@@ -3115,9 +3064,8 @@ GLboolean STATE_APIENTRY
 crStateIsTexture(GLuint texture)
 {
 	CRContext *g = GetCurrentContext();
-	CRTextureState *t = &(g->texture);
 	CRTextureObj *tobj;
 
-	GET_TOBJ(tobj, t, texture);
+	GET_TOBJ(tobj, g, texture);
 	return tobj != NULL;
 }

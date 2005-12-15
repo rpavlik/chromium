@@ -87,6 +87,14 @@ typedef struct {
 
 typedef void (*CRStateFlushFunc)( void *arg );
 
+
+typedef struct _CRSharedState {
+	CRHashTable *textureTable;  /* all texture objects */
+	CRHashTable *dlistTable;    /* all display lists */
+	GLint refCount;
+} CRSharedState;
+
+
 /**
  * Chromium version of the state variables in OpenGL
  */
@@ -94,6 +102,8 @@ struct CRContext {
 	int id;
 	CRbitvalue bitid[CR_MAX_BITARRAY];
 	CRbitvalue neg_bitid[CR_MAX_BITARRAY];
+
+	CRSharedState *shared;
 
 	GLenum     renderMode;
 

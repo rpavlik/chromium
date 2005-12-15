@@ -21,6 +21,44 @@ GLboolean g_availableContexts[CR_MAX_CONTEXTS];
 static CRContext *defaultContext = NULL;
 
 
+static CRSharedState *
+crStateAllocShared(void)
+{
+	CRSharedState *s = (CRSharedState *) crCalloc(sizeof(CRSharedState));
+	if (s) {
+		s->textureTable = crAllocHashtable();
+		s->dlistTable = crAllocHashtable();
+		s->refCount = 1;
+	}
+	return s;
+}
+
+
+
+/**
+ * Callback used for crFreeHashtable().
+ */
+static void
+DeleteTextureCallback(void *texObj)
+{
+	crStateDeleteTextureObject((CRTextureObj *) texObj);
+}
+
+
+/**
+ * Decrement shared state's refcount and delete when it hits zero.
+ */
+static void
+crStateFreeShared(CRSharedState *s)
+{
+	s->refCount--;
+	if (s->refCount <= 0) {
+		crFreeHashtable(s->textureTable, DeleteTextureCallback);
+		crFreeHashtable(s->dlistTable, crFree); /* call crFree for each entry */
+		crFree(s);
+	}
+}
+
 
 /*
  * Helper for crStateCreateContext, below.
@@ -43,6 +81,8 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits,
 		}
 		ctx->neg_bitid[j] = ~(ctx->bitid[j]);
 	}
+
+	ctx->shared = crStateAllocShared();
 
 	/* use Chromium's OpenGL defaults */
 	crStateLimitsInit( &(ctx->limits) );
@@ -275,6 +315,8 @@ void crStateDestroyContext( CRContext *ctx )
 	crStateProgramDestroy( ctx );
 	crStateTextureDestroy( ctx );
 	crStateTransformDestroy( ctx );
+
+	crStateFreeShared(ctx->shared);
 
 	crFree( ctx );
 }

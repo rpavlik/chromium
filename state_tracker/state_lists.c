@@ -12,8 +12,7 @@
 
 void crStateListsDestroy(CRContext *ctx)
 {
-	CRListsState *l = &ctx->lists;
-	crFreeHashtable(l->hash, crFree); /* call crFree for each entry */
+	/* nothing - dlists are in shared state */
 }
 
 void crStateListsInit(CRContext *ctx)
@@ -23,7 +22,6 @@ void crStateListsInit(CRContext *ctx)
 	l->newEnd = GL_FALSE;
 	l->mode = 0;
 	l->currentIndex = 0;
-	l->hash = crAllocHashtable();
 }
 
 void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode) 
@@ -59,8 +57,8 @@ void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode)
 	FLUSH();
 
 	/* Must log that this key is used */
-	if (!crHashtableIsKeyUsed(l->hash, list)) {
-	    crHashtableAdd(l->hash, list, NULL);
+	if (!crHashtableIsKeyUsed(g->shared->dlistTable, list)) {
+		crHashtableAdd(g->shared->dlistTable, list, NULL);
 	}
 
 	/* Need this???
@@ -95,7 +93,6 @@ void STATE_APIENTRY crStateEndList (void)
 GLuint STATE_APIENTRY crStateGenLists(GLsizei range)
 {
 	CRContext *g = GetCurrentContext();
-	CRListsState *l = &(g->lists);
 	GLuint start;
 
 	if (g->current.inBeginEnd)
@@ -110,7 +107,8 @@ GLuint STATE_APIENTRY crStateGenLists(GLsizei range)
 		return 0;
 	}
 
-	start = crHashtableAllocKeys(l->hash, range);
+	start = crHashtableAllocKeys(g->shared->dlistTable, range);
+
 	CRASSERT(start > 0);
 	return start;
 }
@@ -118,7 +116,6 @@ GLuint STATE_APIENTRY crStateGenLists(GLsizei range)
 void STATE_APIENTRY crStateDeleteLists (GLuint list, GLsizei range)
 {
 	CRContext *g = GetCurrentContext();
-	CRListsState *l = &(g->lists);
 
 	if (g->current.inBeginEnd)
 	{
@@ -132,13 +129,12 @@ void STATE_APIENTRY crStateDeleteLists (GLuint list, GLsizei range)
 		return;
 	}
 
-	crHashtableDeleteBlock(l->hash, list, range, crFree); /* call crFree to delete list data */
+	crHashtableDeleteBlock(g->shared->dlistTable, list, range, crFree); /* call crFree to delete list data */
 }
 
 GLboolean STATE_APIENTRY crStateIsList(GLuint list)
 {
 	CRContext *g = GetCurrentContext();
-	CRListsState *l = &(g->lists);
 
 	if (g->current.inBeginEnd)
 	{
@@ -150,7 +146,7 @@ GLboolean STATE_APIENTRY crStateIsList(GLuint list)
 	if (list == 0)
 		return GL_FALSE;
 
-	return crHashtableIsKeyUsed(l->hash, list);
+	return crHashtableIsKeyUsed(g->shared->dlistTable, list);
 }
 	
 void STATE_APIENTRY crStateListBase (GLuint base)
