@@ -44,7 +44,7 @@ expandoCreateContext(const char *displayName, GLint visBits, GLint shareCtx)
 	/* The DLM needs us to use the state tracker to track client
 	 * state, so we can compile client-state-using functions correctly.
 	 */
-	contextState->State = crStateCreateContext(NULL, visBits);
+	contextState->State = crStateCreateContext(NULL, visBits, NULL);
 
 	/* Associate the Expando context with the user context. */
 	crHashtableAdd(expando_spu.contextTable, contextId, (void *)contextState);

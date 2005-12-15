@@ -39,7 +39,7 @@ static SPUFunctions *arraySPUInit( int id, SPU *child, SPU *self,
 	arrayspuGatherConfiguration();
 
 	crStateInit();
-	array_spu.ctx = crStateCreateContext( NULL, 0 );
+	array_spu.ctx = crStateCreateContext( NULL, 0, NULL );
 #ifdef CR_ARB_vertex_buffer_object
 	array_spu.ctx->bufferobject.retainBufferData = GL_TRUE;
 #endif

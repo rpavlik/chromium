@@ -80,7 +80,7 @@ crServerDispatchCreateContext( const char *dpyName, GLint visualBits, GLint shar
 	/* Now create a new state-tracker context and initialize the
 	 * dispatch function pointers.
 	 */
-	newCtx = crStateCreateContext( &cr_server.limits, visualBits );
+	newCtx = crStateCreateContext( &cr_server.limits, visualBits, NULL );
 	if (newCtx) {
 		crStateSetCurrentPointers( newCtx, &(cr_server.current) );
 		retVal = generateID();

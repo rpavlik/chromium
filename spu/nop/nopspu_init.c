@@ -31,7 +31,7 @@ static SPUFunctions *nopSPUInit( int id, SPU *child, SPU *self,
 	nopspuGatherConfiguration();
 
 	crStateInit();
-	nop_spu.ctx = crStateCreateContext( NULL, CR_RGB_BIT );
+	nop_spu.ctx = crStateCreateContext( NULL, CR_RGB_BIT, NULL );
 	crStateSetCurrent( nop_spu.ctx );
 
 	return &nop_functions;

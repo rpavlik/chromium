@@ -154,7 +154,7 @@ struct CRContext {
 
 
 void crStateInit(void);
-CRContext *crStateCreateContext(const CRLimitsState *limits, GLint visBits);
+CRContext *crStateCreateContext(const CRLimitsState *limits, GLint visBits, CRContext *share);
 void crStateMakeCurrent(CRContext *ctx);
 void crStateSetCurrent(CRContext *ctx);
 CRContext *crStateGetCurrent(void);

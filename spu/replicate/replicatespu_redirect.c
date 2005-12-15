@@ -129,7 +129,7 @@ replicatespuReplicateTextures(CRContext *tempState, CRContext *state)
 	else
 		crPackActiveTextureARB(GL_TEXTURE0);
 
-	crHashtableWalk(texstate->idHash, TextureObjDiffCallback, tempState);
+	crHashtableWalk(state->shared->textureTable, TextureObjDiffCallback, tempState);
 
 	/* restore unit 0 bindings */
 	if (replicate_spu.swap) {
@@ -313,6 +313,7 @@ replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
 	CRContext *tempState;
 	GLint return_val = 0;
 	int writeback;
+	GLint sharedCtx = 0;
 
 	if (!context->State) /* XXX need this */
 		return;
@@ -322,10 +323,10 @@ replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
 	 */
 	if (replicate_spu.swap)
 		crPackCreateContextSWAP( replicate_spu.dpyName, context->visBits,
-														 &return_val, &writeback);
+														 sharedCtx, &return_val, &writeback);
 	else
 		crPackCreateContext( replicate_spu.dpyName, context->visBits,
-												 &return_val, &writeback);
+												 sharedCtx, &return_val, &writeback);
 	replicatespuFlushOne(thread, ServerIndex);
 	writeback = 1;
 	while (writeback)
@@ -345,7 +346,7 @@ replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
 	 * needed state to the server.
 	 * When done, we can dispose of this context.
 	 */
-	tempState = crStateCreateContext(NULL, context->visBits);
+	tempState = crStateCreateContext(NULL, context->visBits, NULL);
 
 	/* Bind the remote context. The window's not really significant. */
 	{

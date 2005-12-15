@@ -246,7 +246,7 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 	}
 
 	/* Fill in the new context info */
-	context->State = crStateCreateContext(NULL, visual);
+	context->State = crStateCreateContext(NULL, visual, NULL);
 	context->serverCtx = serverCtx;
 	context->rserverCtx[0] = serverCtx;
 	context->visBits = visual;

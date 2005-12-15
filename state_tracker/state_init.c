@@ -21,6 +21,11 @@ GLboolean g_availableContexts[CR_MAX_CONTEXTS];
 static CRContext *defaultContext = NULL;
 
 
+
+/**
+ * Allocate a new shared state object.
+ * Contains texture objects, display lists, etc.
+ */
 static CRSharedState *
 crStateAllocShared(void)
 {
@@ -28,7 +33,7 @@ crStateAllocShared(void)
 	if (s) {
 		s->textureTable = crAllocHashtable();
 		s->dlistTable = crAllocHashtable();
-		s->refCount = 1;
+		s->refCount = 1; /* refcount is number of contexts using this state */
 	}
 	return s;
 }
@@ -63,8 +68,9 @@ crStateFreeShared(CRSharedState *s)
 /*
  * Helper for crStateCreateContext, below.
  */
-static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits,
-																				 GLint visBits)
+static CRContext *
+crStateCreateContextId(int i, const CRLimitsState *limits,
+											 GLint visBits, CRContext *shareCtx)
 {
 	CRContext *ctx = (CRContext *) crCalloc( sizeof( *ctx ) );
 	int j;
@@ -82,7 +88,14 @@ static CRContext *crStateCreateContextId(int i, const CRLimitsState *limits,
 		ctx->neg_bitid[j] = ~(ctx->bitid[j]);
 	}
 
-	ctx->shared = crStateAllocShared();
+	if (shareCtx) {
+		CRASSERT(shareCtx->shared);
+		ctx->shared = shareCtx->shared;
+		ctx->shared->refCount ++;
+	}
+	else {
+		ctx->shared = crStateAllocShared();
+	}
 
 	/* use Chromium's OpenGL defaults */
 	crStateLimitsInit( &(ctx->limits) );
@@ -207,7 +220,7 @@ void crStateInit(void)
 	crMemZero(&diff_api, sizeof(SPUDispatchTable));
 
 	/* Allocate the default/NULL context */
-	defaultContext = crStateCreateContextId(0, NULL, CR_RGB_BIT);
+	defaultContext = crStateCreateContextId(0, NULL, CR_RGB_BIT, NULL);
 	CRASSERT(g_availableContexts[0] == 0);
 	g_availableContexts[0] = 1; /* in use forever */
 
@@ -263,7 +276,8 @@ void crStateInit(void)
  */
 
 
-CRContext *crStateCreateContext(const CRLimitsState *limits, GLint visBits)
+CRContext *
+crStateCreateContext(const CRLimitsState *limits, GLint visBits, CRContext *share)
 {
 	int i;
 
@@ -275,7 +289,7 @@ CRContext *crStateCreateContext(const CRLimitsState *limits, GLint visBits)
 		if (!g_availableContexts[i])
 		{
 			g_availableContexts[i] = 1; /* it's no longer available */
-			return crStateCreateContextId( i, limits, visBits );
+			return crStateCreateContextId( i, limits, visBits, share );
 		}
 	}
 	crError( "Out of available contexts in crStateCreateContexts (max %d)",

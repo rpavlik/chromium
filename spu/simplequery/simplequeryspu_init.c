@@ -37,7 +37,7 @@ static SPUFunctions *simplequerySPUInit( int id, SPU *child, SPU *self,
 	simplequeryspuGatherConfiguration();
 
 	crStateInit();
-	simplequery_spu.ctx = crStateCreateContext( NULL, CR_RGB_BIT );
+	simplequery_spu.ctx = crStateCreateContext( NULL, CR_RGB_BIT, NULL );
 	crStateSetCurrent( simplequery_spu.ctx );
 
 	return &simplequery_functions;

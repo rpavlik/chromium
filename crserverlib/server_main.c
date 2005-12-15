@@ -219,7 +219,7 @@ crServerInit(int argc, char *argv[])
 	 */
 	cr_server.contextTable = crAllocHashtable();
 	cr_server.DummyContext = crStateCreateContext( &cr_server.limits,
-																								 CR_RGB_BIT | CR_DEPTH_BIT );
+																								 CR_RGB_BIT | CR_DEPTH_BIT, NULL );
 	cr_server.curClient->currentCtx = cr_server.DummyContext;
 
 	crServerInitDispatch();

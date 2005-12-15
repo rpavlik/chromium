@@ -189,7 +189,7 @@ tilesortspu_CreateContext( const char *dpyName, GLint visBits, GLint shareCtx )
 	 * Allocate the state tracker state for this context.
 	 * The GL limits were computed in tilesortspuGatherConfiguration().
 	 */
-	contextInfo->State = crStateCreateContext( &tilesort_spu.limits, visBits );
+	contextInfo->State = crStateCreateContext( &tilesort_spu.limits, visBits, NULL );
 	if (!contextInfo->State) {
 		crWarning( "tilesortspuCreateContext: crStateCreateContext() failed");
 #ifdef CHROMIUM_THREADSAFE
@@ -231,7 +231,7 @@ tilesortspu_CreateContext( const char *dpyName, GLint visBits, GLint shareCtx )
 	for (i = 0; i < tilesort_spu.num_servers; i++)
 	{
 		contextInfo->server[i].State = crStateCreateContext( &tilesort_spu.limits,
-																												 visBits );
+																												 visBits, NULL );
 		crStateSetCurrentPointers( contextInfo->server[i].State,
 															 &(thread0->packer->current) );
 	}
