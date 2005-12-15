@@ -128,8 +128,6 @@ extern void replicatespuDestroyAllWindowsAndContexts(void);
 
 extern ThreadInfo *replicatespuNewThread( unsigned long id );
 
-extern GLint REPLICATESPU_APIENTRY replicatespu_CreateContext( const char *dpyName, GLint visual );
-extern void REPLICATESPU_APIENTRY replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx );
 extern void REPLICATESPU_APIENTRY replicatespu_StateCallList( GLuint list );
 extern void REPLICATESPU_APIENTRY replicatespu_StateCallLists( GLsizei n, GLenum type, const GLvoid * lists );
 
