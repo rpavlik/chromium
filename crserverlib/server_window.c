@@ -128,6 +128,8 @@ crServerDispatchWindowCreate( const char *dpyName, GLint visBits )
 }
 
 
+#define EXTRA_WARN 0
+
 void SERVER_DISPATCH_APIENTRY
 crServerDispatchWindowDestroy( GLint window )
 {
@@ -135,7 +137,9 @@ crServerDispatchWindowDestroy( GLint window )
 
 	mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
 	if (!mural) {
+#if EXTRA_WARN
 		 crWarning("CRServer: invalid window %d passed to WindowDestroy()", window);
+#endif
 		 return;
 	}
 
@@ -152,7 +156,9 @@ crServerDispatchWindowSize( GLint window, GLint width, GLint height )
 	/*	crDebug("CRServer: Window %d size %d x %d", window, width, height);*/
 	mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
 	if (!mural) {
+#if EXTRA_WARN
 		 crWarning("CRServer: invalid window %d passed to WindowSize()", window);
+#endif
 		 return;
 	}
 	mural->underlyingDisplay[2] = width;
@@ -169,10 +175,12 @@ crServerDispatchWindowPosition( GLint window, GLint x, GLint y )
   CRMuralInfo *mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
 	/*	crDebug("CRServer: Window %d pos %d, %d", window, x, y);*/
 	if (!mural) {
+#if EXTRA_WARN
 		 crWarning("CRServer: invalid window %d passed to WindowPosition()", window);
+#endif
 		 return;
 	}
-#if 0 /* don't believe this is needed */
+#if EXTRA_WARN /* don't believe this is needed */
 	mural->underlyingDisplay[0] = x;
 	mural->underlyingDisplay[1] = y;
 	crServerInitializeTiling(mural);
@@ -187,7 +195,9 @@ crServerDispatchWindowShow( GLint window, GLint state )
 {
   CRMuralInfo *mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
 	if (!mural) {
+#if EXTRA_WARN
 		 crWarning("CRServer: invalid window %d passed to WindowShow()", window);
+#endif
 		 return;
 	}
 	cr_server.head_spu->dispatch_table.WindowShow(mural->spuWindow, state);
@@ -199,8 +209,10 @@ crServerSPUWindowID(GLint serverWindow)
 {
   CRMuralInfo *mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, serverWindow);
 	if (!mural) {
+#if EXTRA_WARN
 		 crWarning("CRServer: invalid window %d passed to crServerSPUWindowID()",
 							 serverWindow);
+#endif
 		 return -1;
 	}
 	return mural->spuWindow;
