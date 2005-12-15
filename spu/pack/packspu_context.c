@@ -91,7 +91,7 @@ packspu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 		/* translate to server ctx id */
 		shareCtx -= MAGIC_OFFSET;
 		if (shareCtx >= 0 && shareCtx < pack_spu.numContexts) {
-			shareCtx = pack_spu.context[slot].serverCtx;
+			shareCtx = pack_spu.context[shareCtx].serverCtx;
 		}
 	}
 
