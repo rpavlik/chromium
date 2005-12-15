@@ -199,9 +199,6 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 		crNetRecv();
 
 
-	crDebug("ReplicateSPU: CreateContext share %d sharedServerCtx %d",
-					shareCtx, sharedServerCtx);
-
 	/* Pack the CreateContext command */
 	if (replicate_spu.swap)
 		crPackCreateContextSWAP( dpyName, visual, sharedServerCtx,
@@ -426,7 +423,6 @@ replicatespuDestroyAllWindowsAndContexts(void)
 void REPLICATESPU_APIENTRY
 replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 {
-	GLint *rserverCtx;
 	unsigned int i;
 	unsigned int show_window = 0;
 	WindowInfo *winInfo = (WindowInfo *) crHashtableSearch( replicate_spu.windowTable, window );
@@ -447,7 +443,7 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 	CRASSERT(thread);
 	CRASSERT(thread->packer);
 
-	if (newCtx) {
+	if (newCtx && winInfo) {
 		newCtx->currentWindow = winInfo;
 
 #if 000
@@ -479,17 +475,14 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 		CRASSERT(newCtx->State);  /* verify valid */
 
 		crPackSetContext( thread->packer );
-		rserverCtx = newCtx->rserverCtx;
-	}
-	else {
-		newCtx = NULL;
-		rserverCtx = NULL;
 	}
 
 	/*
 	 * Send the MakeCurrent to all crservers (vnc viewers)
 	 */
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
+		const GLint serverWin = winInfo ? winInfo->id[i] : -1;
+		const GLint serverCtx = newCtx ? newCtx->rserverCtx[i] : -1;
 
 		if (replicate_spu.rserver[i].conn == NULL ||
 				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
@@ -497,9 +490,9 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 
 		/* Note: app's native window ID not needed on server side; pass zero */
 		if (replicate_spu.swap)
-			crPackMakeCurrentSWAP( winInfo->id[i], 0, rserverCtx[i] );
+			crPackMakeCurrentSWAP(serverWin, 0, serverCtx);
 		else
-			crPackMakeCurrent( winInfo->id[i], 0, rserverCtx[i] );
+			crPackMakeCurrent(serverWin, 0, serverCtx);
 
 		if (show_window) {
 			/* We may find that the window was mapped before we
@@ -507,9 +500,9 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 			 * the remote end gets the WindowShow event */
 			if (winInfo->viewable) {
 				if (replicate_spu.swap)
-					crPackWindowShowSWAP( winInfo->id[i], GL_TRUE );
+					crPackWindowShowSWAP(serverWin, GL_TRUE);
 				else
-					crPackWindowShow( winInfo->id[i], GL_TRUE );
+					crPackWindowShow(serverWin, GL_TRUE);
 			}
 		}
 
@@ -526,11 +519,4 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 	}
 
 	thread->currentContext = newCtx;
-
-	/* DEBUG */
-	{
-		GET_THREAD(t);
-		(void) t;
-		CRASSERT(t);
-	}
 }
