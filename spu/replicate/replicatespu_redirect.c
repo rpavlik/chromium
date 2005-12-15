@@ -311,12 +311,14 @@ replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
 	ThreadInfo *thread = (ThreadInfo *) data2;
 	ContextInfo *context = (ContextInfo *) data1;
 	CRContext *tempState;
-	GLint return_val = 0;
+	GLint return_val = 0, sharedCtx = 0;
 	int writeback;
-	GLint sharedCtx = 0;
 
-	if (!context->State) /* XXX need this */
+	if (!context->State) { /* XXX need this? */
+		crWarning("ReplicateSPU: replicating context with no state!");
 		return;
+	}
+
 
 	/*
 	 * Send CreateContext to new server and get return value

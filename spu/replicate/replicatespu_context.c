@@ -86,7 +86,7 @@ ThreadInfo *replicatespuNewThread( unsigned long id )
 /**
  * Determine if the X VNC extension is available.
  * Get list of clients/viewers attached, and replicate to them.
- * Can't call this until we have any X display name (see CreateContext).
+ * Can't call this until we have an X display name (see CreateContext).
  */
 static void
 replicatespuStartVnc(const char *dpyName)
@@ -163,14 +163,16 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 {
 	static GLint freeCtxID = MAGIC_OFFSET;
 	int writeback;
-	GLint serverCtx = (GLint) -1;
+	GLint serverCtx = -1, sharedServerCtx = 0;
 	char headspuname[10];
-	ContextInfo *context;
+	ContextInfo *context, *sharedContext = NULL;
 	unsigned int i;
 
 	if (shareCtx > 0) {
-		crWarning("Replicate SPU: context sharing not implemented");
-		shareCtx = 0;
+		sharedContext = (ContextInfo *)
+			crHashtableSearch(replicate_spu.contextTable, shareCtx);
+		if (sharedContext)
+			sharedServerCtx = sharedContext->rserverCtx[0];
 	}
 
 	replicatespuFlush( &(replicate_spu.thread[0]) );
@@ -197,11 +199,16 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 		crNetRecv();
 
 
+	crDebug("ReplicateSPU: CreateContext share %d sharedServerCtx %d",
+					shareCtx, sharedServerCtx);
+
 	/* Pack the CreateContext command */
 	if (replicate_spu.swap)
-		crPackCreateContextSWAP( dpyName, visual, shareCtx, &serverCtx, &writeback );
+		crPackCreateContextSWAP( dpyName, visual, sharedServerCtx,
+														 &serverCtx, &writeback );
 	else
-		crPackCreateContext( dpyName, visual, shareCtx, &serverCtx, &writeback );
+		crPackCreateContext( dpyName, visual, sharedServerCtx,
+												 &serverCtx, &writeback );
 
 	/* Flush buffer and get return value */
 	replicatespuFlushOne( &(replicate_spu.thread[0]), 0);
@@ -246,7 +253,10 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 	}
 
 	/* Fill in the new context info */
-	context->State = crStateCreateContext(NULL, visual, NULL);
+	if (sharedContext)
+		context->State = crStateCreateContext(NULL, visual, sharedContext->State);
+	else
+		context->State = crStateCreateContext(NULL, visual, NULL);
 	context->serverCtx = serverCtx;
 	context->rserverCtx[0] = serverCtx;
 	context->visBits = visual;
@@ -265,14 +275,18 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
 		int r_writeback = 1, rserverCtx = -1;
 
+		sharedServerCtx = sharedContext ? sharedContext->rserverCtx[i] : 0;
+
 		if (replicate_spu.rserver[i].conn == NULL ||
 				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
 			continue;
 
 		if (replicate_spu.swap)
-			crPackCreateContextSWAP( dpyName, visual, shareCtx, &rserverCtx, &r_writeback );
+			crPackCreateContextSWAP( dpyName, visual, sharedServerCtx,
+															 &rserverCtx, &r_writeback );
 		else
-			crPackCreateContext( dpyName, visual, shareCtx, &rserverCtx, &r_writeback );
+			crPackCreateContext( dpyName, visual, sharedServerCtx,
+													 &rserverCtx, &r_writeback );
 
 		/* Flush buffer and get return value */
 		replicatespuFlushOne( &(replicate_spu.thread[0]), i );
