@@ -18,10 +18,16 @@ void crStateListsDestroy(CRContext *ctx)
 void crStateListsInit(CRContext *ctx)
 {
 	CRListsState *l = &ctx->lists;
+	CRStateBits *sb = GetCurrentBits();
+	CRListsBits *lb = &(sb->lists);
 
 	l->newEnd = GL_FALSE;
 	l->mode = 0;
 	l->currentIndex = 0;
+	l->base = 0;
+
+	RESET(lb->base, ctx->bitid);
+	RESET(lb->dirty, ctx->bitid);
 }
 
 void STATE_APIENTRY crStateNewList (GLuint list, GLenum mode) 
@@ -153,6 +159,8 @@ void STATE_APIENTRY crStateListBase (GLuint base)
 {
 	CRContext *g = GetCurrentContext();
 	CRListsState *l = &(g->lists);
+	CRStateBits *sb = GetCurrentBits();
+	CRListsBits *lb = &(sb->lists);
 
 	if (g->current.inBeginEnd)
 	{
@@ -162,23 +170,58 @@ void STATE_APIENTRY crStateListBase (GLuint base)
 	}
 
 	l->base = base;
+
+	DIRTY(lb->base, g->neg_bitid);
+	DIRTY(lb->dirty, g->neg_bitid);
 }
 
-void crStateListsDiff( CRListsBits *b, CRbitvalue *bitID, 
-		CRContext *fromCtx, CRContext *toCtx )
+
+void
+crStateListsDiff( CRListsBits *b, CRbitvalue *bitID, 
+									CRContext *fromCtx, CRContext *toCtx )
 {
-	(void) b;
-	(void) bitID;
-	(void) fromCtx;
-	(void) toCtx;
+	CRListsState *from = &(fromCtx->lists);
+	CRListsState *to = &(toCtx->lists);
+	unsigned int j;
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
+
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		nbitID[j] = ~bitID[j];
+
+	if (CHECKDIRTY(b->base, bitID))
+	{
+		if (from->base != to->base) {
+			diff_api.ListBase(to->base);
+			from->base = to->base;
+		}
+		CLEARDIRTY(b->base, nbitID);
+	}
+
+	CLEARDIRTY(b->dirty, nbitID);
 }
 
-void crStateListsSwitch( CRListsBits *b, CRbitvalue *bitID, 
-		CRContext *fromCtx, CRContext *toCtx )
 
+void
+crStateListsSwitch( CRListsBits *b, CRbitvalue *bitID, 
+										CRContext *fromCtx, CRContext *toCtx )
 {
-	(void) b;
-	(void) bitID;
-	(void) fromCtx;
-	(void) toCtx;
+	CRListsState *from = &(fromCtx->lists);
+	CRListsState *to = &(toCtx->lists);
+	unsigned int j;
+	CRbitvalue nbitID[CR_MAX_BITARRAY];
+
+	for (j=0;j<CR_MAX_BITARRAY;j++)
+		nbitID[j] = ~bitID[j];
+
+	if (CHECKDIRTY(b->base, bitID))
+	{
+		if (from->base != to->base) {
+			diff_api.ListBase(to->base);
+			FILLDIRTY(b->base);
+			FILLDIRTY(b->dirty);
+		}
+		CLEARDIRTY(b->base, nbitID);
+	}
+
+	CLEARDIRTY(b->dirty, nbitID);
 }

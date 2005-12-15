@@ -17,6 +17,7 @@ extern "C" {
 
 typedef struct {
 	CRbitvalue dirty[CR_MAX_BITARRAY];
+	CRbitvalue base[CR_MAX_BITARRAY];
 } CRListsBits;
 
 typedef struct {
