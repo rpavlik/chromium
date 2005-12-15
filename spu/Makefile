@@ -14,9 +14,7 @@ SUBDIRS += feedback simplequery motionblur injector expando matte grabber
 
 ifeq ($(USE_VNC), 1)
 SUBDIRS += vnc
-ifeq ($(THREADSAFE), 1)
 SUBDIRS += replicate
-endif
 endif
 
 ifeq ($(ARCH), WIN_NT)
