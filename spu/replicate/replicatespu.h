@@ -115,6 +115,7 @@ extern void replicatespuCreateFunctions( void );
 extern void replicatespuGatherConfiguration( const SPU *child_spu );
 extern void replicatespuConnectToServer( CRNetServer *server );
 extern void replicatespuFlush( void *arg );
+extern void replicatespuFlushAll(ThreadInfo *thread);
 extern void replicatespuFlushOne(ThreadInfo *thread, int server);
 extern void replicatespuHuge( CROpcode opcode, void *buf );
 extern void replicatespuReplicate( int ipaddress );

@@ -22,7 +22,7 @@ void REPLICATESPU_APIENTRY replicatespu_ChromiumParametervCR(GLenum target, GLen
 	{
 		case GL_GATHER_PACK_CR:
 			/* flush the current pack buffer */
-			replicatespuFlush( (void *) thread );
+			replicatespuFlushAll( (void *) thread );
 
 			/* the connection is thread->server.conn */
 			msg.header.type = CR_MESSAGE_GATHER;
@@ -50,7 +50,7 @@ void REPLICATESPU_APIENTRY replicatespu_Finish( void )
 	unsigned int i;
 	GET_THREAD(thread);
 
-	replicatespuFlush( (void *) thread );
+	replicatespuFlushAll( (void *) thread );
 
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
 		int writeback = 1;
@@ -87,7 +87,7 @@ void REPLICATESPU_APIENTRY replicatespu_Flush( void )
 	{
 		crPackFlush();
 	}
-	replicatespuFlush( (void *) thread );
+	replicatespuFlushAll( (void *) thread );
 }
 
 
@@ -103,11 +103,11 @@ replicatespu_WindowCreate( const char *dpyName, GLint visBits )
 		return -1;
 
 	if (thread)
-		replicatespuFlush( (void *) thread );
+		replicatespuFlushAll( (void *) thread );
 	else
 		thread = replicatespuNewThread( crThreadID() );
 
-	replicatespuFlush( (void *) thread );
+	replicatespuFlushAll( (void *) thread );
 	crPackSetContext( thread->packer );
 
 #ifdef CHROMIUM_THREADSAFE_notyet
@@ -168,7 +168,7 @@ replicatespu_WindowDestroy(GLint win)
 	GET_THREAD(thread);
 	int i;
 
-	replicatespuFlush( (void *) thread );
+	replicatespuFlushAll( (void *) thread );
 
 	if (winInfo) {
 		for (i = 0; i < CR_MAX_REPLICANTS; i++) {
@@ -202,7 +202,7 @@ replicatespu_WindowSize( GLint win, GLint w, GLint h )
 	winInfo->width = w;
 	winInfo->height = h;
 
-	replicatespuFlush( (void *) thread );
+	replicatespuFlushAll( (void *) thread );
 
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
 		if (!replicate_spu.rserver[i].conn ||
@@ -250,6 +250,6 @@ replicatespu_Clear( GLbitfield mask )
 	{
 		crPackClear(mask);
 	}
-	replicatespuFlush(thread);
+	replicatespuFlushAll(thread);
 }
 

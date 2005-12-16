@@ -17,6 +17,14 @@
 #include <X11/extensions/vnc.h>
 
 
+/**
+ * When using crHashTableWalk to walk over textures, context, windows,
+ * etc we need to know the current server inside some callbacks.
+ * Use this var for that.
+ */
+static int NewServerIndex = -1;
+
+
 
 /**
  * This is called periodically to see if we have received any Xvnc
@@ -154,6 +162,21 @@ replicatespuReplicateTextures(CRContext *tempState, CRContext *state)
 }
 
 
+/**
+ * Send over all the display lists for this context. The temporary
+ * context should have all the client information needed, so that
+ * we can restore correct client state after we're done.
+ */
+static void
+replicatespuReplicateLists(CRContext *tempState)
+{
+	crDLMSetupClientState(&replicate_spu.diff_dispatch);
+	crDLMSendAllDLMLists(replicate_spu.displayListManager, 
+											 &replicate_spu.diff_dispatch);
+	crDLMRestoreClientState(&tempState->client, &replicate_spu.diff_dispatch);
+}
+
+
 void replicatespuRePositionWindow(WindowInfo *winInfo)
 {
 	Window root;
@@ -187,12 +210,6 @@ void replicatespuRePositionWindow(WindowInfo *winInfo)
 }
 
 
-/**
- * Used by the following two crHashTableWalk callbacks.
- * They need to know which replicant/server we're talking to.
- */
-static int ServerIndex = -1;
-
 
 /**
  * Callback called by crHashTableWalk() below.
@@ -211,7 +228,7 @@ replicatespuReplicateWindow(unsigned long key, void *data1, void *data2)
 	GLboolean unviewable = GL_FALSE;
 	XWindowAttributes winAtt;
 
-	CRASSERT(ServerIndex >= 0);
+	CRASSERT(NewServerIndex >= 0);
 
 	/**
 	 * Get application window's attributes
@@ -236,7 +253,7 @@ replicatespuReplicateWindow(unsigned long key, void *data1, void *data2)
 	else
 		crPackWindowCreate( replicate_spu.dpyName, winInfo->visBits, &window, &writeback);
 
-	replicatespuFlushOne(thread, ServerIndex);
+	replicatespuFlushOne(thread, NewServerIndex);
 
 	/* Get return value */
 	while (writeback) {
@@ -246,7 +263,7 @@ replicatespuReplicateWindow(unsigned long key, void *data1, void *data2)
 		window = (GLint) SWAP32(window);
 
 	/* save the server-side window ID */
-	winInfo->id[ServerIndex] = window;
+	winInfo->id[NewServerIndex] = window;
 
 	crDebug("Replicate SPU: created server-side window %d", window);
 
@@ -268,7 +285,7 @@ replicatespuReplicateWindow(unsigned long key, void *data1, void *data2)
 		else
 			crPackWindowShow( window, GL_FALSE );
 		
-		replicatespuFlushOne(thread, ServerIndex);
+		replicatespuFlushOne(thread, NewServerIndex);
 	}
 }
 
@@ -280,18 +297,15 @@ replicatespuReplicateWindow(unsigned long key, void *data1, void *data2)
 static void
 replicatespuResizeWindows(unsigned long key, void *data1, void *data2)
 {
-	ThreadInfo *thread = (ThreadInfo *) data2;
 	WindowInfo *winInfo = (WindowInfo *) data1;
-
-	CRASSERT(ServerIndex >= 0);
+	const int serverWin = winInfo->id[NewServerIndex];
+	CRASSERT(NewServerIndex >= 0);
 
 	if (winInfo->width > 0) {
 		if (replicate_spu.swap)
-			crPackWindowSizeSWAP( winInfo->id[ServerIndex], winInfo->width, winInfo->height );
+			crPackWindowSizeSWAP( serverWin, winInfo->width, winInfo->height );
 		else
-			crPackWindowSize( winInfo->id[ServerIndex], winInfo->width, winInfo->height );
-
-		replicatespuFlushOne(thread, ServerIndex);
+			crPackWindowSize( serverWin, winInfo->width, winInfo->height );
 	}
 
 	/* XXX what's this for? */
@@ -303,7 +317,7 @@ replicatespuResizeWindows(unsigned long key, void *data1, void *data2)
 
 
 /**
- * Replicate our contexts on a new server (indicated by ServerIndex).
+ * Replicate our contexts on a new server (indicated by NewServerIndex).
  */
 static void
 replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
@@ -319,7 +333,6 @@ replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
 		return;
 	}
 
-
 	/*
 	 * Send CreateContext to new server and get return value
 	 */
@@ -329,7 +342,7 @@ replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
 	else
 		crPackCreateContext( replicate_spu.dpyName, context->visBits,
 												 sharedCtx, &return_val, &writeback);
-	replicatespuFlushOne(thread, ServerIndex);
+	replicatespuFlushOne(thread, NewServerIndex);
 	writeback = 1;
 	while (writeback)
 		crNetRecv();
@@ -340,7 +353,7 @@ replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
 		return;
 	}
 
-	context->rserverCtx[ServerIndex] = return_val;
+	context->rserverCtx[NewServerIndex] = return_val;
 
 	/*
 	 * Create a new CRContext record representing the state of the new
@@ -354,7 +367,7 @@ replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
 	{
 		int serverWindow;
 		if (context->currentWindow)
-			serverWindow = context->currentWindow->id[ServerIndex];
+			serverWindow = context->currentWindow->id[NewServerIndex];
 		else
 			serverWindow = 0;
 
@@ -364,27 +377,17 @@ replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
 			crPackMakeCurrent( serverWindow, 0, return_val );
 	}
 
-	replicatespuFlushOne(thread, ServerIndex);
-
-	/* Send state differences and all texture objects to new server */
+	/* Send state differences, all texture objects and all display lists
+	 * to the new server.
+	 */
 	crStateDiffContext( tempState, context->State );
 	replicatespuReplicateTextures(tempState, context->State);
-
-	/* need this? */
-	replicatespuFlushOne(thread, ServerIndex);
-
-	/* Send over all the display lists for this context. The temporary
-	 * context should have all the client information needed, so that
-	 * we can restore correct client state after we're done.
-	 */
-	crDLMSetupClientState(&replicate_spu.diff_dispatch);
-	crDLMSendAllDLMLists(replicate_spu.displayListManager, 
-											 &replicate_spu.diff_dispatch);
-	crDLMRestoreClientState(&tempState->client, &replicate_spu.diff_dispatch);
+	replicatespuReplicateLists(tempState);
 			
-	replicatespuFlushOne(thread, ServerIndex);
+	/* XXX this call may not be needed */
+	replicatespuFlushOne(thread, NewServerIndex);
 
-	/* DestroyContext (only the temporary one) */
+	/* Destroy the temporary context, no longer needed */
 	crStateDestroyContext( tempState );
 }
 
@@ -406,6 +409,19 @@ FlushConnection(int i)
 
 
 /**
+ * This will be called by the Cr packer when it needs to send out a full
+ * buffer.  During replication, we need to send to a specific server.
+ */
+static void
+replicatespuFlushOnePacker(void *arg)
+{
+	ThreadInfo *thread = (ThreadInfo *) arg;
+	replicatespuFlushOne(thread, NewServerIndex);
+}
+
+
+
+/**
  * This is the main routine responsible for replicating our GL state
  * for a new VNC viewer.  Called when we detect that a new VNC viewer
  * has been started.
@@ -422,7 +438,7 @@ replicatespuReplicate(int ipaddress)
 
 	crDebug("Replicate SPU: Enter replicatespuReplicate(ipaddress=0x%x)", ipaddress);
 
-	replicatespuFlush( (void *)thread );
+	replicatespuFlushAll( (void *)thread );
 
 #ifdef CHROMIUM_THREADSAFE_notyet
 	crLockMutex(&_ReplicateMutex);
@@ -447,6 +463,7 @@ replicatespuReplicate(int ipaddress)
 
 	/*
 	 * At this time, we can only support one VNC viewer per host.
+	 * Check for that here.
 	 */
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
 		if (replicate_spu.ipnumbers[i] == ipaddress) {
@@ -505,14 +522,22 @@ replicatespuReplicate(int ipaddress)
 		= crNetConnectToServer( hosturl, CHROMIUM_START_PORT + r_slot,
 														replicate_spu.rserver[r_slot].buffer_size, 1);
 
+
+	/*
+	 * Setup the the packer flush function.  While replicating state to
+	 * a particular server we definitely don't want to do any broadcast
+	 * flushing!
+	 */
+	crPackFlushFunc( thread->packer, replicatespuFlushOnePacker );
+
 	/*
 	 * Create server-side windows and contexts by walking tables of app windows
 	 * and contexts.
 	 */
-	ServerIndex = r_slot;
+	NewServerIndex = r_slot;
 	crHashtableWalk(replicate_spu.windowTable, replicatespuReplicateWindow, thread);
 	crHashtableWalk(replicate_spu.contextTable, replicatespuReplicateContext, thread);
-	ServerIndex = -1;
+	NewServerIndex = -1;
 
 	/* MakeCurrent, the current context */
 	if (thread->currentContext) {
@@ -526,14 +551,22 @@ replicatespuReplicate(int ipaddress)
 		crStateMakeCurrent( thread->currentContext->State );
 	}
 
-	replicatespuFlushOne(thread, r_slot);
-
 	/*
 	 * Set window sizes
 	 */
-	ServerIndex = r_slot;
+	NewServerIndex = r_slot;
 	crHashtableWalk(replicate_spu.windowTable, replicatespuResizeWindows, thread);
-	ServerIndex = -1;
+	NewServerIndex = -1;
+
+
+	replicatespuFlushOne(thread, r_slot);
+
+
+	/*
+	 * restore normal, broadcasting packer flush function now.
+	 */
+	crPackFlushFunc( thread->packer, replicatespuFlush );
+
 
 	crDebug("Replicate SPU: leaving replicatespuReplicate");
 

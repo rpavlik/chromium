@@ -126,9 +126,27 @@ replicatespuFlushOne(ThreadInfo *thread, int server)
 }
 
 
+/**
+ * Flush/send pending commands to all servers.
+ */
+void
+replicatespuFlushAll(ThreadInfo *thread)
+{
+	replicatespuFlush((void *) thread);
+
+	/* 
+	 * As the *Flush() routine is fairly consistently called, we
+	 * can use this as our event loop too. Check for vnc events
+	 * during flush. 
+	 */
+	if (replicate_spu.vncAvailable)
+		replicatespuCheckVncEvents();
+}
+
+
 /*
- * This is called from either the Replicate SPU and the packer library whenever
- * we need to send a data buffer to the server.
+ * This is called from either replicatespuFlushAll or the packer library
+ * whenever we need to send a data buffer to the server.
  */
 void replicatespuFlush(void *arg )
 {
@@ -195,14 +213,6 @@ void replicatespuFlush(void *arg )
 	crPackSetBuffer( thread->packer, buf );
 
 	crPackResetPointers(thread->packer);
-
-	/* 
-	 * As the *Flush() routine is fairly consistently called, we
-	 * can use this as our event loop too. Check for vnc events
-	 * during flush. 
-	 */
-	if (replicate_spu.vncAvailable)
-		replicatespuCheckVncEvents();
 }
 
 

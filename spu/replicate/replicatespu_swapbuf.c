@@ -19,7 +19,7 @@ replicatespu_SwapBuffers( GLint window, GLint flags )
 	WindowInfo *winInfo
 		= (WindowInfo *) crHashtableSearch( replicate_spu.windowTable, window );
 
-	replicatespuFlush( (void *) thread );
+	replicatespuFlushAll( (void *) thread );
 
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
 		if (replicate_spu.rserver[i].conn == NULL ||

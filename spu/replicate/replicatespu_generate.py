@@ -154,7 +154,7 @@ for func_name in keys:
 		print '\t}'
 
 	if needWriteback:
-		print '\treplicatespuFlush( (void *) thread );'
+		print '\treplicatespuFlushAll( (void *) thread );'
 
 	# Pack it up to send it away
 	if needPack:
@@ -170,7 +170,7 @@ for func_name in keys:
 	# Sometimes we'll need to invoke an immediate flush
 	if needFlush:
 		print '\treplicatespuFlushOne(thread, 0);'
-		#print '\treplicatespuFlush( (void *) thread );'
+		#print '\treplicatespuFlushAll( (void *) thread );'
 
 	# If it's a state-affecting function, *and* if we're not compiling
 	# a display list, send it off to the state tracker.

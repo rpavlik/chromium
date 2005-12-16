@@ -20,7 +20,7 @@ replicatespu_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
 	ContextInfo *ctx = thread->currentContext;
 	CRClientState *clientState = &(ctx->State->client);
 
-	replicatespuFlush( (void *) thread );
+	replicatespuFlushAll( (void *) thread );
 
 	replicate_spu.ReadPixels++;
 

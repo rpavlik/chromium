@@ -19,6 +19,7 @@
 
 #define MAGIC_OFFSET 3000
 
+
 /*
  * Allocate a new ThreadInfo structure, setup a connection to the
  * server, allocate/init a packer context, bind this ThreadInfo to
@@ -52,7 +53,7 @@ ThreadInfo *replicatespuNewThread( unsigned long id )
 	}
 	else {
 		/* a new pthread */
-		replicatespuFlush( &(replicate_spu.thread[0]) );
+		replicatespuFlushAll( &(replicate_spu.thread[0]) );
 		crNetNewClient( replicate_spu.thread[0].server.conn, &(thread->server));
 		CRASSERT(thread->server.conn);
 	}
@@ -175,7 +176,7 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 			sharedServerCtx = sharedContext->rserverCtx[0];
 	}
 
-	replicatespuFlush( &(replicate_spu.thread[0]) );
+	replicatespuFlushAll( &(replicate_spu.thread[0]) );
 
 #ifdef CHROMIUM_THREADSAFE_notyet
 	crLockMutex(&_ReplicateMutex);
@@ -333,7 +334,7 @@ replicatespu_DestroyContext( GLint ctx )
 	}
 	CRASSERT(thread);
 
-	replicatespuFlush( (void *)thread );
+	replicatespuFlushAll( (void *)thread );
 
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
 		if (replicate_spu.rserver[i].conn == NULL ||
@@ -435,7 +436,7 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 	}
 
 	if (thread)
-		replicatespuFlush( (void *)thread );
+		replicatespuFlushAll( (void *)thread );
 
 	if (!thread) {
 		thread = replicatespuNewThread( crThreadID() );
