@@ -352,12 +352,19 @@ void crFreeStrings( char **strings )
  */
 char *crStrIntersect( const char *s1, const char *s2 )
 {
-	const int len1 = crStrlen(s1);
-	const int len2 = crStrlen(s2);
+	int len1, len2;
 	int resultLen;
 	char *result;
 	char **exten1, **exten2;
 	int i, j;
+
+	if (!s1 || !s2) {
+		/* null strings, no intersection */
+		return NULL;
+	}
+
+	len1 = crStrlen(s1);
+	len2 = crStrlen(s2);
 
 	/* allocate storage for result (a conservative estimate) */
 	resultLen = ((len1 > len2) ? len1 : len2) + 2;
