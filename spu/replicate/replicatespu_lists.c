@@ -11,6 +11,16 @@
 #include "cr_dlm.h"
 #include "replicatespu_proto.h"
 
+GLuint REPLICATESPU_APIENTRY
+replicatespu_GenLists( GLsizei range )
+{
+	/* Don't get IDs from the crservers since different servers will
+	 * return different IDs.
+	 */
+	return crDLMGenLists(range);
+}
+
+
 void REPLICATESPU_APIENTRY replicatespu_NewList(GLuint listIdentifier, GLenum mode)
 {
 	GET_THREAD(thread);

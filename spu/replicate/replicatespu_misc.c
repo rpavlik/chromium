@@ -228,7 +228,6 @@ replicatespu_GenTextures( GLsizei n, GLuint * textures )
 	crStateGenTextures(n, textures);
 }
 
-
 /**
  * Special case just to call Flush at end.
  * Since glClear is typically called at the start of a frame, it's a good

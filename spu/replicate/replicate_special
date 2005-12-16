@@ -62,6 +62,7 @@ WindowCreate
 WindowDestroy
 WindowSize
 Clear
+GenTextures
 
 # replicatespu_swapbuf.c
 SwapBuffers
@@ -70,11 +71,10 @@ SwapBuffers
 ReadPixels
 
 # replicatespu_lists.c
+GenLists
 NewList
 EndList
 DeleteLists
 CallList
 CallLists
 ListBase
-
-GenTextures
