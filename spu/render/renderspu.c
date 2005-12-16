@@ -894,6 +894,11 @@ static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
 			return NULL;
 
 		nativeExt = (const char *) render_spu.ws.glGetString(GL_EXTENSIONS);
+		if (!nativeExt) {
+			/* maybe called w/out current context. */
+			return NULL;
+		}
+
 		crExt = crStrjoin3(crExtensions, " ", crAppOnlyExtensions);
 		s1 = crStrIntersect(nativeExt, crExt);
 		remove_trailing_space(s1);
