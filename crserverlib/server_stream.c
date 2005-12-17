@@ -115,7 +115,13 @@ static void crServerDeleteClient( CRClient *client )
 {
 	int i, j;
 
-	crDebug("Deleting client %p", client);
+	crDebug("Deleting client %p (%d msgs left)", client,
+					client->conn->messageList.numMessages);
+
+	if (client->conn->messageList.numMessages > 0) {
+		crDebug("Delay destroying client: message still pending");
+		return;
+	}
 
 	if (!FindClientInQueue(client)) {
 		crError("CRServer: client %p not found in the queue!", client);
@@ -196,7 +202,8 @@ getNextClient(GLboolean block)
 			RunQueue *start = cr_server.run_queue;
 
  			if (!cr_server.run_queue->client->conn
-					|| cr_server.run_queue->client->conn->type == CR_NO_CONNECTION) {
+					 || (cr_server.run_queue->client->conn->type == CR_NO_CONNECTION
+							 && cr_server.curClient->conn->messageList.numMessages == 0)) {
 				crDebug("Delete client %p at %d", cr_server.run_queue->client, __LINE__);
  				crServerDeleteClient( cr_server.run_queue->client );
 				start = cr_server.run_queue;
@@ -298,7 +305,8 @@ crServerServiceClient(const RunQueue *qEntry)
 
 		/* Check if the current client connection has gone away */
 		if (!cr_server.curClient->conn
-				|| cr_server.curClient->conn->type == CR_NO_CONNECTION) {
+				|| (cr_server.curClient->conn->type == CR_NO_CONNECTION
+						&& cr_server.curClient->conn->messageList.numMessages == 0)) {
 			crDebug("Delete client %p at %d", cr_server.run_queue->client, __LINE__);
 			crServerDeleteClient( cr_server.curClient );
 			return CLIENT_GONE;
@@ -323,7 +331,11 @@ crServerServiceClient(const RunQueue *qEntry)
 				 */
 				CRASSERT(!qEntry->blocked);
 				crNetRecv();
+#if 1
 				continue; /* return CLIENT_MORE; */
+#else
+				return CLIENT_MORE;
+#endif
 			}
 			else {
 				/* get next client */
