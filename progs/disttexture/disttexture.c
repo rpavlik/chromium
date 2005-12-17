@@ -163,9 +163,9 @@ Init(int argc, char *argv[])
             }
          }
       }
-      buffer = malloc(width * height * 3 + strlen(filename) + 1);
+      buffer = (GLubyte *) malloc(width * height * 3 + strlen(filename) + 1);
       assert(buffer);
-      strcpy(buffer, filename);
+      strcpy((char *) buffer, filename);
       memcpy(buffer + strlen(filename) + 1, image, width * height *3);
       type = GL_TRUE;
    }
