@@ -10,6 +10,7 @@
 #include "cr_spu.h"
 #include "cr_net.h"
 #include "cr_hash.h"
+#include "cr_translator.h"
 #include "cr_protocol.h"
 #include "cr_glstate.h"
 #include "spu_dispatch_table.h"
@@ -66,6 +67,7 @@ typedef struct _crclient {
 	CRConnection *conn;       /**< network connection from the client */
 	int number;        /**< a unique number for each client */
 	GLint currentContextNumber;
+	CRTranslator *currentTranslator;
 	CRContext *currentCtx;
 	GLint currentWindow;
 	CRMuralInfo *currentMural;
@@ -105,6 +107,9 @@ typedef struct {
 
 	CRHashTable *muralTable;  /**< hash table where all murals are stored */
 
+	/* This object handles sharing of display list and other objects */
+	CRTranslator *sharedIdTranslator;
+
 	int client_spu_id;
 
 	int mtu;
@@ -124,6 +129,8 @@ typedef struct {
 
 	CRHashTable *contextTable;  /**< hash table for rendering contexts */
 	CRContext *DummyContext;    /**< used when no other bound context */
+
+	CRHashTable *translatorTable;
 
 	CRHashTable *programTable;  /**< for vertex programs */
 	GLuint currentProgram;

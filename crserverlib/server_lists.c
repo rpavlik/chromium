@@ -11,41 +11,16 @@
 /*
  * Notes on ID translation:
  *
- * If a server has multiple clients (in the case of parallel applications)
- * and N of the clients all create a display list with ID K, does K name
- * one display list or N different display lists?
+ * The server, in serializing multiple remote streams into a single
+ * context, only has one set of context-specific resources (simple state,
+ * display lists, textures, etc.).
  *
- * By default, there is one display list named K.  If the clients put
- * identical commands into list K, then this is fine.  But if the clients
- * each put something different into list K when they created it, then this
- * is a serious problem.
- *
- * By zeroing the 'shared_display_lists' configuration option, we can tell
- * the server to make list K be unique for all N clients.  We do this by
- * translating K into a new, unique ID dependant on which client we're
- * talking to (curClient->number).
- *
- * Same story for texture objects, vertex programs, etc.
- *
- * The application can also dynamically switch between shared and private
- * display lists with:
- *   glChromiumParameteri(GL_SHARED_DISPLAY_LISTS_CR, GL_TRUE)
- * and
- *   glChromiumParameteri(GL_SHARED_DISPLAY_LISTS_CR, GL_FALSE)
- *
+ * Simple state is maintained in software.  Display lists and textures
+ * are maintained differently.  The server context keeps *all* the display
+ * lists and textures stored by any context & client, and uses a translator
+ * to keep track of the mapping between each context's set of IDs and the
+ * server's master set of IDs.
  */
-
-
-
-static GLuint TranslateListID( GLuint id )
-{
-	if (!cr_server.sharedDisplayLists) {
-		int client = cr_server.curClient->number;
-		return id + client * 100000;
-	}
-	return id;
-}
-
 
 static GLuint TranslateTextureID( GLuint id )
 {
@@ -70,19 +45,30 @@ static GLuint TranslateProgramID( GLuint id )
 void SERVER_DISPATCH_APIENTRY
 crServerDispatchNewList( GLuint list, GLenum mode )
 {
+	GLuint translatedList;
 	if (mode == GL_COMPILE_AND_EXECUTE)
 		crWarning("using glNewList(GL_COMPILE_AND_EXECUTE) can confuse the crserver");
 
-	list = TranslateListID( list );
+	/* If this is the ID of a list that already exists, re-use the earlier ID */
+	translatedList = crTranslateListId(cr_server.curClient->currentTranslator, list);
+	if (translatedList == 0) {
+	    /* Here, the list ID isn't already in use.  Find a new ID for it to
+	     * use, and install it in the translator.
+	     */
+	    translatedList = cr_server.head_spu->dispatch_table.GenLists(1);
+	    crTranslateAddListId(cr_server.curClient->currentTranslator, list, translatedList);
+	}
+	    
+	/* Continue with the device's list ID */
 	crStateNewList( list, mode );
-	cr_server.head_spu->dispatch_table.NewList( list, mode );
+	cr_server.head_spu->dispatch_table.NewList( translatedList, mode );
 }
 
 
 void SERVER_DISPATCH_APIENTRY
 crServerDispatchCallList( GLuint list )
 {
-	list = TranslateListID( list );
+	GLuint translatedList = crTranslateListId(cr_server.curClient->currentTranslator, list);
 
 	if (cr_server.curClient->currentCtx->lists.mode == 0) {
 		/* we're not compiling, so execute the list now */
@@ -95,20 +81,20 @@ crServerDispatchCallList( GLuint list )
 
 		if (mural->numExtents == 0) {
 			/* Issue the list as-is */
-			cr_server.head_spu->dispatch_table.CallList( list );
+			cr_server.head_spu->dispatch_table.CallList( translatedList );
 		}
 		else {
 			/* Loop over the extents (tiles) calling glCallList() */
 			for ( i = 0; i < mural->numExtents; i++ )	{
 				if (cr_server.run_queue->client->currentCtx)
 					crServerSetOutputBounds( mural, i );
-				cr_server.head_spu->dispatch_table.CallList( list );
+				cr_server.head_spu->dispatch_table.CallList( translatedList );
 			}
 		}
 	}
 	else {
 		/* we're compiling glCallList into another list - just pass it through */
-		cr_server.head_spu->dispatch_table.CallList( list );
+		cr_server.head_spu->dispatch_table.CallList( translatedList );
 	}
 }
 
@@ -120,14 +106,15 @@ crServerDispatchCallList( GLuint list )
 static void
 TranslateListIDs(GLsizei n, GLenum type, const GLvoid *lists, GLuint *newLists)
 {
-	int offset = cr_server.curClient->number * 100000;
 	GLsizei i;
+	GLuint listBase = cr_server.curClient->currentCtx->lists.base;
+
 	switch (type) {
 	case GL_UNSIGNED_BYTE:
 		{
 			const GLubyte *src = (const GLubyte *) lists;
 			for (i = 0; i < n; i++) {
-				newLists[i] = src[i] + offset;
+				newLists[i] = crTranslateListId(cr_server.curClient->currentTranslator, src[i] + listBase);
 			}
 		}
 		break;
@@ -135,7 +122,7 @@ TranslateListIDs(GLsizei n, GLenum type, const GLvoid *lists, GLuint *newLists)
 		{
 			const GLbyte *src = (const GLbyte *) lists;
 			for (i = 0; i < n; i++) {
-				newLists[i] = src[i] + offset;
+				newLists[i] = crTranslateListId(cr_server.curClient->currentTranslator, src[i] + listBase);
 			}
 		}
 		break;
@@ -143,7 +130,7 @@ TranslateListIDs(GLsizei n, GLenum type, const GLvoid *lists, GLuint *newLists)
 		{
 			const GLushort *src = (const GLushort *) lists;
 			for (i = 0; i < n; i++) {
-				newLists[i] = src[i] + offset;
+				newLists[i] = crTranslateListId(cr_server.curClient->currentTranslator, src[i] + listBase);
 			}
 		}
 		break;
@@ -151,7 +138,7 @@ TranslateListIDs(GLsizei n, GLenum type, const GLvoid *lists, GLuint *newLists)
 		{
 			const GLshort *src = (const GLshort *) lists;
 			for (i = 0; i < n; i++) {
-				newLists[i] = src[i] + offset;
+				newLists[i] = crTranslateListId(cr_server.curClient->currentTranslator, src[i] + listBase);
 			}
 		}
 		break;
@@ -159,7 +146,7 @@ TranslateListIDs(GLsizei n, GLenum type, const GLvoid *lists, GLuint *newLists)
 		{
 			const GLuint *src = (const GLuint *) lists;
 			for (i = 0; i < n; i++) {
-				newLists[i] = src[i] + offset;
+				newLists[i] = crTranslateListId(cr_server.curClient->currentTranslator, src[i] + listBase);
 			}
 		}
 		break;
@@ -167,7 +154,7 @@ TranslateListIDs(GLsizei n, GLenum type, const GLvoid *lists, GLuint *newLists)
 		{
 			const GLint *src = (const GLint *) lists;
 			for (i = 0; i < n; i++) {
-				newLists[i] = src[i] + offset;
+				newLists[i] = crTranslateListId(cr_server.curClient->currentTranslator, src[i] + listBase);
 			}
 		}
 		break;
@@ -175,7 +162,7 @@ TranslateListIDs(GLsizei n, GLenum type, const GLvoid *lists, GLuint *newLists)
 		{
 			const GLfloat *src = (const GLfloat *) lists;
 			for (i = 0; i < n; i++) {
-				newLists[i] = (GLuint) src[i] + offset;
+				newLists[i] = crTranslateListId(cr_server.curClient->currentTranslator, (GLuint) src[i] + listBase);
 			}
 		}
 		break;
@@ -183,8 +170,7 @@ TranslateListIDs(GLsizei n, GLenum type, const GLvoid *lists, GLuint *newLists)
 		{
 			const GLubyte *src = (const GLubyte *) lists;
 			for (i = 0; i < n; i++) {
-				newLists[i] = (src[i*2+0] * 256 +
-											 src[i*2+1]) + offset;
+				newLists[i] = crTranslateListId(cr_server.curClient->currentTranslator, (src[i*2+0]*256 + src[i*2+1] + listBase));
 			}
 		}
 		break;
@@ -192,9 +178,7 @@ TranslateListIDs(GLsizei n, GLenum type, const GLvoid *lists, GLuint *newLists)
 		{
 			const GLubyte *src = (const GLubyte *) lists;
 			for (i = 0; i < n; i++) {
-				newLists[i] = (src[i*3+0] * 256 * 256 +
-											 src[i*3+1] * 256 +
-											 src[i*3+2]) + offset;
+				newLists[i] = crTranslateListId(cr_server.curClient->currentTranslator, (src[i*3+0]*256*256 + src[i*3+1]*256 + src[i*3+2] + listBase));
 			}
 		}
 		break;
@@ -202,10 +186,7 @@ TranslateListIDs(GLsizei n, GLenum type, const GLvoid *lists, GLuint *newLists)
 		{
 			const GLubyte *src = (const GLubyte *) lists;
 			for (i = 0; i < n; i++) {
-				newLists[i] = (src[i*4+0] * 256 * 256 * 256 +
-											 src[i*4+1] * 256 * 256 +
-											 src[i*4+2] * 256 +
-											 src[i*4+3]) + offset;
+				newLists[i] = crTranslateListId(cr_server.curClient->currentTranslator, (src[i*4+0]*256*256*256 + src[i*4+1]*256*256 + src[i*4+2]*256 + src[i*4+3] + listBase));
 			}
 		}
 		break;
@@ -218,15 +199,14 @@ TranslateListIDs(GLsizei n, GLenum type, const GLvoid *lists, GLuint *newLists)
 void SERVER_DISPATCH_APIENTRY
 crServerDispatchCallLists( GLsizei n, GLenum type, const GLvoid *lists )
 {
-	if (!cr_server.sharedDisplayLists) {
-		/* need to translate IDs */
-		GLuint *newLists = (GLuint *) crAlloc(n * sizeof(GLuint));
-		if (newLists) {
-			TranslateListIDs(n, type, lists, newLists);
-		}
-		lists = newLists;
-		type = GL_UNSIGNED_INT;
+	/* always need to translate IDs */
+	GLuint *translatedLists = (GLuint *) crAlloc(n * sizeof(GLuint));
+	if (translatedLists == NULL) {
+		crWarning("CRServer: out of memory dispatching CallLists())");
+		return;
 	}
+	/* Translate into GL_UNSIGNED_INT */
+	TranslateListIDs(n, type, lists, translatedLists);
 
 	if (cr_server.curClient->currentCtx->lists.mode == 0) {
 		/* we're not compiling, so execute the list now */
@@ -239,32 +219,43 @@ crServerDispatchCallLists( GLsizei n, GLenum type, const GLvoid *lists )
 
 		if (mural->numExtents == 0) {
 			/* Issue the list as-is */
-			cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
+			cr_server.head_spu->dispatch_table.CallLists( n, GL_UNSIGNED_INT, translatedLists );
 		}
 		else {
 			/* Loop over the extents (tiles) calling glCallList() */
 			for ( i = 0; i < mural->numExtents; i++ ) {
 				if (cr_server.run_queue->client->currentCtx)
 					crServerSetOutputBounds( mural, i );
-				cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
+				cr_server.head_spu->dispatch_table.CallLists( n, GL_UNSIGNED_INT, translatedLists );
 			}
 		}
 	}
 	else {
 		/* we're compiling glCallList into another list - just pass it through */
-		cr_server.head_spu->dispatch_table.CallLists( n, type, lists );
+		cr_server.head_spu->dispatch_table.CallLists( n, GL_UNSIGNED_INT, translatedLists );
 	}
 
-	if (!cr_server.sharedDisplayLists) {
-		crFree((void *) lists);  /* malloc'd above */
-	}
+	crFree((void *) translatedLists);  /* malloc'd above */
+}
+
+/* The server must receive and store ListBase commands, but must
+ * not execute them; the effects of the ListBase are already included
+ * in the TranslateListIDs call, so passing the ListBase down to the
+ * server would do bad things.
+ */
+void SERVER_DISPATCH_APIENTRY crServerDispatchListBase( GLuint base )
+
+{
+	crStateListBase( base );
+	/* Do *not* send this through the head SPU dispatch table. */
+	/* cr_server.head_spu->dispatch_table.ListBase( base ); */
 }
 
 
 GLboolean SERVER_DISPATCH_APIENTRY crServerDispatchIsList( GLuint list )
 {
 	GLboolean retval;
-	list = TranslateListID( list );
+	list = crTranslateListId(cr_server.curClient->currentTranslator, list);
 	retval = cr_server.head_spu->dispatch_table.IsList( list );
 	crServerReturnValue( &retval, sizeof(retval) );
 	return retval;
@@ -273,9 +264,16 @@ GLboolean SERVER_DISPATCH_APIENTRY crServerDispatchIsList( GLuint list )
 
 void SERVER_DISPATCH_APIENTRY crServerDispatchDeleteLists( GLuint list, GLsizei range )
 {
-	list = TranslateListID( list );
+	/* We have to delete these one by one on the server, because they
+	 * may not be contiguous once mapped to the server's domain
+	 */
+	GLuint i;
+	for (i = list; i < list + range; i++) {
+		cr_server.head_spu->dispatch_table.DeleteLists( crTranslateListId(cr_server.curClient->currentTranslator, i), 1 );
+	}
+		
+	/* The crState version is contiguous. */
 	crStateDeleteLists( list, range );
-	cr_server.head_spu->dispatch_table.DeleteLists( list, range );
 }
 
 

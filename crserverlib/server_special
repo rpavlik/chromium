@@ -125,6 +125,7 @@ CallList
 CallLists
 IsList
 DeleteLists
+ListBase
 BindTexture
 DeleteTextures
 IsTexture
