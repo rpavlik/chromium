@@ -50,6 +50,7 @@ replicateSPUInit( int id, SPU *child, SPU *self,
 	/* Init window/context hash tables */
 	replicate_spu.windowTable = crAllocHashtable();
 	replicate_spu.contextTable = crAllocHashtable();
+	replicate_spu.contextList = crAllocList();
 
 	/* This connects to the server, sets up the packer, etc. */
 	thread = replicatespuNewThread( crThreadID() );

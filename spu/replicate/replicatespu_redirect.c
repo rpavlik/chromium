@@ -168,10 +168,10 @@ replicatespuReplicateTextures(CRContext *tempState, CRContext *state)
  * we can restore correct client state after we're done.
  */
 static void
-replicatespuReplicateLists(CRContext *tempState)
+replicatespuReplicateLists(CRContext *tempState, CRDLM *displayListManager)
 {
 	crDLMSetupClientState(&replicate_spu.diff_dispatch);
-	crDLMSendAllDLMLists(replicate_spu.displayListManager, 
+	crDLMSendAllDLMLists(displayListManager, 
 											 &replicate_spu.diff_dispatch);
 	crDLMRestoreClientState(&tempState->client, &replicate_spu.diff_dispatch);
 }
@@ -318,14 +318,18 @@ replicatespuResizeWindows(unsigned long key, void *data1, void *data2)
 
 /**
  * Replicate our contexts on a new server (indicated by NewServerIndex).
+ * XXX It may be a problem if we try to attach to a shared context,
+ * when that shared context has not yet been created.
  */
 static void
-replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
+replicatespuReplicateContext(void *element, void *arg)
 {
-	ThreadInfo *thread = (ThreadInfo *) data2;
-	ContextInfo *context = (ContextInfo *) data1;
+	GLint ctx = (GLint) element;
+	ThreadInfo *thread = (ThreadInfo *) arg;
+	ContextInfo *context = crHashtableSearch(replicate_spu.contextTable, ctx);
+	ContextInfo *sharedContext = NULL;
 	CRContext *tempState;
-	GLint return_val = 0, sharedCtx = 0;
+	GLint return_val = 0, shareCtx = context->shareCtx, sharedServerCtx = 0;
 	int writeback;
 
 	if (!context->State) { /* XXX need this? */
@@ -333,15 +337,23 @@ replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
 		return;
 	}
 
+	if (shareCtx > 0) {
+		sharedContext = (ContextInfo *)
+			crHashtableSearch(replicate_spu.contextTable, shareCtx);
+		if (sharedContext)
+			sharedServerCtx = sharedContext->rserverCtx[NewServerIndex];
+	}
+
+
 	/*
 	 * Send CreateContext to new server and get return value
 	 */
 	if (replicate_spu.swap)
 		crPackCreateContextSWAP( replicate_spu.dpyName, context->visBits,
-														 sharedCtx, &return_val, &writeback);
+														 sharedServerCtx, &return_val, &writeback);
 	else
 		crPackCreateContext( replicate_spu.dpyName, context->visBits,
-												 sharedCtx, &return_val, &writeback);
+												 sharedServerCtx, &return_val, &writeback);
 	replicatespuFlushOne(thread, NewServerIndex);
 	writeback = 1;
 	while (writeback)
@@ -379,10 +391,12 @@ replicatespuReplicateContext(unsigned long key, void *data1, void *data2)
 
 	/* Send state differences, all texture objects and all display lists
 	 * to the new server.
+	 * XXX We could be more efficient; in the case of a shared context,
+	 * we only need to replicate textures and display lists once...
 	 */
 	crStateDiffContext( tempState, context->State );
 	replicatespuReplicateTextures(tempState, context->State);
-	replicatespuReplicateLists(tempState);
+	replicatespuReplicateLists(tempState, context->displayListManager);
 			
 	/* XXX this call may not be needed */
 	replicatespuFlushOne(thread, NewServerIndex);
@@ -532,11 +546,13 @@ replicatespuReplicate(int ipaddress)
 
 	/*
 	 * Create server-side windows and contexts by walking tables of app windows
-	 * and contexts.
+	 * and contexts.  Note that windows can be created in random order,
+	 * but contexts must be created in the order they were originally
+	 * created, or shared contexts will break.
 	 */
 	NewServerIndex = r_slot;
 	crHashtableWalk(replicate_spu.windowTable, replicatespuReplicateWindow, thread);
-	crHashtableWalk(replicate_spu.contextTable, replicatespuReplicateContext, thread);
+	crListApply(replicate_spu.contextList, replicatespuReplicateContext, thread);
 	NewServerIndex = -1;
 
 	/* MakeCurrent, the current context */

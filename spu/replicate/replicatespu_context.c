@@ -231,23 +231,25 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 		return -1;
 	}
 
-	/* The first slot (slot 0) gets its own display list manager.
-	 * All the other slots use the same display list manager. 
-	 * This isn't great behavior, but it matches Chromium's default
-	 * behaviors.
+	/* Contexts that don't share display lists get their own
+	 * display list managers.  Contexts that do, share the
+	 * display list managers of the contexts they're sharing
+	 * with (man, some grammarian has to go over that and make
+	 * it actually sound like English).
 	 */
-	if (!replicate_spu.displayListManager) {
-		replicate_spu.displayListManager = crDLMNewDLM(0, NULL);
-		if (!replicate_spu.displayListManager) {
-			crWarning("Replicate SPU: could not initialize display list manager.");
-		}
-	}
-	else {
+	if (sharedContext) {
+		context->displayListManager = sharedContext->displayListManager;
 		/* Let the DLM know that a second context is using the
 		 * same display list manager, so it can manage when its
 		 * resources are released.
 		 */
-		crDLMUseDLM(replicate_spu.displayListManager);
+		crDLMUseDLM(context->displayListManager);
+	}
+	else {
+		context->displayListManager = crDLMNewDLM(0, NULL);
+		if (!context->displayListManager) {
+			crWarning("Replicate SPU: could not initialize display list manager.");
+		}
 	}
 
 	/* Fill in the new context info */
@@ -260,9 +262,10 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 	context->visBits = visual;
 	context->currentWindow = 0; /* not bound */
 	context->dlmState
-		= crDLMNewContext(replicate_spu.displayListManager);
+		= crDLMNewContext(context->displayListManager);
 	context->displayListMode = GL_FALSE; /* not compiling */
 	context->displayListIdentifier = 0;
+	context->shareCtx = shareCtx;
 
 #if 0
 	/* Set the Current pointers now.... */
@@ -315,11 +318,16 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 	crUnlockMutex(&_ReplicateMutex);
 #endif
 
+	crListPushBack(replicate_spu.contextList, (void *)freeCtxID);
 	crHashtableAdd(replicate_spu.contextTable, freeCtxID, context);
 
 	return freeCtxID++;
 }
 
+static int CompareIntegers(const void *element1, const void *element2)
+{
+    return (element1 == element2) ? 0 : 1;
+}
 
 void REPLICATESPU_APIENTRY
 replicatespu_DestroyContext( GLint ctx )
@@ -356,7 +364,7 @@ replicatespu_DestroyContext( GLint ctx )
 	 * will track its uses and will only release the resources
 	 * when the last user has relinquished it.
 	 */
-	crDLMFreeDLM(replicate_spu.displayListManager);
+	crDLMFreeDLM(context->displayListManager);
 	crDLMFreeContext(context->dlmState);
 
 	if (thread->currentContext == context) {
@@ -368,7 +376,14 @@ replicatespu_DestroyContext( GLint ctx )
 	/* zero, just to be safe */
 	crMemZero(context, sizeof(ContextInfo));
 
+	/* Delete from both the context table, and the context list. */
 	crHashtableDelete(replicate_spu.contextTable, ctx, crFree);
+	{
+	    CRListIterator *foundElement = crListFind(replicate_spu.contextList, (void *)ctx, CompareIntegers);
+	    if (foundElement != NULL) {
+		crListErase(replicate_spu.contextList, foundElement);
+	    }
+	}
 }
 
 

@@ -19,6 +19,7 @@
 #include "cr_spu.h"
 #include "cr_threads.h"
 #include "cr_dlm.h"
+#include "cr_list.h"
 #include "state/cr_client.h"
 
 #define CHROMIUM_START_PORT 7000
@@ -53,9 +54,11 @@ struct thread_info_t {
 struct context_info_t {
 	CRContext *State; 
 	GLint serverCtx;         /* context ID returned by server */
+	GLint shareCtx;
 	GLint visBits;
 	WindowInfo *currentWindow;
 	GLint rserverCtx[CR_MAX_REPLICANTS];
+	CRDLM *displayListManager; 
 	CRDLMContextState *dlmState;
 	GLenum displayListMode;
 	GLuint displayListIdentifier;
@@ -83,6 +86,7 @@ typedef struct {
 
 	CRHashTable *windowTable;
 	CRHashTable *contextTable;
+	CRList *contextList; /* we need to recreate contexts in order */
 
 	int vncAvailable; /* is the VNC X extension available? */
 	int NOP;        /* Is the 0th server's SPU a NOP SPU? */
@@ -93,8 +97,6 @@ typedef struct {
 
 	int numThreads;
 	ThreadInfo thread[MAX_THREADS];
-
-	CRDLM *displayListManager;  /* shared by all contexts */
 } ReplicateSPU;
 
 extern ReplicateSPU replicate_spu;
