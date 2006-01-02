@@ -1814,6 +1814,7 @@ class CR:
 		(node, url) = spu.servers[server_num]
 		if node == None:
 			sock.Failure( SockWrapper.UNKNOWNSERVER, "No tiles for Null node")
+			return
 		self.tileReply( sock, node )
 
 	def do_servertiles( self, sock, args ):
