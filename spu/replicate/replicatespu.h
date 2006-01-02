@@ -53,7 +53,6 @@ struct thread_info_t {
 
 struct context_info_t {
 	CRContext *State; 
-	GLint serverCtx;         /* context ID returned by server */
 	GLint shareCtx;
 	GLint visBits;
 	WindowInfo *currentWindow;

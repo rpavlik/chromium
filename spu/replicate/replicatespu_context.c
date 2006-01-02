@@ -163,8 +163,6 @@ GLint REPLICATESPU_APIENTRY
 replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 {
 	static GLint freeCtxID = MAGIC_OFFSET;
-	int writeback;
-	GLint serverCtx = -1, sharedServerCtx = 0;
 	char headspuname[10];
 	ContextInfo *context, *sharedContext = NULL;
 	unsigned int i;
@@ -172,8 +170,6 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 	if (shareCtx > 0) {
 		sharedContext = (ContextInfo *)
 			crHashtableSearch(replicate_spu.contextTable, shareCtx);
-		if (sharedContext)
-			sharedServerCtx = sharedContext->rserverCtx[0];
 	}
 
 	replicatespuFlushAll( &(replicate_spu.thread[0]) );
@@ -184,47 +180,9 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 
 	replicatespuStartVnc(dpyName);
 
-	crPackSetContext( replicate_spu.thread[0].packer );
-
-	if (replicate_spu.swap)
-	{
-		crPackGetChromiumParametervCRSWAP( GL_HEAD_SPU_NAME_CR, 0, GL_BYTE, 6, headspuname, &writeback );
-	}
-	else
-	{
-		crPackGetChromiumParametervCR( GL_HEAD_SPU_NAME_CR, 0, GL_BYTE, 6, headspuname, &writeback );
-	}
-	replicatespuFlushOne( &(replicate_spu.thread[0]), 0);
-	writeback = 1;
-	while (writeback)
-		crNetRecv();
-
-
-	/* Pack the CreateContext command */
-	if (replicate_spu.swap)
-		crPackCreateContextSWAP( dpyName, visual, sharedServerCtx,
-														 &serverCtx, &writeback );
-	else
-		crPackCreateContext( dpyName, visual, sharedServerCtx,
-												 &serverCtx, &writeback );
-
-	/* Flush buffer and get return value */
-	replicatespuFlushOne( &(replicate_spu.thread[0]), 0);
-	writeback = 1;
-	while (writeback)
-		crNetRecv();
-	if (replicate_spu.swap) {
-		serverCtx = (GLint) SWAP32(serverCtx);
-	}
-
-	if (serverCtx < 0) {
-#ifdef CHROMIUM_THREADSAFE_notyet
-		crUnlockMutex(&_ReplicateMutex);
-#endif
-		crWarning("Replicate SPU: Failure in CreateContext");
-		return -1;  /* failed */
-	}
-
+	/*
+	 * Alloc new ContextInfo object
+	 */
 	context = (ContextInfo *) crCalloc(sizeof(ContextInfo));
 	if (!context) {
 		crWarning("Replicate SPU: Out of memory in CreateContext");
@@ -257,8 +215,7 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 		context->State = crStateCreateContext(NULL, visual, sharedContext->State);
 	else
 		context->State = crStateCreateContext(NULL, visual, NULL);
-	context->serverCtx = serverCtx;
-	context->rserverCtx[0] = serverCtx;
+	context->rserverCtx[0] = 1; /* not really used */
 	context->visBits = visual;
 	context->currentWindow = 0; /* not bound */
 	context->dlmState
@@ -275,6 +232,7 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
 		int r_writeback = 1, rserverCtx = -1;
+		int sharedServerCtx;
 
 		sharedServerCtx = sharedContext ? sharedContext->rserverCtx[i] : 0;
 
