@@ -8,6 +8,7 @@
 #include "cr_packfunctions.h"
 #include "state/cr_statefuncs.h"
 #include "cr_string.h"
+#include "cr_extstring.h"
 #include "replicatespu_proto.h"
 
 
@@ -18,14 +19,13 @@ static const GLubyte *
 GetExtensions(void)
 {
 	int i;
-	GLubyte return_value[10*1000];
+	GLubyte return_value[10*1000] = {0};
 	const GLubyte *extensions, *ext;
 	GET_THREAD(thread);
 
 	return_value[0] = 0; /* null-terminate */
 
-	/* iterate backward to prefer "real" servers over default/dummy/0 server */
-	for (i = CR_MAX_REPLICANTS - 1; i >= 0; i--) {
+	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
 		if (replicate_spu.rserver[i].conn &&
 				replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
 			int writeback = 1;
@@ -43,6 +43,13 @@ GetExtensions(void)
 			CRASSERT(crStrlen((char *)return_value) < 10*1000);
 			break;
 		}
+	}
+
+	if (return_value[0] == 0) {
+		/* no servers - return default Chromium extension list */
+		crStrcpy(return_value, crExtensions);
+		(void) crAppOnlyExtensions;
+		(void) crChromiumExtensions;
 	}
 
 	/* OK, we got the result from the server.  Now we have to
