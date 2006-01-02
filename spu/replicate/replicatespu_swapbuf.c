@@ -22,8 +22,7 @@ replicatespu_SwapBuffers( GLint window, GLint flags )
 	replicatespuFlushAll( (void *) thread );
 
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
-		if (replicate_spu.rserver[i].conn == NULL ||
-				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+		if (!IS_CONNECTED(replicate_spu.rserver[i].conn))
 			continue;
 
 		if (replicate_spu.swap)
@@ -51,20 +50,20 @@ replicatespu_SwapBuffers( GLint window, GLint flags )
 			 * overriden to always set the value to zero when the
 			 * reply is received, rather than decrementing it: 
 			 */
-			if (winInfo->writeback == 0) {
+			if (winInfo->writeback[i] == 0) {
 				/* Request writeback */
-				winInfo->writeback = 1;
+				winInfo->writeback[i] = 1;
 				if (replicate_spu.swap)
-					crPackWritebackSWAP( &winInfo->writeback );
+					crPackWritebackSWAP( &winInfo->writeback[i] );
 				else
-					crPackWriteback( &winInfo->writeback );
+					crPackWriteback( &winInfo->writeback[i] );
 			}
 			else {
 				/* Make sure writeback from previous frame has been received. */
-				while (winInfo->writeback) {
+				while (winInfo->writeback[i]) {
 					/* detected disconnect during swapbuffers, drop the writeback wait */
 					if (replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
-						winInfo->writeback = 0;
+						winInfo->writeback[i] = 0;
 					else
 						crNetRecv();
 				}

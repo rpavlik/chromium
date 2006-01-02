@@ -9,15 +9,15 @@
 #include "replicatespu.h"
 #include "replicatespu_proto.h"
 
-void REPLICATESPU_APIENTRY replicatespu_ChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
+void REPLICATESPU_APIENTRY
+replicatespu_ChromiumParametervCR(GLenum target, GLenum type, GLsizei count,
+																	const GLvoid *values)
 {
-
 	CRMessage msg;
 	int len;
 	
 	GET_THREAD(thread);
 
-	
 	switch(target)
 	{
 		case GL_GATHER_PACK_CR:
@@ -39,11 +39,13 @@ void REPLICATESPU_APIENTRY replicatespu_ChromiumParametervCR(GLenum target, GLen
 	}
 }
 
+
 GLint REPLICATESPU_APIENTRY replicatespu_RenderMode( GLenum mode )
 {
 	/* ignore this, use the feedbackSPU if needed */
 	return 0;
 }
+
 
 void REPLICATESPU_APIENTRY replicatespu_Finish( void )
 {
@@ -55,8 +57,7 @@ void REPLICATESPU_APIENTRY replicatespu_Finish( void )
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
 		int writeback = 1;
 
-		if (!replicate_spu.rserver[i].conn ||
-				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+		if (!IS_CONNECTED(replicate_spu.rserver[i].conn))
 			continue;
 
 		if (replicate_spu.swap) {
@@ -115,8 +116,7 @@ replicatespu_WindowCreate( const char *dpyName, GLint visBits )
 #endif
 
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
-		if (replicate_spu.rserver[i].conn &&
-				replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
+		if (IS_CONNECTED(replicate_spu.rserver[i].conn)) {
 			int writeback = 1;
 			int return_val = -1;
 
@@ -172,8 +172,7 @@ replicatespu_WindowDestroy(GLint win)
 
 	if (winInfo) {
 		for (i = 0; i < CR_MAX_REPLICANTS; i++) {
-			if (!replicate_spu.rserver[i].conn ||
-					replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+			if (!IS_CONNECTED(replicate_spu.rserver[i].conn))
 				continue;
 
 			if (replicate_spu.swap)
@@ -205,8 +204,7 @@ replicatespu_WindowSize( GLint win, GLint w, GLint h )
 	replicatespuFlushAll( (void *) thread );
 
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
-		if (!replicate_spu.rserver[i].conn ||
-				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+		if (!IS_CONNECTED(replicate_spu.rserver[i].conn))
 			continue;
 
 		if (replicate_spu.swap)

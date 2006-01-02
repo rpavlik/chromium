@@ -36,7 +36,7 @@ struct window_info_t {
 	GLint width, height;
 	GLint nativeWindow;
 	GLboolean viewable;
-	int writeback;  /* for swapbuffers throttling */
+	int writeback[CR_MAX_REPLICANTS];  /* for swapbuffers throttling */
 };
 
 struct thread_info_t {
@@ -111,6 +111,10 @@ extern CRtsd _ReplicateTSD;
 #define GET_CONTEXT(C)                      \
   GET_THREAD(thread);                       \
   ContextInfo *C = thread->currentContext
+
+#define IS_CONNECTED(CONN) \
+  ((CONN) && (CONN)->type != CR_NO_CONNECTION)
+
 
 extern void replicatespuCreateFunctions( void );
 extern void replicatespuGatherConfiguration( const SPU *child_spu );

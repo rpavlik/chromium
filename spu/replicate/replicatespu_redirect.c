@@ -230,6 +230,9 @@ replicatespuReplicateWindow(unsigned long key, void *data1, void *data2)
 
 	CRASSERT(NewServerIndex >= 0);
 
+	/* clear this flag, in case it was still set from an old connection */
+	winInfo->writeback[NewServerIndex] = 0;
+
 	/**
 	 * Get application window's attributes
 	 */
@@ -463,8 +466,7 @@ replicatespuReplicate(int ipaddress)
 	 * Slot 0 is the dummy slot (a non-existant server on devnull connection)
 	 */
 	for (r_slot = 1; r_slot < CR_MAX_REPLICANTS; r_slot++) {
-		if (!replicate_spu.rserver[r_slot].conn ||
-				replicate_spu.rserver[r_slot].conn->type == CR_NO_CONNECTION)
+		if (!IS_CONNECTED(replicate_spu.rserver[r_slot].conn))
 			break;
 	}
 	if (r_slot == CR_MAX_REPLICANTS) {
@@ -493,7 +495,13 @@ replicatespuReplicate(int ipaddress)
 				}
 				if (conn->type != CR_NO_CONNECTION) {
 					crWarning("Replicate SPU: Can't connect to multiple VNC viewers on one host.");
+#if 0
+					/* The above test isn't 100% reliable and can prevent successful
+					 * restart of a viewer on a host.  For now, just print warning and
+					 * continue.
+					 */
 					return;
+#endif
 				}
 			}
 		}

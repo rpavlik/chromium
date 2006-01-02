@@ -236,8 +236,7 @@ replicatespu_CreateContext( const char *dpyName, GLint visual, GLint shareCtx )
 
 		sharedServerCtx = sharedContext ? sharedContext->rserverCtx[i] : 0;
 
-		if (replicate_spu.rserver[i].conn == NULL ||
-				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+		if (!IS_CONNECTED(replicate_spu.rserver[i].conn))
 			continue;
 
 		if (replicate_spu.swap)
@@ -303,8 +302,7 @@ replicatespu_DestroyContext( GLint ctx )
 	replicatespuFlushAll( (void *)thread );
 
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
-		if (replicate_spu.rserver[i].conn == NULL ||
-				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+		if (!IS_CONNECTED(replicate_spu.rserver[i].conn))
 			continue;
 
 		if (replicate_spu.swap)
@@ -458,8 +456,7 @@ replicatespu_MakeCurrent( GLint window, GLint nativeWindow, GLint ctx )
 		const GLint serverWin = winInfo ? winInfo->id[i] : -1;
 		const GLint serverCtx = newCtx ? newCtx->rserverCtx[i] : -1;
 
-		if (replicate_spu.rserver[i].conn == NULL ||
-				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+		if (!IS_CONNECTED(replicate_spu.rserver[i].conn))
 				continue;
 
 		/* Note: app's native window ID not needed on server side; pass zero */

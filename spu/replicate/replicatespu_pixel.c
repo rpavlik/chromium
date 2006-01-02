@@ -30,8 +30,7 @@ replicatespu_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
 
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
 		/* hijack the current packer context */
-		if (replicate_spu.rserver[i].conn &&
-				replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
+		if (IS_CONNECTED(replicate_spu.rserver[i].conn)) {
 			int writeback;
 
 			if (replicate_spu.swap)

@@ -85,8 +85,7 @@ replicateSPUCleanup(void)
 	replicatespuDestroyAllWindowsAndContexts();
 
 	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
-		if (replicate_spu.rserver[i].conn &&
-				replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
+		if (IS_CONNECTED(replicate_spu.rserver[i].conn)) {
 			crNetDisconnect(replicate_spu.rserver[i].conn);
 		}
 		replicate_spu.rserver[i].conn = NULL;

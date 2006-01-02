@@ -113,9 +113,10 @@ replicatespuFlushOne(ThreadInfo *thread, int server)
 
 	conn = replicate_spu.rserver[server].conn;
 	CRASSERT(conn);
-	CRASSERT(conn->type != CR_NO_CONNECTION);
 
-	crNetSend( conn, NULL, hdr, len );
+	if (conn->type != CR_NO_CONNECTION) {
+		crNetSend( conn, NULL, hdr, len );
+	}
 
 	/* The network may have found a new mtu */
 	buf->mtu = thread->server.conn->mtu;
@@ -197,8 +198,7 @@ void replicatespuFlush(void *arg )
 	/* Now send it to all our replicants */
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) 
 	{
-		if (replicate_spu.rserver[i].conn &&
-				replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION)
+		if (IS_CONNECTED(replicate_spu.rserver[i].conn))
 		{
 			if ( buf->holds_BeginEnd )
 				crNetBarf( replicate_spu.rserver[i].conn, NULL, hdr, len );
@@ -272,7 +272,7 @@ void replicatespuHuge( CROpcode opcode, void *buf )
 	/* Now send it to all our replicants */
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) 
 	{
-		if (replicate_spu.rserver[i].conn && replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION)
+		if (IS_CONNECTED(replicate_spu.rserver[i].conn))
 		{
 			crNetSend( replicate_spu.rserver[i].conn, NULL, src, len );
 		}

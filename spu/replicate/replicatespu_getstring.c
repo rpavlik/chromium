@@ -26,8 +26,7 @@ GetExtensions(void)
 	return_value[0] = 0; /* null-terminate */
 
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
-		if (replicate_spu.rserver[i].conn &&
-				replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
+		if (IS_CONNECTED(replicate_spu.rserver[i].conn)) {
 			int writeback = 1;
 
 			if (replicate_spu.swap)
