@@ -283,6 +283,8 @@ crServerGetTileInfoFromMothership( CRConnection *conn, CRMuralInfo *mural )
 			else
 				sscanf(tilelist[i], "%f %f %f %f", &x, &y, &w, &h);
 
+			CRASSERT(w > 0);
+			CRASSERT(h > 0);
 			mural->extents[i].imagewindow.x1 = (int) x;
 			mural->extents[i].imagewindow.y1 = (int) y;
 			mural->extents[i].imagewindow.x2 = (int) x + (int) w;
