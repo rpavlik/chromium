@@ -114,7 +114,7 @@ replicatespu_WindowCreate( const char *dpyName, GLint visBits )
 	crLockMutex(&_ReplicateMutex);
 #endif
 
-	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
+	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
 		if (replicate_spu.rserver[i].conn &&
 				replicate_spu.rserver[i].conn->type != CR_NO_CONNECTION) {
 			int writeback = 1;
