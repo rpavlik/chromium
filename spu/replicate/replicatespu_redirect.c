@@ -459,7 +459,8 @@ replicatespuReplicate(int ipaddress)
 #endif
 
 	/*
-	 * find empty slot
+	 * Find empty slot.
+	 * Slot 0 is the dummy slot (a non-existant server on devnull connection)
 	 */
 	for (r_slot = 1; r_slot < CR_MAX_REPLICANTS; r_slot++) {
 		if (!replicate_spu.rserver[r_slot].conn ||
