@@ -21,7 +21,7 @@ replicatespu_SwapBuffers( GLint window, GLint flags )
 
 	replicatespuFlushAll( (void *) thread );
 
-	for (i = 0; i < CR_MAX_REPLICANTS; i++) {
+	for (i = 1; i < CR_MAX_REPLICANTS; i++) {
 		if (replicate_spu.rserver[i].conn == NULL ||
 				replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
 			continue;
