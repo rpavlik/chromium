@@ -113,7 +113,7 @@ extern CRtsd _ReplicateTSD;
   ContextInfo *C = thread->currentContext
 
 #define IS_CONNECTED(CONN) \
-  ((CONN) && (CONN)->type != CR_NO_CONNECTION)
+  ((CONN) && (CONN)->type != CR_NO_CONNECTION && (CONN)->type != CR_DROP_PACKETS)
 
 
 extern void replicatespuCreateFunctions( void );
