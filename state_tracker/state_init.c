@@ -299,9 +299,8 @@ crStateCreateContext(const CRLimitsState *limits, GLint visBits, CRContext *shar
 }
 
 
-void crStateDestroyContext( void *c )
+void crStateDestroyContext( CRContext *ctx )
 {
-	CRContext *ctx = (CRContext *)c;
 	CRContext *current = GetCurrentContext();
 
 	if (current == ctx) {

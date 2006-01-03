@@ -32,7 +32,6 @@ FILES = bbox \
 	tcpip \
 	udptcpip \
 	timer \
-	translator \
 	url \
 	warp
 PRECOMP = debug_opcodes.c

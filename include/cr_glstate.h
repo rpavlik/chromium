@@ -158,7 +158,7 @@ CRContext *crStateCreateContext(const CRLimitsState *limits, GLint visBits, CRCo
 void crStateMakeCurrent(CRContext *ctx);
 void crStateSetCurrent(CRContext *ctx);
 CRContext *crStateGetCurrent(void);
-void crStateDestroyContext(void *ctx);
+void crStateDestroyContext(CRContext *ctx);
 
 void crStateFlushFunc( CRStateFlushFunc ff );
 void crStateFlushArg( void *arg );

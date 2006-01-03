@@ -221,7 +221,6 @@ crServerInit(int argc, char *argv[])
 	cr_server.DummyContext = crStateCreateContext( &cr_server.limits,
 																								 CR_RGB_BIT | CR_DEPTH_BIT, NULL );
 	cr_server.curClient->currentCtx = cr_server.DummyContext;
-	cr_server.curClient->currentTranslator = NULL;
 
 	crServerInitDispatch();
 	crStateDiffAPI( &(cr_server.head_spu->dispatch_table) );
@@ -231,10 +230,8 @@ crServerInit(int argc, char *argv[])
 
 	cr_server.barriers = crAllocHashtable();
 	cr_server.semaphores = crAllocHashtable();
-
-	/* Each contexts' ID translator */
-	cr_server.translatorTable = crAllocHashtable();
 }
+
 
 
 int

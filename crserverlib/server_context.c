@@ -10,7 +10,6 @@
 #include "cr_net.h"
 #include "cr_rand.h"
 #include "server_dispatch.h"
-#include "cr_translator.h"
 #include "server.h"
 
 /**
@@ -39,7 +38,11 @@ crServerDispatchCreateContext( const char *dpyName, GLint visualBits, GLint shar
 {
 	GLint retVal = -1;
 	CRContext *newCtx;
-	CRTranslator *translator = NULL;
+
+	if (shareCtx > 0) {
+		crWarning("CRServer: context sharing not implemented.");
+		shareCtx = 0;
+	}
 
 	/* Since the Cr server serialized all incoming clients/contexts into
 	 * one outgoing GL stream, we only need to create one context for the
@@ -84,32 +87,6 @@ crServerDispatchCreateContext( const char *dpyName, GLint visualBits, GLint shar
 		crHashtableAdd(cr_server.contextTable, retVal, newCtx);
 	}
 
-	/* If the context is sharing display lists (and other stuff)
-	 * with another context, give them the same translator object.
-	 * Otherwise, create a new one.
-	 *
-	 * This is independent of the "shared state" managed in the
-	 * state tracker.  That shared state manages list IDs, but does
-	 * not translate them to device IDs.  This translator does.
-	 */
-	if (shareCtx != 0) {
-		translator = (CRTranslator *)crHashtableSearch(cr_server.translatorTable, shareCtx);
-		if (translator == NULL) {
-			crWarning("CRServer: trying to share state with a nonexistent context");
-		}
-	}
-	if (translator == NULL) {
-		/* We need a new one, either because we aren't sharing state,
-		 * or because we tried to share state with an illegal context
-		 */
-		translator = crTranslatorCreate();
-	}
-	else {
-		/* Share the old one */
-		translator = crTranslatorShare(translator);
-	}
-	crHashtableAdd(cr_server.translatorTable, retVal, translator);
-
 	crServerReturnValue( &retVal, sizeof(retVal) );
 	return retVal;
 }
@@ -125,16 +102,13 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchDestroyContext( GLint ctx )
 		return;
 	}
 
+	crStateDestroyContext( crCtx );
+
 	/* If we delete our current context, default back to the null context */
 	if (cr_server.curClient->currentCtx == crCtx) {
 		cr_server.curClient->currentContextNumber = -1;
 		cr_server.curClient->currentCtx = cr_server.DummyContext;
-		cr_server.curClient->currentTranslator = NULL;
 	}
-
-	/* This will delete it from the hash table as well as destroy its memory */
-	crHashtableDelete(cr_server.contextTable, ctx, crStateDestroyContext);
-	crHashtableDelete(cr_server.translatorTable, ctx, *crTranslatorDestroy);
 }
 
 
@@ -178,7 +152,6 @@ crServerDispatchMakeCurrent( GLint window, GLint nativeWindow, GLint context )
 	cr_server.curClient->currentCtx = ctx;
 	cr_server.curClient->currentMural = mural;
 	cr_server.curClient->currentWindow = window;
-	cr_server.curClient->currentTranslator = (CRTranslator *)crHashtableSearch(cr_server.translatorTable, context);
 
 	CRASSERT(cr_server.curClient->currentCtx);
 

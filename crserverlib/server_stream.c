@@ -25,7 +25,6 @@ crServerAddNewClient(void)
 																				 cr_server.tcpip_port,
 																				 cr_server.mtu, 1 );
 		newClient->currentCtx = cr_server.DummyContext;
-		newClient->currentTranslator = NULL;
 
 		/* add to array */
 		cr_server.clients[cr_server.numClients++] = newClient;
