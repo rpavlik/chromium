@@ -137,7 +137,24 @@ replicatespuReplicateTextures(CRContext *tempState, CRContext *state)
 	else
 		crPackActiveTextureARB(GL_TEXTURE0);
 
+	/* replicate all texture objects */
 	crHashtableWalk(state->shared->textureTable, TextureObjDiffCallback, tempState);
+
+	/* default texture objects */
+	{
+		CRbitvalue *bitID = NULL, *nbitID = NULL; /* not used */
+		GLboolean alwaysDirty = GL_TRUE;
+		crStateTextureObjectDiff(tempState, bitID, nbitID,
+														 &texstate->base1D, alwaysDirty);
+		crStateTextureObjectDiff(tempState, bitID, nbitID,
+														 &texstate->base2D, alwaysDirty);
+		crStateTextureObjectDiff(tempState, bitID, nbitID,
+														 &texstate->base3D, alwaysDirty);
+		crStateTextureObjectDiff(tempState, bitID, nbitID,
+														 &texstate->baseCubeMap, alwaysDirty);
+		crStateTextureObjectDiff(tempState, bitID, nbitID,
+														 &texstate->baseRect, alwaysDirty);
+	}
 
 	/* restore unit 0 bindings */
 	if (replicate_spu.swap) {
@@ -452,6 +469,7 @@ replicatespuReplicate(int ipaddress)
 	char *hosturl;
 	char *ipstring;
 	int i, r_slot;
+	int serverPort;
 
 	crDebug("Replicate SPU: Enter replicatespuReplicate(ipaddress=0x%x)", ipaddress);
 
@@ -509,6 +527,8 @@ replicatespuReplicate(int ipaddress)
 
 	replicate_spu.ipnumbers[r_slot] = ipaddress;
 
+	serverPort = CHROMIUM_START_PORT + r_slot;
+
 	if (replicate_spu.vncAvailable) {
 		/* Find the mothership port that we're using and pass it along to the
 		 * VNC server.  The VNC server will, in turn, pass it on to the new VNC
@@ -525,9 +545,9 @@ replicatespuReplicate(int ipaddress)
 		else
 			mothershipPort = DEFAULT_MOTHERSHIP_PORT;
 		crDebug("Replicate SPU: Sending ChromiumStart msg to VNC server, port=%d",
-						CHROMIUM_START_PORT + r_slot);
+						serverPort);
 		XVncChromiumStart(replicate_spu.glx_display, ipaddress,
-											CHROMIUM_START_PORT + r_slot, mothershipPort);
+											serverPort, mothershipPort);
 	}
 
 	addr.s_addr = ipaddress;
@@ -535,16 +555,21 @@ replicatespuReplicate(int ipaddress)
 	hosturl = crAlloc(crStrlen(ipstring) + 9);
 	sprintf(hosturl, "tcpip://%s", ipstring);
 
-	crDebug("Replicate SPU attaching to %s on port %d",
-					hosturl, CHROMIUM_START_PORT + r_slot);
+	crDebug("Replicate SPU attaching to %s on port %d", hosturl, serverPort);
 
 	/* connect to the remote VNC server */
 	replicate_spu.rserver[r_slot].name = crStrdup( replicate_spu.name );
 	replicate_spu.rserver[r_slot].buffer_size = replicate_spu.buffer_size;
 	replicate_spu.rserver[r_slot].conn
-		= crNetConnectToServer( hosturl, CHROMIUM_START_PORT + r_slot,
+		= crNetConnectToServer( hosturl, serverPort,
 														replicate_spu.rserver[r_slot].buffer_size, 1);
 
+	if (!replicate_spu.rserver[r_slot].conn) {
+		crWarning("Replicate SPU: failed to connect to %s", hosturl);
+		return;
+	}
+
+	CRASSERT(replicate_spu.rserver[r_slot].conn);
 
 	/*
 	 * Setup the the packer flush function.  While replicating state to
