@@ -70,8 +70,8 @@ fillBucketingHash(CRMuralInfo *mural)
 	/* Fill the rlist */
 	xinc = mural->extents[0].imagewindow.x2 - mural->extents[0].imagewindow.x1;
 	yinc = mural->extents[0].imagewindow.y2 - mural->extents[0].imagewindow.y1;
-	CRASSERT(xinc > 0);
-	CRASSERT(yinc > 0);
+	CRASSERT(xinc > 0 || mural->width == 0);
+	CRASSERT(yinc > 0 || mural->height == 0);
 
 	rptr = bucketInfo->rlist;
 	for (i=0; i < (int) mural->width; i+=xinc) 
