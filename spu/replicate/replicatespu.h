@@ -22,8 +22,6 @@
 #include "cr_list.h"
 #include "state/cr_client.h"
 
-#define CHROMIUM_START_PORT 7000
-
 #define CR_MAX_REPLICANTS 10
 
 typedef struct thread_info_t ThreadInfo;
@@ -79,6 +77,7 @@ typedef struct {
 	/* Config options */
 	int render_to_crut_window;
 	int sync_on_swap;
+	int chromium_start_port;
 
 	CRNetServer rserver[CR_MAX_REPLICANTS];
 	int ipnumbers[CR_MAX_REPLICANTS];

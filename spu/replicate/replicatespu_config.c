@@ -32,12 +32,21 @@ set_sync_on_swap(ReplicateSPU *replicate_spu, const char *response)
 	sscanf(response, "%d", &(replicate_spu->sync_on_swap));
 }
 
+static void
+set_chromium_start_port(ReplicateSPU *replicate_spu, const char *response)
+
+{
+	sscanf(response, "%d", &(replicate_spu->chromium_start_port));
+}
+
 
 SPUOptions replicateSPUOptions[] = {
 	{ "render_to_crut_window", CR_BOOL, 1, "0", NULL, NULL,
 		"Render to CRUT window", (SPUOptionCB) render_to_crut_window },
 	{ "sync_on_swap", CR_BOOL, 1, "1", NULL, NULL,
 		"Sync on SwapBuffers", (SPUOptionCB) set_sync_on_swap },
+	{ "chromium_start_port", CR_INT, 1, "7000", "1024", "65000",
+	 	"Chromium Start Port", (SPUOptionCB) set_chromium_start_port },
 
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };

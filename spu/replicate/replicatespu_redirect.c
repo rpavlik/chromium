@@ -527,7 +527,7 @@ replicatespuReplicate(int ipaddress)
 
 	replicate_spu.ipnumbers[r_slot] = ipaddress;
 
-	serverPort = CHROMIUM_START_PORT + r_slot;
+	serverPort = replicate_spu.chromium_start_port + r_slot;
 
 	if (replicate_spu.vncAvailable) {
 		/* Find the mothership port that we're using and pass it along to the
