@@ -54,6 +54,13 @@ void crPackSetBuffer( CRPackContext *pc, CRPackBuffer *buffer )
 	if (pc->currentBuffer == buffer)
 		return; /* re-bind is no-op */
 
+	if (pc->currentBuffer) {
+		/* Another buffer currently bound to this packer (shouldn't normally occur)
+		 * Release it.  Fixes Ensight issue.
+		 */
+		crPackReleaseBuffer(pc);
+	}
+
 	CRASSERT( pc->currentBuffer == NULL);  /* release if NULL? */
 	CRASSERT( buffer->context == NULL );
 
