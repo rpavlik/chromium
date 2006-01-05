@@ -38,24 +38,24 @@
  * we're in a multi-thread situation, and do the right thing for dispatch.
  */
 #ifdef CHROMIUM_THREADSAFE
-static void
+    static void
 stubCheckMultithread( void )
 {
-	static unsigned long knownID;
-	static GLboolean firstCall = GL_TRUE;
+    static unsigned long knownID;
+    static GLboolean firstCall = GL_TRUE;
 
-	if (stub.threadSafe)
-		return;  /* nothing new, nothing to do */
+    if (stub.threadSafe)
+	return;  /* nothing new, nothing to do */
 
-	if (firstCall) {
-		knownID = crThreadID();
-		firstCall = GL_FALSE;
-	}
-	else if (knownID != crThreadID()) {
-		/* going thread-safe now! */
-		stub.threadSafe = GL_TRUE;
-		crSPUCopyDispatchTable(&glim, &stubThreadsafeDispatch);
-	}
+    if (firstCall) {
+	knownID = crThreadID();
+	firstCall = GL_FALSE;
+    }
+    else if (knownID != crThreadID()) {
+	/* going thread-safe now! */
+	stub.threadSafe = GL_TRUE;
+	crSPUCopyDispatchTable(&glim, &stubThreadsafeDispatch);
+    }
 }
 #endif
 
@@ -63,30 +63,30 @@ stubCheckMultithread( void )
 /**
  * Install the given dispatch table as the table used for all gl* calls.
  */
-static void
+    static void
 stubSetDispatch( SPUDispatchTable *table )
 {
-	CRASSERT(table);
+    CRASSERT(table);
 
 #ifdef CHROMIUM_THREADSAFE
-	/* always set the per-thread dispatch pointer */
-	crSetTSD(&stub.dispatchTSD, (void *) table);
-	if (stub.threadSafe) {
-		/* Do nothing - the thread-safe dispatch functions will call GetTSD()
-		 * to get a pointer to the dispatch table, and jump through it.
-		 */
-	}
-	else 
+    /* always set the per-thread dispatch pointer */
+    crSetTSD(&stub.dispatchTSD, (void *) table);
+    if (stub.threadSafe) {
+	/* Do nothing - the thread-safe dispatch functions will call GetTSD()
+	 * to get a pointer to the dispatch table, and jump through it.
+	 */
+    }
+    else 
 #endif
-	{
-		/* Single thread mode - just install the caller's dispatch table */
-		/* This conditional is an optimization to try to avoid unnecessary
-		 * copying.  It seems to work with atlantis, multiwin, etc. but
-		 * _could_ be a problem. (Brian)
-		 */
-		if (glim.copy_of != table->copy_of)
-			crSPUCopyDispatchTable(&glim, table);
-	}
+    {
+	/* Single thread mode - just install the caller's dispatch table */
+	/* This conditional is an optimization to try to avoid unnecessary
+	 * copying.  It seems to work with atlantis, multiwin, etc. but
+	 * _could_ be a problem. (Brian)
+	 */
+	if (glim.copy_of != table->copy_of)
+	    crSPUCopyDispatchTable(&glim, table);
+    }
 }
 
 
@@ -94,75 +94,75 @@ stubSetDispatch( SPUDispatchTable *table )
  * Create a new _Chromium_ window, not GLX, WGL or CGL.
  * Called by crWindowCreate() only.
  */
-GLint
+    GLint
 stubNewWindow( const char *dpyName, GLint visBits )
 {
-	WindowInfo *winInfo;
-	GLint spuWin, size[2];
-	
-	spuWin = stub.spu->dispatch_table.WindowCreate( dpyName, visBits );
-	if (spuWin < 0) {
-		 return -1;
-	}
-		 
-	winInfo = (WindowInfo *) crCalloc(sizeof(WindowInfo));
-	if (!winInfo) {
-		stub.spu->dispatch_table.WindowDestroy(spuWin);
-		return -1;
-	}
+    WindowInfo *winInfo;
+    GLint spuWin, size[2];
 
-	winInfo->type = CHROMIUM;
+    spuWin = stub.spu->dispatch_table.WindowCreate( dpyName, visBits );
+    if (spuWin < 0) {
+	return -1;
+    }
 
-	/* Ask the head SPU for the initial window size */
-	size[0] = size[1] = 0;
-	stub.spu->dispatch_table.GetChromiumParametervCR(GL_WINDOW_SIZE_CR, 0, GL_INT, 2, size);
-	if (size[0] == 0 && size[1] == 0) {
-		/* use some reasonable defaults */
-		size[0] = size[1] = 512;
-	}
-	winInfo->width = size[0];
-	winInfo->height = size[1];
-	winInfo->mapped = 1;
+    winInfo = (WindowInfo *) crCalloc(sizeof(WindowInfo));
+    if (!winInfo) {
+	stub.spu->dispatch_table.WindowDestroy(spuWin);
+	return -1;
+    }
 
-	if (!dpyName)
-		dpyName = "";
+    winInfo->type = CHROMIUM;
 
-	crStrncpy(winInfo->dpyName, dpyName, MAX_DPY_NAME);
-	winInfo->dpyName[MAX_DPY_NAME-1] = 0;
+    /* Ask the head SPU for the initial window size */
+    size[0] = size[1] = 0;
+    stub.spu->dispatch_table.GetChromiumParametervCR(GL_WINDOW_SIZE_CR, 0, GL_INT, 2, size);
+    if (size[0] == 0 && size[1] == 0) {
+	/* use some reasonable defaults */
+	size[0] = size[1] = 512;
+    }
+    winInfo->width = size[0];
+    winInfo->height = size[1];
+    winInfo->mapped = 1;
 
-	/* Use spuWin as the hash table index and GLX/WGL handle */
+    if (!dpyName)
+	dpyName = "";
+
+    crStrncpy(winInfo->dpyName, dpyName, MAX_DPY_NAME);
+    winInfo->dpyName[MAX_DPY_NAME-1] = 0;
+
+    /* Use spuWin as the hash table index and GLX/WGL handle */
 #ifdef WINDOWS
-	winInfo->drawable = (HDC) spuWin;
+    winInfo->drawable = (HDC) spuWin;
 #elif defined(Darwin)
-	winInfo->drawable = (CGSWindowID) spuWin;
+    winInfo->drawable = (CGSWindowID) spuWin;
 #elif defined(GLX)
-	winInfo->drawable = (GLXDrawable) spuWin;
+    winInfo->drawable = (GLXDrawable) spuWin;
 #endif
-	winInfo->spuWindow = spuWin;
+    winInfo->spuWindow = spuWin;
 
-	crHashtableAdd(stub.windowTable, (unsigned int) spuWin, winInfo);
+    crHashtableAdd(stub.windowTable, (unsigned int) spuWin, winInfo);
 
-	return spuWin;
+    return spuWin;
 }
 
 
-GLboolean
+    GLboolean
 stubIsWindowVisible( const WindowInfo *win )
 {
 #if defined(WINDOWS)
-	return GL_TRUE;
+    return GL_TRUE;
 #elif defined(Darwin)
-	return GL_TRUE;
+    return GL_TRUE;
 #elif defined(GLX)
-	if (win->dpy) {
-		XWindowAttributes attr;
-		XGetWindowAttributes(win->dpy, win->drawable, &attr);
-		return (attr.map_state != IsUnmapped);
-	}
-	else {
-		/* probably created by crWindowCreate() */
-		return win->mapped;
-	}
+    if (win->dpy) {
+	XWindowAttributes attr;
+	XGetWindowAttributes(win->dpy, win->drawable, &attr);
+	return (attr.map_state != IsUnmapped);
+    }
+    else {
+	/* probably created by crWindowCreate() */
+	return win->mapped;
+    }
 #endif
 }
 
@@ -173,32 +173,32 @@ stubIsWindowVisible( const WindowInfo *win )
  */
 WindowInfo *
 #ifdef WINDOWS
-stubGetWindowInfo( HDC drawable )
+    stubGetWindowInfo( HDC drawable )
 #elif defined(Darwin)
-stubGetWindowInfo( CGSWindowID drawable )
+    stubGetWindowInfo( CGSWindowID drawable )
 #elif defined(GLX)
 stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
 #endif
 {
-	WindowInfo *winInfo = (WindowInfo *) crHashtableSearch(stub.windowTable, (unsigned int) drawable);
-	if (!winInfo) {
-		winInfo = (WindowInfo *) crCalloc(sizeof(WindowInfo));
-		if (!winInfo)
-			return NULL;
+    WindowInfo *winInfo = (WindowInfo *) crHashtableSearch(stub.windowTable, (unsigned int) drawable);
+    if (!winInfo) {
+	winInfo = (WindowInfo *) crCalloc(sizeof(WindowInfo));
+	if (!winInfo)
+	    return NULL;
 #ifdef GLX
-		crStrncpy(winInfo->dpyName, DisplayString(dpy), MAX_DPY_NAME);
-		winInfo->dpyName[MAX_DPY_NAME-1] = 0;
-		winInfo->dpy = dpy;
+	crStrncpy(winInfo->dpyName, DisplayString(dpy), MAX_DPY_NAME);
+	winInfo->dpyName[MAX_DPY_NAME-1] = 0;
+	winInfo->dpy = dpy;
 #elif defined(Darwin)
-		winInfo->connection = _CGSDefaultConnection(); // store our connection as default
+	winInfo->connection = _CGSDefaultConnection(); // store our connection as default
 #endif
-		winInfo->drawable = drawable;
-		winInfo->type = UNDECIDED;
-		winInfo->spuWindow = -1;
-		winInfo->mapped = -1; /* don't know */
-		crHashtableAdd(stub.windowTable, (unsigned int) drawable, winInfo);
-	}
-	return winInfo;
+	winInfo->drawable = drawable;
+	winInfo->type = UNDECIDED;
+	winInfo->spuWindow = -1;
+	winInfo->mapped = -1; /* don't know */
+	crHashtableAdd(stub.windowTable, (unsigned int) drawable, winInfo);
+    }
+    return winInfo;
 }
 
 
@@ -207,17 +207,17 @@ stubGetWindowInfo( Display *dpy, GLXDrawable drawable )
  * context hash table.  If type==CHROMIUM, call the head SPU's
  * CreateContext() function too.
  */
-ContextInfo *
+    ContextInfo *
 stubNewContext( const char *dpyName, GLint visBits, ContextType type,
-								GLint shareCtx )
+	unsigned long shareCtx )
 {
-	GLint spuContext = -1, spuShareCtx = 0;
-	ContextInfo *context;
+    GLint spuContext = -1, spuShareCtx = 0;
+    ContextInfo *context;
 
-	if (shareCtx > 0) {
-		/* translate shareCtx to a SPU context ID */
-		context = (ContextInfo *)
-			crHashtableSearch(stub.contextTable, (unsigned long) shareCtx);
+    if (shareCtx > 0) {
+	/* translate shareCtx to a SPU context ID */
+	context = (ContextInfo *)
+	    crHashtableSearch(stub.contextTable, shareCtx);
 		if (context)
 			spuShareCtx = context->spuContext;
 	}

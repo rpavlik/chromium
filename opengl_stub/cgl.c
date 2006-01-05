@@ -105,7 +105,7 @@ CGLCreateContext( CGLPixelFormatObj pix, CGLContextObj share, CGLContextObj *ctx
 	if( stub.haveNativeOpenGL )
 		desiredVisual |= ComputeVisBits( pix );
 
-	context = stubNewContext("", desiredVisual, UNDECIDED, (GLint) share);
+	context = stubNewContext("", desiredVisual, UNDECIDED, (unsigned long) share);
 	if (!context)
 		return 0;
 

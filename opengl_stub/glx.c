@@ -395,7 +395,7 @@ glXCreateContext(Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct)
 		}
 	}
 
-	context = stubNewContext(dpyName, visBits, UNDECIDED, (GLint) share);
+	context = stubNewContext(dpyName, visBits, UNDECIDED, (unsigned long) share);
 	if (!context)
 		return 0;
 
