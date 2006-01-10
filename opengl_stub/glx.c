@@ -65,7 +65,6 @@ FindVisualInfo(Display *dpy, int screen, VisualID visualid)
 }
 
 
-
 /**
  * Set this to 1 if you want to build stub functions for the
  * GL_SGIX_pbuffer and GLX_SGIX_fbconfig extensions.
@@ -156,6 +155,83 @@ static const char *glx_error_string(int err)
 		return tmp;
 	}
 }
+
+/* Given an XVisualInfo structure, try to figure out what its 
+ * OpenGL capabilities are, if we have a native OpenGL.
+ * Returns 0 if no information is available.
+ */
+static struct {
+	int gl_attrib;
+	char *attrib_name;
+	enum {TEST_TRUE, TEST_GREATER_0} test;
+	int match_vis_bits;
+} attrib_map[] = {
+	{GLX_RGBA, "GLX_RGBA", TEST_TRUE, CR_RGB_BIT},
+	{GLX_DOUBLEBUFFER, "GLX_DOUBLEBUFFER", TEST_TRUE, CR_DOUBLE_BIT},
+	{GLX_STEREO, "GLX_STEREO", TEST_TRUE, CR_STEREO_BIT},
+	{GLX_LEVEL, "GLX_LEVEL", TEST_GREATER_0, CR_OVERLAY_BIT},
+	{GLX_ALPHA_SIZE, "GLX_ALPHA_SIZE", TEST_GREATER_0, CR_ALPHA_BIT},
+	{GLX_DEPTH_SIZE, "GLX_DEPTH_SIZE", TEST_GREATER_0, CR_DEPTH_BIT},
+	{GLX_STENCIL_SIZE, "GLX_STENCIL_SIZE", TEST_GREATER_0, CR_STENCIL_BIT},
+	{GLX_ACCUM_RED_SIZE, "GLX_ACCUM_RED_SIZE", TEST_GREATER_0, CR_ACCUM_BIT},
+	{GLX_SAMPLE_BUFFERS_SGIS, "GLX_SAMPLE_BUFFERS_SGIS", TEST_GREATER_0, CR_MULTISAMPLE_BIT},
+};
+static int QueryVisBits(Display *dpy, XVisualInfo *vis)
+{
+	int visBits = 0;
+	int foo, bar, return_val, value;
+	unsigned int i;
+
+	/* We can only query the OpenGL capabilities if we actually
+	 * have a native OpenGL underneath us.  Without it, we can't
+	 * get at all the actual OpenGL characteristics.
+	 */
+	if (!stub.haveNativeOpenGL) return 0;
+
+	if (!stub.wsInterface.glXQueryExtension(dpy, &foo, &bar)) return 0;
+
+	/* If we don't have the GLX_USE_GL attribute, we've failed. */
+	return_val = stub.wsInterface.glXGetConfig(dpy, vis, GLX_USE_GL, &value);
+	if (return_val) {
+		crDebug("native glXGetConfig returned %d (%s) at %s line %d",
+			return_val, glx_error_string(return_val), __FILE__, __LINE__);
+		return 0;
+	}
+	if (value == 0) {
+		crDebug("visual ID 0x%x doesn't support OpenGL at %s line %d",
+			(int) vis->visual->visualid, __FILE__, __LINE__);
+		return 0;
+	}
+
+	for (i = 0; i < sizeof(attrib_map)/sizeof(attrib_map[0]); i++) {
+		return_val = stub.wsInterface.glXGetConfig(dpy, vis, attrib_map[i].gl_attrib, &value);
+		if (return_val) {
+			crDebug("native glXGetConfig(%s) returned %d (%s) at %s line %d",
+				attrib_map[i].attrib_name, return_val, glx_error_string(return_val), __FILE__, __LINE__);
+			return 0;
+		}
+
+		switch(attrib_map[i].test) {
+			case TEST_TRUE:
+				if (value)
+					visBits |= attrib_map[i].match_vis_bits;
+				break;
+
+			case TEST_GREATER_0:
+				if (value > 0)
+					visBits |= attrib_map[i].match_vis_bits;
+				break;
+
+			default:
+				crWarning("illegal attribute map test for %s at %s line %d", 
+					attrib_map[i].attrib_name, __FILE__, __LINE__);
+				return 0;
+		}
+	}
+
+	return visBits;
+}
+
 
 
 XVisualInfo *
@@ -285,10 +361,6 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
 
 	if (vis) {
 		AddVisualInfo(dpy, screen, vis->visual->visualid, visBits);
-		/*
-		crDebug("glXChooseVisual returning xvis=0x%x, visbits=0x%x",
-						(int) vis->visual->visualid, visBits);
-		*/
 	}
 	return vis;
 }
@@ -380,6 +452,25 @@ glXCreateContext(Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct)
 				visBits = v->visBits;
 				/*crDebug("%s visBits=0x%x", __FUNCTION__, visBits);*/
 			}
+			else {
+				/* For some reason, we haven't tested this visual
+				 * before.  This could be because the visual was found 
+				 * through a different display connection to the same
+				 * display (as happens in GeoProbe), or through a
+				 * connection to an external daemon that queries
+				 * visuals.  If we can query it directly, we can still
+				 * find the proper visBits.
+				 */
+				int newVisBits = QueryVisBits(dpy, vis);
+				if (newVisBits > 0) {
+					AddVisualInfo(dpy, DefaultScreen(dpy), vis->visual->visualid, newVisBits);
+					crDebug("Application used unexpected but queryable visual id 0x%x", (int) vis->visual->visualid);
+					visBits = newVisBits;
+				}
+				else {
+					crWarning("Application used unexpected and unqueryable visual id 0x%x; using default visbits", (int) vis->visual->visualid);
+				}
+			}
 
 			/*crDebug("ComputeVisBits(0x%x) = 0x%x", (int)vis->visual->visualid, visBits);*/
 			if (stub.force_pbuffers) {
@@ -393,6 +484,9 @@ glXCreateContext(Display *dpy, XVisualInfo *vis, GLXContext share, Bool direct)
 			}
 
 		}
+	}
+	else {
+		crDebug("No native OpenGL; cannot compute visbits");
 	}
 
 	context = stubNewContext(dpyName, visBits, UNDECIDED, (unsigned long) share);
