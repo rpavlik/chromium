@@ -399,6 +399,15 @@ crServerGatherConfiguration(char *mothership)
 	/* Ask the mothership for the tile info */
 	crServerGetTileInfoFromMothership(conn, defaultMural);
 
+	if (cr_server.vncMode) {
+		/* In vnc mode, we reset the mothership configuration so that it can be
+		 * used by subsequent OpenGL apps without having to spawn a new mothership
+		 * on a new port.
+		 */
+		crDebug("CRServer: Resetting mothership to initial state");
+		crMothershipReset(conn);
+	}
+
 	crMothershipDisconnect(conn);
 }
 
