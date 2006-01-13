@@ -237,6 +237,11 @@ void REPLICATESPU_APIENTRY
 replicatespu_Clear( GLbitfield mask )
 {
 	GET_THREAD(thread);
+
+	/* good time to check for vnc events */
+	if (replicate_spu.vncAvailable)
+		replicatespuCheckVncEvents();
+
 	if (thread->currentContext->displayListMode != GL_FALSE) {
 		crDLMCompileClear(mask);
 	}
