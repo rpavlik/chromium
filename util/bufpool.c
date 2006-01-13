@@ -47,7 +47,7 @@ typedef struct buffer
 struct CRBufferPool_t
 {
 	unsigned int maxBuffers;
-	unsigned int numBuffers;
+	int numBuffers;
 	struct buffer *head;
 };
 
@@ -118,12 +118,12 @@ crBufferPoolPush( CRBufferPool *pool, void *buf, unsigned int bytes )
 void *
 crBufferPoolPop( CRBufferPool *pool, unsigned int bytes )
 {
-	Buffer *b, *prev, *maybe_use;
-	unsigned int next_smallest = UINT_MAX;
-	unsigned int i;
+	Buffer *b, *prev, *prev_smallest;
+	unsigned int smallest = UINT_MAX; /* size of smallest buffer >= bytes */
+	int i;
 
 	prev = NULL;
-	maybe_use = NULL;
+	prev_smallest = NULL;
 	for (b = pool->head, i=0; i<pool->numBuffers; b = b->next, i++) {
 		if (b->size == bytes) {
 			/* we found an exact size match! */
@@ -136,30 +136,45 @@ crBufferPoolPop( CRBufferPool *pool, unsigned int bytes )
 			}
 			crFree(b);
 			pool->numBuffers--;
+			CRASSERT(pool->numBuffers >= 0);
 			return p;
 		}
 		else if (b->size >= bytes){
 			/* We found a buffer that's large enough, but keep looking
 			 * for a smaller one that's large enough.
 			 */
-			if (b->size < next_smallest){
-				maybe_use = b;
+			if (b->size < smallest) {
+				prev_smallest = prev; /* save ptr to previous! */
+				smallest = b->size;
 			}
 		}
 		prev = b;
 	}
-	/* we found the smallest buffer whose size is > bytes */
-	if (maybe_use != NULL){
-		void *p = maybe_use->address;
-		if (prev) {
-		  prev->next = maybe_use->next;
+
+	if (smallest < UINT_MAX) {
+		/* we found the smallest buffer whose size is > bytes */
+		void *p;
+		if (prev_smallest) {
+			b = prev_smallest->next;
 		}
 		else {
-		  pool->head = maybe_use->next;
+			b = pool->head;
 		}
-		crFree(maybe_use);
+		CRASSERT(b->size == smallest);
+		CRASSERT(b->size >= bytes);
+		p = b->address;
+		if (prev_smallest) {
+		  prev_smallest->next = b->next;
+		}
+		else {
+		  pool->head = b->next;
+		}
+		crFree(b);
 		pool->numBuffers--;
+		CRASSERT(pool->numBuffers >= 0);
 		return p;
 	}
+
+	/* found no buffer large enough */
 	return NULL;
 }
