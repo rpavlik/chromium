@@ -228,6 +228,7 @@ extern void crNetSendExact( CRConnection *conn, const void *start, unsigned int 
 extern void crNetSingleRecv( CRConnection *conn, void *buf, unsigned int len );
 extern unsigned int crNetGetMessage( CRConnection *conn, CRMessage **message );
 extern unsigned int crNetPeekMessage( CRConnection *conn, CRMessage **message );
+extern int crNetNumMessages(CRConnection *conn);
 extern void crNetReadline( CRConnection *conn, void *buf );
 extern int crNetRecv( void );
 extern void crNetDefaultRecv( CRConnection *conn, CRMessage *msg, unsigned int len );

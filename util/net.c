@@ -222,7 +222,7 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 	    port = CR_QUADRICS_LOWEST_RANK;
 	  }
 	}
-	crDebug( "Connecting to server %s on port %d, with protocol %s",
+	crDebug( "Connecting to %s on port %d, with protocol %s",
 					 hostname, port, protocol );
 
 #ifdef SDP_SUPPORT
@@ -272,7 +272,7 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 		return NULL;
 	}
 
-	crDebug( "Done connecting to server %s (swapping=%d)", server, conn->swap );
+	crDebug( "Done connecting to %s (swapping=%d)", server, conn->swap );
 	return conn;
 }
 
@@ -1053,6 +1053,16 @@ crNetDispatchMessage( CRNetReceiveFuncList *rfl, CRConnection *conn,
 
 
 /**
+ * Return number of messages queued up on the given connection.
+ */
+int
+crNetNumMessages(CRConnection *conn)
+{
+	return conn->messageList.numMessages;
+}
+
+
+/**
  * Get the next message in the connection's message list.  These are
  * message that have already been received.  We do not try to read more
  * bytes from the network connection.
@@ -1090,7 +1100,8 @@ crNetGetMessage( CRConnection *conn, CRMessage **message )
 	for (;;)
 	{
 		int len = crNetPeekMessage( conn, message );
-		if (len) return len;
+		if (len)
+			return len;
 		crNetRecv();
 	}
 
