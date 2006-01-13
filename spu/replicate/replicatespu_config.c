@@ -87,5 +87,9 @@ replicatespuGatherConfiguration( const SPU *child_spu )
 
 	replicate_spu.buffer_size = crMothershipGetMTU( conn );
 
+	/* reset so next OpenGL app can use the mothership config */
+	crDebug("Replicate SPU: resetting mothership config");
+	crMothershipReset(conn);
+
 	crMothershipDisconnect( conn );
 }
