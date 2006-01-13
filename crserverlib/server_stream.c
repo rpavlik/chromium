@@ -116,9 +116,9 @@ static void crServerDeleteClient( CRClient *client )
 	int i, j;
 
 	crDebug("Deleting client %p (%d msgs left)", client,
-					client->conn->messageList.numMessages);
+					crNetNumMessages(client->conn));
 
-	if (client->conn->messageList.numMessages > 0) {
+	if (crNetNumMessages(client->conn) > 0) {
 		crDebug("Delay destroying client: message still pending");
 		return;
 	}
@@ -155,9 +155,6 @@ static void crServerDeleteClient( CRClient *client )
 					cr_server.run_queue = NULL;
 					cr_server.curClient = NULL;
 					crDebug("Last client deleted - empty run queue.");
-					/* XXX add a config option to specify whether the crserver
-					 * should exit when there's no more clients.
-					 */
 				} 
 				else
 				{
@@ -203,7 +200,7 @@ getNextClient(GLboolean block)
 
  			if (!cr_server.run_queue->client->conn
 					 || (cr_server.run_queue->client->conn->type == CR_NO_CONNECTION
-							 && cr_server.curClient->conn->messageList.numMessages == 0)) {
+							 && crNetNumMessages(cr_server.curClient->conn) == 0)) {
 				crDebug("Delete client %p at %d", cr_server.run_queue->client, __LINE__);
  				crServerDeleteClient( cr_server.run_queue->client );
 				start = cr_server.run_queue;
@@ -223,7 +220,7 @@ getNextClient(GLboolean block)
 				}
 				if (!cr_server.run_queue->blocked
 						&& cr_server.run_queue->client->conn
-						&& cr_server.run_queue->client->conn->messageList.head)
+						&& crNetNumMessages(cr_server.run_queue->client->conn) > 0)
 				{
 					/* OK, this client isn't blocked and has a queued message */
 					return cr_server.run_queue;
@@ -291,62 +288,39 @@ typedef enum
 } ClientStatus;
 
 
+/**
+ * Process incoming/pending message for the given client (queue entry).
+ * \return CLIENT_GONE if this client has gone away/exited,
+ *         CLIENT_NEXT if we can advance to the next client
+ *         CLIENT_MORE if we have to process more messages for this client. 
+ */
 static ClientStatus
 crServerServiceClient(const RunQueue *qEntry)
 {
 	CRMessage *msg;
+	CRConnection *conn;
 
 	/* set current client pointer */
 	cr_server.curClient = qEntry->client;
 
+	conn = cr_server.run_queue->client->conn;
+
 	/* service current client as long as we can */
-	while (1) {
+	while (conn && conn->type != CR_NO_CONNECTION &&
+				 crNetNumMessages(conn) > 0) {
 		unsigned int len;
 
-		/* Check if the current client connection has gone away */
-		if (!cr_server.curClient->conn
-				|| (cr_server.curClient->conn->type == CR_NO_CONNECTION
-						&& cr_server.curClient->conn->messageList.numMessages == 0)) {
-			crDebug("Delete client %p at %d", cr_server.run_queue->client, __LINE__);
-			crServerDeleteClient( cr_server.curClient );
-			return CLIENT_GONE;
-		}
+		/*
+		crDebug("%d messages on %p",
+						crNetNumMessages(conn), (void *) conn);
+		*/
 
-		/* Don't use GetMessage, because it pulls stuff off
-		 * the network too quickly */
-		len = crNetPeekMessage( cr_server.curClient->conn, &msg );
-		if (len == 0) {
-			/* No message ready at this time.
-			 * See if we can advance to the next client, or if we're in the
-			 * middle of something and need to stick with this client.
-			 */
-			if (cr_server.curClient->currentCtx &&
-					(cr_server.curClient->currentCtx->lists.currentIndex != 0 ||
-					 cr_server.curClient->currentCtx->current.inBeginEnd ||
-					 cr_server.curClient->currentCtx->occlusion.currentQueryObject))
-			{
-				/* We're between glNewList/EndList or glBegin/End or inside a
-				 * glBeginQuery/EndQuery sequence.
-				 * We can't context switch because that'll screw things up.
-				 */
-				CRASSERT(!qEntry->blocked);
-				crNetRecv();
-#if 1
-				continue; /* return CLIENT_MORE; */
-#else
-				return CLIENT_MORE;
-#endif
-			}
-			else {
-				/* get next client */
-				return CLIENT_NEXT;
-			}
-		}
-		else {
-			/* Got a message of length 'len' bytes */
-			/*crDebug("got %d bytes", len);*/
-		}
-
+		/* Don't use GetMessage, because we want to do our own crNetRecv() calls
+		 * here ourself.
+		 * Note that crNetPeekMessage() DOES remove the message from the queue
+		 * if there is one.
+		 */
+		len = crNetPeekMessage( conn, &msg );
 		CRASSERT(len > 0);
 		if (msg->header.type != CR_MESSAGE_OPCODES) {
 			crError( "SPU %d sent me CRAP (type=0x%x)",
@@ -417,7 +391,7 @@ crServerServiceClient(const RunQueue *qEntry)
 		/* Commands get dispatched here */
 		crServerDispatchMessage(msg);
 
-		crNetFree( cr_server.curClient->conn, msg );
+		crNetFree( conn, msg );
 
 		if (qEntry->blocked) {
 			/* Note/assert: we should not be inside a glBegin/End or glNewList/
@@ -426,6 +400,36 @@ crServerServiceClient(const RunQueue *qEntry)
 			return CLIENT_NEXT;
 		}
 
+	} /* while */
+
+	/*
+	 * Check if client/connection is gone
+	 */
+	if (!conn || conn->type == CR_NO_CONNECTION) {
+		crDebug("Delete client %p at %d", cr_server.run_queue->client, __LINE__);
+		crServerDeleteClient( cr_server.run_queue->client );
+		return CLIENT_GONE;
+	}
+
+	/*
+	 * Determine if we can advance to next client.
+	 * If we're currently inside a glBegin/End primitive or building a display
+	 * list we can't service another client until we're done with the
+	 * primitive/list.
+	 */
+	if (cr_server.curClient->currentCtx &&
+			(cr_server.curClient->currentCtx->lists.currentIndex != 0 ||
+			 cr_server.curClient->currentCtx->current.inBeginEnd ||
+			 cr_server.curClient->currentCtx->occlusion.currentQueryObject))
+	{
+		/* The next message has to come from the current client's connection. */
+		CRASSERT(!qEntry->blocked);
+		conn->RecvMsg(conn);
+		return CLIENT_MORE;
+	}
+	else {
+		/* get next client */
+		return CLIENT_NEXT;
 	}
 }
 
@@ -441,8 +445,6 @@ crServerServiceClients(void)
 {
 	RunQueue *q;
 
-	crNetRecv();  /* does not block */
-
 	q = getNextClient(GL_FALSE); /* don't block */
 	if (q) {
 		ClientStatus stat = crServerServiceClient(q);
@@ -451,6 +453,12 @@ crServerServiceClients(void)
 			cr_server.run_queue = cr_server.run_queue->next;
 		}
 	}
+	else {
+		/* no clients ready, do a receive and maybe we'll get a new
+		 * client message
+		 */
+		crNetRecv();
+	}
 }
 
 
@@ -458,31 +466,15 @@ crServerServiceClients(void)
 
 /**
  * Main crserver loop.  Service connections from all connected clients.
+ * XXX add a config option to specify whether the crserver
+ * should exit when there's no more clients.
  */
 void
 crServerSerializeRemoteStreams(void)
 {
-	while (1)
+	while (cr_server.run_queue)
 	{
-#if 1 /** THIS CODE BLOCK SHOULD GO AWAY SOMEDAY **/
-		ClientStatus stat;
-		RunQueue *q = getNextClient(GL_TRUE); /* block */
-
-		/* no more clients, quit */
-		if (!q)
-			return;
-
-		stat = crServerServiceClient(q);
-
-		/* check if all clients have gone away */
-		if (!cr_server.run_queue)
-			 return;
-
-		/* advance to next client */
-		cr_server.run_queue = cr_server.run_queue->next;
-#else
 		crServerServiceClients();
-#endif
 	}
 }
 
@@ -490,7 +482,8 @@ crServerSerializeRemoteStreams(void)
 /**
  * This will be called by the network layer when it's received a new message.
  */
-int crServerRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
+int
+crServerRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
 {
 	(void) len;
 
@@ -499,7 +492,7 @@ int crServerRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
 		/* Called when using multiple threads */
 		case CR_MESSAGE_NEWCLIENT:
 			crServerAddNewClient();
-			return 1;
+			return 1; /* msg handled */
 		default:
 			/*crWarning( "Why is the crserver getting a message of type 0x%x?",
 				msg->header.type ); */
