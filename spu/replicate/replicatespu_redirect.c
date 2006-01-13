@@ -453,6 +453,11 @@ replicatespuFlushOnePacker(void *arg)
 	replicatespuFlushOne(thread, NewServerIndex);
 }
 
+static void
+replicatespuHugeOnePacker(CROpcode opcode, void *buf)
+{
+	replicatespuHugeOne(opcode, buf, NewServerIndex);
+}
 
 
 /**
@@ -530,9 +535,11 @@ replicatespuReplicate(int ipaddress)
 	serverPort = replicate_spu.chromium_start_port + r_slot;
 
 	if (replicate_spu.vncAvailable) {
-		/* Find the mothership port that we're using and pass it along to the
-		 * VNC server.  The VNC server will, in turn, pass it on to the new VNC
-		 * viewer and chromium server.
+		/* Send a ChromiumStart message to the VNC Server.  The VNC Server will
+		 * in turn send a ChromiumStart message to all the attached VNC viewers.
+		 * The VNC Viewer/Chromium module will tell its crserver that there's
+		 * a new OpenGL client.
+		 * We pass the mothership port and crserver port in this message.
 		 */
 		char protocol[100], hostname[1000];
 		const char *mothershipURL;
@@ -546,8 +553,11 @@ replicatespuReplicate(int ipaddress)
 			mothershipPort = DEFAULT_MOTHERSHIP_PORT;
 		crDebug("Replicate SPU: Sending ChromiumStart msg to VNC server, port=%d",
 						serverPort);
-		XVncChromiumStart(replicate_spu.glx_display, ipaddress,
-											serverPort, mothershipPort);
+
+		if (!XVncChromiumStart(replicate_spu.glx_display, ipaddress,
+													 serverPort, mothershipPort)) {
+			 crWarning("Replicate SPU: XVncChromiumStart() call failed");
+		}
 	}
 
 	addr.s_addr = ipaddress;
@@ -577,6 +587,7 @@ replicatespuReplicate(int ipaddress)
 	 * flushing!
 	 */
 	crPackFlushFunc( thread->packer, replicatespuFlushOnePacker );
+	crPackSendHugeFunc( thread->packer, replicatespuHugeOnePacker );
 
 	/*
 	 * Create server-side windows and contexts by walking tables of app windows
@@ -608,14 +619,13 @@ replicatespuReplicate(int ipaddress)
 	crHashtableWalk(replicate_spu.windowTable, replicatespuResizeWindows, thread);
 	NewServerIndex = -1;
 
-
 	replicatespuFlushOne(thread, r_slot);
-
 
 	/*
 	 * restore normal, broadcasting packer flush function now.
 	 */
 	crPackFlushFunc( thread->packer, replicatespuFlush );
+	crPackSendHugeFunc( thread->packer, replicatespuHuge );
 
 
 	crDebug("Replicate SPU: leaving replicatespuReplicate");
