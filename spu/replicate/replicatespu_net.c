@@ -15,6 +15,7 @@ replicatespuWriteback( CRMessageWriteback *wb )
 {
 	int *writeback;
 	crMemcpy( &writeback, &(wb->writeback_ptr), sizeof( writeback ) );
+	CRASSERT(*writeback != 0);
 	*writeback = 0;
 }
 
@@ -147,7 +148,7 @@ replicatespuFlushAll(ThreadInfo *thread)
 
 /*
  * This is called from either replicatespuFlushAll or the packer library
- * whenever we need to send a data buffer to the server.
+ * whenever we need to send a data buffer to the servers.
  */
 void replicatespuFlush(void *arg )
 {
@@ -165,45 +166,21 @@ void replicatespuFlush(void *arg )
 
 	crPackReleaseBuffer( thread->packer );
 
-	/*
-	printf("%s thread=%p thread->id = %d thread->pc=%p t2->id=%d t2->pc=%p packbuf=%p packbuf=%p\n",
-		   __FUNCTION__, (void*) thread, (int) thread->id, thread->packer,
-		   (int) t2->id, t2->packer,
-		   buf->pack, thread->packer->buffer.pack);
-	*/
-
 	if ( buf->opcode_current == buf->opcode_start ) {
-		/*
-           printf("%s early return\n", __FUNCTION__);
-	   */
-           /* XXX these calls seem to help, but might be appropriate */
-           crPackSetBuffer( thread->packer, buf );
-           crPackResetPointers(thread->packer);
-           return;
+		/* XXX these calls seem to help, but might be appropriate */
+		crPackSetBuffer( thread->packer, buf );
+		crPackResetPointers(thread->packer);
+		return;
 	}
 
 	hdr = __prependHeader( buf, &len, 0 );
-
-	CRASSERT( thread->server.conn );
-
-	/* Send pack buffer to the primary connection, but if it's the nopspu
-	 * we can drop it on the floor, but not if we've turned off broadcast */
-	if (1/*replicate_spu.NOP*/) {
-		if ( buf->holds_BeginEnd )
-			crNetBarf( thread->server.conn, NULL, hdr, len );
-		else
-			crNetSend( thread->server.conn, NULL, hdr, len );
-	}
 
 	/* Now send it to all our replicants */
 	for (i = 1; i < CR_MAX_REPLICANTS; i++) 
 	{
 		if (IS_CONNECTED(replicate_spu.rserver[i].conn))
 		{
-			if ( buf->holds_BeginEnd )
-				crNetBarf( replicate_spu.rserver[i].conn, NULL, hdr, len );
-			else
-				crNetSend( replicate_spu.rserver[i].conn, NULL, hdr, len );
+			 crNetSend( replicate_spu.rserver[i].conn, NULL, hdr, len );
 		}
 	}
 
@@ -221,6 +198,16 @@ void replicatespuFlush(void *arg )
  * pack, tilesort and replicate SPUs.  Try to simplify someday!
  */
 void replicatespuHuge( CROpcode opcode, void *buf )
+{
+	replicatespuHugeOne(opcode, buf, -1);
+}
+
+
+/**
+ * Send a huge buffer to one server, or all if server==-1.
+ */
+void
+replicatespuHugeOne(CROpcode opcode, void *buf, int server)
 {
 	GET_THREAD(thread);
 	unsigned int          len;
@@ -261,23 +248,25 @@ void replicatespuHuge( CROpcode opcode, void *buf )
 		msg->numOpcodes  = 1;
 	}
 
-	CRASSERT( thread->server.conn );
-
-	/* Send pack buffer to the primary connection, but if it's the nopspu
-	 * we can drop it on the floor, but not if we've turned off broadcast */
-	if (1/*replicate_spu.NOP*/) {
-		crNetSend( thread->server.conn, NULL, src, len );
+	if (server >= 0) {
+		/* send to just one */
+		if (IS_CONNECTED(replicate_spu.rserver[server].conn))	{
+			crNetSend( replicate_spu.rserver[server].conn, NULL, src, len );
+		}
 	}
-
-	/* Now send it to all our replicants */
-	for (i = 1; i < CR_MAX_REPLICANTS; i++) 
-	{
-		if (IS_CONNECTED(replicate_spu.rserver[i].conn))
+	else {
+		/* send to all */
+		for (i = 1; i < CR_MAX_REPLICANTS; i++) 
 		{
-			crNetSend( replicate_spu.rserver[i].conn, NULL, src, len );
+			if (IS_CONNECTED(replicate_spu.rserver[i].conn))
+			{
+				crNetSend( replicate_spu.rserver[i].conn, NULL, src, len );
+			}
 		}
 	}
 }
+
+
 
 
 void replicatespuConnectToServer( CRNetServer *server )

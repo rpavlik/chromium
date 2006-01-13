@@ -122,6 +122,8 @@ extern void replicatespuFlush( void *arg );
 extern void replicatespuFlushAll(ThreadInfo *thread);
 extern void replicatespuFlushOne(ThreadInfo *thread, int server);
 extern void replicatespuHuge( CROpcode opcode, void *buf );
+extern void replicatespuHugeOne(CROpcode opcode, void *buf, int server);
+
 extern void replicatespuReplicate( int ipaddress );
 extern void replicatespuRePositionWindow(WindowInfo *winInfo);
 extern void replicatespuCreateDiffAPI( void );
