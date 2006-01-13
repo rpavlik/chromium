@@ -62,6 +62,7 @@ crNetDisconnect
 crNetServerConnect
 crNetGetMessage
 crNetPeekMessage
+crNetNumMessages
 crNetDump
 crNetBarf
 crPixelCopy1D
