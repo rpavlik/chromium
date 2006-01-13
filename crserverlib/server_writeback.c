@@ -9,8 +9,6 @@
 #include "server_dispatch.h"
 #include "server.h"
 
-#include <memory.h>
-
 void SERVER_DISPATCH_APIENTRY crServerDispatchWriteback( GLint *writeback )
 {
 	(void) writeback;
