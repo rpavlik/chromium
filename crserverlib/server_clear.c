@@ -79,7 +79,6 @@ crServerDispatchSwapBuffers( GLint window, GLint flags )
 
 	mural = (CRMuralInfo *) crHashtableSearch(cr_server.muralTable, window);
 	if (!mural) {
-		 crWarning("CRServer: invalid window %d passed to SwapBuffers()", window);
 		 return;
 	}
 
