@@ -4,9 +4,6 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include "cr_packfunctions.h"
-#include "cr_error.h"
-#include "cr_net.h"
 #include "replicatespu.h"
 #include "replicatespu_proto.h"
 
@@ -30,9 +27,12 @@ replicatespu_SwapBuffers( GLint window, GLint flags )
 		else
 			crPackSwapBuffers( winInfo->id[i], flags );
 
-		replicatespuFlushOne(thread, i);
-
 		if (replicate_spu.sync_on_swap) {
+			/* XXX this code is disabled for now because it's not totally reliable
+			 * when there's multiple replicate SPUs talking to one crserver.
+			 * We eventually deadlock.
+			 */
+#if 0
 			/* This won't block unless there has been more than 1 frame
 			 * since we received a writeback acknowledgement.  In the
 			 * normal case there's no performance penalty for doing this
@@ -45,10 +45,6 @@ replicatespu_SwapBuffers( GLint window, GLint flags )
 			 * Note that this is *not* the same as doing a sync after each
 			 * swapbuffers, which would force a round-trip 'bubble' into
 			 * the network stream under normal conditions.
-			 *
-			 * This is complicated because writeback in the pack spu is
-			 * overriden to always set the value to zero when the
-			 * reply is received, rather than decrementing it: 
 			 */
 			if (winInfo->writeback[i] == 0) {
 				/* Request writeback */
@@ -57,18 +53,43 @@ replicatespu_SwapBuffers( GLint window, GLint flags )
 					crPackWritebackSWAP( &winInfo->writeback[i] );
 				else
 					crPackWriteback( &winInfo->writeback[i] );
+				replicatespuFlushOne(thread, i);
 			}
 			else {
 				/* Make sure writeback from previous frame has been received. */
 				while (winInfo->writeback[i]) {
 					/* detected disconnect during swapbuffers, drop the writeback wait */
-					if (replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION)
+					if (replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION) {
 						winInfo->writeback[i] = 0;
-					else
+					}
+					else {
 						crNetRecv();
+					}
 				}
+				winInfo->writeback[i] = 0;
 			}
 
+#else
+			/* Sync after every frame.  Not as efficient as above, but no deadlocks!
+			 */
+			if (replicate_spu.swap)
+				crPackWritebackSWAP( &winInfo->writeback[i] );
+			else
+				crPackWriteback( &winInfo->writeback[i] );
+
+			replicatespuFlushOne(thread, i);
+
+			winInfo->writeback[i] = 1;
+			while (winInfo->writeback[i]) {
+				/* detected disconnect during swapbuffers, drop the writeback wait */
+				if (replicate_spu.rserver[i].conn->type == CR_NO_CONNECTION) {
+					winInfo->writeback[i] = 0;
+				}
+				else {
+					crNetRecv();
+				}
+			}
+#endif
 		} /* if sync */
 	} /* loop */
 }
