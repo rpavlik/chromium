@@ -4,8 +4,6 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-#include <stdio.h>
-#include "cr_spu.h"
 #include "vncspu.h"
 
 /** Vnc SPU descriptor */ 
@@ -51,6 +49,16 @@ vncSPUInit( int id, SPU *child, SPU *self,
 	vnc_spu.screen_buffer = NULL;
 	vnc_spu.windowTable = crAllocHashtable();
 
+#ifdef NETLOGGER
+	NL_logger_module("vncspu", /* module name */
+									 NULL, /* destination URL (use NL_DEST env var) */
+									 NL_LVL_DEBUG, /* logging level */
+									 NL_TYPE_APP, /* target type */
+									 "" /* terminator */
+									 );
+	NL_info("vncspu", "program.begin", "");
+#endif
+
 	vncspuInitialize();
 
 	vncspuStartServerThread();
@@ -70,6 +78,10 @@ vncSPUSelfDispatch(SPUDispatchTable *self)
 static int
 vncSPUCleanup(void)
 {
+#ifdef NETLOGGER
+	NL_info("vncspu", "program.start", "", 1.0);
+	NL_logger_del();
+#endif
 	return 1;
 }
 

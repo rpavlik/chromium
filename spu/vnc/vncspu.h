@@ -24,6 +24,10 @@
 #include <X11/Xlib.h>
 #endif
 
+#ifdef NETLOGGER
+#include "nl_log.h"
+#endif
+
 
 /**
  * We have a range of ports that we try to use.

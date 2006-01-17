@@ -26,7 +26,6 @@
 #include "client_io.h"
 
 
-
 #if defined(HAVE_VNC_EXT)
 /**
  * \param port  my VNC server port for clients to connect to.
@@ -266,6 +265,10 @@ DoReadback(WindowInfo *window)
 	int size[2], pos[2];
 	int scrx, scry, winWidth, winHeight;
 
+#ifdef NETLOGGER
+  NL_info("vncspu", "readback.begin", "", 1.0);
+#endif
+
 	/* get window size and position (in screen coords) */
 	vnc_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
 																				window->id, GL_INT, 2, size);
@@ -344,6 +347,10 @@ DoReadback(WindowInfo *window)
 		/* Send the new dirty rects to clients */
 		aio_walk_slots(fn_client_send_rects, TYPE_CL_SLOT);
 	}
+
+#ifdef NETLOGGER
+  NL_info("vncspu", "readback.end", "", 1.0);
+#endif
 }
 
 

@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.6 2005-08-26 19:17:33 brianp Exp $
+ * $Id: client_io.c,v 1.7 2006-01-17 21:29:30 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -428,6 +428,11 @@ static void rf_client_updatereq(void)
   RegionRec tmp_region;
   BoxRec rect;
 
+#ifdef NETLOGGER
+  cl->serial_number++;
+  NL_info("vncspu", "fbupdate.receive.request", "NUMBER=i", cl->serial_number);
+#endif
+
   /* the requested region of interest */
   rect.x1 = buf_get_CARD16(&cur_slot->readbuf[1]);
   rect.y1 = buf_get_CARD16(&cur_slot->readbuf[3]);
@@ -758,6 +763,10 @@ static void send_update(void)
   int raw_bytes = 0, hextile_bytes = 0;
   int i, idx, rev_order;
 
+#ifdef NETLOGGER
+  NL_info("vncspu", "fbupdate.send.begin", "NUMBER=i", cl->serial_number);
+#endif
+
   crLockMutex(&vnc_spu.lock);
 
   /* Process framebuffer size change. */
@@ -934,5 +943,8 @@ static void send_update(void)
   cl->update_requested = 0;
 
   crUnlockMutex(&vnc_spu.lock);
-}
 
+#ifdef NETLOGGER
+  NL_info("vncspu", "fbupdate.send.end", "NUMBER=i", cl->serial_number);
+#endif
+}
