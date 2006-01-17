@@ -58,3 +58,7 @@ SDP_SUPPORT=0
 
 # Set to 1 to enable DOXYGEN generation
 DOXYGEN=0
+
+# Set to 1 to enable (limited) NetLogger support
+NETLOGGER=0
+
