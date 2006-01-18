@@ -450,12 +450,14 @@ static void
 replicatespuFlushOnePacker(void *arg)
 {
 	ThreadInfo *thread = (ThreadInfo *) arg;
+	CRASSERT(NewServerIndex != -1);
 	replicatespuFlushOne(thread, NewServerIndex);
 }
 
 static void
 replicatespuHugeOnePacker(CROpcode opcode, void *buf)
 {
+	CRASSERT(NewServerIndex != -1);
 	replicatespuHugeOne(opcode, buf, NewServerIndex);
 }
 
@@ -589,16 +591,16 @@ replicatespuReplicate(int ipaddress)
 	crPackFlushFunc( thread->packer, replicatespuFlushOnePacker );
 	crPackSendHugeFunc( thread->packer, replicatespuHugeOnePacker );
 
+	NewServerIndex = r_slot;
+
 	/*
 	 * Create server-side windows and contexts by walking tables of app windows
 	 * and contexts.  Note that windows can be created in random order,
 	 * but contexts must be created in the order they were originally
 	 * created, or shared contexts will break.
 	 */
-	NewServerIndex = r_slot;
 	crHashtableWalk(replicate_spu.windowTable, replicatespuReplicateWindow, thread);
 	crListApply(replicate_spu.contextList, replicatespuReplicateContext, thread);
-	NewServerIndex = -1;
 
 	/* MakeCurrent, the current context */
 	if (thread->currentContext) {
@@ -615,11 +617,8 @@ replicatespuReplicate(int ipaddress)
 	/*
 	 * Set window sizes
 	 */
-	NewServerIndex = r_slot;
 	crHashtableWalk(replicate_spu.windowTable, replicatespuResizeWindows, thread);
-	NewServerIndex = -1;
-
-	replicatespuFlushOne(thread, r_slot);
+	replicatespuFlushOne(thread, NewServerIndex);
 
 	/*
 	 * restore normal, broadcasting packer flush function now.
@@ -627,6 +626,7 @@ replicatespuReplicate(int ipaddress)
 	crPackFlushFunc( thread->packer, replicatespuFlush );
 	crPackSendHugeFunc( thread->packer, replicatespuHuge );
 
+	NewServerIndex = -1;
 
 	crDebug("Replicate SPU: leaving replicatespuReplicate");
 
