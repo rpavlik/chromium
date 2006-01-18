@@ -180,6 +180,27 @@ static void crServerDeleteClient( CRClient *client )
 
 
 /**
+ * Test if the given client is in the middle of a glBegin/End or
+ * glNewList/EndList pair.
+ * This is used to test if we can advance to the next client.
+ * \return GL_TRUE if so, GL_FALSE otherwise.
+ */
+static GLboolean
+crServerClientInBeginEnd(const CRClient *client)
+{
+	if (client->currentCtx &&
+			(client->currentCtx->lists.currentIndex != 0 ||
+			 client->currentCtx->current.inBeginEnd ||
+			 client->currentCtx->occlusion.currentQueryObject)) {
+		return GL_TRUE;
+	}
+	else {
+		return GL_FALSE;
+	}
+}
+
+
+/**
  * Find the next client in the run queue that's not blocked and has a
  * waiting message.
  * Check if all clients are blocked (on barriers, semaphores), if so we've
@@ -198,10 +219,10 @@ getNextClient(GLboolean block)
 			GLboolean done_something = GL_FALSE;
 			RunQueue *start = cr_server.run_queue;
 
+			/* check if this client's connection has gone away */
  			if (!cr_server.run_queue->client->conn
 					 || (cr_server.run_queue->client->conn->type == CR_NO_CONNECTION
 							 && crNetNumMessages(cr_server.curClient->conn) == 0)) {
-				crDebug("Delete client %p at %d", cr_server.run_queue->client, __LINE__);
  				crServerDeleteClient( cr_server.run_queue->client );
 				start = cr_server.run_queue;
 			}
@@ -211,6 +232,18 @@ getNextClient(GLboolean block)
  				return NULL;
 			}
 
+			if (crServerClientInBeginEnd(cr_server.run_queue->client)) {
+				/* We _must_ service this client and no other.
+				 * If we've got a message waiting on this client's connection we'll
+				 * service it.  Else, return NULL.
+				 */
+				if (crNetNumMessages(cr_server.run_queue->client->conn) > 0)
+					return cr_server.run_queue;
+				else
+					return NULL;
+			}
+
+			/* loop over entries in run queue, looking for next one that's ready */
 			while (!done_something || cr_server.run_queue != start)
 			{
 				done_something = GL_TRUE;
@@ -277,7 +310,6 @@ crServerDispatchMessage(CRMessage *msg)
 						msg_opcodes->numOpcodes,  /* how many opcodes */
 						&(cr_server.dispatch));  /* the CR dispatch table */
 }
-
 
 
 typedef enum
@@ -417,14 +449,9 @@ crServerServiceClient(const RunQueue *qEntry)
 	 * list we can't service another client until we're done with the
 	 * primitive/list.
 	 */
-	if (cr_server.curClient->currentCtx &&
-			(cr_server.curClient->currentCtx->lists.currentIndex != 0 ||
-			 cr_server.curClient->currentCtx->current.inBeginEnd ||
-			 cr_server.curClient->currentCtx->occlusion.currentQueryObject))
-	{
+	if (crServerClientInBeginEnd(cr_server.curClient)) {
 		/* The next message has to come from the current client's connection. */
 		CRASSERT(!qEntry->blocked);
-		conn->RecvMsg(conn);
 		return CLIENT_MORE;
 	}
 	else {
