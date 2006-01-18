@@ -2319,7 +2319,7 @@ class CRDaughtership:
 
 
 
-def CreateDaemon():
+def CreateDaemon(Logfile=None):
 	"""Detach this process from the controlling terminal and run it in the
 	background as a daemon.
 	----------------------------------------------------------------------
@@ -2340,11 +2340,18 @@ def CreateDaemon():
 	# Default maximum for the number of available file descriptors.
 	MAXFD = 1024
 
-	# The standard I/O file descriptors are redirected to /dev/null by default.
+	# The standard I/O file descriptors are redirected to /dev/null by default,
+	# or to the specified file if a logfile was specified.
 	if (hasattr(os, "devnull")):
-		REDIRECT_TO = os.devnull
+		DEVNULL = os.devnull
 	else:
-		REDIRECT_TO = "/dev/null"
+		DEVNULL = "/dev/null"
+
+	INPUT_FROM = DEVNULL
+	if Logfile == None:
+		OUTPUT_TO = DEVNULL
+	else:
+		OUTPUT_TO = Logfile
 
 	try:
 		# Fork a child process so the parent can exit.  This returns control to
@@ -2453,7 +2460,12 @@ def CreateDaemon():
 	#
 	import resource		# Resource usage information.
 	maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
-	if (maxfd == resource.RLIM_INFINITY):
+	# On old versions of Python, which don't have resource.RLIM_INFINITY,
+	# default to MAXFD.
+	try:
+		if (maxfd == resource.RLIM_INFINITY):
+			maxfd = MAXFD
+	except:
 		maxfd = MAXFD
   
 	# Iterate through and close all file descriptors.
@@ -2470,10 +2482,8 @@ def CreateDaemon():
 
 	# This call to open is guaranteed to return the lowest file descriptor,
 	# which will be 0 (stdin), since it was closed above.
-	os.open(REDIRECT_TO, os.O_RDWR)	# standard input (0)
-
-	# Duplicate standard input to standard output and standard error.
-	os.dup2(0, 1)			# standard output (1)
-	os.dup2(0, 2)			# standard error (2)
+	os.open(INPUT_FROM, os.O_RDONLY)	# standard input (0)
+	os.open(OUTPUT_TO, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0600)	# standard output (1)
+	os.dup2(1, 2)				# standard error (2)
 
 	return(0)
