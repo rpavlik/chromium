@@ -14,6 +14,7 @@ FILES = printspu \
 	printspu_get \
 	printspu_init \
 	printspu_lighting \
+	printspu_lists \
 	printspu_matrices \
 	printspu_misc \
 	printspu_tex

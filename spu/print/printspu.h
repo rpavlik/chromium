@@ -28,6 +28,7 @@ extern PrintSpu print_spu;
 
 extern void printspuGatherConfiguration( const SPU *child_spu );
 extern const char *printspuEnumToStr( GLenum e );
+extern const char *printspuListToStr(GLsizei n, GLenum type, const GLvoid *list);
 
 extern void PRINT_APIENTRY printGetIntegerv( GLenum pname, GLint *params );
 extern void PRINT_APIENTRY printGetFloatv( GLenum pname, GLfloat *params );
@@ -52,6 +53,7 @@ extern void PRINT_APIENTRY printTexEnvf( GLenum target, GLenum pname, GLfloat pa
 extern void PRINT_APIENTRY printTexEnvfv( GLenum target, GLenum pname, const GLfloat * params );
 extern void PRINT_APIENTRY printTexEnvi( GLenum target, GLenum pname, GLint param );
 extern void PRINT_APIENTRY printTexEnviv( GLenum target, GLenum pname, const GLint * params );
+extern void PRINT_APIENTRY printCallLists( GLsizei n, GLenum type, const GLvoid * lists );
 
 
 
