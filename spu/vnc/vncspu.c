@@ -264,9 +264,14 @@ DoReadback(WindowInfo *window)
 {
 	int size[2], pos[2];
 	int scrx, scry, winWidth, winHeight;
+	static int number = 0;
+
+	number++;
 
 #ifdef NETLOGGER
-  NL_info("vncspu", "readback.begin", "", 1.0);
+	if (vnc_spu.netlogger_url) {
+		NL_info("vncspu", "spu.readback.begin", "NUMBER=i", number);
+	}
 #endif
 
 	/* get window size and position (in screen coords) */
@@ -349,7 +354,9 @@ DoReadback(WindowInfo *window)
 	}
 
 #ifdef NETLOGGER
-  NL_info("vncspu", "readback.end", "", 1.0);
+	if (vnc_spu.netlogger_url) {
+		NL_info("vncspu", "spu.readback.end", "NUMBER=i", number);
+	}
 #endif
 }
 

@@ -61,6 +61,10 @@ typedef struct {
 	int screen_width, screen_height;
 	int max_update_rate;
 	char display_string[1000];
+#ifdef NETLOGGER
+	char *netlogger_url;
+	char *hostname;
+#endif
 
 	GLubyte *screen_buffer;
 	int pixel_size;               /* 24 or 32 */

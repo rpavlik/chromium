@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.7 2006-01-17 21:29:30 brianp Exp $
+ * $Id: client_io.c,v 1.8 2006-01-20 19:33:03 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -429,8 +429,11 @@ static void rf_client_updatereq(void)
   BoxRec rect;
 
 #ifdef NETLOGGER
-  cl->serial_number++;
-  NL_info("vncspu", "fbupdate.receive.request", "NUMBER=i", cl->serial_number);
+	if (vnc_spu.netlogger_url) {
+		cl->serial_number++;
+		NL_info("vncspu", "spu.fbrequest.receive",
+						"NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
+	}
 #endif
 
   /* the requested region of interest */
@@ -764,7 +767,10 @@ static void send_update(void)
   int i, idx, rev_order;
 
 #ifdef NETLOGGER
-  NL_info("vncspu", "fbupdate.send.begin", "NUMBER=i", cl->serial_number);
+  if (vnc_spu.netlogger_url) {
+		NL_info("vncspu", "spu.fbupdate.send.begin",
+						"NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
+	}
 #endif
 
   crLockMutex(&vnc_spu.lock);
@@ -945,6 +951,9 @@ static void send_update(void)
   crUnlockMutex(&vnc_spu.lock);
 
 #ifdef NETLOGGER
-  NL_info("vncspu", "fbupdate.send.end", "NUMBER=i", cl->serial_number);
+	if (vnc_spu.netlogger_url) {
+		NL_info("vncspu", "spu.fbupdate.send.end",
+						"NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
+	}
 #endif
 }

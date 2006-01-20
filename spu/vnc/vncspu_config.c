@@ -10,7 +10,6 @@
 #include "cr_string.h"
 #include "cr_environment.h"
 
-
 /**
  * Set default options for SPU
  */
@@ -37,6 +36,24 @@ static void set_max_update_rate(VncSPU *vnc_spu, const char *response)
 	vnc_spu->max_update_rate = crStrToInt(response);
 }
 
+#ifdef NETLOGGER
+static void set_netlogger_url(VncSPU *vnc_spu, const char *response)
+{
+	/* Example URLs:
+	 *   -                                   // stdout
+	 *   &                                   // stderr
+	 *   /tmp/vncspu.log                     // local file
+	 *   x-netlog://hostname.domain          // netlogd on remote system
+	 *   x-netlog://hostname.domain:7234     // " " " on specific port
+	 *   ""                                  // empty string -> no output
+	 */
+	if (response && response[0])
+		vnc_spu->netlogger_url = crStrdup(response);
+	else
+		vnc_spu->netlogger_url = NULL;
+}
+#endif
+
 
 /** 
  * SPU options
@@ -49,6 +66,10 @@ SPUOptions vncSPUOptions[] = {
 		"Screen Size", (SPUOptionCB) set_screen_size },
 	{ "max_update_rate", CR_INT, 1, "10", "1", NULL,
 		"Max client frame rate", (SPUOptionCB) set_max_update_rate },
+#ifdef NETLOGGER
+	{ "netlogger_url", CR_STRING, 1, NULL, NULL, NULL,
+		"NetLogger log URL", (SPUOptionCB) set_netlogger_url },
+#endif
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 

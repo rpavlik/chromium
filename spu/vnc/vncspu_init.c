@@ -4,6 +4,8 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include "cr_string.h"
+#include "cr_mem.h"
 #include "vncspu.h"
 
 /** Vnc SPU descriptor */ 
@@ -50,13 +52,27 @@ vncSPUInit( int id, SPU *child, SPU *self,
 	vnc_spu.windowTable = crAllocHashtable();
 
 #ifdef NETLOGGER
-	NL_logger_module("vncspu", /* module name */
-									 NULL, /* destination URL (use NL_DEST env var) */
-									 NL_LVL_DEBUG, /* logging level */
-									 NL_TYPE_APP, /* target type */
-									 "" /* terminator */
-									 );
-	NL_info("vncspu", "program.begin", "");
+	if (vnc_spu.netlogger_url) {
+		char *c;
+
+		crDebug("VNC SPU: NetLogger URL: %s", vnc_spu.netlogger_url);
+		NL_logger_module("vncspu", /* module name */
+										 vnc_spu.netlogger_url,
+										 NL_LVL_DEBUG, /* logging level */
+										 NL_TYPE_APP, /* target type */
+										 "" /* terminator */
+										 );
+		NL_info("vncspu", "spu.program.begin", "");
+
+		vnc_spu.hostname = crAlloc(101);
+		crGetHostname(vnc_spu.hostname, 100);
+		/* truncate at first dot */
+		if ((c = crStrchr(vnc_spu.hostname, '.')))
+			*c = 0;
+	}
+	else {
+		crDebug("VNC SPU: NetLogger disabled");
+	}
 #endif
 
 	vncspuInitialize();
@@ -79,8 +95,10 @@ static int
 vncSPUCleanup(void)
 {
 #ifdef NETLOGGER
-	NL_info("vncspu", "program.start", "", 1.0);
-	NL_logger_del();
+	if (vnc_spu.netlogger_url) {
+		NL_info("vncspu", "spu.program.end", "");
+		NL_logger_del();
+	}
 #endif
 	return 1;
 }
