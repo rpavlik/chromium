@@ -332,7 +332,7 @@ static void RENDER_APIENTRY renderspuWindowDestroy( GLint win )
 		crHashtableDelete(render_spu.windowTable, win, crFree);
 	}
 	else {
-		crWarning("Render SPU: Attempt to destroy invalid window (%d)", win);
+		crDebug("Render SPU: Attempt to destroy invalid window (%d)", win);
 	}
 }
 
@@ -347,7 +347,7 @@ static void RENDER_APIENTRY renderspuWindowSize( GLint win, GLint w, GLint h )
 		renderspu_SystemWindowSize( window, w, h );
 	}
 	else {
-		crWarning("Render SPU: Attempt to resize invalid window (%d)", win);
+		crDebug("Render SPU: Attempt to resize invalid window (%d)", win);
 	}
 }
 
@@ -363,7 +363,7 @@ static void RENDER_APIENTRY renderspuWindowPosition( GLint win, GLint x, GLint y
 			window->y = y;
 		}
 		else {
-			crWarning("Render SPU: Attempt to move invalid window (%d)", win);
+			crDebug("Render SPU: Attempt to move invalid window (%d)", win);
 		}
 	}
 }
@@ -384,7 +384,7 @@ static void RENDER_APIENTRY renderspuWindowShow( GLint win, GLint flag )
 		renderspu_SystemShowWindow( window, (GLboolean) flag );
 	}
 	else {
-		crWarning("Render SPU: Attempt to hide/show invalid window (%d)", win);
+		crDebug("Render SPU: Attempt to hide/show invalid window (%d)", win);
 	}
 }
 
