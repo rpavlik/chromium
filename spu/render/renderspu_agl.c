@@ -143,10 +143,11 @@ renderspuDestroyPixelFormat( ContextInfo *context, AGLPixelFormat *pix )
 
 
 GLboolean
-renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
+renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context, ContextInfo *sharedContext )
 {
 	AGLPixelFormat pix;
 
+	(void) sharedContext;
 	CRASSERT(visual);
 	CRASSERT(context);
 	

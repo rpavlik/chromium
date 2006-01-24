@@ -917,14 +917,21 @@ renderspu_SystemDestroyWindow( WindowInfo *window )
 
 
 GLboolean
-renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
+renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context, ContextInfo *sharedContext )
 {
 	Bool is_direct;
+	GLXContext sharedSystemContext = NULL;
 
 	CRASSERT(visual);
 	CRASSERT(context);
 
 	context->visual = visual;
+
+	if (sharedContext != NULL) {
+	    sharedSystemContext = sharedContext->context;
+	}
+
+
 
 #ifdef USE_OSMESA
 	if (render_spu.use_osmesa) {
@@ -941,7 +948,7 @@ renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
 		context->context = render_spu.ws.glXCreateNewContext( visual->dpy, 
 																													visual->fbconfig,
 																													GLX_RGBA_TYPE,
-																													NULL,
+																													sharedSystemContext,
 																													render_spu.try_direct);
 	}
 	else
@@ -949,7 +956,7 @@ renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
 	{
 		 context->context = render_spu.ws.glXCreateContext( visual->dpy, 
 																												visual->visual,
-																												NULL,
+																												sharedSystemContext,
 																												render_spu.try_direct);
 	}
 	if (!context->context) {

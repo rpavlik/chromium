@@ -61,15 +61,29 @@ crServerDispatchCreateContext( const char *dpyName, GLint visualBits, GLint shar
 	else {
 		/* second or third or ... context */
 		if ((visualBits & cr_server.SpuContextVisBits) != visualBits) {
+			int oldSpuContext;
+
 			/* the new context needs new visual attributes */
 			cr_server.SpuContextVisBits |= visualBits;
 			crDebug("crServerDispatchCreateContext requires new visual (0x%x).",
 							cr_server.SpuContextVisBits);
-			/* destroy old rendering context */
-			cr_server.head_spu->dispatch_table.DestroyContext(cr_server.SpuContext);
+
+			/* Here, we used to just destroy the old rendering context.
+			 * Unfortunately, this had the side effect of destroying
+			 * all display lists and textures that had been loaded on
+			 * the old context as well.
+			 *
+			 * Now, first try to create a new context, with a suitable
+			 * visual, sharing display lists and textures with the
+			 * old context.  Then destroy the old context.
+			 */
+
 			/* create new rendering context with suitable visual */
+			oldSpuContext = cr_server.SpuContext;
 			cr_server.SpuContext = cr_server.head_spu->dispatch_table.
-				CreateContext(dpyName, cr_server.SpuContextVisBits, shareCtx);
+				CreateContext(dpyName, cr_server.SpuContextVisBits, cr_server.SpuContext);
+			/* destroy old rendering context */
+			cr_server.head_spu->dispatch_table.DestroyContext(oldSpuContext);
 			if (cr_server.SpuContext < 0) {
 				crWarning("crServerDispatchCreateContext() failed.");
 				return -1;

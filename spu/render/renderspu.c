@@ -147,7 +147,7 @@ renderspuCreateContext( const char *dpyName, GLint visBits, GLint shareCtx )
 		return -1;
 	context->id = render_spu.context_id;
 	context->shared = sharedContext;
-	if (!renderspu_SystemCreateContext( visual, context ))
+	if (!renderspu_SystemCreateContext( visual, context, sharedContext ))
 		return -1;
 
 	crHashtableAdd(render_spu.contextTable, render_spu.context_id, context);

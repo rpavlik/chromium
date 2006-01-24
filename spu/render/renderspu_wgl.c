@@ -497,8 +497,9 @@ void renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 		ShowWindow( window->visual->hWnd, SW_HIDE );
 }
 
-GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context )
+GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context, ContextInfo *sharedContext )
 {
+	(void) sharedContext;
 	context->visual = visual;
 
 	/* Found a visual, so we're o.k. to create the context now */

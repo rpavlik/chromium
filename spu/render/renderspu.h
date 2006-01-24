@@ -198,7 +198,7 @@ extern void renderspuGatherConfiguration( RenderSPU *spu );
 extern void renderspuMakeVisString( GLbitfield visAttribs, char *s );
 extern VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs );
 extern GLboolean renderspu_SystemInitVisual( VisualInfo *visual );
-extern GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context );
+extern GLboolean renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context, ContextInfo *sharedContext );
 extern void renderspu_SystemDestroyContext( ContextInfo *context );
 extern GLboolean renderspu_SystemCreateWindow( VisualInfo *visual, GLboolean showIt, WindowInfo *window );
 extern void renderspu_SystemDestroyWindow( WindowInfo *window );
