@@ -111,19 +111,23 @@ void crServerAddToRunQueue( CRClient *client )
 
 
 
-static void crServerDeleteClient( CRClient *client )
+static void
+crServerDeleteClient( CRClient *client )
 {
 	int i, j;
 
 	crDebug("Deleting client %p (%d msgs left)", client,
 					crNetNumMessages(client->conn));
 
+#if 0
 	if (crNetNumMessages(client->conn) > 0) {
 		crDebug("Delay destroying client: message still pending");
 		return;
 	}
+#endif
 
 	if (!FindClientInQueue(client)) {
+		/* this should never happen */
 		crError("CRServer: client %p not found in the queue!", client);
 	}
 
