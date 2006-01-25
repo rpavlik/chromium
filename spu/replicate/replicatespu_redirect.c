@@ -11,6 +11,7 @@
 #include "cr_string.h"
 #include "cr_packfunctions.h"
 #include "cr_url.h"
+#include "cr_process.h"
 
 #include <arpa/inet.h>
 #include <X11/Xmd.h>
@@ -24,6 +25,12 @@
  */
 static int NewServerIndex = -1;
 
+/* This is the longest, in milliseconds, that we'll wait for a
+ * XVncChromiumConnected event, after receiving an
+ * XVncConnected event.
+ */
+#define MAX_WAIT_FOR_CHROMIUM_MS 1000
+
 
 
 /**
@@ -33,15 +40,53 @@ static int NewServerIndex = -1;
 void
 replicatespuCheckVncEvents(void)
 {
+
 	if (replicate_spu.glx_display) {
-		while (XPending(replicate_spu.glx_display)) {
+		int waitForChromiumConnection = 0;
+		while (XPending(replicate_spu.glx_display) || waitForChromiumConnection > 0) {
 #if 1
 			int VncConn = replicate_spu.VncEventsBase + XVncConnected;
 			int VncDisconn = replicate_spu.VncEventsBase + XVncDisconnected;
 #endif
 			int VncChromiumConn = replicate_spu.VncEventsBase + XVncChromiumConnected;
 			XEvent event;
+
+			/* When a new VNC viewer attaches, sometimes the
+			 * XVncConnected event can come quickly, but the 
+			 * XVncChromiumConnected event can be delayed a bit.
+			 * If this happens, and we don't catch the XVncChromiumConnected
+			 * event in this loop, the application won't be able to
+			 * connect to the new viewer until the application issues
+			 * a glClear() or a buffer flush; in the case of a static
+			 * application (one that just waits for an Expose event),
+			 * this may never come, and the window may remain dark on
+			 * the new viewer.
+			 *
+			 * To avoid this situation, once we receive an XVncConnected
+			 * event, we remain in this loop until the corresponding
+			 * XVncChromiumConnected event appears, or until we've waited
+			 * about a second.
+			 */
+			if (waitForChromiumConnection > 0 && !XPending(replicate_spu.glx_display)) {
+			    /* This allows us to exit if we've waited too long,
+			     * on the order of 1000 milliseconds, or 1 second.
+			     */
+			    waitForChromiumConnection--;
+			    if (waitForChromiumConnection == 0) {
+				/* The main loop will exit, now that the
+				 * waitForChromiumConnection variable has been
+				 * reduced to 0.  Give a warning, just in case.
+				 */
+				crWarning("Replicate SPU: got a new viewer, but no associated Chromium connection");
+			    }
+			    else {
+				/* Keep waiting. */
+				crMsleep(1);
+			    }
+			    continue;
+			}
 		
+			/* We must have an X event waiting if we get here. */
 			XNextEvent (replicate_spu.glx_display, &event);
 			if (event.type == VncChromiumConn) {
 				XVncConnectedEvent *e = (XVncConnectedEvent*) &event;
@@ -53,12 +98,26 @@ replicatespuCheckVncEvents(void)
 				else {
 					crWarning("Replicate SPU: Someone connected, but with no ipaddress?");
 				}
+
+				/* If we waited at all, let a debugger know. */
+				if (waitForChromiumConnection < MAX_WAIT_FOR_CHROMIUM_MS) {
+					crDebug("Replicate SPU: waited %d ms for Chromium connection", MAX_WAIT_FOR_CHROMIUM_MS - waitForChromiumConnection);
+				}
+				/* If we were waiting for the Chromium connection to
+				 * appear, we need wait no longer.
+				 */
+				waitForChromiumConnection = 0;
 			} 
 #if 1
 			else if (event.type == VncConn) {
 				XVncConnectedEvent *e = (XVncConnectedEvent*) &event;
 				crWarning("Replicate SPU: Received VncConn from IP 0x%x, sock %d",
 									(int) e->ipaddress, (int) e->connected);
+				/* Wait for the Chromium connection event to appear, 
+				 * just in case it isn't already pending, to 
+				 * eliminate the race condition.
+				 */
+				waitForChromiumConnection = MAX_WAIT_FOR_CHROMIUM_MS;
 			} 
 			else if (event.type == VncDisconn) {
 				XVncDisconnectedEvent *e = (XVncDisconnectedEvent*) &event;
