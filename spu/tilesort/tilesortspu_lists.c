@@ -16,7 +16,7 @@
 void TILESORTSPU_APIENTRY
 tilesortspu_NewList(GLuint list, GLuint mode) 
 {
-    CRPackContext *c;
+	CRPackContext *c;
     
 	GET_THREAD(thread);
 
@@ -31,18 +31,19 @@ tilesortspu_NewList(GLuint list, GLuint mode)
 	crStateNewList( list, mode );
 
 	if (tilesort_spu.lazySendDLists || tilesort_spu.listTrack) {
-	    /* In either case, we're locally compiling display lists
-	     * for later reference, so tell the DLM that we're starting
-	     * a compile.  Note that we always do a strict compile
-	     * (and not compile-and-execute), in order to simplify
-	     * logic; compile-and-execute is simulated later.
-	     */
-	    crDLMNewList(list, GL_COMPILE);
+		/* In either case, we're locally compiling display lists
+		 * for later reference, so tell the DLM that we're starting
+		 * a compile.  Note that we always do a strict compile
+		 * (and not compile-and-execute), in order to simplify
+		 * logic; compile-and-execute is simulated later.
+		 */
+		crDLMNewList(list, GL_COMPILE);
 
-	    /* If we're doing lazy display lists, we don't send the
-	     * NewList to any server until needed.  Return for now.
-	     */
-	    if 	(tilesort_spu.lazySendDLists) return;
+		/* If we're doing lazy display lists, we don't send the
+		 * NewList to any server until needed.  Return for now.
+		 */
+		if (tilesort_spu.lazySendDLists)
+			return;
 	}
 
 	/* If we get here, we're not doing lazy display lists; rather, we're
@@ -62,12 +63,12 @@ tilesortspu_NewList(GLuint list, GLuint mode)
 	c->buffer.geometry_only = GL_FALSE;
 
 	if (tilesort_spu.swap)
-	    crPackNewListSWAP(list, mode);
+		crPackNewListSWAP(list, mode);
 	else
-	    crPackNewList(list, mode);
+		crPackNewList(list, mode);
 
 	if (tilesort_spu.autoDListBBoxes && !tilesort_spu.listTrack) {
-	    crPackResetBBOX(thread->packer);
+		crPackResetBBOX(thread->packer);
 	}
 }
 
@@ -90,47 +91,47 @@ tilesortspu_EndList(void)
 	 * have received this display list to empty.
 	 */
 	if (tilesort_spu.lazySendDLists) {
-	    GLboolean *listSent;
+		GLboolean *listSent;
 
-	    /* Finish compiling */
-	    crDLMEndList();
+		/* Finish compiling */
+		crDLMEndList();
 
-	    /* Create a list of which servers have received
-	     * the display list so far.  The list should be,
-	     * of course, empty.  Note that we replace any
-	     * existing hash table entry, just in case we're
-	     * redefining an existing display list.
-	     */
-	    listSent = crCalloc(tilesort_spu.num_servers * sizeof(GLboolean));
-	    crHashtableReplace(tilesort_spu.listTable, list, listSent, crFree);
+		/* Create a list of which servers have received
+		 * the display list so far.  The list should be,
+		 * of course, empty.  Note that we replace any
+		 * existing hash table entry, just in case we're
+		 * redefining an existing display list.
+		 */
+		listSent = crCalloc(tilesort_spu.num_servers * sizeof(GLboolean));
+		crHashtableReplace(tilesort_spu.listTable, list, listSent, crFree);
 		    
-	    /* If the display list was originally created with
-	     * GL_COMPILE_AND_EXECUTE, we changed the mode to
-	     * GL_COMPILE and only compiled elements.  Now we
-	     * simulate GL_COMPILE_AND_EXECUTE by making
-	     a reference to the list.
-	     */
-	    if (oldMode == GL_COMPILE_AND_EXECUTE) {
-		tilesortspu_CallList(oldList);
-	    }
+		/* If the display list was originally created with
+		 * GL_COMPILE_AND_EXECUTE, we changed the mode to
+		 * GL_COMPILE and only compiled elements.  Now we
+		 * simulate GL_COMPILE_AND_EXECUTE by making
+		 a reference to the list.
+		*/
+		if (oldMode == GL_COMPILE_AND_EXECUTE) {
+			tilesortspu_CallList(oldList);
+		}
 
-	    /* All done. */
-	    return;
+		/* All done. */
+		return;
 	}
 
 	if (tilesort_spu.listTrack) {
-	    /* If we're here, we're compiling state functions, but also sending
-	     * the display lists to servers as they are created.  We have to
-	     * finish our local compile, and then let the code fall through
-	     * to pack the EndList instruction.
-	     */
-	    crDLMEndList();
+		/* If we're here, we're compiling state functions, but also sending
+		 * the display lists to servers as they are created.  We have to
+		 * finish our local compile, and then let the code fall through
+		 * to pack the EndList instruction.
+		 */
+		crDLMEndList();
 	}
 
 	if (tilesort_spu.swap)
-	    crPackEndListSWAP();
+		crPackEndListSWAP();
 	else
-	    crPackEndList();
+		crPackEndList();
 
 	/* Turn the geometry_only flag back on.
 	 * See the longer comment above in tilesortspu_NewList().
@@ -185,9 +186,12 @@ tilesortspu_CallList(GLuint list)
 	 * compiled, then compile this function.
 	 */
 	if (dlMode != GL_FALSE) {
-		if (tilesort_spu.lazySendDLists || tilesort_spu.listTrack) crDLMCompileCallList(list);
-		else if (tilesort_spu.swap) crPackCallList(list);
-		else crPackCallList(list);
+		if (tilesort_spu.lazySendDLists || tilesort_spu.listTrack)
+			crDLMCompileCallList(list);
+		else if (tilesort_spu.swap)
+			crPackCallList(list);
+		else
+			crPackCallList(list);
 		return;
 	}
 
@@ -330,9 +334,9 @@ tilesortspu_CallList(GLuint list)
 	}
 
 	if (tilesort_spu.swap)
-	   crPackCallListSWAP( list );
+		crPackCallListSWAP( list );
 	else
-	   crPackCallList( list );
+		crPackCallList( list );
 
 	/* Executing glCallList */
 
@@ -381,18 +385,20 @@ tilesortspu_CallList(GLuint list)
 void TILESORTSPU_APIENTRY
 tilesortspu_CallLists(GLsizei n, GLenum type, const GLvoid *lists)
 {
-    
 	GLint i;
 	GET_THREAD(thread);
 	GLenum dlMode = thread->currentContext->displayListMode;
 	ContextInfo *context = thread->currentContext;
-    const GLuint base = context->State->lists.base;
+	const GLuint base = context->State->lists.base;
 
 	if (dlMode != GL_FALSE) {
-	    if (tilesort_spu.lazySendDLists || tilesort_spu.listTrack) crDLMCompileCallLists(n, type, lists);
-	    else if (tilesort_spu.swap) crPackCallListsSWAP(n, type, lists);
-	    else crPackCallLists(n, type, lists);
-	    return;
+		if (tilesort_spu.lazySendDLists || tilesort_spu.listTrack)
+			crDLMCompileCallLists(n, type, lists);
+		else if (tilesort_spu.swap)
+			crPackCallListsSWAP(n, type, lists);
+		else
+			crPackCallLists(n, type, lists);
+		return;
 	}
 
 
