@@ -61,7 +61,7 @@ void tilesortspuInitThreadPacking( ThreadInfo *thread )
 	crPackFlushFunc( thread->packer, tilesortspuFlush_callback );
 	crPackFlushArg( thread->packer, (void *) thread );
 	crPackSendHugeFunc( thread->packer, tilesortspuHuge );
-	crPackResetBBOX( thread->packer );
+	crPackResetBoundingBox( thread->packer );
 
 	CRASSERT(thread->netServer[0].conn);
 	CRASSERT(tilesort_spu.num_servers > 0);

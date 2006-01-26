@@ -28,7 +28,10 @@ print """
 
 #include <float.h>
 
-void crPackResetBBOX( CRPackContext *pc )
+/**
+ * Reset packer bounding box to empty state.
+ */
+void crPackResetBoundingBox( CRPackContext *pc )
 {
 	pc->bounds_min.x =  FLT_MAX;
 	pc->bounds_min.y =  FLT_MAX;
@@ -38,6 +41,29 @@ void crPackResetBBOX( CRPackContext *pc )
 	pc->bounds_max.z = -FLT_MAX;
 	pc->updateBBOX = 1;
 }
+
+/**
+ * Query current bounding box.
+ * \return GL_TRUE if non-empty box, GL_FALSE if empty box.
+ */
+GLboolean crPackGetBoundingBox( CRPackContext *pc,
+                                GLfloat *xmin, GLfloat *ymin, GLfloat *zmin,
+                                GLfloat *xmax, GLfloat *ymax, GLfloat *zmax)
+{
+	if (pc->bounds_min.x != FLT_MAX) {
+		*xmin = pc->bounds_min.x;
+		*ymin = pc->bounds_min.y;
+		*zmin = pc->bounds_min.z;
+		*xmax = pc->bounds_max.x;
+		*ymax = pc->bounds_max.y;
+		*zmax = pc->bounds_max.z;
+		return GL_TRUE;
+	}
+	else {
+		return GL_FALSE;
+	}
+}
+
 """
 
 def WriteData( offset, arg_type, arg_name, is_swapped ):

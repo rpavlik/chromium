@@ -511,7 +511,7 @@ doFlush( CRContext *ctx, GLboolean broadcast, GLboolean send_state_anyway,
 			bucket_info->objectMax = thread->packer->bounds_max;
 			tilesortspuBucketGeometry(winInfo, bucket_info);
 			if (thread->currentContext->providedBBOX == GL_DEFAULT_BBOX_CR)
-				crPackResetBBOX( thread->packer );
+				crPackResetBoundingBox( thread->packer );
 		}
 	}
 	else

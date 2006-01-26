@@ -68,7 +68,6 @@ typedef void (*CRPackFlushFunc)(void *arg);
 typedef void (*CRPackSendHugeFunc)(CROpcode, void *);
 typedef void (*CRPackErrorHandlerFunc)(int line, const char *file, GLenum error, const char *info);
 
-typedef GLvectorf CRBBOXPoint;
 
 /**
  * Packer context
@@ -80,7 +79,7 @@ struct CRPackContext_t{
 	CRPackSendHugeFunc SendHuge;
 	CRPackErrorHandlerFunc Error;
 	CRCurrentStatePointers current;
-	CRBBOXPoint bounds_min, bounds_max;
+	GLvectorf bounds_min, bounds_max;
 	int updateBBOX;
 	int swapping;
 	CRPackBuffer *currentBuffer;
@@ -108,7 +107,10 @@ void crPackErrorFunction( CRPackContext *pc, CRPackErrorHandlerFunc errf );
 void crPackOffsetCurrentPointers( int offset );
 void crPackNullCurrentPointers( void );
 
-void crPackResetBBOX( CRPackContext *pc );
+void crPackResetBoundingBox( CRPackContext *pc );
+GLboolean crPackGetBoundingBox( CRPackContext *pc,
+                                GLfloat *xmin, GLfloat *ymin, GLfloat *zmin,
+                                GLfloat *xmax, GLfloat *ymax, GLfloat *zmax);
 
 void crPackAppendBuffer( const CRPackBuffer *buffer );
 void crPackAppendBoundedBuffer( const CRPackBuffer *buffer, const CRrecti *bounds );

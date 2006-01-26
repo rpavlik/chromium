@@ -68,7 +68,7 @@ tilesortspu_NewList(GLuint list, GLuint mode)
 		crPackNewList(list, mode);
 
 	if (tilesort_spu.autoDListBBoxes && !tilesort_spu.listTrack) {
-		crPackResetBBOX(thread->packer);
+		crPackResetBoundingBox(thread->packer);
 	}
 }
 
@@ -140,6 +140,13 @@ tilesortspu_EndList(void)
 
 	tilesortspuBroadcastGeom(0);
 
+	if (tilesort_spu.autoDListBBoxes) {
+		GLfloat xmin, ymin, zmin, xmax, ymax, zmax;
+		/* if the packer has a bounding box, pass it on to the DLM */
+		if (crPackGetBoundingBox(c, &xmin, &ymin, &zmin, &xmax, &ymax, &zmax)) {
+			crDLMSetBounds(list, xmin, ymin, zmin, xmax, ymax, zmax);
+		}
+	}
 }
 
 

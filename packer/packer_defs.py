@@ -185,7 +185,8 @@ crPackFlushFunc
 crPackFlushArg
 crPackSendHugeFunc
 crPackBoundsInfoCR
-crPackResetBBOX
+crPackResetBoundingBox
+crPackGetBoundingBox
 crPackOffsetCurrentPointers
 crPackNullCurrentPointers
 crPackNewContext
