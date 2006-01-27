@@ -175,6 +175,24 @@ crStateCreateContextId(int i, const CRLimitsState *limits,
 }
 
 
+static void
+crStateFreeContext(CRContext *ctx)
+{
+	crStateClientDestroy( &(ctx->client) );
+	crStateLimitsDestroy( &(ctx->limits) );
+	crStateBufferObjectDestroy( ctx );
+	crStateEvaluatorDestroy( ctx );
+	crStateListsDestroy( ctx );
+	crStateLightingDestroy( ctx );
+	crStateOcclusionDestroy( ctx );
+	crStateProgramDestroy( ctx );
+	crStateTextureDestroy( ctx );
+	crStateTransformDestroy( ctx );
+	crStateFreeShared(ctx->shared);
+	crFree( ctx );
+}
+
+
 /*
  * Allocate the state (dirty) bits data structures.
  * This should be called before we create any contexts.
@@ -202,18 +220,7 @@ void crStateInit(void)
 	if (defaultContext) {
 		/* Free the default/NULL context.
 		 * Ensures context bits are reset */
-		crStateClientDestroy( &(defaultContext->client) );
-		crStateLimitsDestroy( &(defaultContext->limits) );
-
-		crStateBufferObjectDestroy( defaultContext );
-		crStateEvaluatorDestroy( defaultContext );
-		crStateListsDestroy( defaultContext );
-		crStateLightingDestroy( defaultContext );
-		crStateOcclusionDestroy( defaultContext );
-		crStateProgramDestroy( defaultContext );
-		crStateTextureDestroy( defaultContext );
-		crStateTransformDestroy( defaultContext );
-		crFree( defaultContext );
+		crStateFreeContext(defaultContext);
 	}
 
 	/* Reset diff_api */
@@ -320,19 +327,7 @@ void crStateDestroyContext( CRContext *ctx )
 	}
 	g_availableContexts[ctx->id] = 0;
 
-	crStateClientDestroy( &(ctx->client) );
-	crStateLimitsDestroy( &(ctx->limits) );
-	crStateBufferObjectDestroy( ctx );
-	crStateEvaluatorDestroy( ctx );
-	crStateListsDestroy( ctx );
-	crStateLightingDestroy( ctx );
-	crStateProgramDestroy( ctx );
-	crStateTextureDestroy( ctx );
-	crStateTransformDestroy( ctx );
-
-	crStateFreeShared(ctx->shared);
-
-	crFree( ctx );
+	crStateFreeContext(ctx);
 }
 
 
