@@ -535,7 +535,7 @@ crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 				    host, sizeof( host),
 				    NULL, 0, NI_NUMERICHOST);
 		if ( err )	/* shouldn't ever happen */
-			conn->hostname = "unknown ?!";
+			conn->hostname = crStrdup("unknown ?!");
 		else
 			conn->hostname = crStrdup( host );
 	}
@@ -1335,6 +1335,9 @@ crTCPIPDoConnect( CRConnection *conn )
 }
 
 
+/**
+ * Disconnect this connection, but don't free(conn).
+ */
 void
 crTCPIPDoDisconnect( CRConnection *conn )
 {
@@ -1343,10 +1346,15 @@ crTCPIPDoDisconnect( CRConnection *conn )
 	int i;
 
 	crCloseSocket( conn->tcp_socket );
+	if (conn->hostname) {
+		crFree(conn->hostname);
+		conn->hostname = NULL;
+	}
 	conn->tcp_socket = 0;
 	conn->type = CR_NO_CONNECTION;
 	cr_tcpip.conns[conn->index] = NULL;
 
+	/* see if any connections remain */
 	for (i = 0; i < num_conns; i++) 
 	{
 		if ( cr_tcpip.conns[i] && cr_tcpip.conns[i]->type != CR_NO_CONNECTION )
