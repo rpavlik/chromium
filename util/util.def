@@ -47,6 +47,7 @@ crGetHostname
 crGetPID
 crNetAcceptClient
 crNetConnectToServer
+crNetFreeConnection
 crNetInit
 crNetAlloc
 crNetSend

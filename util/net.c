@@ -366,6 +366,17 @@ crNetAcceptClient( const char *protocol, const char *hostname,
 
 
 /**
+ * Close and free given connection.
+ */
+void
+crNetFreeConnection(CRConnection *conn)
+{
+	conn->Disconnect(conn);
+	crFree(conn);
+}
+
+
+/**
  * Start the ball rolling.  give functions to handle incoming traffic
  * (usually placing blocks on a queue), and a handler for dropped
  * connections.

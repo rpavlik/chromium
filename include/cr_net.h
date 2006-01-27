@@ -220,6 +220,7 @@ extern void crNetFree( CRConnection *conn, void *buf );
 extern void crNetAccept( CRConnection *conn, const char *hostname, unsigned short port );
 extern int crNetConnect( CRConnection *conn );
 extern void crNetDisconnect( CRConnection *conn );
+extern void crNetFreeConnection( CRConnection *conn );
 extern void crCloseSocket( CRSocket sock );
 
 extern void crNetSend( CRConnection *conn, void **bufp, const void *start, unsigned int len );
