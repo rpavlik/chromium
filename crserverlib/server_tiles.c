@@ -417,10 +417,10 @@ crServerGetTileInfoFromMothership( CRConnection *conn, CRMuralInfo *mural )
 				tmp[8] + tmp[6] * Sx * cent[0] + tmp[7] * Sy * cent[1];
 
 			crFree(corners);
-
-			crFreeStrings(displaychain);
-			crFreeStrings(displaylist);
 		}
+
+		crFreeStrings(displaychain);
+		crFreeStrings(displaylist);
 
 		crFreeStrings(tilechain);
 		crFreeStrings(tilelist);
