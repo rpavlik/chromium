@@ -177,8 +177,7 @@ crServerDeleteClient( CRClient *client )
 		} while (q != qStart);
 	}
 
-	crMemZero(client, sizeof(CRClient)); /* just to be safe */
-
+	crNetFreeConnection(client->conn);
 	crFree(client);
 }
 

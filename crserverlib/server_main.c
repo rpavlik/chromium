@@ -67,6 +67,8 @@ static void deleteContextCallback( void *data )
 
 static void crServerTearDown( void )
 {
+	GLint i;
+
 	/* avoid a race condition */
 	if (tearingdown)
 		return;
@@ -95,8 +97,18 @@ static void crServerTearDown( void )
 	/* Free vertex programs */
 	crFreeHashtable(cr_server.programTable, crFree);
 
+	for (i = 0; i < cr_server.numClients; i++) {
+		CRConnection *conn = cr_server.clients[i]->conn;
+		crNetFreeConnection(conn);
+		crFree(cr_server.clients[i]);
+	}
+	cr_server.numClients = 0;
+
+#if 1
+	/* disable these two lines if trying to get stack traces with valgrind */
 	crSPUUnloadChain(cr_server.head_spu);
 	cr_server.head_spu = NULL;
+#endif
 
 	crUnloadOpenGL();
 }
