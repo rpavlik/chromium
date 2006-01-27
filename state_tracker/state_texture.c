@@ -25,8 +25,7 @@
 
 void crStateTextureDestroy(CRContext *ctx)
 {
-	CRTextureState *t = &ctx->texture;
-	crFree(t);
+	/* no-op - texture objects are part of shared state */
 }
 
 
