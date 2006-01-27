@@ -25,7 +25,22 @@
 
 void crStateTextureDestroy(CRContext *ctx)
 {
-	/* no-op - texture objects are part of shared state */
+	crStateDeleteTextureObjectData(&ctx->texture.base1D);
+	crStateDeleteTextureObjectData(&ctx->texture.proxy1D);
+	crStateDeleteTextureObjectData(&ctx->texture.base2D);
+	crStateDeleteTextureObjectData(&ctx->texture.proxy2D);
+#ifdef CR_OPENGL_VERSION_1_2
+	crStateDeleteTextureObjectData(&ctx->texture.base3D);
+	crStateDeleteTextureObjectData(&ctx->texture.proxy3D);
+#endif
+#ifdef CR_ARB_texture_cube_map
+	crStateDeleteTextureObjectData(&ctx->texture.baseCubeMap);
+	crStateDeleteTextureObjectData(&ctx->texture.proxyCubeMap);
+#endif
+#ifdef CR_NV_texture_rectangle
+	crStateDeleteTextureObjectData(&ctx->texture.baseRect);
+	crStateDeleteTextureObjectData(&ctx->texture.proxyRect);
+#endif
 }
 
 
@@ -540,7 +555,7 @@ crStateTextureAllocate_t(CRContext *ctx, GLuint name)
  * dynamically allocated.
  */
 void
-crStateDeleteTextureObject(CRTextureObj *tobj)
+crStateDeleteTextureObjectData(CRTextureObj *tobj)
 {
 	int k;
 	int face;
@@ -565,10 +580,15 @@ crStateDeleteTextureObject(CRTextureObj *tobj)
 		}
 		tobj->level[face] = NULL;
 	}
-
-	crFree(tobj);
 }
 
+
+void
+crStateDeleteTextureObject(CRTextureObj *tobj)
+{
+	crStateDeleteTextureObjectData(tobj);
+	crFree(tobj);
+}
 
 void STATE_APIENTRY crStateGenTextures(GLsizei n, GLuint *textures) 
 {

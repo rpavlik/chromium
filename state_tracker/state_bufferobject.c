@@ -49,6 +49,7 @@ void crStateBufferObjectDestroy (CRContext *ctx)
 {
 	CRBufferObjectState *b = &ctx->bufferobject;
 	crFreeHashtable(b->buffers, crFree);
+	crFree(b->nullBuffer);
 }
 
 

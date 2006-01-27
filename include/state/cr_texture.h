@@ -217,6 +217,7 @@ void crStateTextureObjectDiff(CRContext *fromCtx,
 
 void crStateDiffAllTextureObjects( CRContext *g, CRbitvalue *bitID );
 
+void crStateDeleteTextureObjectData(CRTextureObj *tobj);
 void crStateDeleteTextureObject(CRTextureObj *tobj);
 
 

@@ -1794,15 +1794,15 @@ void crStateProgramInit( CRContext *ctx )
 static void DeleteProgramCallback( void *data )
 {
 	CRProgram *prog = (CRProgram *) data;
-	if (prog->string)
-		crFree((void *) prog->string);
-	crFree(prog);
+	DeleteProgram(prog);
 }
 
 void crStateProgramDestroy(CRContext *ctx)
 {
 	CRProgramState *p = &(ctx->program);
 	crFreeHashtable(p->programHash, DeleteProgramCallback);
+	DeleteProgram(p->defaultVertexProgram);
+	DeleteProgram(p->defaultFragmentProgram);
 }
 
 
