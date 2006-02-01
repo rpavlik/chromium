@@ -445,26 +445,30 @@ DoReadback(WindowInfo *window)
 		BoxPtr rects;
 		int regionArea, extentArea;
 
-		/* initial exposure */
 		if (newWindowSize) {
+			/* dirty region is whole window */
 			BoxRec initRec;
 			initRec.x1 = 0;
 			initRec.y1 = 0;
 			initRec.x2 = winWidth;
 			initRec.y2 = winHeight;
+			/* curr region will replace prev region at end of frame */
+			REGION_UNINIT(&window->currDirtyRegion);
 			REGION_UNINIT(&window->prevDirtyRegion);
 			REGION_INIT(&window->prevDirtyRegion, &initRec, 1);
+			REGION_INIT(&dirtyRegion, &initRec, 1);
 		}
-
-		/* The dirty region is the union of the previous frame's bounding
-		 * boxes and this frame's bounding boxes.
-		 */
-		miRegionInit(&dirtyRegion, NULL, 0);
-		REGION_UNION(&dirtyRegion,
-								 &window->currDirtyRegion, &window->prevDirtyRegion);
-		/*
-		PrintRegion("dirty", &dirtyRegion);
-		*/
+		else {
+			/* The dirty region is the union of the previous frame's bounding
+			 * boxes and this frame's bounding boxes.
+			 */
+			miRegionInit(&dirtyRegion, NULL, 0);
+			REGION_UNION(&dirtyRegion,
+									 &window->currDirtyRegion, &window->prevDirtyRegion);
+			/*
+				PrintRegion("dirty", &dirtyRegion);
+			*/
+		}
 
 		regionArea = RegionArea(&dirtyRegion);
 		extentArea = (dirtyRegion.extents.x2 - dirtyRegion.extents.x1)
@@ -693,15 +697,7 @@ vncspuBoundsInfoCR(const CRrecti *bounds, const GLbyte *payload,
 		RegionRec newRegion;
 		BoxRec newRect;
 
-		CRASSERT(bounds->x1 < bounds->x2);
-		CRASSERT(bounds->y1 < bounds->y2);
-
-		/*
-		crDebug("VNC SPU BoundsInfo %i, %i .. %i, %i",
-						bounds->x1, bounds->y1, bounds->x2, bounds->y2);
-		*/
-
-		if (bounds->x1 <= -2147483600) {
+		if (bounds->x1 == -CR_MAXINT) {
 			/* infinite bounding box, use whole window */
 			newRect.x1 = 0;
 			newRect.y1 = 0;
@@ -714,6 +710,13 @@ vncspuBoundsInfoCR(const CRrecti *bounds, const GLbyte *payload,
 			newRect.x2 = bounds->x2;
 			newRect.y2 = bounds->y2;
 		}
+
+		/*
+		crDebug("VNC SPU BoundsInfo %i, %i .. %i, %i",
+						newRect.x1, newRect.y1, newRect.x2, newRect.y2);
+		*/
+		CRASSERT(newRect.x1 <= newRect.x2);
+		CRASSERT(newRect.y1 <= newRect.y2);
 
 		REGION_INIT(&newRegion, &newRect, 1);
 		REGION_UNION(&window->currDirtyRegion, &window->currDirtyRegion, &newRegion);
