@@ -10,7 +10,7 @@ include $(TOP)/arch.mk
 LIBRARY = crdlm
 LIBRARIES = spuload crutil crmothership
 SHARED = 1
-FILES = dlm dlm_lists dlm_generated dlm_pointers dlm_arrays dlm_checklist dlm_error dlm_calllist
+FILES = dlm dlm_lists dlm_generated dlm_pointers dlm_arrays dlm_checklist dlm_error dlm_calllist dlm_bbox
 LIB_DEFS = dlm.def
 
 PRECOMP = $(LIB_DEFS) $(TOP)/include/cr_dlm.h dlm_generated.h dlm_generated.c

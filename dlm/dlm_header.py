@@ -38,6 +38,7 @@ additionalFunctions = [
     ('CRDLMError DLM_APIENTRY', 'crDLMGetBounds', 'unsigned long listIdentifier, CRDLMBounds *bounds'),
     ('void DLM_APIENTRY', 'crDLMSetDLMBounds', 'CRDLM *dlm, unsigned long listIdentifier, double xmin, double ymin, double zmin, double xmax, double ymax, double zmax'),
     ('void DLM_APIENTRY', 'crDLMSetBounds', 'unsigned long listIdentifier, double xmin, double ymin, double zmin, double xmax, double ymax, double zmax'),
+	('void DLM_APIENTRY', 'crDLMComputeBoundingBox', 'unsigned long listId'),
     ('GLboolean DLM_APIENTRY', 'crDLMListHasDLMBounds', 'CRDLM *dlm, unsigned long listIdentifier'),
     ('GLboolean DLM_APIENTRY', 'crDLMListHasBounds', 'unsigned long listIdentifier'),
     ('GLuint DLM_APIENTRY', 'crDLMGetCurrentList', 'void'),
