@@ -22,6 +22,7 @@ void crUnpackSetWritebackPointer( CRNetworkPointer *wri )
 
 void crUnpackExtendWriteback(void)
 {
+	/* This copies the unpack buffer's CRNetworkPointer to writeback_ptr */
 	SET_WRITEBACK_PTR( 8 );
 	cr_unpackDispatch.Writeback( NULL );
 }
