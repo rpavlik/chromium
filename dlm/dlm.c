@@ -1,9 +1,8 @@
-#include <stdio.h>
 #include <float.h>
 #include "cr_dlm.h"
 #include "cr_mem.h"
-#include "cr_unpack.h"
 #include "dlm.h"
+
 /**
  * \mainpage Dlm 
  *
