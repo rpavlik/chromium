@@ -115,6 +115,10 @@ tilesortspu_EndList(void)
 			tilesortspu_CallList(oldList);
 		}
 
+		if (tilesort_spu.autoDListBBoxes) {
+			crDLMComputeBoundingBox(list);
+		}
+
 		/* All done. */
 		return;
 	}
@@ -141,11 +145,16 @@ tilesortspu_EndList(void)
 	tilesortspuBroadcastGeom(0);
 
 	if (tilesort_spu.autoDListBBoxes) {
+#if 0
+		/* TEMPORARY / OLD CODE */
 		GLfloat xmin, ymin, zmin, xmax, ymax, zmax;
 		/* if the packer has a bounding box, pass it on to the DLM */
 		if (crPackGetBoundingBox(c, &xmin, &ymin, &zmin, &xmax, &ymax, &zmax)) {
 			crDLMSetBounds(list, xmin, ymin, zmin, xmax, ymax, zmax);
 		}
+#else
+		crDLMComputeBoundingBox(list);
+#endif
 	}
 }
 
