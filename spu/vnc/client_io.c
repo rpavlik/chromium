@@ -10,9 +10,15 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.8 2006-01-20 19:33:03 brianp Exp $
+ * $Id: client_io.c,v 1.9 2006-02-01 19:31:24 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
+
+#ifdef CHROMIUM
+#include <unistd.h>
+#include <sched.h>
+#include "vncspu.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,12 +34,6 @@
 #include "translate.h"
 #include "client_io.h"
 #include "encode.h"
-
-#ifdef CHROMIUM
-#include <unistd.h>
-#include <sched.h>
-#include "vncspu.h"
-#endif
 
 static unsigned char *s_password;
 static unsigned char *s_password_ro;
@@ -573,6 +573,9 @@ static void rf_client_cuttext_data(void)
  * Functions called from host_io.c
  */
 
+/**
+ * Append given rectangle to the client's list of dirty regions.
+ */
 void fn_client_add_rect(AIO_SLOT *slot, FB_RECT *rect)
 {
   CL_SLOT *cl = (CL_SLOT *)slot;

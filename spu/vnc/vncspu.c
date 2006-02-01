@@ -168,11 +168,14 @@ GetSerialNumber(void)
 }
 
 
-/* data used in callback called by aio_walk_slots(). */
-static BoxPtr CurrentClipRects = NULL;
+/*
+ * Data used in callback called by aio_walk_slots().
+ * Only valid while doing readback for a single window.
+ */
+static BoxPtr CurrentClipRects = NULL; /* Note: y=0=top */
 static int CurrentClipRectsCount = 0;
 
-/* Callback */
+/* Callback called from aio_walk_slots() below */
 static void
 fn_host_add_client_rect(AIO_SLOT *slot)
 {
@@ -254,6 +257,81 @@ ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
 }
 
 
+#if 0
+static void
+printRegions(RegionPtr rgn)
+{
+	int i, num;
+	BoxPtr rects;
+	int totalArea = 0;
+	int extentArea;
+	Bool overlap;
+
+	num = REGION_NUM_RECTS(rgn);
+	/*size = REGION_SIZE(rgn);*/
+	rects = REGION_RECTS(rgn);
+	/*
+    ErrorF("extents: %d %d %d %d\n",
+		rgn->extents.x1, rgn->extents.y1, rgn->extents.x2, rgn->extents.y2);
+	*/
+	for (i = 0; i < num; i++) {
+		crDebug(" %d: %d, %d .. %d, %d", i,
+	     rects[i].x1, rects[i].y1, rects[i].x2, rects[i].y2);
+
+		totalArea += (rects[i].x2 - rects[i].x1) * (rects[i].y2 - rects[i].y1);
+	}
+
+	REGION_VALIDATE(rgn, &overlap);
+	extentArea = (rgn->extents.x2 - rgn->extents.x1) * (rgn->extents.y2 - rgn->extents.y1);
+	if (extentArea)
+		crDebug("region area: %d  extent area: %d  percent: %f",
+						totalArea, extentArea, (float) totalArea / extentArea);
+}
+#endif
+
+
+static GLint
+ComputeRectListHash(int numRects, const BoxPtr rects)
+{
+	int hash = numRects, i;
+
+	for (i = 0; i < numRects; i++) {
+		hash += rects[i].x1 + rects[i].y1 + rects[i].x2 + rects[i].y2;
+	}
+	return hash;
+}
+
+
+static GLint
+RegionArea(const RegionPtr region)
+{
+	const BoxPtr rects = REGION_RECTS(region);
+	GLint area = 0, n = REGION_NUM_RECTS(region), i;
+
+	for (i = 0; i < n; i++) {
+		CRASSERT(rects[i].x1 < rects[i].x2);
+		CRASSERT(rects[i].y1 < rects[i].y2);
+		area += (rects[i].x2 - rects[i].x1) * (rects[i].y2 - rects[i].y1);
+	}
+	return area;
+}
+
+
+#if 1
+static void
+PrintRegion(const char *s, const RegionPtr r)
+{
+	const BoxPtr rects = REGION_RECTS(r);
+	GLint n = REGION_NUM_RECTS(r), i;
+	crDebug("Region %s", s);
+	for (i = 0; i < n; i++) {
+		crDebug("  Rect %d: %d, %d .. %d, %d", i, rects[i].x1, rects[i].y1,
+						rects[i].x2, rects[i].y2);
+	}
+}
+#endif
+
+
 /**
  * Read back the image from the OpenGL window and store in the screen buffer
  * (i.e. vnc_spu.screen_buffer) at the given x/y screen position.
@@ -263,14 +341,26 @@ static void
 DoReadback(WindowInfo *window)
 {
 	int size[2], pos[2];
-	int scrx, scry, winWidth, winHeight;
-	static int number = 0;
+	int winX, winY, winWidth, winHeight;
+	GLboolean newWindowSize = GL_FALSE;
+	BoxRec wholeWindowRect;
+	int i;
+	BoxPtr clipRects;
+	int numClipRects;
+	RegionRec dirtyRegion;
+	GLint hash;
+	float ratio;
+	const float ratioThreshold = 0.8;
 
-	number++;
+	CRASSERT(window);
+
+	if (!window->nativeWindow) {
+		return;
+	}
 
 #ifdef NETLOGGER
 	if (vnc_spu.netlogger_url) {
-		NL_info("vncspu", "spu.readback.begin", "NUMBER=i", number);
+		NL_info("vncspu", "spu.readback.begin", "NUMBER=i", window->frameCounter);
 	}
 #endif
 
@@ -279,11 +369,17 @@ DoReadback(WindowInfo *window)
 																				window->id, GL_INT, 2, size);
 	vnc_spu.super.GetChromiumParametervCR(GL_WINDOW_POSITION_CR,
 																				window->id, GL_INT, 2, pos);
-
-	scrx = pos[0];
-	scry = pos[1];
+	winX = pos[0];
+	winY = pos[1];
 	winWidth = size[0];
 	winHeight = size[1];
+
+	/* check for window size change */
+	if (window->prevWidth != winWidth || window->prevHeight != winHeight) {
+		newWindowSize = GL_TRUE;
+		window->prevWidth = winWidth;
+		window->prevHeight = winHeight;
+	}
 
 	/* check/alloc the screen buffer now */
 	if (!vnc_spu.screen_buffer) {
@@ -297,65 +393,191 @@ DoReadback(WindowInfo *window)
 
 	CRASSERT(winWidth >= 1);
 	CRASSERT(winHeight >= 1);
-	if (vnc_spu.currentWindow && vnc_spu.currentWindow->nativeWindow) {
-		BoxRec rect;
-		int i;
 
+	/** Get window clip rects **/
 #if defined(HAVE_XCLIPLIST_EXT)
-		if (vnc_spu.haveXClipListExt) {
-			CurrentClipRects = XGetClipList(vnc_spu.dpy,
-																			vnc_spu.currentWindow->nativeWindow,
-																			&CurrentClipRectsCount);
+	if (vnc_spu.haveXClipListExt) {
+		clipRects = XGetClipList(vnc_spu.dpy, window->nativeWindow,
+														 &numClipRects);
+		if (numClipRects == 0) {
+			/* whole window is obscured */
+			CRASSERT(!clipRects);
+			return;
 		}
-		else
-#endif
-		{
-			/* whole window, in window coords */
-			rect.x1 = 0;
-			rect.y1 = 0;
-			rect.x2 = winWidth;
-			rect.y2 = winHeight;
-			CurrentClipRects = &rect;
-			CurrentClipRectsCount = 1;
+		if (vnc_spu.use_bounding_boxes) {
+			/* convert to y=0=bottom */
+			for (i = 0; i < numClipRects; i++) {
+				const int y1 = clipRects[i].y1;
+				const int y2 = clipRects[i].y2;
+				clipRects[i].y1 = winHeight - y2;
+				clipRects[i].y2 = winHeight - y1;
+			}
 		}
-
-		/* read back just the visible regions */
-		for (i = 0; i < CurrentClipRectsCount; i++) {
-			BoxPtr r = CurrentClipRects + i;     /* in window coords! */
-			int width = r->x2 - r->x1;
-			int height = r->y2 - r->y1;
-			int srcx = r->x1;                    /* in window coords */
-			int srcy = winHeight - r->y2;        /* in window coords, y=0=bottom */
-			int destx = scrx + r->x1;            /* in screen coords */
-			int desty = scry + r->y1;            /* in screen coords, y=0=top */
-			ReadbackRegion(destx, desty, srcx, srcy, width, height);
-		}
-
-		/* translate cliprects to screen coords for the VNC server */
-		for (i = 0; i < CurrentClipRectsCount; i++) {
-			BoxPtr r = CurrentClipRects + i;
-			r->x1 += scrx;
-			r->y1 += scry;
-			r->x2 += scrx;
-			r->y2 += scry;
-		}
-
-		/* append this dirty rect to all clients' pending lists */
-    crLockMutex(&vnc_spu.lock);
-		aio_walk_slots(fn_host_add_client_rect, TYPE_CL_SLOT);
-    crUnlockMutex(&vnc_spu.lock);
-
-		/* reset/clear to be safe */
-		CurrentClipRects = NULL;
-		CurrentClipRectsCount = 0;
-
-		/* Send the new dirty rects to clients */
-		aio_walk_slots(fn_client_send_rects, TYPE_CL_SLOT);
 	}
+	else
+#endif /* HAVE_XCLIPLIST_EXT */
+	{
+		/* whole window */
+		wholeWindowRect.x1 = 0;
+		wholeWindowRect.y1 = 0;
+		wholeWindowRect.x2 = winWidth;
+		wholeWindowRect.y2 = winHeight;
+		clipRects = &wholeWindowRect;
+		numClipRects = 1;
+	}
+
+	hash = ComputeRectListHash(numClipRects, clipRects);
+
+	if (hash != window->clippingHash) {
+		/* clipping changed */
+		crDebug("Clipping change");
+		window->clippingHash = hash;
+		newWindowSize = GL_TRUE;
+	}
+
+
+	CRASSERT(numClipRects >= 1);
+	CRASSERT(clipRects);
+
+	if (vnc_spu.use_bounding_boxes) {
+		/* use dirty rects / regions */
+		BoxPtr rects;
+		int regionArea, extentArea;
+
+		/* initial exposure */
+		if (newWindowSize) {
+			BoxRec initRec;
+			initRec.x1 = 0;
+			initRec.y1 = 0;
+			initRec.x2 = winWidth;
+			initRec.y2 = winHeight;
+			REGION_UNINIT(&window->prevDirtyRegion);
+			REGION_INIT(&window->prevDirtyRegion, &initRec, 1);
+		}
+
+		/* The dirty region is the union of the previous frame's bounding
+		 * boxes and this frame's bounding boxes.
+		 */
+		miRegionInit(&dirtyRegion, NULL, 0);
+		REGION_UNION(&dirtyRegion,
+								 &window->currDirtyRegion, &window->prevDirtyRegion);
+		PrintRegion("dirty", &dirtyRegion);
+
+		regionArea = RegionArea(&dirtyRegion);
+		extentArea = (dirtyRegion.extents.x2 - dirtyRegion.extents.x1)
+			* (dirtyRegion.extents.y2 - dirtyRegion.extents.y1);
+		ratio = (float) regionArea / extentArea;
+		/*
+		crDebug("Region ratio filled: %.2f (%ld boxes) (ext area %d)",
+						ratio,
+						REGION_NUM_RECTS(&dirtyRegion),
+						extentArea);
+		*/
+		if (ratio >= ratioThreshold) {
+			/* OPTIMIZATION:  Rather than send a bunch of sub-rects, just
+			 * send the whole region contained by the bounding box.
+			 */
+			BoxRec extents = *REGION_EXTENTS(&dirtyRegion);
+			REGION_UNINIT(&dirtyRegion);
+			miRegionInit(&dirtyRegion, &extents, 1);
+			/*
+			crDebug("Optimized region %d,%d .. %d, %d",
+							extents.x1, extents.y1, extents.x2, extents.y2);
+			*/
+		}
+
+		/* window clipping */
+		if (clipRects != &wholeWindowRect) {
+			/* intersect dirty region with window clipping region */
+			RegionRec clipRegion;
+			miRegionInit(&clipRegion, NULL, 0);
+			miBoxesToRegion(&clipRegion, numClipRects, clipRects);
+			REGION_INTERSECT(&dirtyRegion, &dirtyRegion, &clipRegion);
+			REGION_UNINIT(&clipRegion);
+		}
+
+		/* convert rect list to y=0=top orientation */
+		rects = REGION_RECTS(&dirtyRegion);
+		CurrentClipRectsCount = REGION_NUM_RECTS(&dirtyRegion);
+		CurrentClipRects = (BoxPtr) crAlloc(sizeof(BoxRec) * CurrentClipRectsCount);
+		for (i = 0; i < CurrentClipRectsCount; i++) {
+			/* convert y=0=bottom to y=0=top */
+			CurrentClipRects[i].x1 = rects[i].x1;
+			CurrentClipRects[i].y1 = winHeight - rects[i].y2;
+			CurrentClipRects[i].x2 = rects[i].x2;
+			CurrentClipRects[i].y2 = winHeight - rects[i].y1;
+			CRASSERT(CurrentClipRects[i].x1 < CurrentClipRects[i].x2);
+			CRASSERT(CurrentClipRects[i].y1 < CurrentClipRects[i].y2);
+		}
+
+		REGION_UNINIT(&dirtyRegion);
+	}
+	else {
+		/* no object bounding boxes, just use window cliprect regions */
+		CurrentClipRects = clipRects;
+		CurrentClipRectsCount = numClipRects;
+	}
+
+
+	CRASSERT(CurrentClipRects);
+#if 0
+	for (i = 0; i < CurrentClipRectsCount; i++) {
+		crDebug("ClipRect %d: %d, %d .. %d, %d", i,
+						CurrentClipRects[i].x1, CurrentClipRects[i].y1,
+						CurrentClipRects[i].x2, CurrentClipRects[i].y2);
+	}
+#endif
+
+	/*
+	 * Now do actual pixel readback to update the screen buffer.
+	 */
+	for (i = 0; i < CurrentClipRectsCount; i++) {
+		BoxPtr r = CurrentClipRects + i;     /* in window coords, y=0=top */
+		int width = r->x2 - r->x1;
+		int height = r->y2 - r->y1;
+		int srcx = r->x1;                    /* in window coords */
+		int srcy = winHeight - r->y2;        /* in window coords, y=0=bottom */
+		int destx = winX + r->x1;            /* in screen coords */
+		int desty = winY + r->y1;            /* in screen coords, y=0=top */
+		CRASSERT(width > 0);
+		CRASSERT(height > 0);
+		ReadbackRegion(destx, desty, srcx, srcy, width, height);
+	}
+
+	/* translate cliprects to screen coords for the VNC server */
+	for (i = 0; i < CurrentClipRectsCount; i++) {
+		BoxPtr r = CurrentClipRects + i;
+		r->x1 += winX;
+		r->y1 += winY;
+		r->x2 += winX;
+		r->y2 += winY;
+	}
+
+	/* append the dirty rectlist to all clients' pending lists */
+	crLockMutex(&vnc_spu.lock);
+	aio_walk_slots(fn_host_add_client_rect, TYPE_CL_SLOT);
+	crUnlockMutex(&vnc_spu.lock);
+
+	/* free dynamic allocations */
+	if (clipRects != &wholeWindowRect) {
+		XFree(clipRects);
+	}
+	if (vnc_spu.use_bounding_boxes) {
+		crFree(CurrentClipRects);
+	}
+	CurrentClipRects = NULL;
+	CurrentClipRectsCount = 0;
+
+	/* Send the new dirty rects to clients */
+	/* XXX at this point we should just "nudge" the other thread to tell
+	 * it to send the new updates to the clients.
+	 */
+	aio_walk_slots(fn_client_send_rects, TYPE_CL_SLOT);
+
 
 #ifdef NETLOGGER
 	if (vnc_spu.netlogger_url) {
-		NL_info("vncspu", "spu.readback.end", "NUMBER=i", number);
+		NL_info("vncspu", "spu.readback.end", "NUMBER=i", window->frameCounter);
 	}
 #endif
 }
@@ -392,7 +614,17 @@ vncspuSwapBuffers(GLint win, GLint flags)
 	WindowInfo *window = LookupWindow(win, 0);
 	if (window) {
 		window->frameCounter++;
+
 		DoReadback(window);
+
+		if (vnc_spu.use_bounding_boxes) {
+			/* free prevDirtyRegion */
+			REGION_UNINIT(&window->prevDirtyRegion);
+			/* move currDirtyRegion to prevDirtyRegion */
+			window->prevDirtyRegion = window->currDirtyRegion;
+			/* reset curr dirty region */
+			window->currDirtyRegion.data = NULL;
+		}
 	}
 	else {
 		crWarning("VNC SPU: SwapBuffers called for invalid window id");
@@ -435,6 +667,57 @@ vncspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
 }
 
 
+static void VNCSPU_APIENTRY
+vncspuClear(GLbitfield mask)
+{
+	WindowInfo *window = vnc_spu.currentWindow;
+
+	/*crDebug("VNC SPU Clear");*/
+	vnc_spu.super.Clear(mask);
+	REGION_UNINIT(&window->currDirtyRegion);
+	REGION_EMPTY(&window->currDirtyRegion);
+}
+
+
+static void VNCSPU_APIENTRY
+vncspuBoundsInfoCR(const CRrecti *bounds, const GLbyte *payload,
+									 GLint len, GLint num_opcodes)
+{
+	vnc_spu.super.BoundsInfoCR(bounds, payload, len, num_opcodes);
+
+	if (vnc_spu.use_bounding_boxes) {
+		WindowInfo *window = vnc_spu.currentWindow;
+		RegionRec newRegion;
+		BoxRec newRect;
+
+		CRASSERT(bounds->x1 < bounds->x2);
+		CRASSERT(bounds->y1 < bounds->y2);
+
+		/*
+		crDebug("VNC SPU BoundsInfo %i, %i .. %i, %i",
+						bounds->x1, bounds->y1, bounds->x2, bounds->y2);
+		*/
+
+		if (bounds->x1 <= -2147483600) {
+			/* infinite bounding box, use whole window */
+			newRect.x1 = 0;
+			newRect.y1 = 0;
+			newRect.x2 = window->prevWidth;
+			newRect.y2 = window->prevHeight;
+		}
+		else {
+			newRect.x1 = bounds->x1;
+			newRect.y1 = bounds->y1;
+			newRect.x2 = bounds->x2;
+			newRect.y2 = bounds->y2;
+		}
+
+		REGION_INIT(&newRegion, &newRect, 1);
+		REGION_UNION(&window->currDirtyRegion, &window->currDirtyRegion, &newRegion);
+	}
+}
+
+
 /**
  * SPU function table
  */
@@ -443,5 +726,7 @@ SPUNamedFunctionTable _cr_vnc_table[] = {
 	{"MakeCurrent", (SPUGenericFunction) vncspuMakeCurrent},
 	{"Finish", (SPUGenericFunction) vncspuFinish},
 	{"Flush", (SPUGenericFunction) vncspuFinish},
+	{"Clear", (SPUGenericFunction) vncspuClear},
+	{"BoundsInfoCR", (SPUGenericFunction) vncspuBoundsInfoCR},
 	{ NULL, NULL }
 };

@@ -29,6 +29,12 @@
 #endif
 
 
+#if defined(HAVE_XCLIPLIST_EXT)
+#include <X11/extensions/Xcliplist.h>
+#endif
+#include "region.h"
+
+
 /**
  * We have a range of ports that we try to use.
  * Need this to support multiple, simultaneous SPUs running on one host.
@@ -44,6 +50,10 @@ typedef struct {
 	GLint id;             /* my id */
 	GLint nativeWindow;
 	GLuint frameCounter;
+	RegionRec currDirtyRegion;
+	RegionRec prevDirtyRegion;
+	GLint prevWidth, prevHeight;
+	GLint clippingHash;
 } WindowInfo;
 
 
@@ -61,6 +71,7 @@ typedef struct {
 	int screen_width, screen_height;
 	int max_update_rate;
 	char display_string[1000];
+	int use_bounding_boxes;
 #ifdef NETLOGGER
 	char *netlogger_url;
 	char *hostname;

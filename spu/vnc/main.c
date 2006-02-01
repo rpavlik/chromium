@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: main.c,v 1.4 2005-10-03 17:00:39 brianp Exp $
+ * $Id: main.c,v 1.5 2006-02-01 19:31:24 brianp Exp $
  * Main module
  */
 
@@ -26,6 +26,8 @@
 #include <fcntl.h>
 #include <zlib.h>
 
+#include "vncspu.h"
+
 #include "rfblib.h"
 #include "async_io.h"
 #include "logging.h"
@@ -36,8 +38,6 @@
 #include "client_io.h"
 #include "encode.h"
 
-#include "vncspu.h"
-
 /*
  * Configuration options
  */
@@ -45,7 +45,7 @@
 static int   opt_no_banner;
 static int   opt_cl_listen_port;
 static char *opt_log_filename;
-static char *opt_passwd_filename;
+static char *opt_passwd_filename = NULL;
 static char *opt_active_filename;
 static char *opt_actions_filename;
 static int   opt_foreground;
@@ -100,6 +100,7 @@ int main(int argc, char **argv)
   (void) parse_args;
   (void) report_usage;
   /*opt_log_filename = "reflector.log";*/
+  opt_log_filename = NULL;
   opt_no_banner = 1;
   opt_foreground = 1;
   opt_stderr_loglevel = 5;

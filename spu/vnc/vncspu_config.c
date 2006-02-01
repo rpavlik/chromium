@@ -36,6 +36,11 @@ static void set_max_update_rate(VncSPU *vnc_spu, const char *response)
 	vnc_spu->max_update_rate = crStrToInt(response);
 }
 
+static void set_use_bounding_boxes(VncSPU *vnc_spu, const char *response)
+{
+	vnc_spu->use_bounding_boxes = crStrToInt(response);
+}
+
 #ifdef NETLOGGER
 static void set_netlogger_url(VncSPU *vnc_spu, const char *response)
 {
@@ -66,6 +71,8 @@ SPUOptions vncSPUOptions[] = {
 		"Screen Size", (SPUOptionCB) set_screen_size },
 	{ "max_update_rate", CR_INT, 1, "10", "1", NULL,
 		"Max client frame rate", (SPUOptionCB) set_max_update_rate },
+	{ "use_bounding_boxes", CR_BOOL, 1, "1", NULL, NULL,
+		"Use Bounding Boxes", (SPUOptionCB) set_use_bounding_boxes },
 #ifdef NETLOGGER
 	{ "netlogger_url", CR_STRING, 1, NULL, NULL, NULL,
 		"NetLogger log URL", (SPUOptionCB) set_netlogger_url },
