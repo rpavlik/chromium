@@ -221,6 +221,12 @@ crServerInitializeBucketing(CRMuralInfo *mural)
 }
 
 
+/**
+ * Process a crBoundsInfoCR message/function.  This is a bounding box
+ * followed by a payload of arbitrary Chromium rendering commands.
+ * The tilesort SPU will send this.
+ * Note: the bounding box is in mural pixel coordinates (y=0=bottom)
+ */
 void SERVER_DISPATCH_APIENTRY
 crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 															GLint len, GLint num_opcodes )
@@ -229,17 +235,31 @@ crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 	char *data_ptr = (char*)(payload + ((num_opcodes + 3 ) & ~0x03));
 	unsigned int bx, by;
 
+	/* Save current unpacker state */
 	crUnpackPush();
 
-	bx = BKT_DOWNHASH(bounds->x1, mural->width);
-	by = BKT_DOWNHASH(bounds->y1, mural->height);
+	/* pass bounds info to first SPU */
+	{
+		/* bias bounds to extent/window coords */
+		CRrecti bounds2;
+		int dx = mural->extents[0].imagewindow.x1;
+		int dy = mural->extents[0].imagewindow.y1;
+		bounds2.x1 = bounds->x1 - dx;
+		bounds2.y1 = bounds->y1 - dy;
+		bounds2.x2 = bounds->x2 - dx;
+		bounds2.y2 = bounds->y2 - dy;
+		cr_server.head_spu->dispatch_table.BoundsInfoCR(&bounds2, NULL, 0, 0);
+	}
 
 	if (!mural->viewportValidated) {
 		crServerComputeViewportBounds(&(cr_server.curClient->currentCtx->viewport),
 																	mural);
 	}
 
-	/* Check for out of bounds, and optimizebucket to enable */
+	bx = BKT_DOWNHASH(bounds->x1, mural->width);
+	by = BKT_DOWNHASH(bounds->y1, mural->height);
+
+	/* Check for out of bounds, and optimizeBucket to enable */
 	if (mural->optimizeBucket && (bx <= HASHRANGE) && (by <= HASHRANGE))
 	{
 		const struct BucketingInfo *bucketInfo = mural->bucketInfo;
@@ -269,7 +289,7 @@ crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 	} 
 	else 
 	{
-		/* non-optimized bucketing */
+		/* non-optimized bucketing - unpack/render for each tile/extent */
 		int i;
 		for ( i = 0; i < mural->numExtents; i++ )
 		{
@@ -290,5 +310,6 @@ crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 		}
 	}
 
+	/* Restore previous unpacker state */
 	crUnpackPop();
 }
