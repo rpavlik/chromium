@@ -12,7 +12,6 @@
 
 #include "packer.h"
 #include "cr_error.h"
-#include "pack_bbox.h"
 
 
 void PACK_APIENTRY crPackProgramParameters4dvNV (GLenum target, GLuint index, GLuint num, const GLdouble * params)
