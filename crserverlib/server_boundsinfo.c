@@ -242,12 +242,21 @@ crServerDispatchBoundsInfoCR( const CRrecti *bounds, const GLbyte *payload,
 	{
 		/* bias bounds to extent/window coords */
 		CRrecti bounds2;
-		int dx = mural->extents[0].imagewindow.x1;
-		int dy = mural->extents[0].imagewindow.y1;
-		bounds2.x1 = bounds->x1 - dx;
-		bounds2.y1 = bounds->y1 - dy;
-		bounds2.x2 = bounds->x2 - dx;
-		bounds2.y2 = bounds->y2 - dy;
+		const int dx = mural->extents[0].imagewindow.x1;
+		const int dy = mural->extents[0].imagewindow.y1;
+		if (bounds->x1 == -CR_MAXINT) {
+			/* "infinite" bounds: convert to full image bounds */
+			bounds2.x1 = 0;
+			bounds2.y1 = 0;
+			bounds2.x2 = mural->extents[0].imagewindow.x2 - dx; /* width */
+			bounds2.y2 = mural->extents[0].imagewindow.y2 - dy; /* height */
+		}
+		else {
+			bounds2.x1 = bounds->x1 - dx;
+			bounds2.y1 = bounds->y1 - dy;
+			bounds2.x2 = bounds->x2 - dx;
+			bounds2.y2 = bounds->y2 - dy;
+		}
 		cr_server.head_spu->dispatch_table.BoundsInfoCR(&bounds2, NULL, 0, 0);
 	}
 
