@@ -94,7 +94,9 @@ print """
  */
 static int NopFunction(void)
 {
+/*
 	crWarning("Calling generic no-op function in dispatch.c");
+*/
 	return 0;
 }
 
