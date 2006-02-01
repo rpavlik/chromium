@@ -171,6 +171,10 @@ static void RENDER_APIENTRY renderspuDestroyContext( GLint ctx )
 	context = (ContextInfo *) crHashtableSearch(render_spu.contextTable, ctx);
 	CRASSERT(context);
 	renderspu_SystemDestroyContext( context );
+	if (context->extensionString) {
+		crFree(context->extensionString);
+		context->extensionString = NULL;
+	}
 	crHashtableDelete(render_spu.contextTable, ctx, crFree);
 }
 
@@ -859,14 +863,41 @@ static void RENDER_APIENTRY renderspuGetChromiumParametervCR(GLenum target, GLui
 }
 
 
-static void RENDER_APIENTRY renderspuBoundsInfoCR( CRrecti *bounds, GLbyte *payload, GLint
- len, GLint num_opcodes )
+static void RENDER_APIENTRY
+renderspuBoundsInfoCR( CRrecti *bounds, GLbyte *payload, GLint len,
+											 GLint num_opcodes )
 {
 	(void) bounds;
 	(void) payload;
 	(void) len;
 	(void) num_opcodes;
+	/* draw the bounding box */
+	if (render_spu.draw_bbox) {
+		GET_CONTEXT(context);
+		WindowInfo *window = context->currentWindow;
+		int x, y, w, h;
+
+		renderspu_SystemGetWindowGeometry(window, &x, &y, &w, &h);
+
+		render_spu.self.PushMatrix();
+		render_spu.self.LoadIdentity();
+		render_spu.self.MatrixMode(GL_PROJECTION);
+		render_spu.self.PushMatrix();
+		render_spu.self.LoadIdentity();
+		render_spu.self.Ortho(0, w, 0, h, -1, 1);
+		render_spu.self.Color3f(1, 1, 1);
+		render_spu.self.Begin(GL_LINE_LOOP);
+		render_spu.self.Vertex2i(bounds->x1, bounds->y1);
+		render_spu.self.Vertex2i(bounds->x2, bounds->y1);
+		render_spu.self.Vertex2i(bounds->x2, bounds->y2);
+		render_spu.self.Vertex2i(bounds->x1, bounds->y2);
+		render_spu.self.End();
+		render_spu.self.PopMatrix();
+		render_spu.self.MatrixMode(GL_MODELVIEW);
+		render_spu.self.PopMatrix();
+	}
 }
+
 
 static void RENDER_APIENTRY renderspuWriteback( GLint *writeback )
 {
@@ -885,6 +916,8 @@ static void remove_trailing_space(char *s)
 static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
 {
 	static char tempStr[1000];
+	GET_CONTEXT(context);
+
 	if (pname == GL_EXTENSIONS)
 	{
 		const char *nativeExt;
@@ -906,7 +939,10 @@ static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
 		remove_trailing_space(s2);
 		crFree(crExt);
 		crFree(s1);
-		return (const GLubyte *) s2;  /* leak - this never gets freed! */
+		if (context->extensionString)
+			crFree(context->extensionString);
+		context->extensionString = s2;
+		return (const GLubyte *) s2;
 	}
 	else if (pname == GL_VENDOR)
 		return (const GLubyte *) CR_VENDOR;

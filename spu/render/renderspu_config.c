@@ -224,6 +224,12 @@ static void set_use_glxchoosevisual( RenderSPU *render_spu, char *response )
 	render_spu->use_glxchoosevisual = crStrToInt( response );
 }
 
+static void set_draw_bbox( RenderSPU *render_spu, char *response )
+{
+	render_spu->draw_bbox = crStrToInt( response );
+}
+
+
 
 /* option, type, nr, default, min, max, title, callback
  */
@@ -308,6 +314,8 @@ SPUOptions renderSPUOptions[] = {
 	{ "use_glxchoosevisual", CR_BOOL, 1, "1", NULL, NULL,
 		"Use glXChooseVisual", (SPUOptionCB) set_use_glxchoosevisual },
 
+	{ "draw_bbox", CR_BOOL, 1, "0", NULL, NULL,
+		"Draw Bounding Boxes", (SPUOptionCB) set_draw_bbox },
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 

@@ -97,6 +97,7 @@ typedef struct _ContextInfo {
 	GLXContext context;
 #endif
 	struct _ContextInfo *shared;
+	char *extensionString;
 } ContextInfo;
 
 /**
@@ -142,6 +143,7 @@ typedef struct {
 	int ignore_window_moves;
 	int pbufferWidth, pbufferHeight;
 	int use_glxchoosevisual;
+	int draw_bbox;
 	/*@}*/
 
 	CRServer *server;
@@ -191,7 +193,7 @@ extern RenderSPU render_spu;
 extern CRtsd _RenderTSD;
 #define GET_CONTEXT(T)  ContextInfo *T = (ContextInfo *) crGetTSD(&_RenderTSD)
 #else
-#define GET_CONTEXT(T)  ContextInfo *T = render_spu->currentContext
+#define GET_CONTEXT(T)  ContextInfo *T = render_spu.currentContext
 #endif
 
 extern void renderspuGatherConfiguration( RenderSPU *spu );
