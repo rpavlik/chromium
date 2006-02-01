@@ -1729,6 +1729,23 @@ miRectsToRegion(nrects, prect, ctype)
     return pRgn;
 }
 
+
+void
+miBoxesToRegion(RegionPtr region, int numBoxes, const BoxPtr boxes)
+{
+  Bool overlap;
+
+  REGION_UNINIT(region);
+  region->data = malloc(sizeof(RegDataRec) + numBoxes * sizeof(BoxRec));
+
+  region->data->size = numBoxes;
+  region->data->numRects = numBoxes;
+  memcpy(region->data + 1, boxes, numBoxes * sizeof(BoxRec));
+
+  REGION_VALIDATE(region, &overlap);
+}
+
+
 /*======================================================================
  * 	    	  Region Subtraction
  *====================================================================*/

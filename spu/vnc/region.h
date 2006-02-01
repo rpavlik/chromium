@@ -277,6 +277,7 @@ extern Bool miUnion(RegionPtr newReg, RegionPtr reg1, RegionPtr reg2);
 extern Bool miRegionAppend(RegionPtr dstrgn, RegionPtr rgn);
 extern Bool miRegionValidate(RegionPtr badreg, Bool * pOverlap);
 extern RegionPtr miRectsToRegion(int nrects, xRectanglePtr prect, int ctype);
+extern void miBoxesToRegion(RegionPtr region, int numBoxes, const BoxPtr boxes);
 extern Bool miSubtract(RegionPtr regD, RegionPtr regM, RegionPtr regS);
 extern Bool miInverse(RegionPtr newReg, RegionPtr reg1, BoxPtr invRect);
 extern int miRectIn(RegionPtr region, BoxPtr prect);
