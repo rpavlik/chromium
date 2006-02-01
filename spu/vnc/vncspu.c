@@ -328,6 +328,7 @@ PrintRegion(const char *s, const RegionPtr r)
 		crDebug("  Rect %d: %d, %d .. %d, %d", i, rects[i].x1, rects[i].y1,
 						rects[i].x2, rects[i].y2);
 	}
+	(void) PrintRegion;
 }
 #endif
 
@@ -461,7 +462,9 @@ DoReadback(WindowInfo *window)
 		miRegionInit(&dirtyRegion, NULL, 0);
 		REGION_UNION(&dirtyRegion,
 								 &window->currDirtyRegion, &window->prevDirtyRegion);
+		/*
 		PrintRegion("dirty", &dirtyRegion);
+		*/
 
 		regionArea = RegionArea(&dirtyRegion);
 		extentArea = (dirtyRegion.extents.x2 - dirtyRegion.extents.x1)
