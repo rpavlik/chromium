@@ -78,8 +78,8 @@ static void _math_transposed( GLdouble to[16], const GLdouble from[16] )
 }
 
 
-static void
-init_matrix_stack(CRMatrixStack *stack, int maxDepth)
+void
+crStateInitMatrixStack(CRMatrixStack *stack, int maxDepth)
 {
 	stack->maxDepth = maxDepth;
 	stack->depth = 0;
@@ -122,13 +122,13 @@ void crStateTransformInit(CRContext *ctx)
 	t->matrixMode = GL_MODELVIEW;
 	RESET(tb->matrixMode, ctx->bitid);
 
-	init_matrix_stack(&t->modelViewStack, CR_MAX_MODELVIEW_STACK_DEPTH);
-	init_matrix_stack(&t->projectionStack, CR_MAX_PROJECTION_STACK_DEPTH);
-	init_matrix_stack(&t->colorStack, CR_MAX_COLOR_STACK_DEPTH);
+	crStateInitMatrixStack(&t->modelViewStack, CR_MAX_MODELVIEW_STACK_DEPTH);
+	crStateInitMatrixStack(&t->projectionStack, CR_MAX_PROJECTION_STACK_DEPTH);
+	crStateInitMatrixStack(&t->colorStack, CR_MAX_COLOR_STACK_DEPTH);
 	for (i = 0 ; i < limits->maxTextureUnits ; i++)
-		init_matrix_stack(&t->textureStack[i], CR_MAX_TEXTURE_STACK_DEPTH);
+		crStateInitMatrixStack(&t->textureStack[i], CR_MAX_TEXTURE_STACK_DEPTH);
 	for (i = 0 ; i < CR_MAX_PROGRAM_MATRICES ; i++)
-		init_matrix_stack(&t->programStack[i], CR_MAX_PROGRAM_MATRIX_STACK_DEPTH);
+		crStateInitMatrixStack(&t->programStack[i], CR_MAX_PROGRAM_MATRIX_STACK_DEPTH);
 	t->currentStack = &(t->modelViewStack);
 
 	/* dirty bits */

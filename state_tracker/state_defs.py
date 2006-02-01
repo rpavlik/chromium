@@ -57,6 +57,7 @@ crStateUseServerArrays
 crStateComputeVersion
 crStateTransformXformPointMatrixf
 crStateTransformXformPointMatrixd
+crStateInitMatrixStack
 crStateLoadMatrix
 __currentBits
 """

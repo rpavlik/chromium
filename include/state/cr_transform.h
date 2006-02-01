@@ -66,6 +66,9 @@ typedef struct {
 void crStateTransformInit(CRContext *ctx);
 void crStateTransformDestroy(CRContext *ctx);
 
+void
+crStateInitMatrixStack(CRMatrixStack *stack, int maxDepth);
+
 void crStateLoadMatrix(const CRmatrix *m);
 
 void crStateTransformUpdateTransform(CRTransformState *t);
