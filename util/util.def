@@ -114,6 +114,9 @@ crSignalCondition
 crThreadID
 crInitBarrier
 crWaitBarrier
+crInitSemaphore
+crWaitSemaphore
+crSignalSemaphore
 crInitTSD
 crInitTSDF
 crSetTSD

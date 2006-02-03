@@ -19,6 +19,7 @@ extern "C" {
 #include <windows.h>
 #else
 #include <pthread.h>
+#include <semaphore.h>
 #endif
 
 
@@ -84,6 +85,18 @@ typedef struct {
 extern void crInitBarrier(CRbarrier *b, unsigned int count);
 extern void crFreeBarrier(CRbarrier *b);
 extern void crWaitBarrier(CRbarrier *b);
+
+
+/* Semaphores */
+#ifdef WINDOWS
+	typedef in CRsemaphore;
+#else
+	typedef sem_t CRsemaphore;
+#endif
+
+extern void crInitSemaphore(CRsemaphore *s, unsigned int count);
+extern void crWaitSemaphore(CRsemaphore *s);
+extern void crSignalSemaphore(CRsemaphore *s);
 
 
 #ifdef __cplusplus

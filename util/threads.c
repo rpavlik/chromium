@@ -239,3 +239,34 @@ void crWaitBarrier(CRbarrier *b)
 	pthread_mutex_unlock( &(b->mutex) );
 #endif
 }
+
+
+void crInitSemaphore(CRsemaphore *s, unsigned int count)
+{
+#ifdef WINDOWS
+	crWarning("CRsemaphore functions not implemented on Windows");
+#else
+	sem_init(s, 0, count);
+#endif
+}
+
+
+void crWaitSemaphore(CRsemaphore *s)
+{
+#ifdef WINDOWS
+	/* to do */
+#else
+	sem_wait(s);
+#endif
+}
+
+
+void crSignalSemaphore(CRsemaphore *s)
+{
+#ifdef WINDOWS
+	/* to do */
+#else
+	sem_post(s);
+#endif
+}
+
