@@ -113,12 +113,19 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 
 	if (tilesort_spu.useDMX) {
 		/* load OpenGL */
-		int n = crLoadOpenGL( &tilesort_spu.ws, NULL);
+		int n;
+		crDebug("Tilesort SPU: Using DMX");
+		n = crLoadOpenGL( &tilesort_spu.ws, NULL);
 		if (!n) {
 			crWarning("Tilesort SPU: Unable to load OpenGL, disabling DMX");
 			tilesort_spu.useDMX = 0;
 		}
 	}
+	else {
+		crDebug("Tilesort SPU: Not using DMX");
+	}
+
+	crDebug("Tilesort SPU: ---------- End of Init -------------");
 
 	return &tilesort_functions;
 }
