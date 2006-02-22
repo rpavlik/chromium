@@ -144,7 +144,9 @@ vncspuStartServerThread(void)
 		 * connect the VNC server thread which we just started.
 		 */
 		CRASSERT(vnc_spu.server_port != -1);
+#if defined(HAVE_VNC_EXT)
 		vncspuSendVncStartUpMsg(vnc_spu.server_port);
+#endif
 	}
 }
 
