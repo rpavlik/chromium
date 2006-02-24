@@ -981,6 +981,81 @@ renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context, Context
 }
 
 
+#define USE_GLX_COPYCONTEXT 0
+
+#if !USE_GLX_COPYCONTEXT
+
+/**
+ * Unfortunately, glXCopyContext() is broken sometimes (NVIDIA 76.76 driver).
+ * This bit of code gets and sets GL state we need to copy between contexts.
+ */
+struct saved_state
+{
+	/* XXX depending on the app, more state may be needed here */
+	GLboolean Lighting;
+	GLboolean LightEnabled[8];
+	GLfloat LightPos[8][4];
+	GLfloat LightAmbient[8][4];
+	GLfloat LightDiffuse[8][4];
+	GLfloat LightSpecular[8][4];
+	GLboolean DepthTest;
+};
+
+static struct saved_state SavedState;
+
+static void
+get_state(struct saved_state *s)
+{
+	int i;
+
+	s->Lighting = render_spu.self.IsEnabled(GL_LIGHTING);
+	for (i = 0; i < 8; i++) {
+		s->LightEnabled[i] = render_spu.self.IsEnabled(GL_LIGHT0 + i);
+		render_spu.self.GetLightfv(GL_LIGHT0 + i, GL_POSITION, s->LightPos[i]);
+		render_spu.self.GetLightfv(GL_LIGHT0 + i, GL_AMBIENT, s->LightAmbient[i]);
+		render_spu.self.GetLightfv(GL_LIGHT0 + i, GL_DIFFUSE, s->LightDiffuse[i]);
+		render_spu.self.GetLightfv(GL_LIGHT0 + i, GL_SPECULAR, s->LightSpecular[i]);
+	}
+
+	s->DepthTest = render_spu.self.IsEnabled(GL_DEPTH_TEST);
+}
+
+static void
+set_state(const struct saved_state *s)
+{
+	int i;
+
+	if (s->Lighting) {
+		render_spu.self.Enable(GL_LIGHTING);
+	}
+	else {
+		render_spu.self.Disable(GL_LIGHTING);
+	}
+
+	for (i = 0; i < 8; i++) {
+		if (s->LightEnabled[i]) {
+			render_spu.self.Enable(GL_LIGHT0 + i);
+		}
+		else {
+			render_spu.self.Disable(GL_LIGHT0 + i);
+		}
+		render_spu.self.Lightfv(GL_LIGHT0 + i, GL_POSITION, s->LightPos[i]);
+		render_spu.self.Lightfv(GL_LIGHT0 + i, GL_AMBIENT, s->LightAmbient[i]);
+		render_spu.self.Lightfv(GL_LIGHT0 + i, GL_DIFFUSE, s->LightDiffuse[i]);
+		render_spu.self.Lightfv(GL_LIGHT0 + i, GL_SPECULAR, s->LightSpecular[i]);
+	}
+
+	if (s->DepthTest)
+		render_spu.self.Enable(GL_DEPTH_TEST);
+	else
+		render_spu.self.Disable(GL_DEPTH_TEST);
+}
+
+#endif /* !USE_GLX_COPYCONTEXT */
+
+
+
+
 /**
  * Recreate the GLX context for ContextInfo.  The new context will use the
  * visual specified by newVisualID.
@@ -991,6 +1066,7 @@ renderspu_RecreateContext( ContextInfo *context, int newVisualID )
 	XVisualInfo templateVis, *vis;
 	long templateFlags;
 	int screen = 0, count;
+	GLXContext oldContext = context->context;
 
 	templateFlags = VisualScreenMask | VisualIDMask;
 	templateVis.screen = screen;
@@ -1000,16 +1076,23 @@ renderspu_RecreateContext( ContextInfo *context, int newVisualID )
 	if (!vis)
 		return;
 
-	/* destroy old context */
-	render_spu.ws.glXDestroyContext(context->visual->dpy, context->context);
-
 	/* create new context */
-	crDebug("Creating new GLX context with visual 0x%x", newVisualID);
+	crDebug("Render SPU: Creating new GLX context with visual 0x%x", newVisualID);
 	context->context = render_spu.ws.glXCreateContext(context->visual->dpy,
 																										vis, NULL,
 																										render_spu.try_direct);
 	CRASSERT(context->context);
-	XFree(vis);
+
+#if USE_GLX_COPYCONTEXT
+	/* copy old context state to new context */
+	render_spu.ws.glXCopyContext(context->visual->dpy,
+															 oldContext, context->context, ~0);
+#endif
+
+	/* destroy old context */
+	render_spu.ws.glXDestroyContext(context->visual->dpy, oldContext);
+
+	context->visual->visual = vis;
 }
 
 
@@ -1151,6 +1234,8 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 			if (WindowExists(window->visual->dpy, nativeWindow))
 			{
 				int vid = GetWindowVisualID(window->visual->dpy, nativeWindow);
+				GLboolean recreated = GL_FALSE;
+
 				/* check that the window's visual and context's visual match */
 				if (vid != (int) context->visual->visual->visualid) {
 					crWarning("Render SPU: Can't bind context %d to CRUT/native window "
@@ -1161,14 +1246,26 @@ renderspu_SystemMakeCurrent( WindowInfo *window, GLint nativeWindow,
 					/* Try to recreate the GLX context so that it uses the same
 					 * GLX visual as the window.
 					 */
+#if !USE_GLX_COPYCONTEXT
+					if (context->everCurrent) {
+						get_state(&SavedState);
+					}
+#endif
 					renderspu_RecreateContext(context, vid);
+					recreated = GL_TRUE;
 				}
+
 				/* OK, this should work */
 				window->nativeWindow = (Window) nativeWindow;
 				b = render_spu.ws.glXMakeCurrent( window->visual->dpy,
 																					window->nativeWindow,
 																					context->context );
 				CRASSERT(b);
+#if !USE_GLX_COPYCONTEXT
+				if (recreated) {
+					set_state(&SavedState);
+				}
+#endif
 			}
 			else
 			{
