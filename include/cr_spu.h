@@ -271,6 +271,7 @@ typedef GLXDrawable (*glXGetCurrentDrawableFunc_t)( void );
 typedef char * (*glXGetClientStringFunc_t)( Display *dpy, int name );
 typedef void (*glXWaitGLFunc_t)(void);
 typedef void (*glXWaitXFunc_t)(void);
+typedef void (*glXCopyContextFunc_t)(Display *dpy, GLXContext src, GLXContext dst, unsigned long mask );
 typedef const GLubyte *(*glGetStringFunc_t)( GLenum );
 typedef Bool (*glXJoinSwapGroupNVFunc_t)(Display *dpy, GLXDrawable drawable, GLuint group);
 typedef Bool (*glXBindSwapBarrierNVFunc_t)(Display *dpy, GLuint group, GLuint barrier);
@@ -385,6 +386,7 @@ typedef struct {
 	glXGetClientStringFunc_t glXGetClientString;
 	glXWaitGLFunc_t glXWaitGL;
 	glXWaitXFunc_t glXWaitX;
+	glXCopyContextFunc_t glXCopyContext;
 	/* GLX_NV_swap_group */
 	glXJoinSwapGroupNVFunc_t glXJoinSwapGroupNV;
 	glXBindSwapBarrierNVFunc_t glXBindSwapBarrierNV;

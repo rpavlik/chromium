@@ -397,7 +397,8 @@ useful_glx_functions = [
 	"glXGetCurrentContext",
 	"glXGetClientString",
 	"glXWaitGL",
-	"glXWaitX"
+	"glXWaitX",
+	"glXCopyContext"
 ]
 possibly_useful_glx_functions = [
 	"glXGetProcAddressARB",
