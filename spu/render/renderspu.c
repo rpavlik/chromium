@@ -13,7 +13,8 @@
 #include "cr_extstring.h"
 
 
-static void __doSync(void)
+static void
+DoSync(void)
 {
 	CRMessage *in, out;
 
@@ -23,13 +24,13 @@ static void __doSync(void)
 	{
 		int a;
 	
-		for (a=0; a<render_spu.num_swap_clients; a++)
+		for (a = 0; a < render_spu.num_swap_clients; a++)
 		{
 			crNetGetMessage( render_spu.swap_conns[a], &in );			
 			crNetFree( render_spu.swap_conns[a], in);
 		}
 
-		for (a=0; a<render_spu.num_swap_clients; a++)
+		for (a = 0; a < render_spu.num_swap_clients; a++)
 			crNetSend( render_spu.swap_conns[a], NULL, &out, sizeof(CRMessage));
 	}
 	else
@@ -41,12 +42,17 @@ static void __doSync(void)
 	}
 }
 
+
+
 /*
  * Visual functions
  */
 
-/* used for debugging and giving info to the user */
-void renderspuMakeVisString( GLbitfield visAttribs, char *s )
+/**
+ * used for debugging and giving info to the user.
+ */
+void
+renderspuMakeVisString( GLbitfield visAttribs, char *s )
 {
 	s[0] = 0;
 
@@ -77,7 +83,8 @@ void renderspuMakeVisString( GLbitfield visAttribs, char *s )
  * Find a VisualInfo which matches the given display name and attribute
  * bitmask, or return a pointer to a new visual.
  */
-VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
+VisualInfo *
+renderspuFindVisual(const char *displayName, GLbitfield visAttribs)
 {
 	int i;
 
@@ -102,7 +109,7 @@ VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
 
 	if (render_spu.numVisuals >= MAX_VISUALS)
 	{
-		crWarning( "Render SPU: Couldn't create a visual, too many visuals already" );
+		crWarning("Render SPU: Couldn't create a visual, too many visuals already");
 		return NULL;
 	}
 
@@ -115,7 +122,7 @@ VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
 		return &(render_spu.visuals[i]);
 	}
 	else {
-		crWarning( "Render SPU: Couldn't get a visual, renderspu_SystemInitVisual failed" );
+		crWarning("Render SPU: Couldn't get a visual, renderspu_SystemInitVisual failed");
 		return NULL;
 	}
 }
@@ -125,7 +132,7 @@ VisualInfo *renderspuFindVisual(const char *displayName, GLbitfield visAttribs )
  */
 
 GLint RENDER_APIENTRY
-renderspuCreateContext( const char *dpyName, GLint visBits, GLint shareCtx )
+renderspuCreateContext(const char *dpyName, GLint visBits, GLint shareCtx)
 {
 	ContextInfo *context, *sharedContext = NULL;
 	VisualInfo *visual;
@@ -138,7 +145,7 @@ renderspuCreateContext( const char *dpyName, GLint visBits, GLint shareCtx )
 	if (!dpyName || crStrlen(render_spu.display_string)>0)
 		dpyName = render_spu.display_string;
 
-	visual = renderspuFindVisual( dpyName, visBits );
+	visual = renderspuFindVisual(dpyName, visBits);
 	if (!visual)
 		return -1;
 
@@ -147,7 +154,7 @@ renderspuCreateContext( const char *dpyName, GLint visBits, GLint shareCtx )
 		return -1;
 	context->id = render_spu.context_id;
 	context->shared = sharedContext;
-	if (!renderspu_SystemCreateContext( visual, context, sharedContext ))
+	if (!renderspu_SystemCreateContext(visual, context, sharedContext))
 		return -1;
 
 	crHashtableAdd(render_spu.contextTable, render_spu.context_id, context);
@@ -162,7 +169,8 @@ renderspuCreateContext( const char *dpyName, GLint visBits, GLint shareCtx )
 }
 
 
-static void RENDER_APIENTRY renderspuDestroyContext( GLint ctx )
+static void RENDER_APIENTRY
+renderspuDestroyContext( GLint ctx )
 {
 	ContextInfo *context;
 
@@ -178,7 +186,9 @@ static void RENDER_APIENTRY renderspuDestroyContext( GLint ctx )
 	crHashtableDelete(render_spu.contextTable, ctx, crFree);
 }
 
-void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GLint ctx)
+
+void RENDER_APIENTRY
+renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GLint ctx)
 {
 	WindowInfo *window;
 	ContextInfo *context;
@@ -200,12 +210,12 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
 		context->currentWindow = window;
 		if (!window)
 		{
-			crDebug("renderspuMakeCurrent: invalid window id: %d", crWindow);
+			crDebug("Render SPU: MakeCurrent invalid window id: %d", crWindow);
 			return;
 		}
 		if (!context)
 		{
-			crDebug("renderspuMakeCurrent: invalid context id: %d", ctx);
+			crDebug("Render SPU: MakeCurrent invalid context id: %d", ctx);
 			return;
 		}
 
@@ -251,7 +261,8 @@ void RENDER_APIENTRY renderspuMakeCurrent(GLint crWindow, GLint nativeWindow, GL
  * Window functions
  */
 
-GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits )
+GLint RENDER_APIENTRY
+renderspuWindowCreate( const char *dpyName, GLint visBits )
 {
 	WindowInfo *window;
 	VisualInfo *visual;
@@ -325,7 +336,9 @@ GLint RENDER_APIENTRY renderspuWindowCreate( const char *dpyName, GLint visBits 
 	return window->id;
 }
 
-static void RENDER_APIENTRY renderspuWindowDestroy( GLint win )
+
+static void
+RENDER_APIENTRY renderspuWindowDestroy( GLint win )
 {
 	WindowInfo *window;
 	CRASSERT(win >= 0);
@@ -340,7 +353,9 @@ static void RENDER_APIENTRY renderspuWindowDestroy( GLint win )
 	}
 }
 
-static void RENDER_APIENTRY renderspuWindowSize( GLint win, GLint w, GLint h )
+
+static void RENDER_APIENTRY
+renderspuWindowSize( GLint win, GLint w, GLint h )
 {
 	WindowInfo *window;
 	CRASSERT(win >= 0);
@@ -355,7 +370,9 @@ static void RENDER_APIENTRY renderspuWindowSize( GLint win, GLint w, GLint h )
 	}
 }
 
-static void RENDER_APIENTRY renderspuWindowPosition( GLint win, GLint x, GLint y )
+
+static void RENDER_APIENTRY
+renderspuWindowPosition( GLint win, GLint x, GLint y )
 {
 	if (!render_spu.ignore_window_moves) {
 		WindowInfo *window;
@@ -372,7 +389,9 @@ static void RENDER_APIENTRY renderspuWindowPosition( GLint win, GLint x, GLint y
 	}
 }
 
-static void RENDER_APIENTRY renderspuWindowShow( GLint win, GLint flag )
+
+static void RENDER_APIENTRY
+renderspuWindowShow( GLint win, GLint flag )
 {
 	WindowInfo *window;
 	CRASSERT(win >= 0);
@@ -392,10 +411,12 @@ static void RENDER_APIENTRY renderspuWindowShow( GLint win, GLint flag )
 	}
 }
 
+
 /*
  * Set the current raster position to the given window coordinate.
  */
-static void SetRasterPos( GLint winX, GLint winY )
+static void
+SetRasterPos( GLint winX, GLint winY )
 {
 	GLfloat fx, fy;
 
@@ -521,7 +542,7 @@ void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 
 	if (!w)
 	{
-		crDebug("renderspuSwapBuffers: invalid window id: %d", window);
+		crDebug("Render SPU: SwapBuffers invalid window id: %d", window);
 		return;
 	}
 
@@ -535,7 +556,7 @@ void RENDER_APIENTRY renderspuSwapBuffers( GLint window, GLint flags )
 		DrawCursor( render_spu.cursorX, render_spu.cursorY );
 
 	if (render_spu.swap_master_url)
-		__doSync();
+		DoSync();
 
 	renderspu_SystemSwapBuffers( w, flags );
 }
@@ -649,7 +670,8 @@ static void RENDER_APIENTRY renderspuChromiumParameteriCR(GLenum target, GLint v
 #endif
 }
 
-static void RENDER_APIENTRY renderspuChromiumParameterfCR(GLenum target, GLfloat value)
+static void RENDER_APIENTRY
+renderspuChromiumParameterfCR(GLenum target, GLfloat value)
 {
 	(void) target;
 	(void) value;
@@ -664,7 +686,9 @@ static void RENDER_APIENTRY renderspuChromiumParameterfCR(GLenum target, GLfloat
 }
 
 
-static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count, const GLvoid *values)
+static void RENDER_APIENTRY
+renderspuChromiumParametervCR(GLenum target, GLenum type, GLsizei count,
+															const GLvoid *values)
 {
 	int client_num;
 	unsigned short port;
@@ -691,7 +715,7 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 				switch (render_spu.server->clients[client_num]->conn->type)
 				{
 					case CR_TCPIP:
-						crDebug("AcceptClient from %s on %d", 
+						crDebug("Render SPU: AcceptClient from %s on %d", 
 							render_spu.server->clients[client_num]->conn->hostname, render_spu.gather_port);
 						render_spu.gather_conns[client_num] = 
 								crNetAcceptClient("tcpip", NULL, port, 1024*1024,  1);
@@ -703,7 +727,7 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 						break;
 						
 					default:
-						crError("Unknown Network Type to Open Gather Connection");
+						crError("Render SPU: Unknown Network Type to Open Gather Connection");
 				}
 
 		
@@ -720,7 +744,7 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 
 				if (render_spu.gather_conns[client_num])
 				{
-					crDebug("success! from %s", render_spu.gather_conns[client_num]->hostname);
+					crDebug("Render SPU: success! from %s", render_spu.gather_conns[client_num]->hostname);
 				}
 			}
 
@@ -746,12 +770,12 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 		/* 
 		 * We're only hitting the case if we're not actually calling 
 		 * child.SwapBuffers from readback, so a switch about which
-		 * call to __doSync() we really want [this one, or the one
+		 * call to DoSync() we really want [this one, or the one
 		 * in SwapBuffers above] is not necessary -- karl
 		 */
 		
 		if (render_spu.swap_master_url)
-			__doSync();
+			DoSync();
 
 		for (client_num=0; client_num< render_spu.server->numClients; client_num++)
 			crNetSend(render_spu.gather_conns[client_num], NULL, &pingback,
@@ -804,7 +828,10 @@ static void RENDER_APIENTRY renderspuChromiumParametervCR(GLenum target, GLenum 
 	}
 }
 
-static void RENDER_APIENTRY renderspuGetChromiumParametervCR(GLenum target, GLuint index, GLenum type, GLsizei count, GLvoid *values)
+
+static void RENDER_APIENTRY
+renderspuGetChromiumParametervCR(GLenum target, GLuint index, GLenum type,
+																 GLsizei count, GLvoid *values)
 {
 	switch (target) {
 	case GL_WINDOW_SIZE_CR:
@@ -899,13 +926,15 @@ renderspuBoundsInfoCR( CRrecti *bounds, GLbyte *payload, GLint len,
 }
 
 
-static void RENDER_APIENTRY renderspuWriteback( GLint *writeback )
+static void RENDER_APIENTRY
+renderspuWriteback( GLint *writeback )
 {
 	(void) writeback;
 }
 
 
-static void remove_trailing_space(char *s)
+static void
+remove_trailing_space(char *s)
 {
 	int k = crStrlen(s);
 	while (k > 0 && s[k-1] == ' ')
@@ -913,7 +942,8 @@ static void remove_trailing_space(char *s)
 	s[k] = 0;
 }
 
-static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
+static const GLubyte * RENDER_APIENTRY
+renderspuGetString(GLenum pname)
 {
 	static char tempStr[1000];
 	GET_CONTEXT(context);
@@ -965,7 +995,8 @@ static const GLubyte * RENDER_APIENTRY renderspuGetString( GLenum pname )
 
 /* These are the functions which the render SPU implements, not OpenGL.
  */
-int renderspuCreateFunctions( SPUNamedFunctionTable table[] )
+int
+renderspuCreateFunctions(SPUNamedFunctionTable table[])
 {
 	int i = 0;
 	FILLIN( "SwapBuffers", renderspuSwapBuffers );

@@ -1087,6 +1087,7 @@ renderspu_RecreateContext( ContextInfo *context, int newVisualID )
 	/* copy old context state to new context */
 	render_spu.ws.glXCopyContext(context->visual->dpy,
 															 oldContext, context->context, ~0);
+	crDebug("Render SPU: Done copying context state");
 #endif
 
 	/* destroy old context */
