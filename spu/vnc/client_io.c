@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.9 2006-02-01 19:31:24 brianp Exp $
+ * $Id: client_io.c,v 1.10 2006-02-24 20:46:35 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -20,6 +20,7 @@
 #include "vncspu.h"
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -67,6 +68,27 @@ static void send_update(void);
 /*
  * Implementation
  */
+
+
+
+/**
+ * Return number of client connections.
+ */
+int num_clients(void)
+{
+  AIO_SLOT *slot;
+  int count = 0;
+  for (slot = aio_first_slot(); slot; slot = slot->next) {
+    if (slot->type == TYPE_CL_SLOT) {
+      CL_SLOT *cl = (CL_SLOT *) slot;
+      if (cl->connected) {
+        count++;
+      }
+    }
+  }
+  return count;
+}
+
 
 void set_client_passwords(unsigned char *password, unsigned char *password_ro)
 {
@@ -241,7 +263,7 @@ static void rf_client_initmsg(void)
   cl->compress_level = 6;       /* default compression level */
   cl->jpeg_quality = -1;        /* disable JPEG by default */
 
-  /* The client did not requested framebuffer updates yet */
+  /* The client did not request framebuffer updates yet */
   cl->update_requested = 0;
   cl->update_in_progress = 0;
   REGION_INIT(&cl->pending_region, NullBox, 16);
@@ -339,6 +361,7 @@ static void rf_client_encodings_data(void)
   cl->jpeg_quality = -1;
   cl->enable_lastrect = 0;
   cl->enable_newfbsize = 0;
+  cl->enable_frame_sync = 0;
   for (i = 1; i < NUM_ENCODINGS; i++)
     cl->enc_enable[i] = 0;
 
@@ -376,6 +399,11 @@ static void rf_client_encodings_data(void)
     } else if (enc == RFB_ENCODING_NEWFBSIZE) {
       cl->enable_newfbsize = 1;
       log_write(LL_DETAIL, "Client %s supports desktop geometry changes",
+                cur_slot->name);
+    } else if (enc == RFB_ENCODING_FRAME_SYNC) {
+      cl->enable_frame_sync = 1;
+      vnc_spu.frame_drop = 0; /* can't drop frames if trying to sync! */
+      log_write(LL_DETAIL, "Client %s supports frame sync encoding",
                 cur_slot->name);
     }
   }
@@ -427,13 +455,14 @@ static void rf_client_updatereq(void)
   CL_SLOT *cl = (CL_SLOT *)cur_slot;
   RegionRec tmp_region;
   BoxRec rect;
+  int k;
 
 #ifdef NETLOGGER
-	if (vnc_spu.netlogger_url) {
-		cl->serial_number++;
-		NL_info("vncspu", "spu.fbrequest.receive",
-						"NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
-	}
+  if (vnc_spu.netlogger_url) {
+    cl->serial_number++;
+    NL_info("vncspu", "spu.fbrequest.receive",
+            "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
+  }
 #endif
 
   /* the requested region of interest */
@@ -455,6 +484,11 @@ static void rf_client_updatereq(void)
   cl->update_rect = rect;
   cl->update_requested = 1;
 
+  if (!vnc_spu.frame_drop) {
+    /*crDebug("VNC SPU: Got FB Update request - signaling");*/
+    crSignalSemaphore(&vnc_spu.updateRequested);
+  }
+
   if (!cur_slot->readbuf[0]) {
     log_write(LL_DEBUG, "Received framebuffer update request (full) from %s",
               cur_slot->name);
@@ -462,7 +496,7 @@ static void rf_client_updatereq(void)
       REGION_INIT(&tmp_region, &rect, 1);
 #if 0
       /* Disabling this code prevents the region from outside the GL
-       * window (garbage) from being send to the viewer.
+       * window (garbage) from being sent to the viewer.
        */
       REGION_UNION(&cl->pending_region, &cl->pending_region, &tmp_region);
 #endif
@@ -475,19 +509,16 @@ static void rf_client_updatereq(void)
               cur_slot->name);
   }
 
-  if (!cl->update_in_progress &&
-      (cl->newfbsize_pending ||
-       REGION_NOTEMPTY(&cl->pending_region) ||
-       REGION_NOTEMPTY(&cl->copy_region))) {
-    send_update();
+  if (!cl->update_in_progress) {
+    k = (cl->newfbsize_pending ||
+         REGION_NOTEMPTY(&cl->copy_region));
+    if (!k) {
+      k = vncspuWaitDirtyRects(&cl->pending_region, &cl->frame_num);
+    }
+    if (k) {
+      send_update();
+    }
   }
-
-#ifdef CHROMIUM
-  /* This is a bit of a hack, but it improves performance */
-  sched_yield();
-  /* XXX review this */
-  usleep((1000 * 1000) / vnc_spu.max_update_rate);
-#endif
 
   aio_setread(rf_client_msg, NULL, 1);
 }
@@ -641,8 +672,8 @@ void fn_client_send_rects(AIO_SLOT *slot)
 
   if (!cl->update_in_progress && cl->update_requested &&
       (cl->newfbsize_pending ||
-       REGION_NOTEMPTY(&cl->pending_region) ||
-       REGION_NOTEMPTY(&cl->copy_region))) {
+       REGION_NOTEMPTY(&cl->copy_region) ||
+       vncspuGetDirtyRects(&cl->pending_region, &cl->frame_num))) {
     cur_slot = slot;
     send_update();
     cur_slot = saved_slot;
@@ -765,17 +796,20 @@ static void send_update(void)
   };
   CARD8 rect_hdr[12];
   AIO_FUNCPTR fn = NULL;
-  int num_copy_rects, num_pending_rects, num_all_rects;
+  int num_copy_rects, num_pending_rects, num_all_rects, num_sync_rects;
   int raw_bytes = 0, hextile_bytes = 0;
   int i, idx, rev_order;
 
 #ifdef NETLOGGER
   if (vnc_spu.netlogger_url) {
-		NL_info("vncspu", "spu.fbupdate.send.begin",
-						"NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
-	}
+    NL_info("vncspu", "spu.fbupdate.send.begin",
+            "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
+  }
 #endif
 
+  /*crDebug("Enter send_update");*/
+
+  /* XXX Review locking!!!*/
   crLockMutex(&vnc_spu.lock);
 
   /* Process framebuffer size change. */
@@ -800,6 +834,7 @@ static void send_update(void)
     if (cl->enable_newfbsize) {
       send_newfbsize();
       crUnlockMutex(&vnc_spu.lock);
+      /*crDebug("Leave send_update early 0");*/
       return;
     }
   } else {
@@ -833,7 +868,11 @@ static void send_update(void)
   /* Compute the number of rectangles in regions. */
   num_pending_rects = REGION_NUM_RECTS(&cl->pending_region);
   num_copy_rects = REGION_NUM_RECTS(&cl->copy_region);
-  num_all_rects = num_pending_rects + num_copy_rects;
+  if (cl->enable_frame_sync)
+     num_sync_rects = 1;
+  else
+     num_sync_rects = 0;
+  num_all_rects = num_pending_rects + num_copy_rects + num_sync_rects;
   if (num_all_rects == 0) {
     crUnlockMutex(&vnc_spu.lock);
     return;
@@ -892,6 +931,13 @@ static void send_update(void)
   for (i = 0; i < num_pending_rects; i++) {
     FB_RECT rect;
     AIO_BLOCK *block;
+    /*
+    crDebug("sending rect %d of %d: %d, %d .. %d, %d", i, num_pending_rects,
+            REGION_RECTS(&cl->pending_region)[i].x1,
+            REGION_RECTS(&cl->pending_region)[i].y1,
+            REGION_RECTS(&cl->pending_region)[i].x2,
+            REGION_RECTS(&cl->pending_region)[i].y2);
+    */
     rect.x = REGION_RECTS(&cl->pending_region)[i].x1;
     rect.y = REGION_RECTS(&cl->pending_region)[i].y1;
     rect.w = REGION_RECTS(&cl->pending_region)[i].x2 - rect.x;
@@ -947,16 +993,42 @@ static void send_update(void)
     aio_write(wf_client_update_finished, rect_hdr, 12);
   }
 
+  if (num_sync_rects) {
+    CARD8 rect_hdr[20]; /* 12-byte header + two 32-bit ints */
+    FB_RECT rect;
+    rect.x = rect.y = rect.w = rect.h = 0;
+    rect.enc = RFB_ENCODING_FRAME_SYNC;
+    put_rect_header(rect_hdr, &rect);
+    buf_put_CARD32(rect_hdr + 12, cl->frame_window);
+    buf_put_CARD32(rect_hdr + 16, cl->frame_num);
+
+    /*
+    crDebug("Sending frame_sync %d, win %d", cl->frame_num, cl->frame_window);
+    */
+
+    if (cl->frame_num > 3 && cl->prev_frame_num > 2) {
+      if (cl->prev_frame_num != cl->frame_num - 1) {
+        crWarning("prev = %d  curr = %d", cl->prev_frame_num, cl->frame_num);
+      }
+      assert(cl->prev_frame_num == cl->frame_num - 1);
+    }
+    cl->prev_frame_num = cl->frame_num;
+    aio_write(wf_client_update_finished, rect_hdr, 20);
+    cl->frame_window = 0;
+    cl->frame_num = 0;
+  }
+
   /* Something has been queued for sending. */
   cl->update_in_progress = 1;
   cl->update_requested = 0;
 
   crUnlockMutex(&vnc_spu.lock);
+  /*crDebug("Leave send_update");*/
 
 #ifdef NETLOGGER
-	if (vnc_spu.netlogger_url) {
-		NL_info("vncspu", "spu.fbupdate.send.end",
-						"NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
-	}
+  if (vnc_spu.netlogger_url) {
+    NL_info("vncspu", "spu.fbupdate.send.end",
+            "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
+  }
 #endif
 }

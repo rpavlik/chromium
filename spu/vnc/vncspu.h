@@ -52,8 +52,11 @@ typedef struct {
 	GLuint frameCounter;
 	RegionRec currDirtyRegion;
 	RegionRec prevDirtyRegion;
-	GLint prevWidth, prevHeight;
+	RegionRec accumDirtyRegion;
+	GLint width, height;
+	GLint xPos, yPos;
 	GLint clippingHash;
+	GLboolean isClear;  /* indicates window has only been cleared, no drawing */
 } WindowInfo;
 
 
@@ -72,6 +75,7 @@ typedef struct {
 	int max_update_rate;
 	char display_string[1000];
 	int use_bounding_boxes;
+	int frame_drop;
 #ifdef NETLOGGER
 	char *netlogger_url;
 	char *hostname;
@@ -81,9 +85,13 @@ typedef struct {
 	int pixel_size;               /* 24 or 32 */
 	CRHashTable *windowTable;
 	WindowInfo *currentWindow;
+	int frameCounter;
 
 	CRmutex lock;
 	CRcondition cond;
+	CRsemaphore updateRequested;
+	CRsemaphore dirtyRectsReady;
+
 #if defined(HAVE_XCLIPLIST_EXT) || defined(HAVE_VNC_EXT)
 	Display *dpy;
 	int haveXClipListExt;
@@ -107,5 +115,12 @@ extern void vncspuStartServerThread(void);
 extern void vncspuInitialize(void);
 
 extern void vncspuSendVncStartUpMsg(int port);
+
+extern GLboolean vncspuGetDirtyRects(RegionPtr region, int *frame_num);
+extern GLboolean vncspuWaitDirtyRects(RegionPtr region, int *frame_num);
+
+void
+PrintRegion(const char *s, const RegionPtr r);
+
 
 #endif /* VNC_SPU_H */

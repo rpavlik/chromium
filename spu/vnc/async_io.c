@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.c,v 1.1 2004-12-14 15:39:50 brianp Exp $
+ * $Id: async_io.c,v 1.2 2006-02-24 20:46:35 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
@@ -487,6 +487,7 @@ void aio_setclose(AIO_FUNCPTR closefunc)
   cur_slot->closefunc = closefunc;
 }
 
+
 /***************************
  * Static functions follow
  */
@@ -615,6 +616,28 @@ static void aio_process_output(AIO_SLOT *slot)
     }
   }
 }
+
+
+/**
+ * Check if there's any output pending on any connection.
+ */
+int aio_any_output_pending(void)
+{
+   AIO_SLOT *slot;
+   for (slot = s_first_slot; slot; slot = slot->next) {
+      if (slot->outqueue) {
+         return 1;
+      }
+   }
+   return 0;
+}
+
+
+AIO_SLOT *aio_first_slot(void)
+{
+   return s_first_slot;
+}
+
 
 static void aio_process_func_list(void)
 {

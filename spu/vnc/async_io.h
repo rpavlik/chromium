@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.h,v 1.1 2004-12-14 15:39:50 brianp Exp $
+ * $Id: async_io.h,v 1.2 2006-02-24 20:46:35 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
@@ -98,5 +98,7 @@ void aio_setread(AIO_FUNCPTR fn, void *inbuf, int bytes_to_read);
 void aio_write(AIO_FUNCPTR fn, void *outbuf, int bytes_to_write);
 void aio_write_nocopy(AIO_FUNCPTR fn, AIO_BLOCK *block);
 void aio_setclose(AIO_FUNCPTR closefunc);
+int aio_any_output_pending(void);
+AIO_SLOT *aio_first_slot(void);
 
 #endif /* _REFLIB_ASYNC_IO_H */

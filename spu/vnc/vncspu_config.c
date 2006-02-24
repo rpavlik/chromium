@@ -41,6 +41,11 @@ static void set_use_bounding_boxes(VncSPU *vnc_spu, const char *response)
 	vnc_spu->use_bounding_boxes = crStrToInt(response);
 }
 
+static void set_frame_drop(VncSPU *vnc_spu, const char *response)
+{
+	vnc_spu->frame_drop = crStrToInt(response);
+}
+
 #ifdef NETLOGGER
 static void set_netlogger_url(VncSPU *vnc_spu, const char *response)
 {
@@ -73,6 +78,8 @@ SPUOptions vncSPUOptions[] = {
 		"Max client frame rate", (SPUOptionCB) set_max_update_rate },
 	{ "use_bounding_boxes", CR_BOOL, 1, "1", NULL, NULL,
 		"Use Bounding Boxes", (SPUOptionCB) set_use_bounding_boxes },
+	{ "frame_drop", CR_BOOL, 1, "1", NULL, NULL,
+		"Allow frame dropping", (SPUOptionCB) set_frame_drop },
 #ifdef NETLOGGER
 	{ "netlogger_url", CR_STRING, 1, NULL, NULL, NULL,
 		"NetLogger log URL", (SPUOptionCB) set_netlogger_url },

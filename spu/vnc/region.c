@@ -243,7 +243,7 @@ miPrintRegion(rgn)
     return(num);
 }
 
-Bool
+static Bool
 miRegionsEqual(reg1, reg2)
     RegionPtr reg1;
     RegionPtr reg2;
@@ -267,6 +267,7 @@ miRegionsEqual(reg1, reg2)
     }
     return TRUE;
 }
+#endif /* DEBUG */
 
 Bool
 miValidRegion(reg)
@@ -275,15 +276,20 @@ miValidRegion(reg)
     register int i, numRects;
 
     if ((reg->extents.x1 > reg->extents.x2) ||
-	(reg->extents.y1 > reg->extents.y2))
+	(reg->extents.y1 > reg->extents.y2)) {
 	return FALSE;
+    }
     numRects = REGION_NUM_RECTS(reg);
-    if (!numRects)
-	return ((reg->extents.x1 == reg->extents.x2) &&
+    if (!numRects) {
+       int k = ((reg->extents.x1 == reg->extents.x2) &&
 		(reg->extents.y1 == reg->extents.y2) &&
 		(reg->data->size || (reg->data == &miEmptyData)));
-    else if (numRects == 1)
-	return (!reg->data);
+       return k;
+    }
+    else if (numRects == 1) {
+       int k = (!reg->data);
+       return k;
+    }
     else
     {
 	register BoxPtr pboxP, pboxN;
@@ -296,25 +302,29 @@ miValidRegion(reg)
 	for (i = numRects; --i > 0; pboxP++, pboxN++)
 	{
 	    if ((pboxN->x1 >= pboxN->x2) ||
-		(pboxN->y1 >= pboxN->y2))
-		return FALSE;
+		(pboxN->y1 >= pboxN->y2)) {
+               return FALSE;
+            }
 	    if (pboxN->x1 < box.x1)
 	        box.x1 = pboxN->x1;
 	    if (pboxN->x2 > box.x2)
 		box.x2 = pboxN->x2;
 	    if ((pboxN->y1 < pboxP->y1) ||
 		((pboxN->y1 == pboxP->y1) &&
-		 ((pboxN->x1 < pboxP->x2) || (pboxN->y2 != pboxP->y2))))
+		 ((pboxN->x1 < pboxP->x2) || (pboxN->y2 != pboxP->y2)))) {
 		return FALSE;
+            }
 	}
-	return ((box.x1 == reg->extents.x1) &&
+        {
+           int k = ((box.x1 == reg->extents.x1) &&
 		(box.x2 == reg->extents.x2) &&
 		(box.y1 == reg->extents.y1) &&
 		(box.y2 == reg->extents.y2));
+           return k;
+        }
     }
 }
 
-#endif /* DEBUG */
 
 
 /*****************************************************************
@@ -2578,3 +2588,19 @@ miFindMaxBand(prgn)
     return (nMaxBand);
 }
 #endif
+
+
+int
+miRegionArea(const RegionPtr region)
+{
+   const BoxPtr rects = REGION_RECTS(region);
+   int area = 0, n = REGION_NUM_RECTS(region), i;
+
+   for (i = 0; i < n; i++) {
+      area += (rects[i].x2 - rects[i].x1) * (rects[i].y2 - rects[i].y1);
+   }
+   return area;
+}
+
+
+

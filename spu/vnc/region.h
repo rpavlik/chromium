@@ -289,10 +289,11 @@ extern Bool miRegionNotEmpty(RegionPtr pReg);
 extern void miRegionEmpty(RegionPtr pReg);
 extern BoxPtr miRegionExtents(RegionPtr pReg);
 
+extern Bool miValidRegion(RegionPtr reg);
 
-#ifdef DEBUG
+extern int miRegionArea(const RegionPtr region);
+
 extern int miPrintRegion(RegionPtr rgn);
-#endif
 
 /* one more operation, from region_more.c of VNC Reflector */
 

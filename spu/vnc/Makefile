@@ -33,11 +33,9 @@ FILES = vncspu \
 	rfblib \
 	translate
 
-#LDFLAGS += -lXmu -lX11 -lVncExt
-LDFLAGS += -lX11 -lVncExt
-
 CFLAGS += -DCHROMIUM -DRASTER_BOTTOM_TO_TOP=1
 
+LDFLAGS += -lX11 -lVncExt
 LDFLAGS += -lz -ljpeg -L/usr/X11R6/lib -lX11
 
 CFLAGS += -DHAVE_XCLIPLIST_EXT
