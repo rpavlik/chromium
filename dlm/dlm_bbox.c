@@ -403,11 +403,7 @@ InitDispatchTable(SPUDispatchTable *t)
 
 
 void
-#if 0
-crDLMComputeBoundingBox(CRDLM *dlm, unsigned long listId, CRDLMBounds *bounds)
-#else
 crDLMComputeBoundingBox(unsigned long listId)
-#endif
 {
 	static GLboolean tableInitialized = GL_FALSE;
 	static SPUDispatchTable t;
@@ -431,7 +427,10 @@ crDLMComputeBoundingBox(unsigned long listId)
 	crDLMReplayDLMList(listState->dlm, listId, &t);
 
 	if (Xmin == FLT_MAX) {
+		/* XXX review this choice of default bounds */
+		/*
 		crDebug("Warning: no bounding box!");
+		*/
 		Xmin = -100;
 		Xmax =  100;
 		Ymin = -100;
@@ -439,22 +438,15 @@ crDLMComputeBoundingBox(unsigned long listId)
 		Zmin = -100;
 		Zmax =  100;
 	}
+	/*
 	crDebug("List %d bbox: %f, %f, %f .. %f, %f, %f", (int) listId,
 					Xmin, Ymin, Zmin, Xmax, Ymax, Zmax);
+	*/
 
-#if 0
-	bounds->xmin = Xmin;
-	bounds->xmax = Xmax;
-	bounds->ymin = Ymin;
-	bounds->ymax = Ymax;
-	bounds->zmin = Zmin;
-	bounds->zmax = Zmax;
-#else
 	listInfo->bbox.xmin = Xmin;
 	listInfo->bbox.ymin = Ymin;
 	listInfo->bbox.zmin = Zmin;
 	listInfo->bbox.xmax = Xmax;
 	listInfo->bbox.ymax = Ymax;
 	listInfo->bbox.zmax = Zmax;
-#endif
 }
