@@ -89,7 +89,7 @@ extern void crWaitBarrier(CRbarrier *b);
 
 /* Semaphores */
 #ifdef WINDOWS
-	typedef in CRsemaphore;
+	typedef int CRsemaphore;
 #else
 	typedef sem_t CRsemaphore;
 #endif
