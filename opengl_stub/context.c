@@ -246,8 +246,10 @@ stubNewContext( const char *dpyName, GLint visBits, ContextType type,
 	crStrncpy(context->dpyName, dpyName, MAX_DPY_NAME);
 	context->dpyName[MAX_DPY_NAME-1] = 0;
 
+#if defined(GLX) || defined(DARWIN)
 	context->share = (ContextInfo *)
 		crHashtableSearch(stub.contextTable, (unsigned long) shareCtx);
+#endif
 
 	crHashtableAdd(stub.contextTable, context->id, (void *) context);
 
@@ -774,11 +776,16 @@ stubMakeCurrent( WindowInfo *window, ContextInfo *context )
 		crLockMutex(&stub.mutex);
 #endif
 
-		if( stubCheckUseChromium(window) ) {
+		if (stubCheckUseChromium(window)) {
 			/*
 			 * Create a Chromium context.
 			 */
+#if defined(GLX) || defined(DARWIN)
 			GLint spuShareCtx = context->share ? context->share->spuContext : 0;
+#else
+      GLint spuShareCtx = 0;
+#endif
+
 			CRASSERT(stub.spu);
 			CRASSERT(stub.spu->dispatch_table.CreateContext);
 			context->type = CHROMIUM;
