@@ -378,27 +378,28 @@ InitDispatchTable(SPUDispatchTable *t)
 {
 	crMemZero(t, sizeof(*t));
 	crSPUInitDispatchNops(t);
-	t->MatrixMode = MatrixMode;
-	t->LoadIdentity = LoadIdentity;
-	t->LoadMatrixf = LoadMatrixf;
-	t->LoadMatrixd = LoadMatrixd;
-	t->PushMatrix = PushMatrix;
-	t->PopMatrix = PopMatrix;
-	t->MultMatrixf = MultMatrixf;
-	t->MultMatrixd = MultMatrixd;
-	t->Rotatef = Rotatef;
-                   	t->Rotated = Rotated;
-	t->Translatef = Translatef;
-	t->Translated = Translated;
-	t->Scalef = Scalef;
-	t->Scaled = Scaled;
-	t->Vertex2f = Vertex2f;
-	t->Vertex2fv = Vertex2fv;
-	t->Vertex3f = Vertex3f;
-	t->Vertex3fv = Vertex3fv;
-	t->Vertex4f = Vertex4f;
-	t->Vertex4fv = Vertex4fv;
-	t->VertexAttrib3fARB = VertexAttrib3fARB;
+  /* drm1 */
+	t->MatrixMode = (MatrixModeFunc_t)MatrixMode;
+	t->LoadIdentity = (LoadIdentityFunc_t)LoadIdentity;
+	t->LoadMatrixf = (LoadMatrixfFunc_t)LoadMatrixf;
+	t->LoadMatrixd = (LoadMatrixdFunc_t)LoadMatrixd;
+	t->PushMatrix = (PushMatrixFunc_t)PushMatrix;
+	t->PopMatrix = (PopMatrixFunc_t)PopMatrix;
+	t->MultMatrixf = (MultMatrixfFunc_t)MultMatrixf;
+	t->MultMatrixd = (MultMatrixdFunc_t)MultMatrixd;
+	t->Rotatef = (RotatefFunc_t)Rotatef;
+  t->Rotated = (RotatedFunc_t)Rotated;
+	t->Translatef = (TranslatefFunc_t)Translatef;
+	t->Translated = (TranslatedFunc_t)Translated;
+	t->Scalef = (ScalefFunc_t)Scalef;
+	t->Scaled = (ScaledFunc_t)Scaled;
+	t->Vertex2f = (Vertex2fFunc_t)Vertex2f;
+	t->Vertex2fv = (Vertex2fvFunc_t)Vertex2fv;
+	t->Vertex3f = (Vertex3fFunc_t)Vertex3f;
+	t->Vertex3fv = (Vertex3fvFunc_t)Vertex3fv;
+	t->Vertex4f = (Vertex4fFunc_t)Vertex4f;
+	t->Vertex4fv = (Vertex4fvFunc_t)Vertex4fv;
+	t->VertexAttrib3fARB = (VertexAttrib3fARBFunc_t)VertexAttrib3fARB;
 }
 
 
