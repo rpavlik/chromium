@@ -912,20 +912,6 @@ vncspuDrawPixels(GLsizei width, GLsizei height, GLenum format,
 }
 
 
-static void
-vncspuDisable(GLenum cap)
-{
-	if (cap >= GL_LIGHT0 && cap <= GL_LIGHT7) {
-		crWarning("*************************");
-		crWarning("**** Disable light %d", (cap - GL_LIGHT0));
-		crWarning("*************************");
-	}
-
-	vnc_spu.super.Disable(cap);
-}
-
-
-
 /**
  * SPU function table
  */
@@ -938,6 +924,5 @@ SPUNamedFunctionTable _cr_vnc_table[] = {
 	{"ClearColor", (SPUGenericFunction) vncspuClearColor},
 	{"BoundsInfoCR", (SPUGenericFunction) vncspuBoundsInfoCR},
 	{"DrawPixels", (SPUGenericFunction) vncspuDrawPixels},
-	{"Disable", (SPUGenericFunction) vncspuDisable},
 	{ NULL, NULL }
 };
