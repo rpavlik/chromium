@@ -8,7 +8,7 @@ TOP = ..
 include $(TOP)/arch.mk
 
 LIBRARY = crdlm
-LIBRARIES = spuload crutil crmothership
+LIBRARIES = spuload crutil crmothership crstate
 SHARED = 1
 FILES = dlm dlm_lists dlm_generated dlm_pointers dlm_arrays dlm_checklist dlm_error dlm_calllist dlm_bbox
 LIB_DEFS = dlm.def
