@@ -46,7 +46,7 @@ GetExtensions(void)
 
 	if (return_value[0] == 0) {
 		/* no servers - return default Chromium extension list */
-		crStrcpy(return_value, crExtensions);
+		crStrcpy((char *)return_value, (const char *)crExtensions);
 		(void) crAppOnlyExtensions;
 		(void) crChromiumExtensions;
 	}
