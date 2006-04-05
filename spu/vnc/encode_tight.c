@@ -11,7 +11,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode_tight.c,v 1.1 2004-12-14 15:39:50 brianp Exp $
+ * $Id: encode_tight.c,v 1.2 2006-04-05 00:10:11 brianp Exp $
  * Tight encoder.
  */
 
@@ -708,7 +708,7 @@ SendIndexedRect(CL_SLOT *cl, int w, int h)
 static int
 SendFullColorRect(CL_SLOT *cl, int w, int h)
 {
-  CARD8 *buf[1];
+  CARD8 buf[1];
   int streamId = 0;
   int len;
 

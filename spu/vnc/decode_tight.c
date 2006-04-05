@@ -11,7 +11,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: decode_tight.c,v 1.1 2004-12-14 15:39:50 brianp Exp $
+ * $Id: decode_tight.c,v 1.2 2006-04-05 00:10:11 brianp Exp $
  * Decoding Tight-encoded rectangles.
  */
 
@@ -97,7 +97,7 @@ static void rf_host_tight_compctl(void)
 
   /* Flush zlib streams if we are told by the server to do so */
   for (stream_id = 0; stream_id < 4; stream_id++) {
-    if ((comp_ctl & (1 < stream_id)) && s_zstream_active[stream_id]) {
+    if ((comp_ctl & (1 << stream_id)) && s_zstream_active[stream_id]) {
       if (inflateEnd(&s_zstream[stream_id]) != Z_OK) {
         if (s_zstream[stream_id].msg != NULL) {
           log_write(LL_WARN, "inflateEnd() failed: %s",
