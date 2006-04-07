@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.10 2006-02-24 20:46:35 brianp Exp $
+ * $Id: client_io.c,v 1.11 2006-04-07 15:55:05 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -925,6 +925,11 @@ static void send_update(void)
     /* Send the rectangle.
        FIXME: Check for block == NULL? */
     aio_write_nocopy(fn, block);
+  }
+
+  if (cl->enc_prefer == RFB_ENCODING_TIGHT) {
+    /* needed for successful caching of zlib-compressed data (tight) */
+    rfb_reset_tight_encoder(cl);
   }
 
   /* For each of the usual pending rectangles: */
