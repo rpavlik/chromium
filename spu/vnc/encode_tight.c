@@ -11,7 +11,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode_tight.c,v 1.2 2006-04-05 00:10:11 brianp Exp $
+ * $Id: encode_tight.c,v 1.3 2006-04-07 15:53:18 brianp Exp $
  * Tight encoder.
  */
 
@@ -180,6 +180,27 @@ num_rects_tight(CL_SLOT *cl, FB_RECT *r)
   }
 }
 #endif
+
+
+/**
+ * Reset the tight encoder state.
+ */
+void
+rfb_reset_tight_encoder(CL_SLOT *cl)
+{
+  int i;
+  for (i = 0; i < 4; i++) {
+    cl->zs_struct[i].total_out = 0;
+    cl->zs_level[i] = -1;
+    if (cl->zs_active[i]) {
+      deflateEnd(&cl->zs_struct[i]);
+      memset(&cl->zs_struct[i], 0, sizeof(cl->zs_struct[i]));
+      cl->zs_active[i] = 0;
+    }
+  }
+  cl->zs_reset = 0xf; /* reset streams 0, 1, 2, 3 */
+}
+
 
 int
 rfb_encode_tight(CL_SLOT *cl, FB_RECT *r)
@@ -593,6 +614,8 @@ SendSolidRect(CL_SLOT *cl)
   }
 
   buf[0] = RFB_TIGHT_FILL;
+  buf[0] |= cl->zs_reset;
+  cl->zs_reset = 0;
   memcpy(&buf[1], tightBeforeBuf, len);
   aio_write(NULL, buf, 1 + len);
 }
@@ -609,6 +632,8 @@ SendMonoRect(CL_SLOT *cl, int w, int h)
   dataLen *= h;
 
   buf[0] = RFB_TIGHT_EXPLICIT_FILTER | (streamId << 4);
+  buf[0] |= cl->zs_reset;
+  cl->zs_reset = 0;
   buf[1] = RFB_TIGHT_FILTER_PALETTE;
   buf[2] = 1;                   /* number of colors - 1 */
 
@@ -661,6 +686,8 @@ SendIndexedRect(CL_SLOT *cl, int w, int h)
   int i, entryLen;
 
   buf[0] = RFB_TIGHT_EXPLICIT_FILTER | (streamId << 4);
+  buf[0] |= cl->zs_reset;
+  cl->zs_reset = 0;
   buf[1] = RFB_TIGHT_FILTER_PALETTE;
   buf[2] = (CARD8)(paletteNumColors - 1);
 
@@ -713,6 +740,8 @@ SendFullColorRect(CL_SLOT *cl, int w, int h)
   int len;
 
   buf[0] = 0;                   /* stream id = 0, no flushing, no filter */
+  buf[0] |= cl->zs_reset;
+  cl->zs_reset = 0;
   aio_write(NULL, buf, 1);
 
   if (usePixelFormat24) {
@@ -1254,6 +1283,11 @@ SendJpegRect(FB_RECT *r, int quality)
     return 0;
 
   buf[0] = RFB_TIGHT_JPEG;
+  {
+     CL_SLOT *cl = (CL_SLOT *) cur_slot;
+     buf[0] |= cl->zs_reset;
+     cl->zs_reset = 0;
+  }
   aio_write(NULL, buf, 1);
   SendCompressedData(jpegDstDataLen);
   return 1;

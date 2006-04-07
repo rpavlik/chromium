@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode.h,v 1.2 2005-08-26 19:17:33 brianp Exp $
+ * $Id: encode.h,v 1.3 2006-04-07 15:53:18 brianp Exp $
  * Encoding screen rectangles.
  */
 
@@ -56,6 +56,7 @@ AIO_BLOCK *rfb_encode_hextile_block(CL_SLOT *cl, FB_RECT *r);
 
 /* encode-tight.c */
 
+void rfb_reset_tight_encoder(CL_SLOT *cl);
 int rfb_encode_tight(CL_SLOT *cl, FB_RECT *r);
 
 #endif /* _REFLIB_ENCODE_H */
