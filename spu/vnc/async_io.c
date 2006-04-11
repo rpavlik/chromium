@@ -10,10 +10,11 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.c,v 1.2 2006-02-24 20:46:35 brianp Exp $
+ * $Id: async_io.c,v 1.3 2006-04-11 21:49:33 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,6 +34,8 @@
 #endif
 
 #include "async_io.h"
+
+extern int opt_write_coalescing;
 
 /*
  * Global variables
@@ -68,7 +71,7 @@ static int s_close_f;
  * Prototypes for static functions
  */
 
-static AIO_SLOT *aio_new_slot(int fd, char *name, size_t slot_size);
+static AIO_SLOT *aio_new_slot(int fd, const char *name, size_t slot_size);
 static void aio_process_input(AIO_SLOT *slot);
 static void aio_process_output(AIO_SLOT *slot);
 static void aio_process_func_list(void);
@@ -135,16 +138,17 @@ int aio_set_bind_address(char *bind_ip)
  * should set some input handler using aio_setread() function.
  */
 
-int aio_add_slot(int fd, char *name, AIO_FUNCPTR initfunc, size_t slot_size)
+AIO_SLOT *
+aio_add_slot(int fd, const char *name, AIO_FUNCPTR initfunc, size_t slot_size)
 {
   AIO_SLOT *slot, *saved_slot;
 
   if (initfunc == NULL)
-    return 0;
+    return NULL;
 
   slot = aio_new_slot(fd, name, slot_size);
   if (slot == NULL)
-    return 0;
+    return NULL;
 
   /* Saving cur_slot value, calling initfunc with different cur_slot */
   saved_slot = cur_slot;
@@ -152,7 +156,7 @@ int aio_add_slot(int fd, char *name, AIO_FUNCPTR initfunc, size_t slot_size)
   (*initfunc)();
   cur_slot = saved_slot;
 
-  return 1;
+  return slot;
 }
 
 /*
@@ -162,7 +166,7 @@ int aio_add_slot(int fd, char *name, AIO_FUNCPTR initfunc, size_t slot_size)
  * on newly accepted connection.
  */
 
-int aio_listen(int port, AIO_FUNCPTR initfunc, AIO_FUNCPTR acceptfunc,
+AIO_SLOT *aio_listen(int port, AIO_FUNCPTR initfunc, AIO_FUNCPTR acceptfunc,
                size_t slot_size)
 {
   AIO_SLOT *slot, *saved_slot;
@@ -213,7 +217,7 @@ int aio_listen(int port, AIO_FUNCPTR initfunc, AIO_FUNCPTR acceptfunc,
     cur_slot = saved_slot;
   }
 
-  return 1;
+  return slot;
 }
 
 /*
@@ -238,6 +242,31 @@ int aio_walk_slots(AIO_FUNCPTR fn, int type)
 
   return count;
 }
+
+
+int aio_walk_slots2(AIO_FUNCPTR fn, int type, void *data)
+{
+  AIO_SLOT *slot, *next_slot, *saved_cur;
+  int count = 0;
+
+  saved_cur = cur_slot;
+
+  slot = s_first_slot;
+  while (slot != NULL && !s_close_f) {
+    next_slot = slot->next;
+    if (slot->type == type && !slot->close_f) {
+      cur_slot = slot;
+      (*fn)(data);
+      count++;
+    }
+    slot = next_slot;
+  }
+
+  cur_slot = saved_cur;
+
+  return count;
+}
+
 
 /*
  * This function should be called if we have to execute a function
@@ -378,11 +407,18 @@ void aio_mainloop(void)
     timeout.tv_sec = 1;         /* One second timeout */
     timeout.tv_usec = 0;
     if (select(s_max_fd + 1, &fdset_r, &fdset_w, NULL, &timeout) > 0) {
+      /* loop over all slots */
       slot = s_first_slot;
       while (slot != NULL && !s_close_f) {
         next_slot = slot->next;
-        if (FD_ISSET(slot->fd, &fdset_w))
-          aio_process_output(slot);
+        if (FD_ISSET(slot->fd, &fdset_w)) {
+          if ((slot->suspended & SUSPEND_WRITE) == 0) {
+            aio_process_output(slot);
+          }
+          else {
+            /*printf("output blocked\n");*/
+          }
+        }
         if (FD_ISSET(slot->fd, &fdset_r) && !slot->close_f) {
           if (slot->listening_f)
             aio_accept_connection(slot);
@@ -442,29 +478,52 @@ void aio_setread(AIO_FUNCPTR fn, void *inbuf, int bytes_to_read)
   cur_slot->bytes_ready = 0;
 }
 
+
 void aio_write(AIO_FUNCPTR fn, void *outbuf, int bytes_to_write)
 {
   AIO_BLOCK *block;
 
-  /* FIXME: Join small blocks together? */
   /* FIXME: Support small static buffer as in reading? */
 
-  block = malloc(sizeof(AIO_BLOCK) + bytes_to_write);
-  if (block != NULL) {
-    block->data_size = bytes_to_write;
-    memcpy(block->data, outbuf, bytes_to_write);
-    aio_write_nocopy(fn, block);
+  if (opt_write_coalescing) {
+    unsigned char *dest = aio_alloc_write(bytes_to_write, &block);
+    assert(dest);
+    memcpy(dest, outbuf, bytes_to_write);
+    assert(block);
+    assert(!block->func);
+    block->func = fn;
+
+#ifdef USE_POLL
+    s_fd_array[cur_slot->idx].events |= POLLOUT;
+#else
+    FD_SET(cur_slot->fd, &s_fdset_write);
+#endif
+  }
+  else
+  {
+    /* original, non-coalesce path */
+    block = malloc(sizeof(AIO_BLOCK));
+    if (block != NULL) {
+      block->buffer_size = bytes_to_write;
+      block->data = malloc(block->buffer_size);
+      block->data_size = bytes_to_write;
+      memcpy(block->data, outbuf, bytes_to_write);
+      aio_write_nocopy(fn, block);
+    }
   }
 }
+
 
 void aio_write_nocopy(AIO_FUNCPTR fn, AIO_BLOCK *block)
 {
   if (block != NULL) {
+    /*printf("aio_write_nocopy %d on %d\n", block->data_size, cur_slot->fd);*/
     /* By the way, fn may be NULL */
     block->func = fn;
+    block->in_list_flag = 1;
 
     if (cur_slot->outqueue == NULL) {
-      /* Output queue was empty */
+      /* Output queue was empty - init outqueue list */
       cur_slot->outqueue = block;
       cur_slot->bytes_written = 0;
 #ifdef USE_POLL
@@ -472,8 +531,9 @@ void aio_write_nocopy(AIO_FUNCPTR fn, AIO_BLOCK *block)
 #else
       FD_SET(cur_slot->fd, &s_fdset_write);
 #endif
-    } else {
-      /* Output queue was not empty */
+    }
+    else {
+      /* Output queue was not empty - add to end of outqueue list */
       cur_slot->outqueue_last->next = block;
     }
 
@@ -481,6 +541,7 @@ void aio_write_nocopy(AIO_FUNCPTR fn, AIO_BLOCK *block)
     block->next = NULL;
   }
 }
+
 
 void aio_setclose(AIO_FUNCPTR closefunc)
 {
@@ -492,7 +553,7 @@ void aio_setclose(AIO_FUNCPTR closefunc)
  * Static functions follow
  */
 
-AIO_SLOT *aio_new_slot(int fd, char *name, size_t slot_size)
+AIO_SLOT *aio_new_slot(int fd, const char *name, size_t slot_size)
 {
   size_t size;
   AIO_SLOT *slot;
@@ -543,25 +604,40 @@ AIO_SLOT *aio_new_slot(int fd, char *name, size_t slot_size)
 
 static void aio_process_input(AIO_SLOT *slot)
 {
-  int bytes = 0;
+  int bytes = 0, error = 0;
 
   /* FIXME: Do not read anything if readfunc is not set?
      Or maybe skip everything we're receiving?
      Or better destroy the slot? -- I think yes. */
 
   if (!slot->close_f) {
-    errno = 0;
-    if (slot->bytes_to_read - slot->bytes_ready > 0) {
-      bytes = read(slot->fd, slot->readbuf + slot->bytes_ready,
-                   slot->bytes_to_read - slot->bytes_ready);
-    }
-    if (bytes > 0 || slot->bytes_to_read == 0) {
-      slot->bytes_ready += bytes;
-      if (slot->bytes_ready == slot->bytes_to_read) {
-        cur_slot = slot;
-        (*slot->readfunc)();
+    if ((slot->suspended & SUSPEND_READ) == 0) {
+      int bytes_remaining = slot->bytes_to_read - slot->bytes_ready;
+      errno = 0;
+      if (bytes_remaining > 0) {
+        bytes = read(slot->fd, slot->readbuf + slot->bytes_ready,
+                     bytes_remaining);
+        slot->total_read += bytes;
       }
-    } else if (bytes == 0 || (bytes < 0 && errno != EAGAIN)) {
+
+#if 0
+      if (slot->cache && bytes > 0) {
+        cache_data(slot->cache, slot->readbuf + slot->bytes_ready, bytes);
+      }
+#endif
+      if (bytes > 0)
+        slot->bytes_ready += bytes;
+      else
+        error = 1;
+    }
+
+    if (slot->bytes_to_read == 0 || slot->bytes_ready == slot->bytes_to_read) {
+      /* call the socket's read function to process the buffered data */
+      cur_slot = slot;
+      (*slot->readfunc)();
+    }
+    else if (error || (bytes < 0 && errno != EAGAIN)) {
+      /* error while reading - mark slot for close-down */
       slot->close_f = 1;
       slot->errio_f = 1;
       slot->errread_f = 1;
@@ -578,29 +654,47 @@ static void aio_process_output(AIO_SLOT *slot)
   /* FIXME: Maybe write all blocks in a loop. */
 
   if (!slot->close_f) {
+    AIO_BLOCK *block = slot->outqueue;
+    if (!block)
+       return;
     errno = 0;
-    if (slot->outqueue->data_size - slot->bytes_written > 0) {
-      bytes = write(slot->fd, slot->outqueue->data + slot->bytes_written,
-                    slot->outqueue->data_size - slot->bytes_written);
+
+#if 0
+       printf("process output %d on %d (%d writes)\n",
+           block->data_size - slot->bytes_written, slot->fd,
+           block->write_count);
+#endif
+    if (block->data_size - slot->bytes_written > 0) {
+      bytes = write(slot->fd, block->data + slot->bytes_written,
+                    block->data_size - slot->bytes_written);
+      slot->total_written += bytes;
     }
-    if (bytes > 0 || slot->outqueue->data_size == 0) {
+    if (bytes > 0 || block->data_size == 0) {
       slot->bytes_written += bytes;
-      if (slot->bytes_written == slot->outqueue->data_size) {
+      if (slot->bytes_written == block->data_size) {
         /* Block sent, call hook function if set */
-        if (slot->outqueue->func != NULL) {
+        if (block->func != NULL) {
           cur_slot = slot;
-          (*slot->outqueue->func)();
+          (*block->func)();
         }
-        next = slot->outqueue->next;
+        next = block->next;
+
+        /* free this block, unless it's in the cache */
+        block->in_list_flag = 0;
+        if (!block->in_cache_flag) {
+          free(block->data);
+          free(block);
+        }
+
+        /* fix up linked list ptrs */
         if (next != NULL) {
           /* There are other blocks to send */
-          free(slot->outqueue);
           slot->outqueue = next;
           slot->bytes_written = 0;
         } else {
           /* Last block sent */
-          free(slot->outqueue);
           slot->outqueue = NULL;
+          slot->outqueue_last = NULL;
 #ifdef USE_POLL
           s_fd_array[slot->idx].events &= (short)~POLLOUT;
 #else
@@ -639,6 +733,9 @@ AIO_SLOT *aio_first_slot(void)
 }
 
 
+/**
+ * Process signal handling functions.
+ */
 static void aio_process_func_list(void)
 {
   int i;
@@ -751,7 +848,10 @@ static void aio_destroy_slot(AIO_SLOT *slot, int fatal)
     free(block);
     block = next_block;
   }
-  free(slot->name);
+  if (slot->name)
+    free((char *) slot->name);
+  if (slot->dpy_name)
+    free((char *) slot->dpy_name);
   if (slot->alloc_f)
     free(slot->readbuf);
 
@@ -772,3 +872,104 @@ static void sh_interrupt(int signo)
   signal(signo, sh_interrupt);
 }
 
+
+void aio_set_slot_displayname(AIO_SLOT *slot, const char *dpyname)
+{
+   assert(!slot->dpy_name);
+   slot->dpy_name = strdup(dpyname);
+}
+
+
+/**
+ * Allocate a new AIO_BLOCK with the given payloadSize
+ */
+AIO_BLOCK *
+aio_new_block(size_t payloadSize)
+{
+  AIO_BLOCK *block;
+  assert(payloadSize > 0);
+
+  block = calloc(1, sizeof(AIO_BLOCK));
+  if (block) {
+    block->data = malloc(payloadSize);
+    if (block) {
+      block->buffer_size = payloadSize;
+    }
+    else {
+      free(block);
+      block = NULL;
+    }
+  }
+  return block;
+}
+
+
+/**
+ * Allocate space for 'bytes' in the last AIO_BLOCK on cur_slot, if possible.
+ * In some situations we still need to create a new AIO_BLOCK object.
+ * The caller can then directly poke data into the buffer instead of
+ * calling aio_write() which does a memcpy().
+ */
+unsigned char *
+aio_alloc_write(size_t bytes_to_write, AIO_BLOCK **blockOut)
+{
+  AIO_BLOCK *block;
+  unsigned char *dest;
+
+  /* Check if we can append onto the last block in the outqueue list.
+   * We can't if it's a cached block.
+   * We can't if the block's callback function pointer is set.
+   */
+  if (cur_slot->outqueue_last
+      && !cur_slot->outqueue_last->in_cache_flag
+      && !cur_slot->outqueue_last->func) {
+    /* append to last block in list */
+    assert(cur_slot->outqueue);
+    assert(!cur_slot->outqueue_last->next);
+    block = cur_slot->outqueue_last;
+  }
+  else {
+    /* allocate new block and append to tail of list */
+    const size_t minSize = 4096;
+    const size_t size = (bytes_to_write > minSize) ? bytes_to_write : minSize;
+    block = aio_new_block(size);
+#if 0
+    block = calloc(1, sizeof(AIO_BLOCK));
+    block->buffer_size = size;
+    block->data = (unsigned char *) malloc(block->buffer_size);
+#endif
+    if (cur_slot->outqueue_last) {
+      /* put after last block */
+      cur_slot->outqueue_last->next = block;
+      cur_slot->outqueue_last = block;
+    }
+    else {
+      /* this will be the only block in the list */
+      cur_slot->outqueue = block;
+      cur_slot->outqueue_last = block;
+    }
+    cur_slot->bytes_written = 0;
+  }
+
+  assert(block);
+  assert(!block->next);
+  assert(!block->in_cache_flag);
+
+  if (block->data_size + bytes_to_write > block->buffer_size) {
+    /* grow by power of two */
+    while (block->data_size + bytes_to_write > block->buffer_size) {
+      block->buffer_size *= 2;
+    }
+    block->data = realloc(block->data, block->buffer_size);
+  }
+
+  dest = block->data + block->data_size;
+
+  block->data_size += bytes_to_write;
+  assert(block->data_size <= block->buffer_size);
+
+  if (blockOut)
+    *blockOut = block;
+
+  return dest;
+}

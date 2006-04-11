@@ -10,12 +10,17 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.h,v 1.2 2006-02-24 20:46:35 brianp Exp $
+ * $Id: async_io.h,v 1.3 2006-04-11 21:49:33 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
 #ifndef _REFLIB_ASYNC_IO_H
 #define _REFLIB_ASYNC_IO_H
+
+
+#define SUSPEND_READ  0x1
+#define SUSPEND_WRITE 0x2
+
 
 /*
  * Data types
@@ -28,8 +33,11 @@ typedef void (*AIO_FUNCPTR)();
 typedef struct _AIO_BLOCK {
   struct _AIO_BLOCK *next;      /* Next block or NULL for the last block   */
   AIO_FUNCPTR func;             /* A function to call after sending block  */
-  size_t data_size;             /* Data size in this block                 */
-  unsigned char data[1];        /* Beginning of the data buffer            */
+  size_t data_size;             /* Amount of data in block                 */
+  size_t buffer_size;           /* malloc'd size of <data> */
+  unsigned char *data;          /* the actual data buffer */
+  int in_list_flag;             /* is block in the to-be-written list? */
+  int in_cache_flag;            /* is block in the cache? */
 } AIO_BLOCK;
 
 /* This structure holds the data associated with a file/socket */
@@ -38,9 +46,10 @@ typedef struct _AIO_SLOT {
                                 /*   certain type of file/socket           */
   int fd;                       /* File/socket descriptor                  */
   int idx;                      /* Index in the array of pollfd structures */
-  char *name;                   /* Allocated string containing slot name   */
+  const char *name;             /* Allocated string containing slot name   */
                                 /*   (currently, IP address for sockets)   */
 
+  const char *dpy_name;         /* X display name, if applicable */
   AIO_FUNCPTR readfunc;         /* Function to process data read,          */
                                 /*   to be set with aio_setread(), or with */
                                 /*   aio_listen for listening socket       */
@@ -52,6 +61,8 @@ typedef struct _AIO_SLOT {
                                 /*   this is a lostening slot              */
   size_t bytes_ready;           /* Bytes ready in the input buffer         */
   unsigned char buf256[256];    /* Built-in input buffer                   */
+
+  struct cache_entry *cache;    /* non-null if caching reads on this slot  */
 
   AIO_BLOCK *outqueue;          /* First block of the output queue or NULL */
   AIO_BLOCK *outqueue_last;     /* Last block of the output queue or NULL  */
@@ -72,6 +83,12 @@ typedef struct _AIO_SLOT {
   struct _AIO_SLOT *next;       /* To make a list of AIO_SLOT structures   */
   struct _AIO_SLOT *prev;       /* To make a list of AIO_SLOT structures   */
 
+  void *encoder_private;
+
+  unsigned int total_read;      /* just instrumentation */
+  unsigned int total_written;   /* just instrumentation */
+
+  int suspended;  /* bitmask of SUSPEND_READ, SUSPEND_WRITE */
 } AIO_SLOT;
 
 /*
@@ -86,10 +103,11 @@ extern AIO_SLOT *cur_slot;
 
 void aio_init(void);
 int aio_set_bind_address(char *bind_ip);
-int aio_add_slot(int fd, char *name, AIO_FUNCPTR initfunc, size_t slot_size);
-int aio_listen(int port, AIO_FUNCPTR initfunc, AIO_FUNCPTR acceptfunc,
+AIO_SLOT *aio_add_slot(int fd, const char *name, AIO_FUNCPTR initfunc, size_t slot_size);
+AIO_SLOT *aio_listen(int port, AIO_FUNCPTR initfunc, AIO_FUNCPTR acceptfunc,
                size_t slot_size);
 int aio_walk_slots(AIO_FUNCPTR fn, int type);
+int aio_walk_slots2(AIO_FUNCPTR fn, int type, void *data);
 void aio_call_func(AIO_FUNCPTR fn, int fn_type);
 void aio_close(int fatal_f);
 void aio_close_other(AIO_SLOT *slot, int fatal_f);
@@ -100,5 +118,12 @@ void aio_write_nocopy(AIO_FUNCPTR fn, AIO_BLOCK *block);
 void aio_setclose(AIO_FUNCPTR closefunc);
 int aio_any_output_pending(void);
 AIO_SLOT *aio_first_slot(void);
+
+void aio_set_slot_displayname(AIO_SLOT *slot, const char *dpyname);
+void aio_flush_output(AIO_SLOT *slot);
+
+AIO_BLOCK *aio_new_block(size_t payloadSize);
+
+unsigned char *aio_alloc_write(size_t bytes, AIO_BLOCK **blockOut);
 
 #endif /* _REFLIB_ASYNC_IO_H */

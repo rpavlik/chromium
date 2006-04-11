@@ -10,6 +10,9 @@
 #include "cr_string.h"
 #include "cr_environment.h"
 
+
+extern int opt_write_coalescing;
+
 /**
  * Set default options for SPU
  */
@@ -46,6 +49,11 @@ static void set_frame_drop(VncSPU *vnc_spu, const char *response)
 	vnc_spu->frame_drop = crStrToInt(response);
 }
 
+static void set_coalesce_writes(VncSPU *vnc_spu, const char *response)
+{
+	opt_write_coalescing = crStrToInt(response);
+}
+
 #ifdef NETLOGGER
 static void set_netlogger_url(VncSPU *vnc_spu, const char *response)
 {
@@ -80,6 +88,8 @@ SPUOptions vncSPUOptions[] = {
 		"Use Bounding Boxes", (SPUOptionCB) set_use_bounding_boxes },
 	{ "frame_drop", CR_BOOL, 1, "1", NULL, NULL,
 		"Allow frame dropping", (SPUOptionCB) set_frame_drop },
+	{ "coalesce_writes", CR_BOOL, 1, "0", NULL, NULL,
+		"Coalesce Writes", (SPUOptionCB) set_coalesce_writes },
 #ifdef NETLOGGER
 	{ "netlogger_url", CR_STRING, 1, NULL, NULL, NULL,
 		"NetLogger log URL", (SPUOptionCB) set_netlogger_url },

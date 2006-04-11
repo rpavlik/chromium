@@ -11,7 +11,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode_tight.c,v 1.3 2006-04-07 15:53:18 brianp Exp $
+ * $Id: encode_tight.c,v 1.4 2006-04-11 21:49:33 brianp Exp $
  * Tight encoder.
  */
 
@@ -29,6 +29,8 @@
 #include "translate.h"
 #include "client_io.h"
 #include "encode.h"
+
+extern int opt_write_coalescing;
 
 /* These parameters may be adjusted. */
 #define MIN_SPLIT_RECT_SIZE     4096
@@ -493,10 +495,12 @@ SendRectSimple(CL_SLOT *cl, FB_RECT *r)
 
   if (tightAfterBufSize < maxAfterSize) {
     tightAfterBufSize = maxAfterSize;
-    if (tightAfterBuf == NULL)
+    if (tightAfterBuf == NULL) {
       tightAfterBuf = malloc(tightAfterBufSize);
-    else
+    }
+    else {
       tightAfterBuf = realloc(tightAfterBuf, tightAfterBufSize);
+    }
   }
 
   if (tightBeforeBuf == NULL || tightAfterBuf == NULL)
@@ -589,11 +593,17 @@ static int SendSubrect(CL_SLOT *cl, FB_RECT *r)
 static void
 SendTightHeader(FB_RECT *r)
 {
-  CARD8 rect_hdr[12];
-
-  r->enc = RFB_ENCODING_TIGHT;
-  put_rect_header(rect_hdr, r);
-  aio_write(NULL, rect_hdr, sizeof(rect_hdr));
+  if (opt_write_coalescing) {
+    CARD8 *rect_hdr = (CARD8 *) aio_alloc_write(12, NULL);
+    r->enc = RFB_ENCODING_TIGHT;
+    put_rect_header(rect_hdr, r);
+  }
+  else {
+    CARD8 rect_hdr[12];
+    r->enc = RFB_ENCODING_TIGHT;
+    put_rect_header(rect_hdr, r);
+    aio_write(NULL, rect_hdr, sizeof(rect_hdr));
+  }
 }
 
 /*
@@ -603,21 +613,38 @@ SendTightHeader(FB_RECT *r)
 static void
 SendSolidRect(CL_SLOT *cl)
 {
-  CARD8 buf[5];
-  int len;
+  if (opt_write_coalescing) {
+    CARD8 buf[5];
+    int len;
 
-  if (usePixelFormat24) {
-    Pack24(tightBeforeBuf, 1);
-    len = 3;
-  } else {
-    len = cl->format.bits_pixel / 8;
+    if (usePixelFormat24) {
+      Pack24(tightBeforeBuf, 1);
+      len = 3;
+    } else {
+      len = cl->format.bits_pixel / 8;
+    }
+
+    buf[0] = RFB_TIGHT_FILL;
+    memcpy(&buf[1], tightBeforeBuf, len);
+    aio_write(NULL, buf, 1 + len);
   }
+  else {
+    CARD8 *buf;
+    int len;
 
-  buf[0] = RFB_TIGHT_FILL;
-  buf[0] |= cl->zs_reset;
-  cl->zs_reset = 0;
-  memcpy(&buf[1], tightBeforeBuf, len);
-  aio_write(NULL, buf, 1 + len);
+    if (usePixelFormat24) {
+      Pack24(tightBeforeBuf, 1);
+      len = 3;
+    } else {
+      len = cl->format.bits_pixel / 8;
+    }
+
+    buf = (CARD8 *) aio_alloc_write(1 + len, NULL);
+    buf[0] = RFB_TIGHT_FILL;
+    buf[0] |= cl->zs_reset;
+    cl->zs_reset = 0;
+    memcpy(&buf[1], tightBeforeBuf, len);
+  }
 }
 
 static int
@@ -816,10 +843,10 @@ static void SendCompressedData(int compressedLen)
   buf[len_bytes++] = compressedLen & 0x7F;
   if (compressedLen > 0x7F) {
     buf[len_bytes-1] |= 0x80;
-    buf[len_bytes++] = compressedLen >> 7 & 0x7F;
+    buf[len_bytes++] = (compressedLen >> 7) & 0x7F;
     if (compressedLen > 0x3FFF) {
       buf[len_bytes-1] |= 0x80;
-      buf[len_bytes++] = compressedLen >> 14 & 0xFF;
+      buf[len_bytes++] = (compressedLen >> 14) & 0xFF;
     }
   }
   aio_write(NULL, buf, len_bytes);
