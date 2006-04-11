@@ -225,7 +225,7 @@ getNextClient(GLboolean block)
 			/* check if this client's connection has gone away */
  			if (!cr_server.run_queue->client->conn
 					 || (cr_server.run_queue->client->conn->type == CR_NO_CONNECTION
-							 && crNetNumMessages(cr_server.curClient->conn) == 0)) {
+							 && crNetNumMessages(cr_server.run_queue->client->conn) == 0)) {
  				crServerDeleteClient( cr_server.run_queue->client );
 				start = cr_server.run_queue;
 			}
