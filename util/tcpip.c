@@ -1345,6 +1345,17 @@ crTCPIPDoDisconnect( CRConnection *conn )
 	int none_left = 1;
 	int i;
 
+	/* If this connection has already been disconnected (e.g.
+	 * if the connection has been lost and disabled through
+	 * a call to __tcpip_dead_connection(), which will then
+	 * call this routine), don't disconnect it again; if we
+	 * do, and if a new valid connection appears in the same
+	 * slot (conn->index), we'll effectively disable the
+	 * valid connection by mistake, leaving us unable to
+	 * receive inbound data on that connection.
+	 */
+	if (conn->type == CR_NO_CONNECTION) return;
+
 	crCloseSocket( conn->tcp_socket );
 	if (conn->hostname) {
 		crFree(conn->hostname);
