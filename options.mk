@@ -18,7 +18,6 @@ THREADSAFE=0
 # Set to 1 if you want to force building 32-bit objects on a 64-bit system.
 FORCE_32BIT_ABI=0
 
-
 # Set USE_DMX to 1 if you want to enable DMX support.
 # You'll need the libdmx.a library and dmxext.h header in the usual X
 # directories.  If you don't, set DMX_INCDIR and DMX_LIBDIR here.
@@ -27,13 +26,17 @@ USE_DMX=0
 #DMX_INCDIR=${DMX_DIR}/dmx/xc/exports/include/
 #DMX_LIBDIR=${DMX_DIR}/dmx/xc/exports/lib/
 
-
-# Set USE_VNC to 1 if you want to enable VNC support.
+# Set USE_REPLICATE to 1 if you want to enable the "replicate" SPU build,
+# which can be used with a specially-constructed VNC viewer to use local
+# acccelerated rendering to display windows belonging to OpenGL applications.
 # You'll need the libVncExt.so.2.0 library and vncstr.h & vnc.h headers in
-# the usual X directories. This will build the replicateSPU.
-# Note: you'll probably want to turn on threadsafety too (see above).
-USE_VNC=0
+# the usual X directories.
+USE_REPLICATE=1
 
+# Set USE_VNC to 1 if you want to enable the "vnc" SPU build.
+# You'll need the libVncExt.so.2.0 library and vncstr.h & vnc.h &
+# Xcliplist.h headers in the usual X directories.
+USE_VNC=1
 
 # Set USE_OSMESA to 1 if you want to enable off screen rendering using Mesa.
 USE_OSMESA=0
