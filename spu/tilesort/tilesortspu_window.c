@@ -128,8 +128,14 @@ tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 		return;
 	}
 
+	winInfo->numBackendsRealized = 0;
+
 	/* From the DMX info, compute tiling info.
 	 * Also setup child X windows for back-end rendering.
+	 * We'll count the number of back-end windows in existance (see the
+	 * numBackendsRealized field) and will set the newBackendWindows flag
+	 * if we create any new backend windows.  These are tested elsewhere
+	 * to determine if/when we need to update the tiling info.
 	 */
 	for (i = 0; i < count; i++) {
 		int server = dmxWinInfo[i].screen;
@@ -214,6 +220,10 @@ tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 			XMoveResizeWindow(backend->dpy, backend->xsubwin, subwinX, subwinY,
 												(unsigned int) subwinW, (unsigned int) subwinH);
 			XSync(backend->dpy, 0);
+		}
+
+		if (backend->xsubwin) {
+			winInfo->numBackendsRealized++;
 		}
 
 #if 0
@@ -355,7 +365,8 @@ tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 
 #ifdef USE_DMX
 		if (winInfo->isDMXWindow &&
-				(winInfo->lastX != x ||
+				(winInfo->numBackendsRealized == 0 ||
+				 winInfo->lastX != x ||
 				 winInfo->lastY != y ||
 				 winInfo->lastWidth != (int)width ||
 				 winInfo->lastHeight != (int)height))

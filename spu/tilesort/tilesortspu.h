@@ -176,6 +176,7 @@ struct window_info_t {
 	GLint visBits;               /**< CR_RGB_BIT | CR_DOUBLE_BIT, etc */
 
 	BackendWindowInfo *backendWindows;       /**< array [num_servers] */
+	int numBackendsRealized;
 
 	/**
 	 *  \name tilesort stuff

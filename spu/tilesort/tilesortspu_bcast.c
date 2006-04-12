@@ -19,21 +19,24 @@ void TILESORTSPU_APIENTRY tilesortspu_Accum( GLenum op, GLfloat value )
 {
 	GET_THREAD(thread);
 	GLenum dlMode = thread->currentContext->displayListMode;
+
 	if (dlMode != GL_FALSE) {
-	    if (tilesort_spu.lazySendDLists) crDLMCompileAccum(op, value);
-	    else if (tilesort_spu.swap) crPackAccumSWAP( op, value );
-	    else crPackAccum( op, value );
-	    return;
+		if (tilesort_spu.lazySendDLists)
+			crDLMCompileAccum(op, value);
+		else if (tilesort_spu.swap)
+			crPackAccumSWAP( op, value );
+		else
+			crPackAccum( op, value );
+		return;
 	}
+
 	tilesortspuFlush( thread );
+
 	if (tilesort_spu.swap)
-	{
 		crPackAccumSWAP( op, value );
-	}
 	else
-	{
 		crPackAccum( op, value );
-	}
+
 	tilesortspuBroadcastGeom(GL_TRUE);
 }
 
@@ -47,15 +50,22 @@ void TILESORTSPU_APIENTRY tilesortspu_Clear( GLbitfield mask )
 	GLenum dlMode = thread->currentContext->displayListMode;
 	WindowInfo *winInfo = thread->currentContext->currentWindow;
 
-	if (tilesort_spu.trackWindowPosition && !dlMode) {
+	/* This is a good place to check for new tiling geometry when
+	 * the DMX window is changed.
+	 */
 #ifdef USE_DMX
+	if (tilesort_spu.trackWindowPosition && !dlMode) {
 		if (winInfo->isDMXWindow && winInfo->xwin) {
 			if (tilesortspuUpdateWindowInfo(winInfo)) {
 				tilesortspuGetNewTiling(winInfo);
 			}
 		}
-#endif
 	}
+
+	if (winInfo->newBackendWindows) {
+		tilesortspuGetNewTiling(winInfo);
+	}
+#endif
 
 	if (dlMode != GL_FALSE) {
 		/* just creating and/or compiling display lists */
