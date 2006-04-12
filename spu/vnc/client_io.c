@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.11 2006-04-07 15:55:05 brianp Exp $
+ * $Id: client_io.c,v 1.12 2006-04-12 17:33:36 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -795,7 +795,6 @@ static void send_update(void)
     0, 0, 0, 1
   };
   CARD8 rect_hdr[12];
-  AIO_FUNCPTR fn = NULL;
   int num_copy_rects, num_pending_rects, num_all_rects, num_sync_rects;
   int raw_bytes = 0, hextile_bytes = 0;
   int i, idx, rev_order;
@@ -913,18 +912,9 @@ static void send_update(void)
     /* Prepare the CopyRect rectangle. */
     block = rfb_encode_copyrect_block(cl, &rect);
 
-    /* If it's the last rectangle, install hook function which would
-       be called after all data has been sent. But do not do that if
-       we use Tight encoding since there would be one more rectangle
-       (LastRect marker) */
-    if (i == num_all_rects - 1) {
-      if (cl->enc_prefer != RFB_ENCODING_TIGHT || !cl->enable_lastrect)
-        fn = wf_client_update_finished;
-    }
-
     /* Send the rectangle.
        FIXME: Check for block == NULL? */
-    aio_write_nocopy(fn, block);
+    aio_write_nocopy(NULL, block);
   }
 
   if (cl->enc_prefer == RFB_ENCODING_TIGHT) {
@@ -974,29 +964,13 @@ static void send_update(void)
       block = rfb_encode_raw_block(cl, &rect);
     }
 
-    /* If it's the last rectangle, install hook function which would
-       be called after all data has been sent. But do not do that if
-       we use Tight encoding since there would be one more rectangle
-       (LastRect marker) */
-    if (i == num_pending_rects - 1)
-      fn = wf_client_update_finished;
-
     /* Send the rectangle.
        FIXME: Check for block == NULL? */
-    aio_write_nocopy(fn, block);
+    aio_write_nocopy(NULL, block);
   }
 
   REGION_EMPTY(&cl->pending_region);
   REGION_EMPTY(&cl->copy_region);
-
-  /* Send LastRect marker. */
-  if (cl->enc_prefer == RFB_ENCODING_TIGHT && cl->enable_lastrect) {
-    FB_RECT rect;
-    rect.x = rect.y = rect.w = rect.h = 0;
-    rect.enc = RFB_ENCODING_LASTRECT;
-    put_rect_header(rect_hdr, &rect);
-    aio_write(wf_client_update_finished, rect_hdr, 12);
-  }
 
   if (num_sync_rects) {
     CARD8 rect_hdr[20]; /* 12-byte header + two 32-bit ints */
@@ -1018,9 +992,25 @@ static void send_update(void)
       assert(cl->prev_frame_num == cl->frame_num - 1);
     }
     cl->prev_frame_num = cl->frame_num;
-    aio_write(wf_client_update_finished, rect_hdr, 20);
+    aio_write(NULL, rect_hdr, 20);
     cl->frame_window = 0;
     cl->frame_num = 0;
+  }
+
+  /* Send LastRect marker. */
+  if (cl->enc_prefer == RFB_ENCODING_TIGHT && cl->enable_lastrect) {
+    FB_RECT rect;
+    rect.x = rect.y = rect.w = rect.h = 0;
+    rect.enc = RFB_ENCODING_LASTRECT;
+    put_rect_header(rect_hdr, &rect);
+    aio_write(NULL, rect_hdr, 12);
+  }
+
+  /* Set the last block's callback function */
+  /* All prev blocks had NULL callbacks */
+  assert(cur_slot->outqueue_last);
+  if (cur_slot->outqueue_last) {
+    cur_slot->outqueue_last->func = wf_client_update_finished;
   }
 
   /* Something has been queued for sending. */
