@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode.c,v 1.4 2005-10-19 17:44:11 brianp Exp $
+ * $Id: encode.c,v 1.5 2006-04-13 17:49:59 brianp Exp $
  * Encoding screen rectangles.
  */
 
@@ -146,8 +146,7 @@ AIO_BLOCK *rfb_encode_raw_block(CL_SLOT *cl, FB_RECT *r)
 {
   AIO_BLOCK *block;
 
-  block = malloc(sizeof(AIO_BLOCK) + 12 +
-                 r->w * r->h * (cl->format.bits_pixel / 8));
+  block = aio_new_block(12 + r->w * r->h * (cl->format.bits_pixel / 8));
   if (block) {
     put_rect_header(block->data, r);
     (*cl->trans_func)(&block->data[12], r, cl->trans_table);
@@ -170,7 +169,7 @@ AIO_BLOCK *rfb_encode_raw24_block(CL_SLOT *cl, FB_RECT *r)
   /*assert(vnc_spu.pixel_size == 24);*/
 
   /* 16 = 12-byte header plus 4-byte serial number */
-  block = malloc(sizeof(AIO_BLOCK) + 16 + r->w * r->h * 3);
+  block = aio_new_block(16 + r->w * r->h * 3);
   if (block) {
     CARD32 serialNumber = GetSerialNumber();
     put_rect_header(block->data, r);
@@ -190,7 +189,7 @@ AIO_BLOCK *rfb_encode_copyrect_block(CL_SLOT *cl, FB_RECT *r)
 {
   AIO_BLOCK *block;
 
-  block = malloc(sizeof(AIO_BLOCK) + 12 + 4);
+  block = aio_new_block(12 + 4);
   if (block) {
     put_rect_header(block->data, r);
     buf_put_CARD16(&block->data[12], r->src_x);
@@ -271,9 +270,8 @@ AIO_BLOCK *rfb_encode_hextile_block(CL_SLOT *cl, FB_RECT *r)
   aligned_f = (r->x & 0x0F) == 0 && (r->y & 0x0F) == 0;
 
   /* Allocate a memory block of maximum possible size */
-  block = malloc(sizeof(AIO_BLOCK) + 12 +
-                 r->w * r->h * (cl->format.bits_pixel / 8) +
-                 num_tiles);
+  block = aio_new_block(12 + r->w * r->h * (cl->format.bits_pixel / 8) +
+                        num_tiles);
   if (block == NULL)
     return NULL;
 
@@ -312,7 +310,14 @@ AIO_BLOCK *rfb_encode_hextile_block(CL_SLOT *cl, FB_RECT *r)
   }
 
   block->data_size = data_ptr - (CARD8 *)block->data;
-  return realloc(block, sizeof(AIO_BLOCK) + block->data_size);
+#if 1
+  /* don't realloc buffer to make it smaller */
+  return block;
+#else
+  /* realloc buffer to make it smaller */
+  block->data = realloc(block->data, block->data_size);
+  return block;
+#endif
 }
 
 static long s_cache_hits, s_cache_misses;
