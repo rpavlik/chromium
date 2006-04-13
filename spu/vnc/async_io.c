@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.c,v 1.3 2006-04-11 21:49:33 brianp Exp $
+ * $Id: async_io.c,v 1.4 2006-04-13 18:46:26 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
@@ -502,7 +502,7 @@ void aio_write(AIO_FUNCPTR fn, void *outbuf, int bytes_to_write)
   else
   {
     /* original, non-coalesce path */
-    block = malloc(sizeof(AIO_BLOCK));
+    block = calloc(1, sizeof(AIO_BLOCK));
     if (block != NULL) {
       block->buffer_size = bytes_to_write;
       block->data = malloc(block->buffer_size);
@@ -933,11 +933,6 @@ aio_alloc_write(size_t bytes_to_write, AIO_BLOCK **blockOut)
     const size_t minSize = 4096;
     const size_t size = (bytes_to_write > minSize) ? bytes_to_write : minSize;
     block = aio_new_block(size);
-#if 0
-    block = calloc(1, sizeof(AIO_BLOCK));
-    block->buffer_size = size;
-    block->data = (unsigned char *) malloc(block->buffer_size);
-#endif
     if (cur_slot->outqueue_last) {
       /* put after last block */
       cur_slot->outqueue_last->next = block;
