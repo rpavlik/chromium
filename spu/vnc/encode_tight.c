@@ -11,7 +11,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode_tight.c,v 1.4 2006-04-11 21:49:33 brianp Exp $
+ * $Id: encode_tight.c,v 1.5 2006-04-18 14:11:33 brianp Exp $
  * Tight encoder.
  */
 
@@ -35,7 +35,11 @@ extern int opt_write_coalescing;
 /* These parameters may be adjusted. */
 #define MIN_SPLIT_RECT_SIZE     4096
 #define MIN_SOLID_SUBRECT_SIZE  2048
+#ifdef TIGHT_OPTIMIZATIONS
+#define MAX_SPLIT_TILE_SIZE       32
+#else
 #define MAX_SPLIT_TILE_SIZE       16
+#endif
 
 /* This variable is set on every encode_tight_block() call. */
 static int usePixelFormat24;
@@ -108,10 +112,9 @@ static CARD8 *tightAfterBuf = NULL;
 
 /* Prototypes for static functions. */
 
-static void FindBestSolidArea (FB_RECT *r, CARD32 colorValue, FB_RECT *result);
-static void ExtendSolidArea   (FB_RECT *r, CARD32 colorValue, FB_RECT *result);
-static int  CheckSolidTile    (FB_RECT *r, CARD32 *colorPtr,
-                               int needSameColor);
+static void FindBestSolidArea(const FB_RECT *r, CARD32 colorValue, FB_RECT *result);
+static void ExtendSolidArea(const FB_RECT *r, CARD32 colorValue, FB_RECT *result);
+static int CheckSolidTile(const FB_RECT *r, CARD32 *colorPtr, int needSameColor);
 
 static int  SendRectSimple    (CL_SLOT *cl, FB_RECT *r);
 static int  SendSubrect       (CL_SLOT *cl, FB_RECT *r);
@@ -340,8 +343,9 @@ rfb_encode_tight(CL_SLOT *cl, FB_RECT *r)
   return SendRectSimple(cl, r);
 }
 
+
 static void
-FindBestSolidArea(FB_RECT *r, CARD32 colorValue, FB_RECT *result)
+FindBestSolidArea(const FB_RECT *r, CARD32 colorValue, FB_RECT *result)
 {
   FB_RECT rc;
   int w_prev;
@@ -378,8 +382,113 @@ FindBestSolidArea(FB_RECT *r, CARD32 colorValue, FB_RECT *result)
   SET_RECT(result, r->x, r->y, w_best, h_best);
 }
 
+/**
+ * Try to extend the solid region defined by <r>.
+ * The known color of region <r> is <colorValue>.
+ * Don't grow the region any larger than <r_bounds>, however.
+ */
+
+#ifdef TIGHT_OPTIMIZATIONS
+
+#if RASTER_BOTTOM_TO_TOP
+#define GET_FB_POINTER(X, Y) \
+  (g_framebuffer + (g_fb_height - 1 - (Y)) * g_fb_width + (X))
+#else
+#define GET_FB_POINTER(X, Y) \
+  (g_framebuffer + (Y) * g_fb_width + (X))
+#endif
+
 static void
-ExtendSolidArea(FB_RECT *r_bounds, CARD32 colorValue, FB_RECT *r)
+ExtendSolidArea(const FB_RECT *r_bounds, CARD32 colorValue, FB_RECT *r)
+{
+#ifdef CHROMIUM
+  CARD16 g_fb_width, g_fb_height;
+  CARD32 *g_framebuffer = GetFrameBuffer(&g_fb_width, &g_fb_height);
+  CARD32 *fb;
+#endif
+#if RASTER_BOTTOM_TO_TOP
+  const int rowStride = -g_fb_width;
+#else
+  const int rowStride = g_fb_width;
+#endif
+
+  ExtendSolidCount++;
+
+  /* try to extend to left */
+  {
+     int i;
+     while (r->x > r_bounds->x) {
+        fb = GET_FB_POINTER(r->x - 1, r->y);
+        for (i = 0; i < r->h; i++) {
+           if (*fb != colorValue)
+              goto done_left;
+           fb += rowStride;
+        }
+        r->x--;
+        r->w++;
+     }
+  done_left:
+     assert(r->x >= r_bounds->x);
+  }
+
+  /* try to extend region to right */
+  {
+     const int xMax = r_bounds->x + r_bounds->w;
+     int xRight = r->x + r->w;
+     int i;
+     while (xRight < xMax) {
+        fb = GET_FB_POINTER(xRight, r->y);
+        for (i = 0; i < r->h; i++) {
+           if (*fb != colorValue)
+              goto done_right;
+           fb += rowStride;
+        }
+        xRight++;
+        r->w++;
+     }
+  done_right:
+     assert(r->x + r->w <= r_bounds->x + r_bounds->w);
+  }
+
+  /* Try to extend the area upwards. */
+  {
+     int i;
+     while (r->y > r_bounds->y) {
+        fb = GET_FB_POINTER(r->x, r->y - 1);
+        for (i = 0; i < r->w; i++) {
+           if (fb[i] != colorValue)
+              goto done_up;
+        }
+        r->y--;
+        r->h++;
+     }
+  done_up:
+     assert(r->y >= r_bounds->y);
+  }
+
+  /* try to extend region downward */
+  {
+     const int yMax = r_bounds->y + r_bounds->h;
+     int yBot = r->y + r->h;
+     int i;
+     while (yBot < yMax) {
+        fb = GET_FB_POINTER(r->x, yBot);
+        for (i = 0; i < r->w; i++) {
+           if (fb[i] != colorValue)
+              goto done_down;
+        }
+        yBot++;
+        r->h++;
+     }
+    done_down:
+     assert(r->y + r->h <= r_bounds->y + r_bounds->h);
+  }
+}
+
+#else /* TIGHT_OPTIMIZATIONS */
+
+static void
+ExtendSolidArea(const FB_RECT *r_bounds, CARD32 colorValue, FB_RECT *r)
 {
   FB_RECT rtemp;
 
@@ -426,6 +535,9 @@ ExtendSolidArea(FB_RECT *r_bounds, CARD32 colorValue, FB_RECT *r)
   r->w += rtemp.x - (r->x + r->w);
 }
 
+#endif /* TIGHT_OPTIMIZATIONS */
+
+
 /*
  * Check if a rectangle is all of the same color. If needSameColor is
  * set to non-zero, then also check that its color equals to the
@@ -434,7 +546,7 @@ ExtendSolidArea(FB_RECT *r_bounds, CARD32 colorValue, FB_RECT *r)
  */
 
 static int
-CheckSolidTile(FB_RECT *r, CARD32 *colorPtr, int needSameColor)
+CheckSolidTile(const FB_RECT *r, CARD32 *colorPtr, int needSameColor)
 {
   CARD32 *fb_ptr;
   CARD32 colorValue;
