@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.12 2006-04-12 17:33:36 brianp Exp $
+ * $Id: client_io.c,v 1.13 2006-04-18 14:25:24 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -868,7 +868,7 @@ static void send_update(void)
   num_pending_rects = REGION_NUM_RECTS(&cl->pending_region);
   num_copy_rects = REGION_NUM_RECTS(&cl->copy_region);
   if (cl->enable_frame_sync)
-     num_sync_rects = 1;
+     num_sync_rects = 0;/**1; XXX FIX */
   else
      num_sync_rects = 0;
   num_all_rects = num_pending_rects + num_copy_rects + num_sync_rects;
@@ -944,7 +944,10 @@ static void send_update(void)
     if (cl->enc_prefer == RFB_ENCODING_TIGHT && cl->enable_lastrect) {
       /* Use Tight encoding */
       rect.enc = RFB_ENCODING_TIGHT;
+      /* lock to prevent glReadPixels in other thread changing data */
+      crLockMutex(&vnc_spu.fblock);
       rfb_encode_tight(cl, &rect);
+      crUnlockMutex(&vnc_spu.fblock);
       continue;                 /* Important! */
     } else if (cl->enc_prefer == RFB_ENCODING_RAW24) {
       rect.enc = RFB_ENCODING_RAW24;
@@ -953,7 +956,9 @@ static void send_update(void)
                 cl->enc_enable[RFB_ENCODING_HEXTILE] ) {
       /* Use Hextile encoding */
       rect.enc = RFB_ENCODING_HEXTILE;
+      crLockMutex(&vnc_spu.fblock);
       block = rfb_encode_hextile_block(cl, &rect);
+      crUnlockMutex(&vnc_spu.fblock);
       if (block != NULL) {
         hextile_bytes += block->data_size;
         raw_bytes += rect.w * rect.h * (cl->format.bits_pixel / 8);

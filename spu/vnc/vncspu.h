@@ -57,6 +57,7 @@ typedef struct {
 	GLint xPos, yPos;
 	GLint clippingHash;
 	GLboolean isClear;  /* indicates window has only been cleared, no drawing */
+	GLuint newSize;
 } WindowInfo;
 
 
@@ -86,6 +87,8 @@ typedef struct {
 	CRHashTable *windowTable;
 	WindowInfo *currentWindow;
 	int frameCounter;
+
+	CRmutex fblock;
 
 	CRmutex lock;
 	CRcondition cond;

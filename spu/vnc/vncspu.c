@@ -46,6 +46,7 @@ VerifyRegion(const char *s, const RegionPtr r)
 {
 	const BoxPtr rects = REGION_RECTS(r);
 	GLint n = REGION_NUM_RECTS(r), i;
+	(void) rects;
 	crDebug("Verify %s", s);
 	for (i = 0; i < n; i++) {
 		 CRASSERT(rects[i].x1 >= 0);
@@ -152,6 +153,7 @@ void
 vncspuStartServerThread(void)
 {
 	/* init locks and condition vars */
+	crInitMutex(&vnc_spu.fblock);
 	crInitMutex(&vnc_spu.lock);
 	crInitCondition(&vnc_spu.cond);
 	crInitSemaphore(&vnc_spu.updateRequested, 0);
@@ -439,7 +441,6 @@ WindowCleanUp(WindowInfo *window)
 static void
 DoReadback(WindowInfo *window)
 {
-	GLboolean newWindowSize = GL_FALSE;
 	BoxRec wholeWindowRect;
 	int i;
 	BoxPtr clipRects;
@@ -465,7 +466,7 @@ DoReadback(WindowInfo *window)
 		vnc_spu.super.GetChromiumParametervCR(GL_WINDOW_POSITION_CR,
 																					window->id, GL_INT, 2, pos);
 		if (window->width != size[0] || window->height != size[1]) {
-			newWindowSize = GL_TRUE;
+			window->newSize = 3;
 			window->width = size[0];
 			window->height = size[1];
 		}
@@ -522,7 +523,7 @@ DoReadback(WindowInfo *window)
 		/* clipping has changed */
 		crDebug("Clipping change");
 		window->clippingHash = hash;
-		newWindowSize = GL_TRUE;
+		window->newSize = 3;
 	}
 
 
@@ -533,7 +534,7 @@ DoReadback(WindowInfo *window)
 	if (vnc_spu.use_bounding_boxes) {
 		/* use dirty rects / regions */
 
-		if ((newWindowSize || window->isClear) && window->width && window->height) {
+		if ((window->newSize || window->isClear) && window->width && window->height) {
 			/* dirty region is whole window */
 			BoxRec initRec;
 			initRec.x1 = 0;
@@ -545,6 +546,8 @@ DoReadback(WindowInfo *window)
 			REGION_UNINIT(&window->prevDirtyRegion);
 			REGION_INIT(&window->prevDirtyRegion, &initRec, 1);
 			REGION_INIT(&dirtyRegion, &initRec, 1);
+			if (window->newSize > 0)
+				window->newSize--;
 		}
 		else {
 			/* The dirty region is the union of the previous frame's bounding
@@ -616,6 +619,7 @@ DoReadback(WindowInfo *window)
 	{
 		const BoxPtr rects = REGION_RECTS(&dirtyRegion);
 		const int n = REGION_NUM_RECTS(&dirtyRegion);
+		crLockMutex(&vnc_spu.fblock);
 		for (i = 0; i < n; i++) {
 			int width = rects[i].x2 - rects[i].x1;
 			int height = rects[i].y2 - rects[i].y1;
@@ -629,6 +633,7 @@ DoReadback(WindowInfo *window)
 				ReadbackRegion(destx, desty, srcx, srcy, width, height);
 			}
 		}
+		crUnlockMutex(&vnc_spu.fblock);
 	}
 
 	/* Having a nil dirty region is a special case */
@@ -641,6 +646,8 @@ DoReadback(WindowInfo *window)
 			box.x2 = window->width;
 			box.y2 = window->height;
 			REGION_INIT(&dirtyRegion, &box, 1);
+			CRASSERT(window->width > 0);
+			CRASSERT(window->height > 0);
 		}
 		else {
 			/* Add empty/dummy rect so we have _something_ to send.
