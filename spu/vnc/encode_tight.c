@@ -11,7 +11,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode_tight.c,v 1.5 2006-04-18 14:11:33 brianp Exp $
+ * $Id: encode_tight.c,v 1.6 2006-04-18 14:22:33 brianp Exp $
  * Tight encoder.
  */
 
@@ -411,8 +411,6 @@ ExtendSolidArea(const FB_RECT *r_bounds, CARD32 colorValue, FB_RECT *r)
 #else
   const int rowStride = g_fb_width;
 #endif
-
-  ExtendSolidCount++;
 
   /* try to extend to left */
   {
