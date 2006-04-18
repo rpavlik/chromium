@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.c,v 1.4 2006-04-13 18:46:26 brianp Exp $
+ * $Id: async_io.c,v 1.5 2006-04-18 22:30:47 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
@@ -892,7 +892,7 @@ aio_new_block(size_t payloadSize)
   block = calloc(1, sizeof(AIO_BLOCK));
   if (block) {
     block->data = malloc(payloadSize);
-    if (block) {
+    if (block->data) {
       block->buffer_size = payloadSize;
     }
     else {
