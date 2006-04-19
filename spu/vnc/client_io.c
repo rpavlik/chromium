@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.13 2006-04-18 14:25:24 brianp Exp $
+ * $Id: client_io.c,v 1.14 2006-04-19 02:58:11 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -804,6 +804,7 @@ static void send_update(void)
     NL_info("vncspu", "spu.fbupdate.send.begin",
             "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
   }
+  aio_set_serial_number(&cl->s, cl->serial_number);
 #endif
 
   /*crDebug("Enter send_update");*/
@@ -1030,5 +1031,6 @@ static void send_update(void)
     NL_info("vncspu", "spu.fbupdate.send.end",
             "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
   }
+  aio_set_serial_number(&cl->s, 0);
 #endif
 }

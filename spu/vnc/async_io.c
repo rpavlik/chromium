@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.c,v 1.5 2006-04-18 22:30:47 brianp Exp $
+ * $Id: async_io.c,v 1.6 2006-04-19 02:58:11 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
@@ -27,6 +27,9 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
+#ifdef NETLOGGER
+#include "nl_log.h"
+#endif
 
 #ifdef USE_POLL
 #include <sys/poll.h>
@@ -379,7 +382,7 @@ void aio_mainloop(void)
   }
   /* Close all slots and exit */
   slot = s_first_slot;
-  while(slot != NULL) {
+  while (slot != NULL) {
     next_slot = slot->next;
     aio_destroy_slot(slot, 1);
     slot = next_slot;
@@ -439,7 +442,7 @@ void aio_mainloop(void)
   }
   /* Stop listening, close all slots and exit */
   slot = s_first_slot;
-  while(slot != NULL) {
+  while (slot != NULL) {
     next_slot = slot->next;
     aio_destroy_slot(slot, 1);
     slot = next_slot;
@@ -620,11 +623,6 @@ static void aio_process_input(AIO_SLOT *slot)
         slot->total_read += bytes;
       }
 
-#if 0
-      if (slot->cache && bytes > 0) {
-        cache_data(slot->cache, slot->readbuf + slot->bytes_ready, bytes);
-      }
-#endif
       if (bytes > 0)
         slot->bytes_ready += bytes;
       else
@@ -649,7 +647,6 @@ static void aio_process_input(AIO_SLOT *slot)
 static void aio_process_output(AIO_SLOT *slot)
 {
   int bytes = 0;
-  AIO_BLOCK *next;
 
   /* FIXME: Maybe write all blocks in a loop. */
 
@@ -658,6 +655,13 @@ static void aio_process_output(AIO_SLOT *slot)
     if (!block)
        return;
     errno = 0;
+
+#ifdef NETLOGGER
+    if (slot->bytes_written == 0 && block->serial_number) {
+      NL_info("vncspu", "vncspu.fbupdate.send.begin",
+              "NUMBER=i", block->serial_number);
+    }
+#endif
 
 #if 0
        printf("process output %d on %d (%d writes)\n",
@@ -672,12 +676,20 @@ static void aio_process_output(AIO_SLOT *slot)
     if (bytes > 0 || block->data_size == 0) {
       slot->bytes_written += bytes;
       if (slot->bytes_written == block->data_size) {
+        AIO_BLOCK *next = block->next;
+
+#ifdef NETLOGGER
+        if (block->serial_number) {
+          NL_info("vncproxy", "proxy.fbupdate.send.end",
+                  "NUMBER=i", block->serial_number);
+        }
+#endif
+
         /* Block sent, call hook function if set */
         if (block->func != NULL) {
           cur_slot = slot;
           (*block->func)();
         }
-        next = block->next;
 
         /* free this block, unless it's in the cache */
         block->in_list_flag = 0;
@@ -949,6 +961,7 @@ aio_alloc_write(size_t bytes_to_write, AIO_BLOCK **blockOut)
   assert(block);
   assert(!block->next);
   assert(!block->in_cache_flag);
+  block->serial_number = cur_slot->serial_number;
 
   if (block->data_size + bytes_to_write > block->buffer_size) {
     /* grow by power of two */
@@ -967,4 +980,35 @@ aio_alloc_write(size_t bytes_to_write, AIO_BLOCK **blockOut)
     *blockOut = block;
 
   return dest;
+}
+
+
+void
+aio_set_serial_number(AIO_SLOT *slot, int serno)
+{
+  slot->serial_number = serno;
+}
+
+
+
+/**
+ * Useful for debug.
+ */
+void
+aio_print_slots(void)
+{
+  const AIO_SLOT *slot;
+
+  for (slot = s_first_slot; slot; slot = slot->next) {
+     printf("Slot %p\n", (void*) slot);
+     printf("  Name: %s\n", slot->name);
+     printf("  Type: %d\n", slot->type);
+     printf("  Susp: 0x%x\n", slot->suspended);
+     /*
+     if (slot->type == TYPE_HOST_ACTIVE_SLOT) {
+        HOST_SLOT *hs = (HOST_SLOT *) slot;
+        printf("  VNC: %d\n", hs->is_vnc_spu);
+     }
+     */
+  }
 }
