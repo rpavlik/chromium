@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.c,v 1.6 2006-04-19 02:58:11 brianp Exp $
+ * $Id: async_io.c,v 1.7 2006-04-19 16:11:19 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
@@ -680,7 +680,7 @@ static void aio_process_output(AIO_SLOT *slot)
 
 #ifdef NETLOGGER
         if (block->serial_number) {
-          NL_info("vncproxy", "proxy.fbupdate.send.end",
+          NL_info("vncspu", "vncspu.fbupdate.send.end",
                   "NUMBER=i", block->serial_number);
         }
 #endif
