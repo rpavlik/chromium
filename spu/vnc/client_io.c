@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.14 2006-04-19 02:58:11 brianp Exp $
+ * $Id: client_io.c,v 1.15 2006-04-20 18:20:45 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -800,10 +800,6 @@ static void send_update(void)
   int i, idx, rev_order;
 
 #ifdef NETLOGGER
-  if (vnc_spu.netlogger_url) {
-    NL_info("vncspu", "spu.fbupdate.send.begin",
-            "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
-  }
   aio_set_serial_number(&cl->s, cl->serial_number);
 #endif
 
@@ -923,57 +919,75 @@ static void send_update(void)
     rfb_reset_tight_encoder(cl);
   }
 
-  /* For each of the usual pending rectangles: */
-  for (i = 0; i < num_pending_rects; i++) {
-    FB_RECT rect;
-    AIO_BLOCK *block;
-    /*
-    crDebug("sending rect %d of %d: %d, %d .. %d, %d", i, num_pending_rects,
-            REGION_RECTS(&cl->pending_region)[i].x1,
-            REGION_RECTS(&cl->pending_region)[i].y1,
-            REGION_RECTS(&cl->pending_region)[i].x2,
-            REGION_RECTS(&cl->pending_region)[i].y2);
-    */
-    rect.x = REGION_RECTS(&cl->pending_region)[i].x1;
-    rect.y = REGION_RECTS(&cl->pending_region)[i].y1;
-    rect.w = REGION_RECTS(&cl->pending_region)[i].x2 - rect.x;
-    rect.h = REGION_RECTS(&cl->pending_region)[i].y2 - rect.y;
-    log_write(LL_DEBUG, "Sending rectangle %dx%d at %d,%d to %s enc 0x%x",
-              (int)rect.w, (int)rect.h, (int)rect.x, (int)rect.y,
-              cur_slot->name, cl->enc_prefer);
+  if (num_pending_rects) {
+    /* Lock around fb access so other thread doesn't change contents while
+     * we're encoding.
+     */
+#ifdef NETLOGGER
+    if (vnc_spu.netlogger_url) {
+      NL_info("vncspu", "spu.fbupdate.waitlock",
+              "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
+    }
+#endif
+    crLockMutex(&vnc_spu.fblock);
+#ifdef NETLOGGER
+  if (vnc_spu.netlogger_url) {
+    NL_info("vncspu", "spu.fbupdate.encode.begin",
+            "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
+  }
+#endif
 
-    if (cl->enc_prefer == RFB_ENCODING_TIGHT && cl->enable_lastrect) {
-      /* Use Tight encoding */
-      rect.enc = RFB_ENCODING_TIGHT;
-      /* lock to prevent glReadPixels in other thread changing data */
-      crLockMutex(&vnc_spu.fblock);
-      rfb_encode_tight(cl, &rect);
-      crUnlockMutex(&vnc_spu.fblock);
-      continue;                 /* Important! */
-    } else if (cl->enc_prefer == RFB_ENCODING_RAW24) {
-      rect.enc = RFB_ENCODING_RAW24;
-      block = rfb_encode_raw24_block(cl, &rect);
-    } else if ( cl->enc_prefer != RFB_ENCODING_RAW &&
-                cl->enc_enable[RFB_ENCODING_HEXTILE] ) {
-      /* Use Hextile encoding */
-      rect.enc = RFB_ENCODING_HEXTILE;
-      crLockMutex(&vnc_spu.fblock);
-      block = rfb_encode_hextile_block(cl, &rect);
-      crUnlockMutex(&vnc_spu.fblock);
-      if (block != NULL) {
-        hextile_bytes += block->data_size;
-        raw_bytes += rect.w * rect.h * (cl->format.bits_pixel / 8);
+    /* For each of the usual pending rectangles: */
+    for (i = 0; i < num_pending_rects; i++) {
+      FB_RECT rect;
+      AIO_BLOCK *block;
+      /*
+      crDebug("sending rect %d of %d: %d, %d .. %d, %d", i, num_pending_rects,
+              REGION_RECTS(&cl->pending_region)[i].x1,
+              REGION_RECTS(&cl->pending_region)[i].y1,
+              REGION_RECTS(&cl->pending_region)[i].x2,
+              REGION_RECTS(&cl->pending_region)[i].y2);
+      */
+      rect.x = REGION_RECTS(&cl->pending_region)[i].x1;
+      rect.y = REGION_RECTS(&cl->pending_region)[i].y1;
+      rect.w = REGION_RECTS(&cl->pending_region)[i].x2 - rect.x;
+      rect.h = REGION_RECTS(&cl->pending_region)[i].y2 - rect.y;
+      log_write(LL_DEBUG, "Sending rectangle %dx%d at %d,%d to %s enc 0x%x",
+                (int)rect.w, (int)rect.h, (int)rect.x, (int)rect.y,
+                cur_slot->name, cl->enc_prefer);
+
+      if (cl->enc_prefer == RFB_ENCODING_TIGHT && cl->enable_lastrect) {
+        /* Use Tight encoding */
+        rect.enc = RFB_ENCODING_TIGHT;
+        /* lock to prevent glReadPixels in other thread changing data */
+        rfb_encode_tight(cl, &rect);
+        continue;                 /* Important! */
+      } else if (cl->enc_prefer == RFB_ENCODING_RAW24) {
+        rect.enc = RFB_ENCODING_RAW24;
+        block = rfb_encode_raw24_block(cl, &rect);
+      } else if ( cl->enc_prefer != RFB_ENCODING_RAW &&
+                  cl->enc_enable[RFB_ENCODING_HEXTILE] ) {
+        /* Use Hextile encoding */
+        rect.enc = RFB_ENCODING_HEXTILE;
+        block = rfb_encode_hextile_block(cl, &rect);
+        if (block != NULL) {
+          hextile_bytes += block->data_size;
+          raw_bytes += rect.w * rect.h * (cl->format.bits_pixel / 8);
+        }
+      } else {
+        /* Use Raw encoding */
+        rect.enc = RFB_ENCODING_RAW;
+        block = rfb_encode_raw_block(cl, &rect);
       }
-    } else {
-      /* Use Raw encoding */
-      rect.enc = RFB_ENCODING_RAW;
-      block = rfb_encode_raw_block(cl, &rect);
+
+      /* Send the rectangle.
+         FIXME: Check for block == NULL? */
+      aio_write_nocopy(NULL, block);
     }
 
-    /* Send the rectangle.
-       FIXME: Check for block == NULL? */
-    aio_write_nocopy(NULL, block);
-  }
+    crUnlockMutex(&vnc_spu.fblock);
+  } /* if num_pending_rects */
+
 
   REGION_EMPTY(&cl->pending_region);
   REGION_EMPTY(&cl->copy_region);
@@ -1028,7 +1042,7 @@ static void send_update(void)
 
 #ifdef NETLOGGER
   if (vnc_spu.netlogger_url) {
-    NL_info("vncspu", "spu.fbupdate.send.end",
+    NL_info("vncspu", "spu.fbupdate.encode.end",
             "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
   }
   aio_set_serial_number(&cl->s, 0);

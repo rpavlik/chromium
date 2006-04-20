@@ -332,9 +332,19 @@ vncspuWaitDirtyRects(RegionPtr region, int *frame_num)
 	 * a semaphore would probably be best.
 	 */
 
+#ifdef NETLOGGER
+	if (vnc_spu.netlogger_url) {
+		NL_info("vncspu", "spu.waitrects", "NUMBER=i", vnc_spu.frameCounter);
+	}
+#endif
 	/*crDebug("Waiting for diry rects");*/
 	do {
 		crWaitSemaphore(&vnc_spu.dirtyRectsReady);
+#ifdef NETLOGGER
+		if (vnc_spu.netlogger_url) {
+			NL_info("vncspu", "spu.obtainrects", "NUMBER=i", vnc_spu.frameCounter);
+		}
+#endif
 		ready = vncspuGetDirtyRects(region, frame_num);
 	} while (!ready);
 	/*crDebug("Got diry rects");*/
@@ -619,7 +629,18 @@ DoReadback(WindowInfo *window)
 	{
 		const BoxPtr rects = REGION_RECTS(&dirtyRegion);
 		const int n = REGION_NUM_RECTS(&dirtyRegion);
+#ifdef NETLOGGER
+		if (vnc_spu.netlogger_url) {
+			NL_info("vncspu", "spu.readback.waitlock", "NUMBER=i",
+							window->frameCounter);
+		}
+#endif
 		crLockMutex(&vnc_spu.fblock);
+#ifdef NETLOGGER
+		if (vnc_spu.netlogger_url) {
+			NL_info("vncspu", "spu.readpix.begin", "NUMBER=i", window->frameCounter);
+		}
+#endif
 		for (i = 0; i < n; i++) {
 			int width = rects[i].x2 - rects[i].x1;
 			int height = rects[i].y2 - rects[i].y1;
@@ -634,6 +655,11 @@ DoReadback(WindowInfo *window)
 			}
 		}
 		crUnlockMutex(&vnc_spu.fblock);
+#ifdef NETLOGGER
+		if (vnc_spu.netlogger_url) {
+			NL_info("vncspu", "spu.readpix.end", "NUMBER=i", window->frameCounter);
+		}
+#endif
 	}
 
 	/* Having a nil dirty region is a special case */
