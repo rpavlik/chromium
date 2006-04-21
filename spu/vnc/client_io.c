@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.15 2006-04-20 18:20:45 brianp Exp $
+ * $Id: client_io.c,v 1.16 2006-04-21 15:43:27 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -513,7 +513,7 @@ static void rf_client_updatereq(void)
     k = (cl->newfbsize_pending ||
          REGION_NOTEMPTY(&cl->copy_region));
     if (!k) {
-      k = vncspuWaitDirtyRects(&cl->pending_region, &cl->frame_num);
+      k = vncspuWaitDirtyRects(&cl->pending_region, &cl->frame_num, cl->serial_number);
     }
     if (k) {
       send_update();

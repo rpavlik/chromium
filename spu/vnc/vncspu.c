@@ -324,7 +324,7 @@ vncspuGetDirtyRects(RegionPtr region, int *frame_num)
 
 
 GLboolean
-vncspuWaitDirtyRects(RegionPtr region, int *frame_num)
+vncspuWaitDirtyRects(RegionPtr region, int *frame_num, int serial_no)
 {
 	GLboolean ready;
 
@@ -334,7 +334,8 @@ vncspuWaitDirtyRects(RegionPtr region, int *frame_num)
 
 #ifdef NETLOGGER
 	if (vnc_spu.netlogger_url) {
-		NL_info("vncspu", "spu.waitrects", "NUMBER=i", vnc_spu.frameCounter);
+		NL_info("vncspu", "spu.waitrects", "NODE=s NUMBER=i",
+						vnc_spu.hostname, serial_no);
 	}
 #endif
 	/*crDebug("Waiting for diry rects");*/
@@ -342,10 +343,12 @@ vncspuWaitDirtyRects(RegionPtr region, int *frame_num)
 		crWaitSemaphore(&vnc_spu.dirtyRectsReady);
 #ifdef NETLOGGER
 		if (vnc_spu.netlogger_url) {
-			NL_info("vncspu", "spu.obtainrects", "NUMBER=i", vnc_spu.frameCounter);
+			NL_info("vncspu", "spu.obtainrects", "NODE=s NUMBER=i",
+							vnc_spu.hostname, serial_no);
 		}
 #endif
 		ready = vncspuGetDirtyRects(region, frame_num);
+		sched_yield();
 	} while (!ready);
 	/*crDebug("Got diry rects");*/
 
@@ -698,6 +701,11 @@ DoReadback(WindowInfo *window)
 	CRASSERT(miValidRegion(&window->accumDirtyRegion));
 	vnc_spu.frameCounter++;
 	crUnlockMutex(&vnc_spu.lock);
+#ifdef NETLOGGER
+	if (vnc_spu.netlogger_url) {
+		NL_info("vncspu", "spu.signalrects", "NUMBER=i", window->frameCounter);
+	}
+#endif
 	/* Tell vnc server thread that an update is ready */
 	crSignalSemaphore(&vnc_spu.dirtyRectsReady);
 
@@ -762,6 +770,8 @@ LookupWindow(GLint win, GLint nativeWindow)
 static void
 vncspuUpdateFramebuffer(WindowInfo *window)
 {
+	GLint readBuf;
+
 	CRASSERT(window);
 
 	/* check/alloc the screen buffer now */
@@ -776,7 +786,12 @@ vncspuUpdateFramebuffer(WindowInfo *window)
 
 	window->frameCounter++;
 
+	vnc_spu.super.GetIntegerv(GL_READ_BUFFER, &readBuf);
+	vnc_spu.super.ReadBuffer(GL_FRONT);
+
 	DoReadback(window);
+
+	vnc_spu.super.ReadBuffer(readBuf);
 
 	if (vnc_spu.use_bounding_boxes) {
 		/* free prevDirtyRegion */
@@ -793,14 +808,15 @@ static void VNCSPU_APIENTRY
 vncspuSwapBuffers(GLint win, GLint flags)
 {
 	WindowInfo *window = LookupWindow(win, 0);
+
+	vnc_spu.super.SwapBuffers(win, flags);
+
 	if (window) {
 		vncspuUpdateFramebuffer(window);
 	}
 	else {
 		crWarning("VNC SPU: SwapBuffers called for invalid window id");
 	}
-	vnc_spu.super.SwapBuffers(win, flags);
-	/**vnc_spu.frameCounter++;**/
 }
 
 

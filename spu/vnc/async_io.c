@@ -10,10 +10,11 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.c,v 1.7 2006-04-19 16:11:19 brianp Exp $
+ * $Id: async_io.c,v 1.8 2006-04-21 15:43:26 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
+#include "vncspu.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -658,8 +659,8 @@ static void aio_process_output(AIO_SLOT *slot)
 
 #ifdef NETLOGGER
     if (slot->bytes_written == 0 && block->serial_number) {
-      NL_info("vncspu", "vncspu.fbupdate.send.begin",
-              "NUMBER=i", block->serial_number);
+      NL_info("vncspu", "spu.fbupdate.send.begin",
+              "NODE=s NUMBER=i", vnc_spu.hostname, block->serial_number);
     }
 #endif
 
@@ -680,8 +681,8 @@ static void aio_process_output(AIO_SLOT *slot)
 
 #ifdef NETLOGGER
         if (block->serial_number) {
-          NL_info("vncspu", "vncspu.fbupdate.send.end",
-                  "NUMBER=i", block->serial_number);
+          NL_info("vncspu", "spu.fbupdate.send.end",
+                  "NODE=s NUMBER=i", vnc_spu.hostname, block->serial_number);
         }
 #endif
 
