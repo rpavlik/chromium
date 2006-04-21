@@ -334,7 +334,7 @@ vncspuWaitDirtyRects(RegionPtr region, int *frame_num, int serial_no)
 
 #ifdef NETLOGGER
 	if (vnc_spu.netlogger_url) {
-		NL_info("vncspu", "spu.waitrects", "NODE=s NUMBER=i",
+		NL_info("vncspu", "spu.wait.rects", "NODE=s NUMBER=i",
 						vnc_spu.hostname, serial_no);
 	}
 #endif
@@ -343,12 +343,11 @@ vncspuWaitDirtyRects(RegionPtr region, int *frame_num, int serial_no)
 		crWaitSemaphore(&vnc_spu.dirtyRectsReady);
 #ifdef NETLOGGER
 		if (vnc_spu.netlogger_url) {
-			NL_info("vncspu", "spu.obtainrects", "NODE=s NUMBER=i",
+			NL_info("vncspu", "spu.obtain.rects", "NODE=s NUMBER=i",
 							vnc_spu.hostname, serial_no);
 		}
 #endif
 		ready = vncspuGetDirtyRects(region, frame_num);
-		sched_yield();
 	} while (!ready);
 	/*crDebug("Got diry rects");*/
 
@@ -634,7 +633,7 @@ DoReadback(WindowInfo *window)
 		const int n = REGION_NUM_RECTS(&dirtyRegion);
 #ifdef NETLOGGER
 		if (vnc_spu.netlogger_url) {
-			NL_info("vncspu", "spu.readback.waitlock", "NUMBER=i",
+			NL_info("vncspu", "spu.wait.fbmutex1", "NUMBER=i",
 							window->frameCounter);
 		}
 #endif
@@ -703,7 +702,7 @@ DoReadback(WindowInfo *window)
 	crUnlockMutex(&vnc_spu.lock);
 #ifdef NETLOGGER
 	if (vnc_spu.netlogger_url) {
-		NL_info("vncspu", "spu.signalrects", "NUMBER=i", window->frameCounter);
+		NL_info("vncspu", "spu.signal.rects", "NUMBER=i", window->frameCounter);
 	}
 #endif
 	/* Tell vnc server thread that an update is ready */

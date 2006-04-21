@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.16 2006-04-21 15:43:27 brianp Exp $
+ * $Id: client_io.c,v 1.17 2006-04-21 23:33:31 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -925,14 +925,14 @@ static void send_update(void)
      */
 #ifdef NETLOGGER
     if (vnc_spu.netlogger_url) {
-      NL_info("vncspu", "spu.fbupdate.waitlock",
+      NL_info("vncspu", "spu.wait.fbmutex2",
               "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
     }
 #endif
     crLockMutex(&vnc_spu.fblock);
 #ifdef NETLOGGER
   if (vnc_spu.netlogger_url) {
-    NL_info("vncspu", "spu.fbupdate.encode.begin",
+    NL_info("vncspu", "spu.encode.begin",
             "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
   }
 #endif
@@ -1042,7 +1042,7 @@ static void send_update(void)
 
 #ifdef NETLOGGER
   if (vnc_spu.netlogger_url) {
-    NL_info("vncspu", "spu.fbupdate.encode.end",
+    NL_info("vncspu", "spu.encode.end",
             "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
   }
   aio_set_serial_number(&cl->s, 0);
