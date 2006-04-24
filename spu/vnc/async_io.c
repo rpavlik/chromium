@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.c,v 1.8 2006-04-21 15:43:26 brianp Exp $
+ * $Id: async_io.c,v 1.9 2006-04-24 16:07:38 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
@@ -677,7 +677,9 @@ static void aio_process_output(AIO_SLOT *slot)
     if (bytes > 0 || block->data_size == 0) {
       slot->bytes_written += bytes;
       if (slot->bytes_written == block->data_size) {
+        /* All block data sent, remove block */
         AIO_BLOCK *next = block->next;
+        AIO_FUNCPTR func = block->func;
 
 #ifdef NETLOGGER
         if (block->serial_number) {
@@ -685,12 +687,6 @@ static void aio_process_output(AIO_SLOT *slot)
                   "NODE=s NUMBER=i", vnc_spu.hostname, block->serial_number);
         }
 #endif
-
-        /* Block sent, call hook function if set */
-        if (block->func != NULL) {
-          cur_slot = slot;
-          (*block->func)();
-        }
 
         /* free this block, unless it's in the cache */
         block->in_list_flag = 0;
@@ -714,8 +710,15 @@ static void aio_process_output(AIO_SLOT *slot)
           FD_CLR(slot->fd, &s_fdset_write);
 #endif
         }
+
+        /* Call hook function after block was sent */
+        if (func) {
+          cur_slot = slot;
+          (*func)();
+        }
       }
-    } else if (bytes == 0 || (bytes < 0 && errno != EAGAIN)) {
+    }
+    else if (bytes == 0 || (bytes < 0 && errno != EAGAIN)) {
       slot->close_f = 1;
       slot->errio_f = 1;
       slot->errwrite_f = 1;
