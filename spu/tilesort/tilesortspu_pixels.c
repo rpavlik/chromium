@@ -165,8 +165,6 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 		return;
 	}
 
-	tilesortspuFlush( thread );
-	
 	oldZoomX = p->xZoom;
 	oldZoomY = p->yZoom;
 	if (tilesort_spu.scaleImages) {
@@ -203,6 +201,16 @@ tilesortspu_DrawPixels(GLsizei width, GLsizei height, GLenum format,
 	screen_bbox[1] = screen_bbox[1] * 2.0f - 1.0f;
 	screen_bbox[4] = screen_bbox[4] * 2.0f - 1.0f;
 	screen_bbox[5] = screen_bbox[5] * 2.0f - 1.0f;
+
+
+	/* flush any buffered geometry */
+	tilesortspuFlush( thread );
+
+	/* This flushes any state changes.
+	 * XXX See about using the bounding box above...
+	 */
+	tilesortspuBroadcastGeom(GL_TRUE);
+
 
 	thread->currentContext->inDrawPixels = GL_TRUE;
 
