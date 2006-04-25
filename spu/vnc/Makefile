@@ -47,8 +47,8 @@ LDFLAGS += -lVncExt
 endif
 
 ifeq ($(NETLOGGER), 1)
-CFLAGS += -DNETLOGGER
-LDFLAGS += -L/usr/local/lib -lnllite
+CFLAGS += -DNETLOGGER -I$(NLHOME)/include
+LDFLAGS += -L$(NLHOME)/lib -lnllite
 endif
 
 LIBRARIES = spuload crutil crmothership
