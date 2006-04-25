@@ -277,8 +277,17 @@ windowUnionCB(unsigned long key, void *data1, void *data2)
 	/* change y=0=bottom to y=0=top */
 	InvertRegion(&window->accumDirtyRegion, window->height ? window->height : 1);
 
-	/* add window offset */
-	miTranslateRegion(&window->accumDirtyRegion, window->xPos, window->yPos);
+	if (REGION_NUM_RECTS(&window->accumDirtyRegion) == 1 &&
+			window->accumDirtyRegion.extents.x1 == 0 &&
+			window->accumDirtyRegion.extents.y1 == 0 &&
+			window->accumDirtyRegion.extents.x2 == 1 &&
+			window->accumDirtyRegion.extents.y2 == 1) {
+		/* empty / sentinal region */
+	}
+	else {
+		/* add window offset */
+		miTranslateRegion(&window->accumDirtyRegion, window->xPos, window->yPos);
+	}
 
 	/* XXX intersect w/ window bounds here? */
 	REGION_UNION(regionUnion, regionUnion, &window->accumDirtyRegion);
@@ -696,7 +705,8 @@ DoReadback(WindowInfo *window)
 		}
 		else {
 			/* Add empty/dummy rect so we have _something_ to send.
-			 * If we don't, the window barrier will wait forever.
+			 * This is needed for framesync.  We always need to send something
+			 * in response to an RFB update request in that case.
 			 */
 			BoxRec mtBox = {0, 0, 1, 1};  /* XXX not really empty! */
 			REGION_INIT(&dirtyRegion, &mtBox, 1);
