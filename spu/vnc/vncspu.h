@@ -120,7 +120,8 @@ extern void vncspuInitialize(void);
 extern void vncspuSendVncStartUpMsg(int port);
 
 extern GLboolean vncspuGetDirtyRects(RegionPtr region, int *frame_num);
-extern GLboolean vncspuWaitDirtyRects(RegionPtr region, int *frame_num, int serial_no);
+extern GLboolean vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi,
+                                      int *frame_num, int serial_no);
 
 void
 PrintRegion(const char *s, const RegionPtr r);

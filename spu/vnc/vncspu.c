@@ -323,10 +323,18 @@ vncspuGetDirtyRects(RegionPtr region, int *frame_num)
 }
 
 
+/**
+ * Wait until there's new "dirty" rectangles (changed window/screen
+ * regions) that lie inside the given region of interest.
+ */
 GLboolean
-vncspuWaitDirtyRects(RegionPtr region, int *frame_num, int serial_no)
+vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi,
+										 int *frame_num, int serial_no)
 {
 	GLboolean ready;
+	RegionRec clipRegion;
+
+  REGION_INIT(&clipRegion, roi, 1);
 
 	/* XXX this is a bit of a hack - using a condition variable instead of
 	 * a semaphore would probably be best.
@@ -338,18 +346,27 @@ vncspuWaitDirtyRects(RegionPtr region, int *frame_num, int serial_no)
 						vnc_spu.hostname, serial_no);
 	}
 #endif
-	/*crDebug("Waiting for diry rects");*/
+
 	do {
+		/* wait until something is rendered/changed */
 		crWaitSemaphore(&vnc_spu.dirtyRectsReady);
-#ifdef NETLOGGER
-		if (vnc_spu.netlogger_url) {
-			NL_info("vncspu", "spu.obtain.rects", "NODE=s NUMBER=i",
-							vnc_spu.hostname, serial_no);
-		}
-#endif
+		/* Get the new region and see if it intersects the region of interest */
 		ready = vncspuGetDirtyRects(region, frame_num);
+		if (ready) {
+			REGION_INTERSECT(region, region, &clipRegion);
+			if (REGION_NUM_RECTS(region) == 0) {
+				/* the dirty region was outside the specified region of interest */
+				ready = 0;
+			}
+		}
 	} while (!ready);
-	/*crDebug("Got diry rects");*/
+
+#ifdef NETLOGGER
+	if (vnc_spu.netlogger_url) {
+		NL_info("vncspu", "spu.obtain.rects", "NODE=s NUMBER=i",
+						vnc_spu.hostname, serial_no);
+	}
+#endif
 
 	return ready;
 }

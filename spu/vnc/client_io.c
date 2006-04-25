@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.17 2006-04-21 23:33:31 brianp Exp $
+ * $Id: client_io.c,v 1.18 2006-04-25 21:42:12 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -455,7 +455,6 @@ static void rf_client_updatereq(void)
   CL_SLOT *cl = (CL_SLOT *)cur_slot;
   RegionRec tmp_region;
   BoxRec rect;
-  int k;
 
 #ifdef NETLOGGER
   if (vnc_spu.netlogger_url) {
@@ -510,11 +509,10 @@ static void rf_client_updatereq(void)
   }
 
   if (!cl->update_in_progress) {
-    k = (cl->newfbsize_pending ||
-         REGION_NOTEMPTY(&cl->copy_region));
-    if (!k) {
-      k = vncspuWaitDirtyRects(&cl->pending_region, &cl->frame_num, cl->serial_number);
-    }
+    int k = (cl->newfbsize_pending ||
+             REGION_NOTEMPTY(&cl->copy_region) ||
+             vncspuWaitDirtyRects(&cl->pending_region, &cl->update_rect,
+                                  &cl->frame_num, cl->serial_number));
     if (k) {
       send_update();
     }
@@ -830,7 +828,6 @@ static void send_update(void)
     if (cl->enable_newfbsize) {
       send_newfbsize();
       crUnlockMutex(&vnc_spu.lock);
-      /*crDebug("Leave send_update early 0");*/
       return;
     }
   } else {
@@ -840,6 +837,7 @@ static void send_update(void)
 
   /* Clip regions to the rectangle requested by the client. */
   REGION_INIT(&clip_region, &cl->update_rect, 1);
+
   REGION_INTERSECT(&cl->pending_region, &cl->pending_region, &clip_region);
   if (REGION_NOTEMPTY(&cl->copy_region)) {
     REGION_INTERSECT(&cl->copy_region, &cl->copy_region, &clip_region);
