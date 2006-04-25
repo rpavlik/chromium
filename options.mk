@@ -64,4 +64,5 @@ DOXYGEN=0
 
 # Set to 1 to enable (limited) NetLogger support
 NETLOGGER=0
-
+# Set NLHOME to NetLogger install dir (i.e. /usr/local)
+NLHOME=
