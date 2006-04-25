@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.18 2006-04-25 21:42:12 brianp Exp $
+ * $Id: client_io.c,v 1.19 2006-04-25 22:09:07 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -512,7 +512,7 @@ static void rf_client_updatereq(void)
     int k = (cl->newfbsize_pending ||
              REGION_NOTEMPTY(&cl->copy_region) ||
              vncspuWaitDirtyRects(&cl->pending_region, &cl->update_rect,
-                                  &cl->frame_num, cl->serial_number));
+                                  cl->serial_number));
     if (k) {
       send_update();
     }
@@ -671,7 +671,7 @@ void fn_client_send_rects(AIO_SLOT *slot)
   if (!cl->update_in_progress && cl->update_requested &&
       (cl->newfbsize_pending ||
        REGION_NOTEMPTY(&cl->copy_region) ||
-       vncspuGetDirtyRects(&cl->pending_region, &cl->frame_num))) {
+       vncspuGetDirtyRects(&cl->pending_region))) {
     cur_slot = slot;
     send_update();
     cur_slot = saved_slot;
@@ -793,7 +793,7 @@ static void send_update(void)
     0, 0, 0, 1
   };
   CARD8 rect_hdr[12];
-  int num_copy_rects, num_pending_rects, num_all_rects, num_sync_rects;
+  int num_copy_rects, num_pending_rects, num_all_rects;
   int raw_bytes = 0, hextile_bytes = 0;
   int i, idx, rev_order;
 
@@ -862,11 +862,7 @@ static void send_update(void)
   /* Compute the number of rectangles in regions. */
   num_pending_rects = REGION_NUM_RECTS(&cl->pending_region);
   num_copy_rects = REGION_NUM_RECTS(&cl->copy_region);
-  if (cl->enable_frame_sync)
-     num_sync_rects = 0;/**1; XXX FIX */
-  else
-     num_sync_rects = 0;
-  num_all_rects = num_pending_rects + num_copy_rects + num_sync_rects;
+  num_all_rects = num_pending_rects + num_copy_rects;
   if (num_all_rects == 0) {
     crUnlockMutex(&vnc_spu.lock);
     return;
@@ -989,31 +985,6 @@ static void send_update(void)
 
   REGION_EMPTY(&cl->pending_region);
   REGION_EMPTY(&cl->copy_region);
-
-  if (num_sync_rects) {
-    CARD8 rect_hdr[20]; /* 12-byte header + two 32-bit ints */
-    FB_RECT rect;
-    rect.x = rect.y = rect.w = rect.h = 0;
-    rect.enc = RFB_ENCODING_FRAME_SYNC;
-    put_rect_header(rect_hdr, &rect);
-    buf_put_CARD32(rect_hdr + 12, cl->frame_window);
-    buf_put_CARD32(rect_hdr + 16, cl->frame_num);
-
-    /*
-    crDebug("Sending frame_sync %d, win %d", cl->frame_num, cl->frame_window);
-    */
-
-    if (cl->frame_num > 3 && cl->prev_frame_num > 2) {
-      if (cl->prev_frame_num != cl->frame_num - 1) {
-        crWarning("prev = %d  curr = %d", cl->prev_frame_num, cl->frame_num);
-      }
-      assert(cl->prev_frame_num == cl->frame_num - 1);
-    }
-    cl->prev_frame_num = cl->frame_num;
-    aio_write(NULL, rect_hdr, 20);
-    cl->frame_window = 0;
-    cl->frame_num = 0;
-  }
 
   /* Send LastRect marker. */
   if (cl->enc_prefer == RFB_ENCODING_TIGHT && cl->enable_lastrect) {

@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode.c,v 1.5 2006-04-13 17:49:59 brianp Exp $
+ * $Id: encode.c,v 1.6 2006-04-25 22:09:07 brianp Exp $
  * Encoding screen rectangles.
  */
 
@@ -171,7 +171,7 @@ AIO_BLOCK *rfb_encode_raw24_block(CL_SLOT *cl, FB_RECT *r)
   /* 16 = 12-byte header plus 4-byte serial number */
   block = aio_new_block(16 + r->w * r->h * 3);
   if (block) {
-    CARD32 serialNumber = GetSerialNumber();
+    CARD32 serialNumber = 0;
     put_rect_header(block->data, r);
     buf_put_CARD32(&block->data[12], serialNumber);
     transfunc_null24(&block->data[16], r, cl->trans_table);

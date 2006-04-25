@@ -205,17 +205,6 @@ GetFrameBuffer(CARD16 *w, CARD16 *h)
 }
 
 
-/* XXX obsolete */
-CARD32
-GetSerialNumber(void)
-{
-	if (vnc_spu.currentWindow)
-		return vnc_spu.currentWindow->frameCounter;
-	else
-		return 0;
-}
-
-
 static void
 InvertRegion(RegionPtr reg, int height)
 {
@@ -300,7 +289,7 @@ windowUnionCB(unsigned long key, void *data1, void *data2)
  * This is the union of all Cr/GL windows.
  */
 GLboolean
-vncspuGetDirtyRects(RegionPtr region, int *frame_num)
+vncspuGetDirtyRects(RegionPtr region)
 {
 	GLboolean retval;
 	RegionRec dirtyUnion;
@@ -320,7 +309,6 @@ vncspuGetDirtyRects(RegionPtr region, int *frame_num)
 		REGION_EMPTY(&dirtyUnion);
 #endif
 
-		*frame_num = vnc_spu.frameCounter;
 		retval = GL_TRUE;
 	}
 	else {
@@ -337,8 +325,7 @@ vncspuGetDirtyRects(RegionPtr region, int *frame_num)
  * regions) that lie inside the given region of interest.
  */
 GLboolean
-vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi,
-										 int *frame_num, int serial_no)
+vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi, int serial_no)
 {
 	GLboolean ready;
 	RegionRec clipRegion;
@@ -360,7 +347,7 @@ vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi,
 		/* wait until something is rendered/changed */
 		crWaitSemaphore(&vnc_spu.dirtyRectsReady);
 		/* Get the new region and see if it intersects the region of interest */
-		ready = vncspuGetDirtyRects(region, frame_num);
+		ready = vncspuGetDirtyRects(region);
 		if (ready) {
 			REGION_INTERSECT(region, region, &clipRegion);
 			if (REGION_NUM_RECTS(region) == 0) {
