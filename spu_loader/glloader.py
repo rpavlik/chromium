@@ -55,6 +55,13 @@ static CRDLL *cglDll = NULL;
 static CRDLL *aglDll = NULL;
 #endif
 
+#if defined(WINDOWS)
+#define GLLOADER_APIENTRY __stdcall
+#else
+#define GLLOADER_APIENTRY
+#endif
+
+
 /*
  * Add an entry to the SPUNamedFunctionTable
  */
@@ -205,7 +212,7 @@ def IsExtensionFunc(func_name):
 def GenerateNop(func_name):
 	return_type = apiutil.ReturnType(func_name);
 	params = apiutil.Parameters(func_name)
-	print 'static %s Nop%s(%s)' % (return_type, func_name, apiutil.MakeDeclarationString(params))
+	print 'static %s GLLOADER_APIENTRY Nop%s(%s)' % (return_type, func_name, apiutil.MakeDeclarationString(params))
 	print '{'
 	for (name, type, vecSize) in params:
 		if name != "":
