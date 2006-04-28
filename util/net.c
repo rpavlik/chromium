@@ -342,23 +342,22 @@ crNetAcceptClient( const char *protocol, const char *hostname,
 			 !crStrncmp( protocol, "swapfile", crStrlen( "swapfile" ) ) )
 	{
 		char filename[4096];
+    char protocol_only[4096];
+
 		cr_net.use_file++;
-		if (!crParseURL( protocol, NULL, filename, NULL, 0 ))
+		if (!crParseURL(protocol, protocol_only, filename, NULL, 0))
 		{
 			crError( "Malformed URL: \"%s\"", protocol );
 		}
 		conn->hostname = crStrdup( filename );
-		/* At this point, protocol will be something like "file:///tmp/foo".
-		 * change protocol to be exactly "file" or "swapfile" here.
-		 */
-		if (protocol[0] == 'f')
-			protocol = "file";
-		else
-			protocol = "swapfile";
-	}
 
-	/* call the protocol-specific init routines */
-	InitConnection(conn, protocol, mtu);
+    /* call the protocol-specific init routines */  // ktd (add)
+    InitConnection(conn, protocol_only, mtu);       // ktd (add)
+	}
+	else {
+  	/* call the protocol-specific init routines */
+	  InitConnection(conn, protocol, mtu);
+	}
 
 	crNetAccept( conn, hostname, port );
 	return conn;
