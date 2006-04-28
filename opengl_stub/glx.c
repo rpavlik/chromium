@@ -516,11 +516,18 @@ Bool glXMakeCurrent( Display *dpy, GLXDrawable drawable, GLXContext ctx )
 
 	/*crDebug("glXMakeCurrent(%p, 0x%x, 0x%x)", (void *) dpy, (int) drawable, (int) ctx);*/
 
-	context = (ContextInfo *) crHashtableSearch(stub.contextTable, (unsigned long) ctx);
-	window = stubGetWindowInfo(dpy, drawable);
+	if (ctx && drawable) {
+		context = (ContextInfo *) crHashtableSearch(stub.contextTable, (unsigned long) ctx);
+		window = stubGetWindowInfo(dpy, drawable);
 
-	if (context && context->type == UNDECIDED) {
-		XSync(dpy, 0); /* sync to force window creation on the server */
+		if (context && context->type == UNDECIDED) {
+			XSync(dpy, 0); /* sync to force window creation on the server */
+		}
+	}
+	else {
+		dpy = NULL;
+		window = NULL;
+		context = NULL;
 	}
 
 	currentDisplay = dpy;
