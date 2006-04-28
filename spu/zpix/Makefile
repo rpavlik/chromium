@@ -13,7 +13,7 @@ FILES =	zpixspu_config \
 	zpixspu
 
 LIBRARIES = spuload crutil crmothership
-LDFLAGS =  -lz
+LDFLAGS += -lz
 
 PRECOMP =
 SLOP = $(PRECOMP)
