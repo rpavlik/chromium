@@ -978,10 +978,9 @@ void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, cons
 
 	cp->bytesPerIndex = cp->size * sizeof (GLfloat);
 
-	if (stride)
-		cp->stride = stride + (cp->p - base);
-	else
-		cp->stride = cp->bytesPerIndex + (cp->p - base);
+	if (stride==0)
+		stride = cp->bytesPerIndex + (cp->p - base);
+	cp->stride = stride;
 
 /*
 **  NormalPointer
@@ -989,32 +988,23 @@ void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, cons
 
 	cp = &(c->array.n);
 	cp->enabled = GL_TRUE;
+	cp->stride = stride;
 	switch (format) 
 	{
 		case GL_T4F_C4F_N3F_V4F:
 			cp->p = base+4*sizeof(GLfloat)+4*sizeof(GLfloat);
-			cp->stride = 4*sizeof(GLfloat)+4*sizeof(GLfloat)+stride;
-			if (!stride) cp->stride += 3*sizeof(GLfloat)+4*sizeof(GLfloat);
 			break;
 		case GL_T2F_C4F_N3F_V3F:
 			cp->p = base+2*sizeof(GLfloat)+4*sizeof(GLfloat);
-			cp->stride = 2*sizeof(GLfloat)+4*sizeof(GLfloat)+stride;
-			if (!stride) cp->stride += 3*sizeof(GLfloat)+3*sizeof(GLfloat);
 			break;
 		case GL_C4F_N3F_V3F:
 			cp->p = base+4*sizeof(GLfloat);
-			cp->stride = 4*sizeof(GLfloat)+stride;
-			if (!stride) cp->stride += 3*sizeof(GLfloat)+3*sizeof(GLfloat);
 			break;
 		case GL_T2F_N3F_V3F:
 			cp->p = base+2*sizeof(GLfloat);
-			cp->stride = 2*sizeof(GLfloat)+stride;
-			if (!stride) cp->stride += 3*sizeof(GLfloat)+3*sizeof(GLfloat);
 			break;
 		case GL_N3F_V3F:
 			cp->p = base;
-			cp->stride = stride;
-			if (!stride) cp->stride += 3*sizeof(GLfloat)+3*sizeof(GLfloat);
 			break;
 		case GL_T4F_V4F:
 		case GL_T2F_C3F_V3F:
@@ -1045,6 +1035,7 @@ void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, cons
 
 	cp = &(c->array.c);
 	cp->enabled = GL_TRUE;
+	cp->stride = stride;
 	switch (format) 
 	{
 		case GL_T4F_C4F_N3F_V4F:
@@ -1052,64 +1043,48 @@ void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, cons
 			cp->type = GL_FLOAT;
 			cp->bytesPerIndex = cp->size * sizeof(GLfloat);
 			cp->p = base+4*sizeof(GLfloat);
-			cp->stride = 4*sizeof(GLfloat)+stride;
-			if (!stride) cp->stride += 4*sizeof(GLfloat)+3*sizeof(GLfloat)+4*sizeof(GLfloat);
 			break;
 		case GL_T2F_C4F_N3F_V3F:
 			cp->size = 4;
 			cp->type = GL_FLOAT;
 			cp->bytesPerIndex = cp->size * sizeof(GLfloat);
 			cp->p = base+2*sizeof(GLfloat);
-			cp->stride = 2*sizeof(GLfloat)+stride;
-			if (!stride) cp->stride += 4*sizeof(GLfloat)+3*sizeof(GLfloat)+3*sizeof(GLfloat);
 			break;
 		case GL_C4F_N3F_V3F:
 			cp->size = 4;
 			cp->type = GL_FLOAT;
 			cp->bytesPerIndex = cp->size * sizeof(GLfloat);
 			cp->p = base;
-			cp->stride = stride;
-			if (!stride) cp->stride += 4*sizeof(GLfloat)+3*sizeof(GLfloat)+3*sizeof(GLfloat);
 			break;
 		case GL_T2F_C3F_V3F:
 			cp->size = 3;
 			cp->type = GL_FLOAT;
 			cp->bytesPerIndex = cp->size * sizeof(GLfloat);
 			cp->p = base+2*sizeof(GLfloat);
-			cp->stride = 2*sizeof(GLfloat)+stride;
-			if (!stride) cp->stride += 3*sizeof(GLfloat)+3*sizeof(GLfloat);
 			break;
 		case GL_C3F_V3F:
 			cp->size = 3;
 			cp->type = GL_FLOAT;
 			cp->bytesPerIndex = cp->size * sizeof(GLfloat);
 			cp->p = base;
-			cp->stride = stride;
-			if (!stride) cp->stride += 3*sizeof(GLfloat) + 3*sizeof(GLfloat);
 			break;
 		case GL_T2F_C4UB_V3F:
 			cp->size = 4;
 			cp->type = GL_UNSIGNED_BYTE;
 			cp->bytesPerIndex = cp->size * sizeof(GLubyte);
 			cp->p = base+2*sizeof(GLfloat);
-			cp->stride = 2*sizeof(GLfloat)+stride;
-			if (!stride) cp->stride += 4*sizeof(GLubyte)+2*sizeof(GLfloat);
 			break;
 		case GL_C4UB_V3F:
 			cp->size = 4;
 			cp->type = GL_UNSIGNED_BYTE;
 			cp->bytesPerIndex = cp->size * sizeof(GLubyte);
 			cp->p = base;
-			cp->stride = stride;
-			if (!stride) cp->stride += 4*sizeof(GLubyte)+3*sizeof(GLfloat);
 			break;
 		case GL_C4UB_V2F:
 			cp->size = 4;
 			cp->type = GL_UNSIGNED_BYTE;
 			cp->bytesPerIndex = cp->size * sizeof(GLubyte);
 			cp->p = base;
-			cp->stride = stride;
-			if (!stride) cp->stride += 4*sizeof(GLubyte)+2*sizeof(GLfloat);
 			break;
 		case GL_T2F_N3F_V3F:
 		case GL_N3F_V3F:
@@ -1130,44 +1105,33 @@ void STATE_APIENTRY crStateInterleavedArrays(GLenum format, GLsizei stride, cons
 
 	cp = &(c->array.t[c->curClientTextureUnit]);
 	cp->enabled = GL_TRUE;
+	cp->stride = stride;
 	switch (format) 
 	{
 		case GL_T4F_C4F_N3F_V4F:
 			cp->size = 4;
 			cp->p = base;
-			cp->stride = stride;
-			if (!stride) cp->stride = 4*sizeof(GLfloat)+4*sizeof(GLfloat)+3*sizeof(GLfloat)+4*sizeof(GLfloat);
 			break;
 		case GL_T2F_C4F_N3F_V3F:
 			cp->size = 3;
 			cp->p = base;
-			cp->stride = stride;
-			if (!stride) cp->stride = 2*sizeof(GLfloat)+4*sizeof(GLfloat)+3*sizeof(GLfloat)+3*sizeof(GLfloat);
 			break;
 		case GL_T2F_C3F_V3F:
 		case GL_T2F_N3F_V3F:
 			cp->size = 3;
 			cp->p = base;
-			cp->stride = stride;
-			if (!stride) cp->stride = 2*sizeof(GLfloat)+3*sizeof(GLfloat)+3*sizeof(GLfloat);
 			break;
 		case GL_T2F_C4UB_V3F:
 			cp->size = 3;
 			cp->p = base;
-			cp->stride = stride;
-			if (!stride) cp->stride = 2*sizeof(GLfloat)+4*sizeof(GLubyte)+3*sizeof(GLfloat);
 			break;
 		case GL_T4F_V4F:
 			cp->size = 4;
 			cp->p = base;
-			cp->stride = stride;
-			if (!stride) cp->stride = 4*sizeof(GLfloat)+4*sizeof(GLfloat);
 			break;
 		case GL_T2F_V3F:
 			cp->size = 3;
 			cp->p = base;
-			cp->stride = stride;
-			if (!stride) cp->stride = 2*sizeof(GLfloat)+3*sizeof(GLfloat);
 			break;
 		case GL_C4UB_V3F:
 		case GL_C4UB_V2F:
