@@ -81,7 +81,8 @@ int WINAPI wglChoosePixelFormat_prox( HDC hdc, CONST PIXELFORMATDESCRIPTOR *pfd 
 			PFD_STEREO_DONTCARE       |
 			PFD_DEPTH_DONTCARE        );
 	if ( pfd->dwFlags & ~okayFlags ) {
-		crError( "wglChoosePixelFormat: only support flags=0x%x, but you gave me flags=0x%x", okayFlags, pfd->dwFlags );
+		crWarning( "wglChoosePixelFormat: only support flags=0x%x, but you gave me flags=0x%x", okayFlags, pfd->dwFlags );
+		return 0;
 	}
 
 	if ( pfd->iPixelType != PFD_TYPE_RGBA ) {
