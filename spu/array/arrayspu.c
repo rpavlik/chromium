@@ -747,6 +747,12 @@ arrayspu_GetBufferPointervARB(GLenum target, GLenum pname, GLvoid **params)
 	crStateGetBufferPointervARB(target, pname, params);
 }
 
+static void ARRAYSPU_APIENTRY
+arrayspu_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *p)
+{
+	crStateInterleavedArrays(format, stride, p);
+}
+
 
 SPUNamedFunctionTable _cr_array_table[] = {
 	{ "ArrayElement", (SPUGenericFunction) arrayspu_ArrayElement },
@@ -785,5 +791,6 @@ SPUNamedFunctionTable _cr_array_table[] = {
 	{ "UnmapBufferARB", (SPUGenericFunction) arrayspu_UnmapBufferARB },
 	{ "GetBufferParameterivARB", (SPUGenericFunction) arrayspu_GetBufferParameterivARB},
 	{ "GetBufferPointervARB", (SPUGenericFunction) arrayspu_GetBufferPointervARB},
+	{ "InterleavedArrays", (SPUGenericFunction) arrayspu_InterleavedArrays},
 	{ NULL, NULL }
 };
