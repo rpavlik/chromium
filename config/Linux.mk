@@ -47,6 +47,10 @@ CFLAGS            += -DPLAYSTATION2
 endif
 endif
 
+ifeq ($(MACHTYPE), ia64)
+CFLAGS            += -fPIC
+endif
+
 PROFILEFLAGS = -pg -a
 
 CAT = cat
