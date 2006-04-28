@@ -616,6 +616,8 @@ crStateTextureObjectDiff(CRContext *fromCtx,
 		f[1] = tobj->borderColor.g;
 		f[2] = tobj->borderColor.b;
 		f[3] = tobj->borderColor.a;
+		diff_api.TexParameteri(tobj->target, GL_TEXTURE_BASE_LEVEL, tobj->baseLevel);
+		diff_api.TexParameteri(tobj->target, GL_TEXTURE_MAX_LEVEL, tobj->maxLevel);
 		diff_api.TexParameteri(tobj->target, GL_TEXTURE_MIN_FILTER, tobj->minFilter);
 		diff_api.TexParameteri(tobj->target, GL_TEXTURE_MAG_FILTER, tobj->magFilter);
 		diff_api.TexParameteri(tobj->target, GL_TEXTURE_WRAP_S, tobj->wrapS);
