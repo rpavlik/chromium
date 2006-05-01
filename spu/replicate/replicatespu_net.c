@@ -209,13 +209,10 @@ void replicatespuHuge( CROpcode opcode, void *buf )
 void
 replicatespuHugeOne(CROpcode opcode, void *buf, int server)
 {
-	GET_THREAD(thread);
 	unsigned int          len;
 	unsigned char        *src;
 	CRMessageOpcodes *msg;
 	int i;
-
-	CRASSERT(thread);
 
 	/* packet length is indicated by the variable length field, and
 	   includes an additional word for the opcode (with alignment) and
