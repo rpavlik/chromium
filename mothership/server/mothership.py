@@ -36,7 +36,7 @@ import sys, string, types, traceback, re, threading, os, socket, select, signal,
 from crconfig import arch, crdir, crbindir, crlibdir
 
 # Version string
-Version = "1.8"
+Version = "1.9"
 
 # Default port we'll listen on (also set in cr_net.h)
 DefaultMothershipPort = 10000
