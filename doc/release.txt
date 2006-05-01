@@ -16,7 +16,7 @@ has been updated since last release.
 
 Bump version in doc/banner.html.
 
-Update doc/intro.html with info about the new version
+Update doc/versions.html with info about the new version
 
 
 Make the tarballs
