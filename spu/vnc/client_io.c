@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.19 2006-04-25 22:09:07 brianp Exp $
+ * $Id: client_io.c,v 1.20 2006-05-01 22:06:09 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -537,14 +537,28 @@ static void wf_client_update_finished(void)
   }
 }
 
+/*
+ * Called when keyboard event is received from client.
+ */
 static void rf_client_keyevent(void)
 {
   CL_SLOT *cl = (CL_SLOT *)cur_slot;
   CARD8 msg[8];
 
+  msg[0] = 4;                 /* KeyEvent */
+  memcpy(&msg[1], cur_slot->readbuf, 7);
+
+  {
+    const int counter = msg[2] + msg[3] * 255; /* [2..3] is padding */
+    if (counter) {
+      crDebug("VNC SPU: marker event %d", counter);
+#ifdef NETLOGGER
+      NL_info("vncspu", "spu.marker", "NUMBER=i", counter);
+#endif
+    }
+  }
+
   if (!cl->readonly) {
-    msg[0] = 4;                 /* KeyEvent */
-    memcpy(&msg[1], cur_slot->readbuf, 7);
     pass_msg_to_host(msg, sizeof(msg));
   }
 
