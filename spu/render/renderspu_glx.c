@@ -965,11 +965,12 @@ renderspu_SystemCreateContext( VisualInfo *visual, ContextInfo *context, Context
 	}
 
 	is_direct = render_spu.ws.glXIsDirect( visual->dpy, context->context );
-	crDebug("Render SPU: Created %s context (%d) on display %s for visAttribs 0x%x",
-					is_direct ? "DIRECT" : "INDIRECT",
-					context->id,
-					DisplayString(visual->dpy),
-					visual->visAttribs);
+	if (visual->visual)
+		crDebug("Render SPU: Created %s context (%d) on display %s for visAttribs 0x%x",
+						is_direct ? "DIRECT" : "INDIRECT",
+						context->id,
+						DisplayString(visual->dpy),
+						visual->visAttribs);
 
 	if ( render_spu.force_direct && !is_direct )
 	{
@@ -1538,7 +1539,7 @@ renderspu_SystemShowWindow( WindowInfo *window, GLboolean showIt )
 static void
 MarkWindow(WindowInfo *w)
 {
-	static GC gc = 0;
+	static GC gc = 0;  /* XXX per-window??? */
 	if (!gc) {
 		/* Create a GC for drawing invisible lines */
 		XGCValues gcValues;
