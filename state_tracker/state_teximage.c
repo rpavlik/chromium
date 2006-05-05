@@ -629,6 +629,7 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 	/* compute size of image buffer */
 	if (is_distrib) {
 		tl->bytes = crStrlen((char *) pixels) + 1;
+		tl->bytes += crImageSize(format, GL_UNSIGNED_BYTE, width, height);
 	}
 	else if (IsProxyTarget(target)) {
 		tl->bytes = 0;
