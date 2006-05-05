@@ -163,13 +163,17 @@ Init(int argc, char *argv[])
             }
          }
       }
+      /* allocate buffer for both filename and pixel data */
       buffer = (GLubyte *) malloc(width * height * 3 + strlen(filename) + 1);
       assert(buffer);
+      /* filename comes first, with terminating zero */
       strcpy((char *) buffer, filename);
-      memcpy(buffer + strlen(filename) + 1, image, width * height *3);
+      /* image data follows */
+      memcpy(buffer + strlen(filename) + 1, image, width * height * 3);
       type = GL_TRUE;
    }
    else {
+      /* the texture will be read from file produced by the "write" step */
       assert(readMode);
       buffer = (GLubyte *) filename;
       type = GL_FALSE;
