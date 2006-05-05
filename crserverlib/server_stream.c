@@ -403,7 +403,7 @@ crServerServiceClient(const RunQueue *qEntry)
 		crStateMakeCurrent( cr_server.curClient->currentCtx );
 
 		/* Check if the current window is the one that the client wants to
-		 * draw into.  If not, dispatch a MakeCurrent to active the proper
+		 * draw into.  If not, dispatch a MakeCurrent to activate the proper
 		 * window.
 		 */
 		if (cr_server.curClient) {
