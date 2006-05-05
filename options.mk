@@ -31,12 +31,12 @@ USE_DMX=0
 # acccelerated rendering to display windows belonging to OpenGL applications.
 # You'll need the libVncExt.so.2.0 library and vncstr.h & vnc.h headers in
 # the usual X directories.
-USE_REPLICATE=1
+USE_REPLICATE=0
 
 # Set USE_VNC to 1 if you want to enable the "vnc" SPU build.
 # You'll need the libVncExt.so.2.0 library and vncstr.h & vnc.h &
 # Xcliplist.h headers in the usual X directories.
-USE_VNC=1
+USE_VNC=0
 
 # Set USE_OSMESA to 1 if you want to enable off screen rendering using Mesa.
 USE_OSMESA=0
