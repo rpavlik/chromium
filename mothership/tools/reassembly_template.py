@@ -381,6 +381,7 @@ for i in range(NUM_APP_NODES):
 
 if REASSEMBLY:
 	reassembleNode = CRNetworkNode(REASSEMBLE_HOST)
+	reassembleNode.Conf('shared_windows', 1)
 	reassembleSPU = SPU('render')
 	reassembleNode.AddSPU(reassembleSPU)
 	for (name, value) in REASSEMBLE_OPTIONS:
