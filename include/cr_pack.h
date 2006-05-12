@@ -7,6 +7,7 @@
 #ifndef CR_PACK_H
 #define CR_PACK_H
 
+#include "cr_compiler.h"
 #include "cr_error.h"
 #include "cr_protocol.h"
 #include "cr_opcodes.h"
@@ -18,28 +19,6 @@
 #include "cr_threads.h"
 #endif
 
-#ifdef WINDOWS
-#ifndef DLLDATA 
-#define DLLDATA __declspec(dllexport)
-#endif
-#else
-#define DLLDATA
-#endif
-
-
-/* Function inlining */
-#if defined(__GNUC__)
-#  define INLINE __inline__
-#elif defined(__MSC__)
-#  define INLINE __inline
-#elif defined(_MSC_VER)
-#  define INLINE __inline
-#elif defined(__ICL)
-#  define INLINE __inline
-#else
-#  define INLINE
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,7 +28,8 @@ typedef struct CRPackContext_t CRPackContext;
 /**
  * Packer buffer
  */
-typedef struct {
+typedef struct
+{
 	void          *pack;  /**< the actual storage space/buffer */
 	unsigned int   size;  /**< size of pack[] buffer */
 	unsigned int   mtu;
@@ -72,7 +52,8 @@ typedef void (*CRPackErrorHandlerFunc)(int line, const char *file, GLenum error,
 /**
  * Packer context
  */
-struct CRPackContext_t{
+struct CRPackContext_t
+{
 	CRPackBuffer buffer;   /**< not a pointer, see comments in pack_buffer.c */
 	CRPackFlushFunc Flush;
 	void *flush_arg;
@@ -97,8 +78,8 @@ void crPackSetBufferDEBUG( const char *file, int line, CRPackContext *pc, CRPack
 void crPackReleaseBuffer( CRPackContext *pc );
 void crPackResetPointers( CRPackContext *pc );
 
-int crPackNumOpcodes( int buffer_size );
-int crPackNumData( int buffer_size );
+int crPackMaxOpcodes( int buffer_size );
+int crPackMaxData( int buffer_size );
 void crPackInitBuffer( CRPackBuffer *buffer, void *buf, int size, int mtu );
 void crPackFlushFunc( CRPackContext *pc, CRPackFlushFunc ff );
 void crPackFlushArg( CRPackContext *pc, void *flush_arg );
@@ -157,56 +138,99 @@ extern DLLDATA CRPackContext cr_packer_globals;
 #define GET_PACKER_CONTEXT(C) CRPackContext *C = &cr_packer_globals
 #endif
 
-static INLINE int crPackCanHoldOpcode( int num_opcode, int num_data )
+
+/**
+ * Return number of opcodes in given buffer.
+ */
+static INLINE int
+crPackNumOpcodes(const CRPackBuffer *buffer)
 {
-        int fitsInMTU, opcodesFit, dataFits;
-        GET_PACKER_CONTEXT(pc);
-
-        CRASSERT(pc->currentBuffer);
-
-        fitsInMTU = (((pc->buffer.data_current - pc->buffer.opcode_current - 1
-                                                                 + num_opcode + num_data
-                                                                 + 0x3 ) & ~0x3) + sizeof(CRMessageOpcodes)
-                                                         <= pc->buffer.mtu);
-        opcodesFit = (pc->buffer.opcode_current - num_opcode
-                                                                >= pc->buffer.opcode_end);
-        dataFits = (pc->buffer.data_current + num_data <= pc->buffer.data_end);
-
-        return fitsInMTU && opcodesFit && dataFits;
+	CRASSERT(buffer->opcode_start - buffer->opcode_current >= 0);
+	return buffer->opcode_start - buffer->opcode_current;
 }
 
-#define GET_BUFFERED_POINTER_NO_BEGINEND_FLUSH( pc, len ) \
-  THREADASSERT( pc ); \
-  CRASSERT( pc->currentBuffer ); \
-  data_ptr = pc->buffer.data_current; \
-  if ( !crPackCanHoldOpcode( 1, (len) ) ) \
-  { \
-    pc->Flush( pc->flush_arg ); \
-    data_ptr = pc->buffer.data_current; \
-    CRASSERT(crPackCanHoldOpcode( 1, (len) ) ); \
-  } \
-  pc->buffer.data_current += (len)
 
-#define GET_BUFFERED_POINTER( pc, len ) \
-  CRASSERT( pc->currentBuffer ); \
-  if ( pc->buffer.holds_BeginEnd && ! pc->buffer.in_BeginEnd ) { \
-		pc->Flush( pc->flush_arg ); \
-		pc->buffer.holds_BeginEnd = 0; \
-  } \
-  GET_BUFFERED_POINTER_NO_BEGINEND_FLUSH( pc, len )
+/**
+ * Return amount of data (in bytes) in buffer.
+ */
+static INLINE int
+crPackNumData(const CRPackBuffer *buffer)
+{
+	CRASSERT(buffer->data_current - buffer->data_start >= 0);
+	return buffer->data_current - buffer->data_start; /* in bytes */
+}
 
-#define GET_BUFFERED_COUNT_POINTER( pc, len ) \
-  CRASSERT( pc->currentBuffer ); \
-  data_ptr = pc->buffer.data_current; \
-  if ( !crPackCanHoldOpcode( 1, (len) ) ) \
-  { \
-    pc->Flush( pc->flush_arg ); \
-    data_ptr = pc->buffer.data_current; \
-    CRASSERT( crPackCanHoldOpcode( 1, (len) ) ); \
-  } \
-  pc->current.vtx_count++; \
-  pc->buffer.data_current += (len)
 
+static INLINE int
+crPackCanHoldOpcode(const CRPackContext *pc, int num_opcode, int num_data)
+{
+  int fitsInMTU, opcodesFit, dataFits;
+
+  CRASSERT(pc->currentBuffer);
+
+  fitsInMTU = (((pc->buffer.data_current - pc->buffer.opcode_current - 1
+                 + num_opcode + num_data
+                 + 0x3 ) & ~0x3) + sizeof(CRMessageOpcodes)
+               <= pc->buffer.mtu);
+  opcodesFit = (pc->buffer.opcode_current - num_opcode >= pc->buffer.opcode_end);
+  dataFits = (pc->buffer.data_current + num_data <= pc->buffer.data_end);
+
+  return fitsInMTU && opcodesFit && dataFits;
+}
+
+
+/**
+ * Alloc space for a message of 'len' bytes (plus 1 opcode).
+ * Only flush if buffer is full.
+ */
+#define GET_BUFFERED_POINTER_NO_BEGINEND_FLUSH( pc, len )	\
+  do {								\
+    THREADASSERT( pc );						\
+    CRASSERT( pc->currentBuffer );				\
+    if ( !crPackCanHoldOpcode( pc, 1, (len) ) ) {		\
+      pc->Flush( pc->flush_arg );				\
+      CRASSERT(crPackCanHoldOpcode( pc, 1, (len) ) );		\
+    }								\
+    data_ptr = pc->buffer.data_current;				\
+    pc->buffer.data_current += (len);				\
+  } while (0)
+
+
+/**
+ * As above, flush if the buffer contains vertex data and we're
+ * no longer inside glBegin/glEnd.
+ */
+#define GET_BUFFERED_POINTER( pc, len )					\
+  do {									\
+    CRASSERT( pc->currentBuffer );					\
+    if ( pc->buffer.holds_BeginEnd && !pc->buffer.in_BeginEnd ) {	\
+      pc->Flush( pc->flush_arg );					\
+      pc->buffer.holds_BeginEnd = 0;					\
+    }									\
+    GET_BUFFERED_POINTER_NO_BEGINEND_FLUSH( pc, len );			\
+  } while (0)
+
+
+/**
+ * As above, but for vertex data between glBegin/End (counts vertices).
+ */
+#define GET_BUFFERED_COUNT_POINTER( pc, len )		\
+  do {							\
+    CRASSERT( pc->currentBuffer );			\
+    if ( !crPackCanHoldOpcode( pc, 1, (len) ) ) {	\
+      pc->Flush( pc->flush_arg );			\
+      CRASSERT( crPackCanHoldOpcode( pc, 1, (len) ) );	\
+    }							\
+    data_ptr = pc->buffer.data_current;			\
+    pc->current.vtx_count++;				\
+    pc->buffer.data_current += (len);			\
+  } while (0)
+
+
+/**
+ * Allocate space for a msg/command that has no arguments, such
+ * as glFinish().
+ */
 #define GET_BUFFERED_POINTER_NO_ARGS( pc ) \
   GET_BUFFERED_POINTER( pc, 4 );  \
   WRITE_DATA( 0, GLuint, 0xdeadbeef )
