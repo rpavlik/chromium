@@ -545,9 +545,6 @@ void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( GLint ctx )
 		crStateSetCurrent(NULL);
 	}
 
-	/* release again, just in case */
-	crPackReleaseBuffer( thread0->packer );
-
 	/*
 	 * Send DestroyCurrent msg to each server using zero-th thread's connection.
 	 */
@@ -566,6 +563,9 @@ void TILESORTSPU_APIENTRY tilesortspu_DestroyContext( GLint ctx )
 
 		/* release server buffer */
 		crPackReleaseBuffer( thread0->packer );
+
+		/* send the command to the server */
+		tilesortspuSendServerBufferThread( i, thread0 );
 
 		contextInfo->server[i].serverContext = 0;
 		crStateDestroyContext(contextInfo->server[i].State);
