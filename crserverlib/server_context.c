@@ -106,7 +106,8 @@ crServerDispatchCreateContext( const char *dpyName, GLint visualBits, GLint shar
 }
 
 
-void SERVER_DISPATCH_APIENTRY crServerDispatchDestroyContext( GLint ctx )
+void SERVER_DISPATCH_APIENTRY
+crServerDispatchDestroyContext( GLint ctx )
 {
 	CRContext *crCtx;
 
@@ -116,6 +117,7 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchDestroyContext( GLint ctx )
 		return;
 	}
 
+	crHashtableDelete(cr_server.contextTable, ctx, NULL);
 	crStateDestroyContext( crCtx );
 
 	/* If we delete our current context, default back to the null context */
