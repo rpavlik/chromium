@@ -98,9 +98,11 @@ static void crServerTearDown( void )
 	crFreeHashtable(cr_server.programTable, crFree);
 
 	for (i = 0; i < cr_server.numClients; i++) {
-		CRConnection *conn = cr_server.clients[i]->conn;
-		crNetFreeConnection(conn);
-		crFree(cr_server.clients[i]);
+		if (cr_server.clients[i]) {
+			CRConnection *conn = cr_server.clients[i]->conn;
+			crNetFreeConnection(conn);
+			crFree(cr_server.clients[i]);
+		}
 	}
 	cr_server.numClients = 0;
 
