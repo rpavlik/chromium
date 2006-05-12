@@ -78,7 +78,7 @@ tilesortSPUInit( int id, SPU *child, SPU *self,
 	tilesort_spu.geom_buffer_size = tilesort_spu.buffer_size;
 
 	/* geom_buffer_mtu must fit in data's part of our buffers */
-	tilesort_spu.geom_buffer_mtu = crPackNumData(tilesort_spu.buffer_size)
+	tilesort_spu.geom_buffer_mtu = crPackMaxData(tilesort_spu.buffer_size)
 	/* 24 is the size of the bounds info packet
 	 * END_FLUFF is the size of data of the extra End opcode if needed
 	 * 4 since BoundsInfo opcode may take a whole 4 bytes
