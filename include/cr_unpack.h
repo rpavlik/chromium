@@ -7,17 +7,10 @@
 #ifndef CR_UNPACK_H
 #define CR_UNPACK_H
 
+#include "cr_compiler.h"
 #include "cr_spu.h"
 #include "cr_protocol.h"
 #include "cr_mem.h"
-
-#ifdef WINDOWS
-#ifndef DLLDATA 
-#define DLLDATA __declspec(dllimport)
-#endif
-#else
-#define DLLDATA
-#endif
 
 #ifdef __cplusplus
 extern "C" {

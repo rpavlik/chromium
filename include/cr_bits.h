@@ -4,27 +4,13 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-/* Chromium sources include this file instead of including
- * the GL/gl.h and GL/glext.h headers directly.
- */
+/* Bit vector functions */
 
 #ifndef CR_BITS_H
 #define CR_BITS_H
 
 
-
-/* Function inlining */
-#if defined(__GNUC__)
-#  define INLINE __inline__
-#elif defined(__MSC__)
-#  define INLINE __inline
-#elif defined(_MSC_VER)
-#  define INLINE __inline
-#elif defined(__ICL)
-#  define INLINE __inline
-#else
-#  define INLINE
-#endif
+#include "cr_compiler.h"
 
 
 #define CR_MAX_CONTEXTS      512

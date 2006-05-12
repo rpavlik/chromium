@@ -26,6 +26,8 @@
 /*****             System includes and other cruft                *****/
 /**********************************************************************/
 
+#include "cr_compiler.h"
+
 /*
  * We effectively wrap gl.h, glu.h, etc, just like GLUT
  */
@@ -37,7 +39,6 @@
 #if defined(WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #define WGL_APIENTRY __stdcall
-#define CR_APIENTRY __stdcall
 #include <windows.h>
 #elif defined(DARWIN)
 /* nothing */
@@ -48,7 +49,6 @@
 #include <GL/gl.h>
 
 #ifndef WINDOWS
-#define CR_APIENTRY
 #include <GL/glu.h>
 #endif
 
