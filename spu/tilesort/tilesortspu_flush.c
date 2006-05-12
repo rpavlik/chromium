@@ -780,7 +780,6 @@ void tilesortspuFlush( ThreadInfo *thread )
 {
 	CRContext *ctx;
 	int newSize;
-
 	CRPackBuffer old_geometry_buffer;
 
 	CRASSERT(thread);
@@ -819,6 +818,12 @@ void tilesortspuFlush( ThreadInfo *thread )
 	/* release the geometry buffer to sync it up */
 	CRASSERT(thread->packer->buffer.pack == thread->geometry_buffer.pack);
 	crPackReleaseBuffer( thread->packer );
+
+	/* Save copy of geoemtry_buffer information.  We'll copy this into the
+	 * new, bigger buffer below.
+	 */
+	old_geometry_buffer = thread->geometry_buffer; /* struct copy */ 
+
 
 	newSize = thread->geometry_buffer.size * 2;
 	crDebug( "-=-=-=- Growing the buffer to %d -=-=-=-", newSize );
