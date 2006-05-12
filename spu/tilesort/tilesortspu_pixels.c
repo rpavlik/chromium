@@ -315,6 +315,7 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 	int len = 48 + sizeof(CRNetworkPointer);
 	int zoomedWidth, zoomedHeight;
 	GLenum hint;
+	GET_PACKER_CONTEXT(pc);
 
 	/* Start with basic error checking */
 	if (c->inBeginEnd)
@@ -442,11 +443,11 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 			/* Build the network message */
 			/* XXX try to use the crPackReadPixels function here instead someday! */
 			data_ptr = buffer->data_current; 
-			if (!crPackCanHoldOpcode( 1, len ) )
+			if (!crPackCanHoldOpcode( pc, 1, len ) )
 			{ 
 				tilesortspuFlush( thread );
 				data_ptr = buffer->data_current; 
-				CRASSERT( crPackCanHoldOpcode( 1, len ) );
+				CRASSERT( crPackCanHoldOpcode( pc, 1, len ) );
 			}
 			buffer->data_current += len;
 			WRITE_DATA( 0,  GLint,  new_x );
