@@ -24,9 +24,10 @@
  * Output: len - number of bytes to send, including the header.
  * Return: pointer to the header info.
  */
-static CRMessageOpcodes *__applySendBufferHeader( CRPackBuffer *pack, unsigned int *len )
+static CRMessageOpcodes *
+__applySendBufferHeader( CRPackBuffer *pack, unsigned int *len )
 {
-	int num_opcodes;
+	const int num_opcodes = crPackNumOpcodes(pack);
 	CRMessageOpcodes *hdr;
 
 	CRASSERT( pack->opcode_current < pack->opcode_start );
@@ -34,7 +35,6 @@ static CRMessageOpcodes *__applySendBufferHeader( CRPackBuffer *pack, unsigned i
 	CRASSERT( pack->data_current > pack->data_start );
 	CRASSERT( pack->data_current <= pack->data_end );
 
-	num_opcodes = pack->opcode_start - pack->opcode_current;
 	hdr = (CRMessageOpcodes *) 
 		( pack->data_start - ( ( num_opcodes + 3 ) & ~0x3 ) - sizeof(*hdr) );
 
@@ -56,6 +56,10 @@ static CRMessageOpcodes *__applySendBufferHeader( CRPackBuffer *pack, unsigned i
 	return hdr;
 }
 
+
+/**
+ * Print all the opcodes in the given buffer.
+ */
 void tilesortspuDebugOpcodes( CRPackBuffer *buffer )
 {
 	unsigned char *tmp;
@@ -66,37 +70,39 @@ void tilesortspuDebugOpcodes( CRPackBuffer *buffer )
 	crDebug( "\n" );
 }
 
+
 /**
  * Send this thread's packing buffer to the named server using a
  * specific thread's packer.
  */
 void tilesortspuSendServerBufferThread( int server_index, ThreadInfo *thread )
 {
-	CRPackBuffer *pack = &(thread->buffer[server_index]);
+	CRPackBuffer *buffer = &(thread->buffer[server_index]);
 	CRNetServer *netServer = &(thread->netServer[server_index]);
 	unsigned int len;
 	CRMessageOpcodes *hdr;
 
-	if ( pack->opcode_current == pack->opcode_start ) {
+	/* buffer should not be bound at this time */
+	CRASSERT(buffer->context == NULL);
+
+	if (crPackNumOpcodes(buffer) == 0) {
 		/* buffer is empty */
+		CRASSERT(crPackNumData(buffer) == 0);
 		return;
 	}
 
-	/* buffer should not be bound at this time */
-	CRASSERT(pack->context == NULL);
+	hdr = __applySendBufferHeader( buffer, &len );
 
-	hdr = __applySendBufferHeader( pack, &len );
-
-	if ( pack->holds_BeginEnd && pack->canBarf ) {
-		crNetBarf( netServer->conn, &pack->pack, hdr, len );
+	if ( buffer->holds_BeginEnd && buffer->canBarf ) {
+		crNetBarf( netServer->conn, &buffer->pack, hdr, len );
 	}
 	else {
-		crNetSend( netServer->conn, &pack->pack, hdr, len );
+		crNetSend( netServer->conn, &buffer->pack, hdr, len );
 	}
 
-	crPackInitBuffer( pack, crNetAlloc( netServer->conn ),
+	crPackInitBuffer( buffer, crNetAlloc( netServer->conn ),
 										netServer->conn->buffer_size, netServer->conn->mtu );
-	pack->canBarf = netServer->conn->Barf ? GL_TRUE : GL_FALSE;
+	buffer->canBarf = netServer->conn->Barf ? GL_TRUE : GL_FALSE;
 }
 
 /**
@@ -112,7 +118,8 @@ void tilesortspuSendServerBuffer( int server_index )
 /**
  * Append the given buffer onto the current packing buffer.
  */
-static void __appendBuffer( const CRPackBuffer *src )
+static void
+__appendBuffer( const CRPackBuffer *src )
 {
 	GET_THREAD(thread);
 
@@ -137,10 +144,12 @@ static void __appendBuffer( const CRPackBuffer *src )
 	/*crWarning( "Back from crPackAppendBuffer: 0x%x", thread->packer->buffer.data_current ); */
 }
 
+
 /**
  * As above, but with bounding box info.
  */
-static void __appendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bounds )
+static void 
+__appendBoundedBuffer( const CRPackBuffer *src, const CRrecti *bounds )
 {
 	GET_THREAD(thread);
 	int length = src->data_current - src->opcode_current - 1;
