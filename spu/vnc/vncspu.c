@@ -143,6 +143,8 @@ vncspuInitialize(void)
 #else
 	crWarning("VNC SPU: Not compiled with HAVE_VNC_EXT=1");
 #endif /* HAVE_VNC_EXT */
+
+	vnc_spu.timer = crTimerNewTimer();
 }
 
 
@@ -769,6 +771,7 @@ LookupWindow(GLint win, GLint nativeWindow)
 		window = (WindowInfo *) crCalloc(sizeof(WindowInfo));
 		crHashtableAdd(vnc_spu.windowTable, win, window);
 		window->id = win;
+		window->prevSwapTime = -1.0;
 	}
 
 	if (window->nativeWindow != nativeWindow && nativeWindow != 0) {
@@ -829,6 +832,34 @@ vncspuSwapBuffers(GLint win, GLint flags)
 	}
 	else {
 		crWarning("VNC SPU: SwapBuffers called for invalid window id");
+	}
+
+	/* compute FPS (update rate) */
+	{
+		const double minPeriod = 10.0; /* seconds */
+		double t = crTimerTime(vnc_spu.timer);
+		if (window->prevSwapTime < 0.0) {
+			/* first-time init */
+			window->prevSwapTime = t;
+			window->swapCounter = 0;
+		}
+		else {
+			window->swapCounter++;
+			if (t - window->prevSwapTime >= minPeriod) {
+				/* report rate */
+				double rate = window->swapCounter / (t - window->prevSwapTime);
+				window->prevSwapTime = t;
+				window->swapCounter = 0;
+				/*
+				crDebug("VNC SPU: SwapBuffers frame rate: %.2f", rate);
+				*/
+#ifdef NETLOGGER
+				if (vnc_spu.netlogger_url) {
+					NL_info("vncspu", "spu.updates_per_sec", "RATE=d", rate);
+				}
+#endif
+			}
+		}
 	}
 }
 

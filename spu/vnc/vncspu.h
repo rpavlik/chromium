@@ -17,6 +17,7 @@
 #include "cr_spu.h"
 #include "cr_server.h"
 #include "cr_threads.h"
+#include "cr_timer.h"
 #include "rfblib.h"
 #include "async_io.h"
 
@@ -58,6 +59,8 @@ typedef struct {
 	GLint clippingHash;
 	GLboolean isClear;  /* indicates window has only been cleared, no drawing */
 	GLuint newSize;
+	double prevSwapTime;
+	GLint swapCounter;
 } WindowInfo;
 
 
@@ -94,6 +97,8 @@ typedef struct {
 	CRcondition cond;
 	CRsemaphore updateRequested;
 	CRsemaphore dirtyRectsReady;
+
+	CRTimer *timer;
 
 #if defined(HAVE_XCLIPLIST_EXT) || defined(HAVE_VNC_EXT)
 	Display *dpy;
