@@ -16,7 +16,7 @@
 #include "cr_mem.h"
 
 static void
-tilesortspuReadPixels( const CRMessageReadPixels *rp, unsigned int len )
+tilesortspuReceiveReadPixels( const CRMessageReadPixels *rp, unsigned int len )
 {
 	GET_THREAD(thread);
 
@@ -40,7 +40,7 @@ tilesortspuReceiveData( CRConnection *conn, CRMessage *msg, unsigned int len )
 	switch( msg->header.type )
 	{
 		case CR_MESSAGE_READ_PIXELS:
-			tilesortspuReadPixels( &(msg->readPixels), len );
+			tilesortspuReceiveReadPixels( &(msg->readPixels), len );
 			return 1; /* HANDLED */
 		default:
 			/*
