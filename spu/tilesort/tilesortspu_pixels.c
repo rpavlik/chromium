@@ -309,13 +309,9 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 	WindowInfo *winInfo = thread->currentContext->currentWindow;
 	CRCurrentState *c = &(ctx->current);
 	CRViewportState *v = &(ctx->viewport);
-	unsigned char *data_ptr;
-	int i, stride = 0;
-	int bytes_per_pixel = 0;
-	int len = 48 + sizeof(CRNetworkPointer);
+	int i, bytes_per_pixel = 0;
 	int zoomedWidth, zoomedHeight;
 	GLenum hint;
-	GET_PACKER_CONTEXT(pc);
 
 	/* Start with basic error checking */
 	if (c->inBeginEnd)
@@ -398,7 +394,7 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 	{
 		CRPixelPackState packing;
 		const CRrecti *extent;
-		int new_width, new_height, new_x, new_y, bytes_per_row;
+		int new_width, new_height, new_x, new_y;
 
 		/* Server[i]'s tile region (XXX we should loop over extents) */
 		extent = winInfo->server[i].extents + 0;  /* x1,y1,x2,y2 */
@@ -423,7 +419,7 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 												&packing.skipPixels, &packing.skipRows,
 												1.0F, 1.0F, extent))
 		{
-			CRPackBuffer *buffer = &(thread->buffer[i]);
+			int writeback;
 
 			/* adjust position by this tile's origin (relative to window) */
 			new_x -= extent->x1;
@@ -435,44 +431,22 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 							packing.skipRows, packing.rowLength);
 			*/
 
-			/* We've got one in the pot ! */
+			/* Increment counter of 'N' sub-ReadPixels */
 			thread->currentContext->readPixelsCount++;
 
-			bytes_per_row = new_width * bytes_per_pixel;
-
-			/* Build the network message */
-			/* XXX try to use the crPackReadPixels function here instead someday! */
-			data_ptr = buffer->data_current; 
-			if (!crPackCanHoldOpcode( pc, 1, len ) )
-			{ 
-				tilesortspuFlush( thread );
-				data_ptr = buffer->data_current; 
-				CRASSERT( crPackCanHoldOpcode( pc, 1, len ) );
-			}
-			buffer->data_current += len;
-			WRITE_DATA( 0,  GLint,  new_x );
-			WRITE_DATA( 4,  GLint,  new_y );
-			WRITE_DATA( 8,  GLsizei,  new_width );
-			WRITE_DATA( 12, GLsizei,  new_height );
-			WRITE_DATA( 16, GLenum, format );
-			WRITE_DATA( 20, GLenum, type );
-			WRITE_DATA( 24, GLint, stride ); /* not really used! */
-			WRITE_DATA( 28, GLint, packing.alignment );
-			WRITE_DATA( 32, GLint, packing.skipRows );
-			WRITE_DATA( 36, GLint, packing.skipPixels );
-			WRITE_DATA( 40, GLint, bytes_per_row );
-			WRITE_DATA( 44, GLint, packing.rowLength);
-			WRITE_NETWORK_POINTER( 48, pixels );
-			*(buffer->opcode_current--) = (unsigned char) CR_READPIXELS_OPCODE;
-
+			/* pack the ReadPixels command, send it */
+			crPackSetBuffer( thread->packer, &(thread->buffer[i]) );
+			crPackReadPixels(new_x, new_y, new_width, new_height, format, type,
+											 pixels, &packing, &writeback);
+			crPackReleaseBuffer(thread->packer);
 			tilesortspuSendServerBuffer( i );
 		}
 	}
 
-	/* Ensure all readpixel buffers are on the way !! */
-	tilesortspuFlush( thread );
+	/* Restore the default geometry pack buffer */
+	crPackSetBuffer( thread->packer, &(thread->geometry_buffer) );
 
-	/* We need to receive them all back before continuing */
+	/* Need to receive 'n' sub-ReadPixels */
 	while ( thread->currentContext->readPixelsCount > 0 )
 	{
 		crNetRecv( );
