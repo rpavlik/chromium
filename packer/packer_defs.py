@@ -196,7 +196,7 @@ crPackFree
 crNetworkPointerWrite
 crPackCanHoldBuffer
 crPackCanHoldBoundedBuffer
-crPackNumData
+crPackMaxData
 crPackErrorFunction
 cr_packer_globals
 _PackerTSD
