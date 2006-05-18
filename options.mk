@@ -62,7 +62,5 @@ SDP_SUPPORT=0
 # Set to 1 to enable DOXYGEN generation
 DOXYGEN=0
 
-# Set to 1 to enable (limited) NetLogger support
-NETLOGGER=0
-# Set NLHOME to NetLogger install dir (i.e. /usr/local)
-NLHOME=
+# Netlogger support is in spu/vnc/Makefile
+# set NETLOGGER=1 to turn it on

@@ -58,3 +58,14 @@ SLOP = $(PRECOMP)
 
 LIB_DEFS += vncspu.def
 include ${TOP}/cr.mk
+
+# Set to 1 to enable (limited) NetLogger support
+NETLOGGER ?= 1
+#ifdef NETLOGGER
+#ifndef NLHOME
+#error "You must have NLHOME set if you turn on NETLOGGER compilation"
+#else
+CFLAGS += -I$(NLHOME)/include 
+LDFLAGS += -L$(NLHOME)/lib
+#endif
+#endif
