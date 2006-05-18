@@ -38,7 +38,7 @@ CFLAGS += -DCHROMIUM -DRASTER_BOTTOM_TO_TOP=1
 LDFLAGS += -lX11 -lVncExt
 LDFLAGS += -lz -ljpeg -L/usr/X11R6/lib -lX11
 
-CFLAGS += -DHAVE_XCLIPLIST_EXT
+CFLAGS += -DHAVE_XCLIPLIST_EXT -I/usr/X11R6/include 
 LDFLAGS += -lXcliplist
 
 ifeq ($(USE_VNC), 1)
