@@ -83,7 +83,7 @@ ARCH_EXPORTS_PY = $(ARCH)_exports.py
 ARCH_EXPORTS = $(ARCH)_exports.c 
 endif
 
-PRECOMP = $(ARCH_EXPORTS) getprocaddress.c opengl.def NULLfuncs.c
+PRECOMP = $(ARCH_EXPORTS) getprocaddress.c opengl.def NULLfuncs.c tsfuncs.c
 SLOP = $(PRECOMP)
 
 LIB_DEFS = opengl.def
