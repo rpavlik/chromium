@@ -198,12 +198,60 @@ vncspuStartServerThread(void)
 }
 
 
+/**
+ * Encoders call this function to get pointer to framebufer data.
+ */
 CARD32 *
 GetFrameBuffer(CARD16 *w, CARD16 *h)
 {
 	*w = vnc_spu.screen_width;
 	*h = vnc_spu.screen_height;
-	return (CARD32 *) vnc_spu.screen_buffer;
+	return (CARD32 *) vnc_spu.screen_buffer[0];
+}
+
+
+/**
+ * Called by the RFB encoder to lock access to 0th screen_buffer.
+ */
+void
+vncspuLockFrameBuffer(void)
+{
+	crLockMutex(&vnc_spu.fblock);
+	vnc_spu.screen_buffer_locked = GL_TRUE;
+	crUnlockMutex(&vnc_spu.fblock);
+}
+
+/**
+ * Called by the RFB encoder to unlock access to 0th screen_buffer.
+ */
+void
+vncspuUnlockFrameBuffer(void)
+{
+	crLockMutex(&vnc_spu.fblock);
+	vnc_spu.screen_buffer_locked = GL_FALSE;
+	crUnlockMutex(&vnc_spu.fblock);
+}
+
+
+/**
+ * The screen buffer that the main thread puts pixels into and the RFB
+ * encoders grab pixels from is double-buffered to avoid a big lock around
+ * a single buffer.
+ * screen_buffer[0] is read by the encoders while screen_buffer[1] is written
+ * by the main thread/glReadPixels.
+ * This function called by main thread to swap the [0] and [1] screen_buffers.
+ */
+static void
+SwapFrameBuffers(void)
+{
+	GLubyte *tmp;
+	crLockMutex(&vnc_spu.fblock);
+	if (!vnc_spu.screen_buffer_locked) {
+		tmp = vnc_spu.screen_buffer[0];
+		vnc_spu.screen_buffer[0] = vnc_spu.screen_buffer[1];
+		vnc_spu.screen_buffer[1] = tmp;
+	}
+	crUnlockMutex(&vnc_spu.fblock);
 }
 
 
@@ -380,6 +428,7 @@ vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi, int serial_no)
 static void
 ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
 {
+	GLubyte *buffer = vnc_spu.screen_buffer[1];
 #if RASTER_BOTTOM_TO_TOP
 	{
 		/* yFlipped = 0 = bottom of screen */
@@ -392,13 +441,11 @@ ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
 		vnc_spu.super.PixelStorei(GL_PACK_ROW_LENGTH, vnc_spu.screen_width);
 		if (vnc_spu.pixel_size == 24) {
 			vnc_spu.super.ReadPixels(winx, winy, width, height,
-															 GL_BGR, GL_UNSIGNED_BYTE,
-															 vnc_spu.screen_buffer);
+															 GL_BGR, GL_UNSIGNED_BYTE, buffer);
 		}
 		else {
 			vnc_spu.super.ReadPixels(winx, winy, width, height,
-															 GL_BGRA, GL_UNSIGNED_BYTE,
-															 vnc_spu.screen_buffer);
+															 GL_BGRA, GL_UNSIGNED_BYTE, buffer);
 		}
 	}
 #else
@@ -423,7 +470,7 @@ ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
 
 		/* copy/flip */
 		src = buffer + (height - 1) * width * pixelBytes; /* top row */
-		dst = vnc_spu.screen_buffer + (vnc_spu.screen_width * scry + scrx) * pixelBytes;
+		dst = buffer + (vnc_spu.screen_width * scry + scrx) * pixelBytes;
 		for (i = 0; i < height; i++) {
 			crMemcpy(dst, src, width * pixelBytes);
 			src -= width * pixelBytes;
@@ -652,7 +699,6 @@ DoReadback(WindowInfo *window)
 							window->frameCounter);
 		}
 #endif
-		crLockMutex(&vnc_spu.fblock);
 #ifdef NETLOGGER
 		if (vnc_spu.netlogger_url) {
 			NL_info("vncspu", "spu.readpix.begin", "NUMBER=i", window->frameCounter);
@@ -671,7 +717,9 @@ DoReadback(WindowInfo *window)
 				ReadbackRegion(destx, desty, srcx, srcy, width, height);
 			}
 		}
-		crUnlockMutex(&vnc_spu.fblock);
+
+		SwapFrameBuffers();
+
 #ifdef NETLOGGER
 		if (vnc_spu.netlogger_url) {
 			NL_info("vncspu", "spu.readpix.end", "NUMBER=i", window->frameCounter);
@@ -791,10 +839,12 @@ vncspuUpdateFramebuffer(WindowInfo *window)
 	CRASSERT(window);
 
 	/* check/alloc the screen buffer now */
-	if (!vnc_spu.screen_buffer) {
-		vnc_spu.screen_buffer = (GLubyte *)
+	if (!vnc_spu.screen_buffer[0]) {
+		vnc_spu.screen_buffer[0] = (GLubyte *)
 			crAlloc(vnc_spu.screen_width * vnc_spu.screen_height * 4);
-		if (!vnc_spu.screen_buffer) {
+		vnc_spu.screen_buffer[1] = (GLubyte *)
+			crAlloc(vnc_spu.screen_width * vnc_spu.screen_height * 4);
+		if (!vnc_spu.screen_buffer[0] || !vnc_spu.screen_buffer[1]) {
 			crWarning("VNC SPU: Out of memory!");
 			return;
 		}
@@ -853,6 +903,7 @@ vncspuSwapBuffers(GLint win, GLint flags)
 				/*
 				crDebug("VNC SPU: SwapBuffers frame rate: %.2f", rate);
 				*/
+				(void) rate;
 #ifdef NETLOGGER
 				if (vnc_spu.netlogger_url) {
 					NL_info("vncspu", "spu.updates_per_sec", "RATE=d", rate);

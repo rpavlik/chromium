@@ -85,7 +85,8 @@ typedef struct {
 	char *hostname;
 #endif
 
-	GLubyte *screen_buffer;
+	GLubyte *screen_buffer[2];
+	GLboolean screen_buffer_locked; /* True while accessed by encoder */
 	int pixel_size;               /* 24 or 32 */
 	CRHashTable *windowTable;
 	WindowInfo *currentWindow;

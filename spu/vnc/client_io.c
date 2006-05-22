@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.20 2006-05-01 22:06:09 brianp Exp $
+ * $Id: client_io.c,v 1.21 2006-05-22 19:47:33 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -376,6 +376,7 @@ static void rf_client_encodings_data(void)
         cl->enc_prefer = enc;
         preferred_enc_set = 1;
         log_write(LL_DETAIL, "Prefer encoding 0x%x", enc);
+        crDebug("VNC SPU: Using encoding 0x%x for new client", enc);
       }
     }
     if (enc >= 0 && enc < NUM_ENCODINGS) {
@@ -937,12 +938,12 @@ static void send_update(void)
               "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
     }
 #endif
-    crLockMutex(&vnc_spu.fblock);
+    vncspuLockFrameBuffer(); /* encoder using buffer */
 #ifdef NETLOGGER
-  if (vnc_spu.netlogger_url) {
-    NL_info("vncspu", "spu.encode.begin",
-            "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
-  }
+    if (vnc_spu.netlogger_url) {
+      NL_info("vncspu", "spu.encode.begin",
+              "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
+    }
 #endif
 
     /* For each of the usual pending rectangles: */
@@ -993,7 +994,7 @@ static void send_update(void)
       aio_write_nocopy(NULL, block);
     }
 
-    crUnlockMutex(&vnc_spu.fblock);
+    vncspuUnlockFrameBuffer(); /* encoder done with buffer */
   } /* if num_pending_rects */
 
 

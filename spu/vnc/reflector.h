@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: reflector.h,v 1.3 2006-04-25 22:09:07 brianp Exp $
+ * $Id: reflector.h,v 1.4 2006-05-22 19:47:33 brianp Exp $
  * Global include file
  */
 
@@ -57,5 +57,7 @@ extern void fbs_close_file(void);
 
 /* new */
 extern CARD32 *GetFrameBuffer(CARD16 *w, CARD16 *h);
+extern void vncspuLockFrameBuffer(void);
+extern void vncspuUnlockFrameBuffer(void);
 
 #endif /* _REF_REFLECTOR_H */

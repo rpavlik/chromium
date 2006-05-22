@@ -7,6 +7,10 @@
 #include "cr_string.h"
 #include "cr_mem.h"
 #include "vncspu.h"
+#ifdef NETLOGGER
+#include <unistd.h>
+#endif
+
 
 /** Vnc SPU descriptor */ 
 VncSPU vnc_spu;
@@ -48,7 +52,8 @@ vncSPUInit( int id, SPU *child, SPU *self,
 	crSPUInitDispatchTable( &(vnc_spu.super) );
 	crSPUCopyDispatchTable( &(vnc_spu.super), &(self->superSPU->dispatch_table) );
 	vncspuGatherConfiguration();
-	vnc_spu.screen_buffer = NULL;
+	vnc_spu.screen_buffer[0] = NULL;
+	vnc_spu.screen_buffer[1] = NULL;
 	vnc_spu.windowTable = crAllocHashtable();
 
 #ifdef NETLOGGER
@@ -56,6 +61,12 @@ vncSPUInit( int id, SPU *child, SPU *self,
 		char *c;
 
 		crDebug("VNC SPU: NetLogger URL: %s", vnc_spu.netlogger_url);
+#if 0
+		if (vnc_spu.netlogger_url) {
+			/* XXX add unlink() wrapper to Cr util package */
+			unlink(vnc_spu.netlogger_url);
+		}
+#endif
 		NL_logger_module("vncspu", /* module name */
 										 vnc_spu.netlogger_url,
 										 NL_LVL_DEBUG, /* logging level */
@@ -100,6 +111,10 @@ vncSPUCleanup(void)
 		NL_logger_del();
 	}
 #endif
+	if (vnc_spu.screen_buffer[0])
+		crFree(vnc_spu.screen_buffer[0]);
+	if (vnc_spu.screen_buffer[1])
+		crFree(vnc_spu.screen_buffer[1]);
 	return 1;
 }
 
