@@ -3,9 +3,14 @@
 #
 # See the file LICENSE.txt for information on redistributing this software.
 
+# Set to 1 to enable (limited) NetLogger support
+NETLOGGER = 0
+
+
 TOP = ../..
 
 include ${TOP}/options.mk
+
 
 SPU = 1
 SHARED = 1
@@ -33,7 +38,7 @@ FILES = vncspu \
 	rfblib \
 	translate
 
-CFLAGS += -DCHROMIUM -DRASTER_BOTTOM_TO_TOP=1
+CFLAGS += -DCHROMIUM -DRASTER_BOTTOM_TO_TOP=1 -DTIGHT_OPTIMIZATIONS
 
 LDFLAGS += -lX11 -lVncExt
 LDFLAGS += -lz -ljpeg -L/usr/X11R6/lib -lX11
@@ -47,6 +52,9 @@ LDFLAGS += -lVncExt
 endif
 
 ifeq ($(NETLOGGER), 1)
+ifndef NLHOME
+$(error "You must have NLHOME set if you turn on NETLOGGER compilation")
+endif
 CFLAGS += -DNETLOGGER -I$(NLHOME)/include
 LDFLAGS += -L$(NLHOME)/lib -lnllite
 endif
@@ -59,13 +67,3 @@ SLOP = $(PRECOMP)
 LIB_DEFS += vncspu.def
 include ${TOP}/cr.mk
 
-# Set to 1 to enable (limited) NetLogger support
-NETLOGGER ?= 1
-#ifdef NETLOGGER
-#ifndef NLHOME
-#error "You must have NLHOME set if you turn on NETLOGGER compilation"
-#else
-CFLAGS += -I$(NLHOME)/include 
-LDFLAGS += -L$(NLHOME)/lib
-#endif
-#endif
