@@ -4,7 +4,7 @@
 # See the file LICENSE.txt for information on redistributing this software.
 
 # Set to 1 to enable (limited) NetLogger support
-NETLOGGER = 0
+NETLOGGER ?= 0
 
 
 TOP = ../..
