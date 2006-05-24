@@ -80,6 +80,7 @@ typedef struct {
 	char display_string[1000];
 	int use_bounding_boxes;
 	int frame_drop;
+	int double_buffer;
 #ifdef NETLOGGER
 	char *netlogger_url;
 	char *hostname;

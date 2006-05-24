@@ -145,6 +145,8 @@ vncspuInitialize(void)
 #endif /* HAVE_VNC_EXT */
 
 	vnc_spu.timer = crTimerNewTimer();
+
+	crDebug("VNC SPU: double buffering: %d", vnc_spu.double_buffer);
 }
 
 
@@ -204,6 +206,7 @@ vncspuStartServerThread(void)
 CARD32 *
 GetFrameBuffer(CARD16 *w, CARD16 *h)
 {
+	CRASSERT(vnc_spu.screen_buffer_locked);
 	*w = vnc_spu.screen_width;
 	*h = vnc_spu.screen_height;
 	return (CARD32 *) vnc_spu.screen_buffer[0];
@@ -218,7 +221,8 @@ vncspuLockFrameBuffer(void)
 {
 	crLockMutex(&vnc_spu.fblock);
 	vnc_spu.screen_buffer_locked = GL_TRUE;
-	crUnlockMutex(&vnc_spu.fblock);
+	if (vnc_spu.double_buffer)
+		crUnlockMutex(&vnc_spu.fblock);
 }
 
 /**
@@ -227,7 +231,8 @@ vncspuLockFrameBuffer(void)
 void
 vncspuUnlockFrameBuffer(void)
 {
-	crLockMutex(&vnc_spu.fblock);
+	if (vnc_spu.double_buffer)
+		crLockMutex(&vnc_spu.fblock);
 	vnc_spu.screen_buffer_locked = GL_FALSE;
 	crUnlockMutex(&vnc_spu.fblock);
 }
@@ -246,7 +251,7 @@ SwapFrameBuffers(void)
 {
 	GLubyte *tmp;
 	crLockMutex(&vnc_spu.fblock);
-	if (!vnc_spu.screen_buffer_locked) {
+	if (vnc_spu.double_buffer && !vnc_spu.screen_buffer_locked) {
 		tmp = vnc_spu.screen_buffer[0];
 		vnc_spu.screen_buffer[0] = vnc_spu.screen_buffer[1];
 		vnc_spu.screen_buffer[1] = tmp;
@@ -385,7 +390,6 @@ vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi, int serial_no)
 	/* XXX this is a bit of a hack - using a condition variable instead of
 	 * a semaphore would probably be best.
 	 */
-
 #ifdef NETLOGGER
 	if (vnc_spu.netlogger_url) {
 		NL_info("vncspu", "spu.wait.rects", "NODE=s NUMBER=i",
@@ -428,7 +432,9 @@ vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi, int serial_no)
 static void
 ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
 {
-	GLubyte *buffer = vnc_spu.screen_buffer[1];
+		GLubyte *buffer = vnc_spu.double_buffer
+			? vnc_spu.screen_buffer[1] : vnc_spu.screen_buffer[0];
+
 #if RASTER_BOTTOM_TO_TOP
 	{
 		/* yFlipped = 0 = bottom of screen */

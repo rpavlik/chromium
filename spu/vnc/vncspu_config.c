@@ -54,6 +54,11 @@ static void set_coalesce_writes(VncSPU *vnc_spu, const char *response)
 	opt_write_coalescing = crStrToInt(response);
 }
 
+static void set_double_buffer(VncSPU *vnc_spu, const char *response)
+{
+	vnc_spu->double_buffer = crStrToInt(response);
+}
+
 #ifdef NETLOGGER
 static void set_netlogger_url(VncSPU *vnc_spu, const char *response)
 {
@@ -90,6 +95,8 @@ SPUOptions vncSPUOptions[] = {
 		"Allow frame dropping", (SPUOptionCB) set_frame_drop },
 	{ "coalesce_writes", CR_BOOL, 1, "0", NULL, NULL,
 		"Coalesce Writes", (SPUOptionCB) set_coalesce_writes },
+	{ "double_buffer", CR_BOOL, 1, "1", NULL, NULL,
+		"Double Buffer", (SPUOptionCB) set_double_buffer },
 #ifdef NETLOGGER
 	{ "netlogger_url", CR_STRING, 1, NULL, NULL, NULL,
 		"NetLogger log URL", (SPUOptionCB) set_netlogger_url },
