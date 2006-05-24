@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.21 2006-05-22 19:47:33 brianp Exp $
+ * $Id: client_io.c,v 1.22 2006-05-24 20:19:46 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -347,6 +347,24 @@ static void rf_client_encodings_hdr(void)
   aio_setread(rf_client_encodings_data, NULL, cl->temp_count * sizeof(CARD32));
 }
 
+
+static const char *encoding_string(CARD32 encoding)
+{
+  switch (encoding) {
+  case RFB_ENCODING_RAW:
+    return "raw";
+  case RFB_ENCODING_HEXTILE:
+    return "hextile";
+  case RFB_ENCODING_TIGHT:
+    return "tight";
+  case RFB_ENCODING_RAW24:
+    return "raw24";
+  default:
+    return "other";
+  }
+}
+
+
 static void rf_client_encodings_data(void)
 {
   CL_SLOT *cl = (CL_SLOT *)cur_slot;
@@ -375,8 +393,6 @@ static void rf_client_encodings_data(void)
            enc == RFB_ENCODING_TIGHT ) {
         cl->enc_prefer = enc;
         preferred_enc_set = 1;
-        log_write(LL_DETAIL, "Prefer encoding 0x%x", enc);
-        crDebug("VNC SPU: Using encoding 0x%x for new client", enc);
       }
     }
     if (enc >= 0 && enc < NUM_ENCODINGS) {
@@ -419,17 +435,7 @@ static void rf_client_encodings_data(void)
     REGION_EMPTY(&cl->copy_region);
   }
 
-  log_write(LL_DEBUG, "Encoding list set by %s", cur_slot->name);
-  if (cl->enc_prefer == RFB_ENCODING_RAW) {
-    log_write(LL_DETAIL, "Using raw encoding for client %s",
-              cur_slot->name);
-  } else if (cl->enc_prefer == RFB_ENCODING_TIGHT) {
-    log_write(LL_DETAIL, "Using Tight encoding for client %s",
-              cur_slot->name);
-  } else if (cl->enc_prefer == RFB_ENCODING_HEXTILE) {
-    log_write(LL_DETAIL, "Using Hextile encoding for client %s",
-              cur_slot->name);
-  } else if (cl->enc_prefer == RFB_ENCODING_RAW24) {
+  if (cl->enc_prefer == RFB_ENCODING_RAW24) {
     if (vnc_spu.pixel_size == 0 || vnc_spu.pixel_size == 24) {
        /* not set, or already 24bpp */
       vnc_spu.pixel_size = 24;
@@ -442,8 +448,13 @@ static void rf_client_encodings_data(void)
       log_write(LL_DETAIL, "Using Raw (32) encoding for client %s",
                 cur_slot->name);
     }
-
   }
+
+  log_write(LL_DETAIL, "Using encoding %s (0x%x)",
+            encoding_string(cl->enc_prefer), cl->enc_prefer);
+  crDebug("VNC SPU: Using %s encoding (0x%x) for new client",
+          encoding_string(cl->enc_prefer), cl->enc_prefer);
+
   aio_setread(rf_client_msg, NULL, 1);
 }
 
