@@ -985,9 +985,8 @@ void STATE_APIENTRY crStateGetTrackMatrixivNV(GLenum target, GLuint address,
 
 void STATE_APIENTRY crStateGetVertexAttribdvNV(GLuint index, GLenum pname, GLdouble *params)
 {
-	 GLfloat floatParams[4];
 	 /* init vars to prevent compiler warnings/errors */
-	 floatParams[0] = floatParams[1] = floatParams[2] = floatParams[3] = 0.0;
+	 GLfloat floatParams[4] = { 0.0, 0.0, 0.0, 0.0 };
 	 crStateGetVertexAttribfvNV(index, pname, floatParams);
 	 params[0] = floatParams[0];
 	 if (pname == GL_CURRENT_ATTRIB_NV) {
@@ -1037,7 +1036,8 @@ void STATE_APIENTRY crStateGetVertexAttribfvNV(GLuint index, GLenum pname, GLflo
 
 void STATE_APIENTRY crStateGetVertexAttribivNV(GLuint index, GLenum pname, GLint *params)
 {
-	 GLfloat floatParams[4];
+	 /* init vars to prevent compiler warnings/errors */
+	 GLfloat floatParams[4] = { 0.0, 0.0, 0.0, 0.0 };
 	 crStateGetVertexAttribfvNV(index, pname, floatParams);
 	 params[0] = (GLint) floatParams[0];
 	 if (pname == GL_CURRENT_ATTRIB_NV) {
