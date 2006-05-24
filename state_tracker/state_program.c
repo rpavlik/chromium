@@ -1094,7 +1094,8 @@ void STATE_APIENTRY crStateGetVertexAttribfvARB(GLuint index, GLenum pname, GLfl
 
 void STATE_APIENTRY crStateGetVertexAttribivARB(GLuint index, GLenum pname, GLint *params)
 {
-	 GLfloat floatParams[4];
+	 /* init vars to prevent compiler warnings/errors */
+	 GLfloat floatParams[4] = { 0.0, 0.0, 0.0, 0.0 };
 	 crStateGetVertexAttribfvARB(index, pname, floatParams);
 	 params[0] = (GLint) floatParams[0];
 	 if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
@@ -1107,7 +1108,8 @@ void STATE_APIENTRY crStateGetVertexAttribivARB(GLuint index, GLenum pname, GLin
 
 void STATE_APIENTRY crStateGetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params)
 {
-	 GLfloat floatParams[4];
+	 /* init vars to prevent compiler warnings/errors */
+	 GLfloat floatParams[4] = { 0.0, 0.0, 0.0, 0.0 };
 	 crStateGetVertexAttribfvARB(index, pname, floatParams);
 	 params[0] = floatParams[0];
 	 if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
