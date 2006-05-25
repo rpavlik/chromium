@@ -12,13 +12,13 @@ CC = gcc
 # P4/Xeon systems:
 #-O3 -DNDEBUG -fno-strict-aliasing -fomit-frame-pointer -fexpensive-optimizations -falign-functions=4 -funroll-loops -malign-double -fprefetch-loop-arrays -march=pentium4 -mcpu=pentium4 -msse2 -mfpmath=sse 
 
-CXXFLAGS          += -DLINUX -Wall -Werror
+CXXFLAGS          += -DLINUX -Wall
 CXX_RELEASE_FLAGS += -O3 -DNDEBUG -fno-strict-aliasing
-CXX_DEBUG_FLAGS   += -g
+CXX_DEBUG_FLAGS   += -g -Werror
 
-CFLAGS            += -DLINUX -Wall -Werror -Wmissing-prototypes -Wsign-compare
+CFLAGS            += -DLINUX -Wall -Wmissing-prototypes -Wsign-compare
 C_RELEASE_FLAGS   += -O3 -DNDEBUG -fno-strict-aliasing
-C_DEBUG_FLAGS     += -g
+C_DEBUG_FLAGS     += -g -Werror
 
 ifeq ($(MACHTYPE),x86_64)
 ifeq ($(FORCE_32BIT_ABI),1)

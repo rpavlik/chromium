@@ -23,13 +23,13 @@ OTHER_LD       = -L/export/mira3/willjl/mygl -L/export/mira3/willjl/src/sparc_so
 #
 OTHER_FLAGS = -DSOLARIS_9_X_BUG
 
-CXXFLAGS          += -DSunOS -DSUN_OGL_NO_VERTEX_MACROS -Wall -Werror -fPIC $(OTHER_INCLUDES) $(OTHER_FLAGS)  
+CXXFLAGS          += -DSunOS -DSUN_OGL_NO_VERTEX_MACROS -Wall -fPIC $(OTHER_INCLUDES) $(OTHER_FLAGS)  
 CXX_RELEASE_FLAGS += -O3 -DNDEBUG
-CXX_DEBUG_FLAGS   += -g
+CXX_DEBUG_FLAGS   += -g -Werror
 
-CFLAGS            += -DSunOS -DSUN_OGL_NO_VERTEX_MACROS -Wall -Werror -fPIC $(OTHER_INCLUDES) $(OTHER_FLAGS) 
+CFLAGS            += -DSunOS -DSUN_OGL_NO_VERTEX_MACROS -Wall -fPIC $(OTHER_INCLUDES) $(OTHER_FLAGS) 
 C_RELEASE_FLAGS   += -O3 -DNDEBUG
-C_DEBUG_FLAGS     += -g
+C_DEBUG_FLAGS     += -g -Werror
 
 LDFLAGS           +=  -L/usr/X11R6/lib $(OTHER_LD)
 LD_RELEASE_FLAGS  += 

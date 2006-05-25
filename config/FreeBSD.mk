@@ -7,15 +7,15 @@ G++-INCLUDE-DIR = /usr/include/g++
 CXX = g++
 CC = gcc
 
-CXXFLAGS          += -DFREEBSD -Wall -Werror -I/usr/X11R6/include \
+CXXFLAGS          += -DFREEBSD -Wall -I/usr/X11R6/include \
                      -fno-strict-aliasing -fPIC
 CXX_RELEASE_FLAGS += -O3 -DNDEBUG
-CXX_DEBUG_FLAGS   += -g
+CXX_DEBUG_FLAGS   += -g -Werror
 
-CFLAGS            += -DFREEBSD -Wall -Werror -I/usr/X11R6/include \
+CFLAGS            += -DFREEBSD -Wall -I/usr/X11R6/include \
                      -fno-strict-aliasing -fPIC
 C_RELEASE_FLAGS   += -O3 -DNDEBUG
-C_DEBUG_FLAGS     += -g
+C_DEBUG_FLAGS     += -g -Werror
 
 LDFLAGS           += -lX11 -lXext -L/usr/X11R6/lib -rpath-link=/usr/X11R6/lib
 LD_RELEASE_FLAGS  +=
