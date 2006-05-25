@@ -125,7 +125,10 @@ static void UpdateMesh( void )
 static void ComputeNormal( int x, int y, float n[3] )
 {
 	float len;
-	float p1[3], p2[3], p3[3], p4[3];
+	float	p1[3] = { 0.0, 0.0, 0.0 },
+		p2[3] = { 0.0, 0.0, 0.0 },
+		p3[3] = { 0.0, 0.0, 0.0 },
+		p4[3] = { 0.0, 0.0, 0.0 };
 	n[0] = n[1] = n[2] = 0;
 	p1[0] = (float) x-1;
 	p2[0] = (float) x;
