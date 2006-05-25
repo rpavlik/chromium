@@ -1,8 +1,8 @@
-%define binary_version 1.7
+%define binary_version 1.9
 
 Name:		 cr
 Summary:	 Chromium
-Version:	 1.7
+Version:	 1.9
 Release:	 1
 License:	 BSD
 Group:		 User Interface/X
