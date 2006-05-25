@@ -902,7 +902,7 @@ renderspuBoundsInfoCR( CRrecti *bounds, GLbyte *payload, GLint len,
 	if (render_spu.draw_bbox) {
 		GET_CONTEXT(context);
 		WindowInfo *window = context->currentWindow;
-		int x, y, w, h;
+		GLint x, y, w, h;
 
 		renderspu_SystemGetWindowGeometry(window, &x, &y, &w, &h);
 
