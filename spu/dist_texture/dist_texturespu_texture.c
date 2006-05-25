@@ -314,8 +314,8 @@ dist_textureTexImage2D(GLenum target, GLint level, GLint internalformat,
 				}
 #else
 				if ( ! check_match( f, "P6" ) ) { close( f ) ; return ; }
-				if ( read_int( f, &width ) ) { close( f ) ; return ; }
-				if ( read_int( f, &height ) ) { close( f ) ; return ; }
+				if ( read_int( f, (int *) &width ) ) { close( f ) ; return ; }
+				if ( read_int( f, (int *) &height ) ) { close( f ) ; return ; }
 				if ( read_int( f, &tmp ) ) { close( f ) ; return ; }
 				if ( tmp != 255 ) {
 					crWarning( "PPM file isn't GL_UNSIGNED_BYTE format" ) ;
