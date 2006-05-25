@@ -394,7 +394,8 @@ tilesortspu_ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 	{
 		CRPixelPackState packing;
 		const CRrecti *extent;
-		int new_width, new_height, new_x, new_y;
+		GLsizei new_width, new_height;
+		GLint new_x, new_y;
 
 		/* Server[i]'s tile region (XXX we should loop over extents) */
 		extent = winInfo->server[i].extents + 0;  /* x1,y1,x2,y2 */
