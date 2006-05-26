@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.22 2006-05-24 20:19:46 brianp Exp $
+ * $Id: client_io.c,v 1.23 2006-05-26 21:28:29 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -454,6 +454,8 @@ static void rf_client_encodings_data(void)
             encoding_string(cl->enc_prefer), cl->enc_prefer);
   crDebug("VNC SPU: Using %s encoding (0x%x) for new client",
           encoding_string(cl->enc_prefer), cl->enc_prefer);
+  crDebug("VNC SPU: frame_drop = %d", vnc_spu.frame_drop);
+  crDebug("VNC SPU: double_buffer = %d", vnc_spu.double_buffer);
 
   aio_setread(rf_client_msg, NULL, 1);
 }
@@ -830,7 +832,8 @@ static void send_update(void)
   /*crDebug("Enter send_update");*/
 
   /* XXX Review locking!!!*/
-  crLockMutex(&vnc_spu.lock);
+  if (!vnc_spu.double_buffer)
+    crLockMutex(&vnc_spu.lock);
 
   /* Process framebuffer size change. */
   if (cl->newfbsize_pending) {
@@ -853,7 +856,8 @@ static void send_update(void)
        pseudo-rectangle, pixel data will be sent in the next update. */
     if (cl->enable_newfbsize) {
       send_newfbsize();
-      crUnlockMutex(&vnc_spu.lock);
+      if (!vnc_spu.double_buffer)
+        crUnlockMutex(&vnc_spu.lock);
       return;
     }
   } else {
@@ -890,7 +894,8 @@ static void send_update(void)
   num_copy_rects = REGION_NUM_RECTS(&cl->copy_region);
   num_all_rects = num_pending_rects + num_copy_rects;
   if (num_all_rects == 0) {
-    crUnlockMutex(&vnc_spu.lock);
+     if (!vnc_spu.double_buffer)
+       crUnlockMutex(&vnc_spu.lock);
     return;
   }
 
@@ -1032,7 +1037,9 @@ static void send_update(void)
   cl->update_in_progress = 1;
   cl->update_requested = 0;
 
-  crUnlockMutex(&vnc_spu.lock);
+  if (!vnc_spu.double_buffer)
+    crUnlockMutex(&vnc_spu.lock);
+
   /*crDebug("Leave send_update");*/
 
 #ifdef NETLOGGER
