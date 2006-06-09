@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.c,v 1.9 2006-04-24 16:07:38 brianp Exp $
+ * $Id: async_io.c,v 1.10 2006-06-09 23:39:02 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
@@ -658,7 +658,7 @@ static void aio_process_output(AIO_SLOT *slot)
     errno = 0;
 
 #ifdef NETLOGGER
-    if (slot->bytes_written == 0 && block->serial_number) {
+    if (slot->bytes_written == 0 && block->serial_number && block->first_block) {
       NL_info("vncspu", "spu.fbupdate.send.begin",
               "NODE=s NUMBER=i", vnc_spu.hostname, block->serial_number);
     }
@@ -682,7 +682,8 @@ static void aio_process_output(AIO_SLOT *slot)
         AIO_FUNCPTR func = block->func;
 
 #ifdef NETLOGGER
-        if (block->serial_number) {
+        if (block->serial_number && block->last_block) {
+          /* last block in queue */
           NL_info("vncspu", "spu.fbupdate.send.end",
                   "NODE=s NUMBER=i", vnc_spu.hostname, block->serial_number);
         }
@@ -991,6 +992,23 @@ void
 aio_set_serial_number(AIO_SLOT *slot, int serno)
 {
   slot->serial_number = serno;
+  if (serno == 0) {
+    /* After an RFB update reply has been completed, fix-up the blocks'
+     * first/last_block flags so we can do proper NetLogger reporting.
+     */
+    AIO_BLOCK *block;
+    for (block = slot->outqueue; block; block = block->next) {
+       /*
+      block->first_block = block->last_block = 0;
+       */
+      if (block == slot->outqueue) {
+        block->first_block = 1;
+      }
+      if (block->next == NULL) {
+        block->last_block = 1;
+      }
+    }
+  }
 }
 
 
@@ -1008,11 +1026,12 @@ aio_print_slots(void)
      printf("  Name: %s\n", slot->name);
      printf("  Type: %d\n", slot->type);
      printf("  Susp: 0x%x\n", slot->suspended);
-     /*
+     printf("  FD: %d\n", slot->fd);
+#if 0
      if (slot->type == TYPE_HOST_ACTIVE_SLOT) {
         HOST_SLOT *hs = (HOST_SLOT *) slot;
         printf("  VNC: %d\n", hs->is_vnc_spu);
      }
-     */
+#endif
   }
 }

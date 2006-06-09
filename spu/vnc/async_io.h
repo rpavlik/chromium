@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.h,v 1.4 2006-04-19 02:58:11 brianp Exp $
+ * $Id: async_io.h,v 1.5 2006-06-09 23:39:02 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
@@ -18,6 +18,7 @@
 #define _REFLIB_ASYNC_IO_H
 
 
+#define UNSUSPEND     0x0
 #define SUSPEND_READ  0x1
 #define SUSPEND_WRITE 0x2
 
@@ -39,6 +40,7 @@ typedef struct _AIO_BLOCK {
   int in_list_flag;             /* is block in the to-be-written list? */
   int in_cache_flag;            /* is block in the cache? */
   int serial_number;            /* for netlogger */
+  int first_block, last_block;  /* for netlogger */
 } AIO_BLOCK;
 
 /* This structure holds the data associated with a file/socket */
@@ -90,6 +92,7 @@ typedef struct _AIO_SLOT {
   unsigned int total_written;   /* just instrumentation */
 
   int suspended;  /* bitmask of SUSPEND_READ, SUSPEND_WRITE */
+
   int serial_number;  /* for netlogger */
 } AIO_SLOT;
 
