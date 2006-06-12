@@ -966,12 +966,14 @@ crTCPIPRecv( void )
 			 * (MSG_PEEK flag to recv()?) if the connection isn't
 			 * enabled. 
 			 */
+#if 0 /* not used - see below */
 #ifndef ADDRINFO
 			struct sockaddr s;
 #else
 			struct sockaddr_storage s;
 #endif
 			socklen_t slen;
+#endif
 			fd_set only_fd; /* testing single fd */
 			CRSocket sock = conn->tcp_socket;
 
@@ -1000,10 +1002,11 @@ crTCPIPRecv( void )
 			
 			FD_ZERO(&only_fd);
 			FD_SET( sock, &only_fd );
+
+#if 0 /* Disabled on Dec 13 2005 by BrianP - seems to cause trouble */
 			slen = sizeof( s );
 			/* Check that the socket is REALLY connected */
 			/* Doesn't this call introduce some inefficiency??? (BP) */
-#if 0 /* Disabled on Dec 13 2005 by BrianP - seems to cause trouble */
 			if (getpeername(sock, (struct sockaddr *) &s, &slen) < 0) {
 				/* Another kludge.....
 				 * If we disconnect a socket without writing
