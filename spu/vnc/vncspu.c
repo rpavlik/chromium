@@ -251,22 +251,31 @@ SwapFrameBuffers(void)
 {
 	crLockMutex(&vnc_spu.fblock);
 	if (vnc_spu.double_buffer && !vnc_spu.screen_buffer_locked) {
+#if 0
+		crMemcpy(vnc_spu.screen_buffer[0]->buffer,
+						 vnc_spu.screen_buffer[1]->buffer,
+						 vnc_spu.screen_width * vnc_spu.screen_height * 4);
+#else
 		ScreenBuffer *tmp;
 		tmp = vnc_spu.screen_buffer[0];
 		vnc_spu.screen_buffer[0] = vnc_spu.screen_buffer[1];
 		vnc_spu.screen_buffer[1] = tmp;
+#endif
 	}
 	crUnlockMutex(&vnc_spu.fblock);
 }
 
 
+/**
+ * Vertically invert a region.
+ */
 static void
 InvertRegion(RegionPtr reg, int height)
 {
 	const BoxPtr b = REGION_RECTS(reg);
 	const int n = REGION_NUM_RECTS(reg);
 	int i;
-#if 0
+#if 0 /* DEBUG */
 	Bool overlap;
 #endif
 	RegionRec newRegion;
@@ -288,23 +297,17 @@ InvertRegion(RegionPtr reg, int height)
 		miRegionInit(&invReg, &invBox, 1);
 		REGION_UNION(&newRegion, &newRegion, &invReg);
 		REGION_UNINIT(&invReg);
-#if 0
-		int y1 = b[i].y1;
-		int y2 = b[i].y2;
-		b[i].y1 = height - y2;
-		b[i].y2 = height - y1;
-#endif
 	}
 
 	CRASSERT(miValidRegion(&newRegion));
 
-#if 0
+#if 0 /* DEBUG */
 	miRegionValidate(reg, &overlap);
 	CRASSERT(miValidRegion(reg));
-#else
+#endif
+
 	REGION_COPY(reg, &newRegion);
 	REGION_UNINIT(&newRegion);
-#endif
 }
 
 
@@ -313,10 +316,10 @@ InvertRegion(RegionPtr reg, int height)
  * regions.
  */
 static void
-windowUnionCB(unsigned long key, void *data1, void *data2)
+windowUnionCB(unsigned long key, void *windowData, void *regionData)
 {
-	WindowInfo *window = (WindowInfo *) data1;
-	RegionPtr regionUnion = (RegionPtr) data2;
+	WindowInfo *window = (WindowInfo *) windowData;
+	RegionPtr regionUnion = (RegionPtr) regionData;
 
 	/* change y=0=bottom to y=0=top */
 	InvertRegion(&window->accumDirtyRegion, window->height ? window->height : 1);
@@ -355,7 +358,7 @@ vncspuGetDirtyRects(RegionPtr region)
 	crHashtableWalk(vnc_spu.windowTable, windowUnionCB, &dirtyUnion);
 
 	if (REGION_NOTEMPTY(&dirtyUnion)) {
-#if 0
+#if 1
 		/* XXX this _should_ work, and be faster */
 		REGION_EMPTY(region);
 		*region = dirtyUnion;
@@ -897,7 +900,7 @@ vncspuUpdateFramebuffer(WindowInfo *window)
 		window->prevDirtyRegion = window->currDirtyRegion;
 		/* reset curr dirty region */
 		window->currDirtyRegion.data = NULL;
-		REGION_EMPTY(&window->currDirtyRegion); /*NEW*/
+		REGION_EMPTY(&window->currDirtyRegion);
 	}
 }
 
