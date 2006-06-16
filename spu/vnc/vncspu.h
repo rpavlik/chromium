@@ -65,6 +65,16 @@ typedef struct {
 
 
 /**
+ * The screen buffer contains the pixels we'll encode and send to clients.
+ */
+typedef struct {
+	GLubyte *buffer;  /* screen_width * screen_height * 4 */
+
+	RegionRec dirtyRegion;
+} ScreenBuffer;
+
+
+/**
  * Vnc SPU descriptor
  */
 typedef struct {
@@ -86,7 +96,10 @@ typedef struct {
 	char *hostname;
 #endif
 
+	/*
 	GLubyte *screen_buffer[2];
+	*/
+	ScreenBuffer *screen_buffer[2];
 	GLboolean screen_buffer_locked; /* True while accessed by encoder */
 	int pixel_size;               /* 24 or 32 */
 	CRHashTable *windowTable;

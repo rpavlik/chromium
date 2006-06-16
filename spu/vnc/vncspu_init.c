@@ -102,6 +102,14 @@ vncSPUSelfDispatch(SPUDispatchTable *self)
 	vnc_spu.server = (CRServer *)(self->server);
 }
 
+static void
+free_screenbuffer(ScreenBuffer *b)
+{
+	if (b->buffer)
+		crFree(b->buffer);
+	crFree(b);
+}
+
 static int
 vncSPUCleanup(void)
 {
@@ -112,9 +120,9 @@ vncSPUCleanup(void)
 	}
 #endif
 	if (vnc_spu.screen_buffer[0])
-		crFree(vnc_spu.screen_buffer[0]);
+		free_screenbuffer(vnc_spu.screen_buffer[0]);
 	if (vnc_spu.screen_buffer[1])
-		crFree(vnc_spu.screen_buffer[1]);
+		free_screenbuffer(vnc_spu.screen_buffer[1]);
 	return 1;
 }
 

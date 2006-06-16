@@ -209,7 +209,7 @@ GetFrameBuffer(CARD16 *w, CARD16 *h)
 	CRASSERT(vnc_spu.screen_buffer_locked);
 	*w = vnc_spu.screen_width;
 	*h = vnc_spu.screen_height;
-	return (CARD32 *) vnc_spu.screen_buffer[0];
+	return (CARD32 *) vnc_spu.screen_buffer[0]->buffer;
 }
 
 
@@ -249,9 +249,9 @@ vncspuUnlockFrameBuffer(void)
 static void
 SwapFrameBuffers(void)
 {
-	GLubyte *tmp;
 	crLockMutex(&vnc_spu.fblock);
 	if (vnc_spu.double_buffer && !vnc_spu.screen_buffer_locked) {
+		ScreenBuffer *tmp;
 		tmp = vnc_spu.screen_buffer[0];
 		vnc_spu.screen_buffer[0] = vnc_spu.screen_buffer[1];
 		vnc_spu.screen_buffer[1] = tmp;
@@ -432,8 +432,8 @@ vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi, int serial_no)
 static void
 ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
 {
-		GLubyte *buffer = vnc_spu.double_buffer
-			? vnc_spu.screen_buffer[1] : vnc_spu.screen_buffer[0];
+	ScreenBuffer *sb = vnc_spu.double_buffer
+		? vnc_spu.screen_buffer[1] : vnc_spu.screen_buffer[0];
 
 #if RASTER_BOTTOM_TO_TOP
 	{
@@ -447,11 +447,11 @@ ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
 		vnc_spu.super.PixelStorei(GL_PACK_ROW_LENGTH, vnc_spu.screen_width);
 		if (vnc_spu.pixel_size == 24) {
 			vnc_spu.super.ReadPixels(winx, winy, width, height,
-															 GL_BGR, GL_UNSIGNED_BYTE, buffer);
+															 GL_BGR, GL_UNSIGNED_BYTE, sb->buffer);
 		}
 		else {
 			vnc_spu.super.ReadPixels(winx, winy, width, height,
-															 GL_BGRA, GL_UNSIGNED_BYTE, buffer);
+															 GL_BGRA, GL_UNSIGNED_BYTE, sb->buffer);
 		}
 	}
 #else
@@ -466,17 +466,17 @@ ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
 		if (vnc_spu.pixel_size == 24) {
 			pixelBytes = 3;
 			vnc_spu.super.ReadPixels(winx, winy, width, height,
-															 GL_BGR, GL_UNSIGNED_BYTE, buffer);
+															 GL_BGR, GL_UNSIGNED_BYTE, sb->buffer);
 		}
 		else {
 			pixelBytes = 4;
 			vnc_spu.super.ReadPixels(winx, winy, width, height,
-															 GL_BGRA, GL_UNSIGNED_BYTE, buffer);
+															 GL_BGRA, GL_UNSIGNED_BYTE, sb->buffer);
 		}
 
 		/* copy/flip */
-		src = buffer + (height - 1) * width * pixelBytes; /* top row */
-		dst = buffer + (vnc_spu.screen_width * scry + scrx) * pixelBytes;
+		src = sb->buffer + (height - 1) * width * pixelBytes; /* top row */
+		dst = sb->buffer + (vnc_spu.screen_width * scry + scrx) * pixelBytes;
 		for (i = 0; i < height; i++) {
 			crMemcpy(dst, src, width * pixelBytes);
 			src -= width * pixelBytes;
@@ -837,6 +837,31 @@ LookupWindow(GLint win, GLint nativeWindow)
 }
 
 
+static ScreenBuffer *
+alloc_screenbuffer(void)
+{
+	ScreenBuffer *s = crCalloc(sizeof(ScreenBuffer));
+	if (s) {
+		s->buffer = (GLubyte *)
+			crAlloc(vnc_spu.screen_width * vnc_spu.screen_height * 4);
+		if (!s->buffer) {
+			crFree(s);
+			s = NULL;
+		}
+	}
+	if (!s) {
+		crError("VNC SPU: Out of memory allocating %d x %d screen buffer",
+						vnc_spu.screen_width, vnc_spu.screen_height);
+	}
+	return s;
+}
+
+
+/**
+ * Called by SwapBuffers, glFinish, glFlush after something's been rendered.
+ * Determine which window regions have changed, call ReadPixels to store
+ * those regions into the framebuffer.
+ */
 static void
 vncspuUpdateFramebuffer(WindowInfo *window)
 {
@@ -844,16 +869,16 @@ vncspuUpdateFramebuffer(WindowInfo *window)
 
 	CRASSERT(window);
 
-	/* check/alloc the screen buffer now */
+	/* check/alloc the screen buffer(s) now */
 	if (!vnc_spu.screen_buffer[0]) {
-		vnc_spu.screen_buffer[0] = (GLubyte *)
-			crAlloc(vnc_spu.screen_width * vnc_spu.screen_height * 4);
-		vnc_spu.screen_buffer[1] = (GLubyte *)
-			crAlloc(vnc_spu.screen_width * vnc_spu.screen_height * 4);
-		if (!vnc_spu.screen_buffer[0] || !vnc_spu.screen_buffer[1]) {
-			crWarning("VNC SPU: Out of memory!");
+		vnc_spu.screen_buffer[0] = alloc_screenbuffer();
+		if (!vnc_spu.screen_buffer[0])
 			return;
-		}
+	}
+	if (!vnc_spu.screen_buffer[1]) {
+		vnc_spu.screen_buffer[1] = alloc_screenbuffer();
+		if (!vnc_spu.screen_buffer[1])
+			return;
 	}
 
 	window->frameCounter++;
@@ -872,6 +897,7 @@ vncspuUpdateFramebuffer(WindowInfo *window)
 		window->prevDirtyRegion = window->currDirtyRegion;
 		/* reset curr dirty region */
 		window->currDirtyRegion.data = NULL;
+		REGION_EMPTY(&window->currDirtyRegion); /*NEW*/
 	}
 }
 
