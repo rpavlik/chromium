@@ -1740,17 +1740,23 @@ miRectsToRegion(nrects, prect, ctype)
 }
 
 
+/**
+ * Convert array of BoxRecs into a region.
+ */
 void
 miBoxesToRegion(RegionPtr region, int numBoxes, const BoxPtr boxes)
 {
   Bool overlap;
 
   REGION_UNINIT(region);
-  region->data = malloc(sizeof(RegDataRec) + numBoxes * sizeof(BoxRec));
-
+  region->data = xallocData(numBoxes);
   region->data->size = numBoxes;
   region->data->numRects = numBoxes;
   memcpy(region->data + 1, boxes, numBoxes * sizeof(BoxRec));
+
+  /* empty extents to force miRegionValidate to recompute them */
+  region->extents.x1 = region->extents.x2 = 0;
+  region->extents.y1 = region->extents.y2 = 0;
 
   REGION_VALIDATE(region, &overlap);
 }
