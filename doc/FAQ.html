@@ -85,6 +85,9 @@
       <li>
         <a href="#sdp">How do I use Infiniband / SDP with Chromium? </a>
       </li>
+      <li>
+        <a href="#hosts">I get "Bad Mothership response: Never heard of server host foobar.  Expected one of: 192.168.1.1 192.168.1.2"</a>
+      </li>
     </ol>
     <hr>
     <a name="mozTocId480292" class="mozTocH2" id="mozTocId480292"></a>
@@ -780,5 +783,31 @@
       InfiniBand vendors typically have test programs for this.
     </p>
 
+
+    <a name="hosts"></a>
+    <h2>
+      Q: I get "Bad Mothership response: Never heard of server host foobar.
+      Expected one of: 192.168.1.1 192.168.1.2" (or similar)</a>
+    </h2>
+    <p>
+      <span class="AnswerMark">A:</span>
+      Usually, this is a problem with your /etc/hosts files.
+      If you run the 'hostname' program and don't get a fully-qualified
+      domain name, this is the likely problem.
+      Make sure your /etc/hosts file(s) looks like this:
+      <pre>
+127.0.0.1               localhost.localdomain localhost
+192.168.0.1             foobar.baz.com foobar
+      </pre>
+    </p>
+    <p>
+      Alternately, you might try editing the mothership/server/mothership.py
+      script and add your hostnames and domains to the <b>HostPrefixPairs</b>
+      list.
+    </p>
+
   </body>
 </html>
+
+
+
