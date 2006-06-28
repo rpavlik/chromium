@@ -339,6 +339,20 @@ glXChooseVisual( Display *dpy, int screen, int *attribList )
 				attrib++;
 				break;
 
+#ifdef GLX_VERSION_1_3
+			case GLX_X_VISUAL_TYPE:
+			case GLX_TRANSPARENT_TYPE_EXT:
+			case GLX_TRANSPARENT_INDEX_VALUE_EXT:
+			case GLX_TRANSPARENT_RED_VALUE_EXT:
+			case GLX_TRANSPARENT_GREEN_VALUE_EXT:
+			case GLX_TRANSPARENT_BLUE_VALUE_EXT:
+			case GLX_TRANSPARENT_ALPHA_VALUE_EXT:
+				/* ignore */
+				crWarning("glXChooseVisual: ignoring attribute 0x%x", *attrib);
+				attrib++;
+				break;
+#endif
+
 			default:
 				crWarning( "glXChooseVisual: bad attrib=0x%x", *attrib );
 				return NULL;
