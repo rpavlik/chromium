@@ -269,3 +269,4 @@ GetQueryivARB
 GetQueryObjectivARB
 GetQueryOjbectuivARB
 IsQueryARB
+GetCompressedTexImageARB
