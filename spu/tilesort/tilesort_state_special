@@ -270,3 +270,6 @@ GetQueryObjectivARB
 GetQueryOjbectuivARB
 IsQueryARB
 GetCompressedTexImageARB
+CompressedTexImage1DARB
+CompressedTexImage2DARB
+CompressedTexImage3DARB
