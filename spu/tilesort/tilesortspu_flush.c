@@ -77,13 +77,21 @@ void tilesortspuDebugOpcodes( CRPackBuffer *buffer )
  */
 void tilesortspuSendServerBufferThread( int server_index, ThreadInfo *thread )
 {
-	CRPackBuffer *buffer = &(thread->buffer[server_index]);
-	CRNetServer *netServer = &(thread->netServer[server_index]);
+	CRPackBuffer *buffer;
+	CRNetServer *netServer;
 	unsigned int len;
 	CRMessageOpcodes *hdr;
 
+	CRASSERT(server_index >= 0);
+	CRASSERT(server_index < tilesort_spu.num_servers);
+
+	buffer = &(thread->buffer[server_index]);
+	netServer = &(thread->netServer[server_index]);
+
+#if 0
 	/* buffer should not be bound at this time */
 	CRASSERT(buffer->context == NULL);
+#endif
 
 	if (crPackNumOpcodes(buffer) == 0) {
 		/* buffer is empty */
@@ -253,6 +261,7 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 	/* the pipeserver's buffer might have data in it, and that should
        go across the wire before this big packet */
 	tilesortspuSendServerBuffer( thread->state_server_index );
+	CRASSERT(thread->state_server_index >= 0);
 	crNetSend( thread->netServer[thread->state_server_index].conn, NULL, src, len );
 }
 
