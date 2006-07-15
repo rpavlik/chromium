@@ -285,6 +285,7 @@ for func_name in keys:
 	# values, because only the values from the last server are
 	# actually returned to the caller.
 	if needWriteback:
+		print '\ttilesortspuFlush(thread);'
 		print '\tcrPackReleaseBuffer(thread->packer);'
 		print '\tfor (i=0; i<(unsigned int)tilesort_spu.num_servers; i++) {'
 		print '\t\tint writeback = 1;'
