@@ -22,7 +22,7 @@ print
 
 # Print the appropriate header. 
 if mode == 'table':
-    print """
+	print """
 #include <stdio.h>
 #include "cr_string.h"
 #include "cr_spu.h"
@@ -34,53 +34,53 @@ if mode == 'table':
 void tilesortspuLoadStateTable(SPUDispatchTable *t)
 {"""
 elif mode == 'header':
-    pass
+	pass
 else:
-    raise "unknown generation mode '%s'" % mode
+	raise "unknown generation mode '%s'" % mode
 
 for func_name in keys:
-    return_type = apiutil.ReturnType(func_name)
-    chromiumProps = apiutil.ChromiumProps(func_name)
-    params = apiutil.Parameters(func_name)
-    declarationString = apiutil.MakeDeclarationString(params)
-    basicCallString = apiutil.MakeCallString(params)
+	return_type = apiutil.ReturnType(func_name)
+	chromiumProps = apiutil.ChromiumProps(func_name)
+	params = apiutil.Parameters(func_name)
+	declarationString = apiutil.MakeDeclarationString(params)
+	basicCallString = apiutil.MakeCallString(params)
 
-    # The two "special" state functions have real state implementations;
-    # they don't need generated implementations, but should still
-    # appear in headers.
-    if func_name in ['CallList', 'CallLists']:
-	if mode == 'table':
-	    print '\tt->%s = tilesortspu_State%s;' % (func_name, func_name)
-	elif mode == 'header':
-	    print 'extern %s TILESORTSPU_APIENTRY tilesortspu_State%s( %s );' % (return_type, func_name, declarationString)
-	continue
+	# The two "special" state functions have real state implementations;
+	# they don't need generated implementations, but should still
+	# appear in headers.
+	if func_name in ['CallList', 'CallLists']:
+		if mode == 'table':
+			print '\tt->%s = tilesortspu_State%s;' % (func_name, func_name)
+		elif mode == 'header':
+			print 'extern %s TILESORTSPU_APIENTRY tilesortspu_State%s( %s );' % (return_type, func_name, declarationString)
+		continue
 
 
-    # This dispatch table is used only for replaying display lists state.
-    # It can safely have NULL entries in all the non-compilable or non-state functions.
-    if not apiutil.CanCompile(func_name):
-	if mode == 'table':
-	    print '\tt->%s = NULL;' % func_name
-	elif mode == 'header':
-	    pass
-	continue
+	# This dispatch table is used only for replaying display lists state.
+	# It can safely have NULL entries in all the non-compilable or non-state functions.
+	if not apiutil.CanCompile(func_name):
+		if mode == 'table':
+			print '\tt->%s = NULL;' % func_name
+		elif mode == 'header':
+			pass
+		continue
 
-    # The only entries left are those that manage tracked state.  Everything
-    # else gets a NULL.
-    if not apiutil.SetsTrackedState(func_name):
-	if mode == 'table':
-	    print '\tt->%s = NULL;' % func_name
-	elif mode == 'header':
-	    pass
-    else:
-	if mode == 'table':
-	    print '\tt->%s = crState%s;' % (func_name, func_name)
-	elif mode == 'header':
-	    pass
+	# The only entries left are those that manage tracked state.  Everything
+	# else gets a NULL.
+	if not apiutil.SetsTrackedState(func_name):
+		if mode == 'table':
+			print '\tt->%s = NULL;' % func_name
+		elif mode == 'header':
+			pass
+	else:
+		if mode == 'table':
+			print '\tt->%s = crState%s;' % (func_name, func_name)
+		elif mode == 'header':
+			pass
 
 
 # Done with the whole file.  Print out any ending necessary.
 if mode == 'table':
-    print '}'
+	print '}'
 elif mode == 'header':
-    pass
+	pass
