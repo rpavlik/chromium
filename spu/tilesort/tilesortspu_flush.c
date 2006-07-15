@@ -260,9 +260,30 @@ void tilesortspuHuge( CROpcode opcode, void *buf )
 
 	/* the pipeserver's buffer might have data in it, and that should
        go across the wire before this big packet */
+#if 1
+	/* This seems to solve a problem found with OpenSceneGraph and compressed
+	 * textures.  If we get a huge packet outside of state differencing,
+	 * broadcast it.
+	 */
+	if (thread->state_server_index == -1) {
+		int i;
+		for (i = 0; i < tilesort_spu.num_servers; i++) {
+			thread->state_server_index = i;
+			tilesortspuSendServerBuffer(i);
+			crNetSend( thread->netServer[i].conn, NULL, src, len );
+		}
+		thread->state_server_index = -1;
+	}
+	else {
+		tilesortspuSendServerBuffer( thread->state_server_index );
+		CRASSERT(thread->state_server_index >= 0);
+		crNetSend( thread->netServer[thread->state_server_index].conn, NULL, src, len );
+	}
+#else
 	tilesortspuSendServerBuffer( thread->state_server_index );
 	CRASSERT(thread->state_server_index >= 0);
 	crNetSend( thread->netServer[thread->state_server_index].conn, NULL, src, len );
+#endif
 }
 
 static void __drawBBOX(const TileSortBucketInfo * bucket_info)
