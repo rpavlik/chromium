@@ -387,6 +387,7 @@ static void WETSPU_APIENTRY wetDestroyContext( GLint ctx )
 			crFree(c);
 			return;
 		}
+		prev = c;
 	}
 }
 
