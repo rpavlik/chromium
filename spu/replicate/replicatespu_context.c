@@ -112,9 +112,10 @@ replicatespuStartVnc(const char *dpyName)
 	/* Open the named display */
 	if (!replicate_spu.glx_display) {
 		replicate_spu.glx_display = XOpenDisplay(dpyName);
-		crWarning("Replicate SPU: Unable to open X display %s", dpyName);
 		if (!replicate_spu.glx_display) {
 			/* Try local display */
+			crWarning("Replicate SPU: Unable to open X display %s, trying :0 next",
+								dpyName);
 			replicate_spu.glx_display = XOpenDisplay(":0");
 		}
 		if (!replicate_spu.glx_display) {
