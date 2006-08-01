@@ -430,8 +430,12 @@ const GLubyte * TILESORTSPU_APIENTRY tilesortspu_GetString( GLenum pname )
 {
 	if (pname == GL_EXTENSIONS)
 	{
-		/* Query all servers for their extensions, return the intersection */
-		return tilesortspuGetExtensionsString();
+		GET_CONTEXT(ctx);
+		if (!ctx->limits.extensions) {
+			/* Query all servers for their extensions, return the intersection */
+			ctx->limits.extensions = tilesortspuGetExtensionsString();
+		}
+		return ctx->limits.extensions;
 	}
 	else if (pname == GL_VERSION) {
 		GLfloat version = tilesortspuGetVersionNumber();

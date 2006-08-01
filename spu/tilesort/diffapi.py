@@ -53,6 +53,14 @@ for func_name in keys:
 
 
 print """
+static const GLubyte *
+diffGetString(GLenum cap)
+{
+  GET_CONTEXT(ctx);
+  return ctx->limits.extensions;
+}
+
+
 void tilesortspuCreateDiffAPI( void )
 {
 	SPUDispatchTable diff;
@@ -71,7 +79,12 @@ for func_name in keys:
 		continue
 
 	if "get" in props:
-		print '\tdiff.%s = NULL;' % func_name
+		if func_name == "GetString":
+			# special case for state differencer
+			print '\tdiff.GetString = diffGetString;'
+			pass
+		else:
+			print '\tdiff.%s = NULL;' % func_name
 	elif "pixelstore" in props:
 		print '\tdiff.%s = tilesortspuDiff%s;' % (func_name, func_name)
 	else:
