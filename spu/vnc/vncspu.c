@@ -26,6 +26,18 @@
 #include "client_io.h"
 
 
+/*
+ * Move SRC region to DST region, leaving SRC empty.
+ */
+#define MOVE_REGION(DST, SRC) \
+  do { \
+    REGION_EMPTY((DST)); \
+    *(DST) = *(SRC); \
+    (SRC)->data = NULL; \
+    REGION_EMPTY((SRC)); \
+	} while (0)
+
+
 void
 PrintRegion(const char *s, const RegionPtr r)
 {
@@ -61,6 +73,24 @@ VerifyRegion(const char *s, const RegionPtr r)
 		 CRASSERT(rects[i].y1 <= rects[i].y2);
 	}
 	(void) VerifyRegion;
+}
+
+
+/**
+ * Compute a hash value for the given region.
+ */
+static GLint
+RegionHash(const RegionPtr region)
+{
+	const BoxPtr rects = REGION_RECTS(region);
+	const GLint n = REGION_NUM_RECTS(region);
+	int hash = n, i;
+
+	/* XXX improve this hash computation! */
+	for (i = 0; i < n; i++) {
+		hash += rects[i].x1 + rects[i].y1 + rects[i].x2 + rects[i].y2;
+	}
+	return hash;
 }
 
 
@@ -221,47 +251,43 @@ vncspuLockFrameBuffer(void)
 {
 	crLockMutex(&vnc_spu.fblock);
 	vnc_spu.screen_buffer_locked = GL_TRUE;
-	if (vnc_spu.double_buffer)
+	if (vnc_spu.double_buffer) {
 		crUnlockMutex(&vnc_spu.fblock);
+	}
+	else {
+		/* keep/hold lock when single-buffered */
+	}
 }
 
+
 /**
- * Called by the RFB encoder to unlock access to 0th screen_buffer.
+ * Called by the RFB encoder thread to unlock access to 0th screen_buffer.
  */
 void
 vncspuUnlockFrameBuffer(void)
 {
-	if (vnc_spu.double_buffer)
+	ScreenBuffer *sb;
+
+	if (vnc_spu.double_buffer) {
 		crLockMutex(&vnc_spu.fblock);
-	vnc_spu.screen_buffer_locked = GL_FALSE;
-	crUnlockMutex(&vnc_spu.fblock);
-}
-
-
-/**
- * The screen buffer that the main thread puts pixels into and the RFB
- * encoders grab pixels from is double-buffered to avoid a big lock around
- * a single buffer.
- * screen_buffer[0] is read by the encoders while screen_buffer[1] is written
- * by the main thread/glReadPixels.
- * This function called by main thread to swap the [0] and [1] screen_buffers.
- */
-static void
-SwapFrameBuffers(void)
-{
-	crLockMutex(&vnc_spu.fblock);
-	if (vnc_spu.double_buffer && !vnc_spu.screen_buffer_locked) {
-#if 0
-		crMemcpy(vnc_spu.screen_buffer[0]->buffer,
-						 vnc_spu.screen_buffer[1]->buffer,
-						 vnc_spu.screen_width * vnc_spu.screen_height * 4);
-#else
-		ScreenBuffer *tmp;
-		tmp = vnc_spu.screen_buffer[0];
-		vnc_spu.screen_buffer[0] = vnc_spu.screen_buffer[1];
-		vnc_spu.screen_buffer[1] = tmp;
-#endif
 	}
+	else {
+		/* lock is already held when single-buffered */
+	}
+
+	CRASSERT(vnc_spu.screen_buffer_locked);
+
+	sb = vnc_spu.screen_buffer[0];
+
+	sb->regionSent = GL_TRUE;
+
+	/*
+	if (miRegionArea(&sb->dirtyRegion) > 0)
+		crDebug("In %s non-empty dirty region", __FUNCTION__);
+	*/
+	REGION_EMPTY(&sb->dirtyRegion);
+
+	vnc_spu.screen_buffer_locked = GL_FALSE;
 	crUnlockMutex(&vnc_spu.fblock);
 }
 
@@ -275,9 +301,6 @@ InvertRegion(RegionPtr reg, int height)
 	const BoxPtr b = REGION_RECTS(reg);
 	const int n = REGION_NUM_RECTS(reg);
 	int i;
-#if 0 /* DEBUG */
-	Bool overlap;
-#endif
 	RegionRec newRegion;
 
 	miRegionInit(&newRegion, NULL, 0);
@@ -301,139 +324,174 @@ InvertRegion(RegionPtr reg, int height)
 
 	CRASSERT(miValidRegion(&newRegion));
 
-#if 0 /* DEBUG */
-	miRegionValidate(reg, &overlap);
-	CRASSERT(miValidRegion(reg));
-#endif
-
 	REGION_COPY(reg, &newRegion);
 	REGION_UNINIT(&newRegion);
 }
 
 
 /**
- * Called by crHashtableWalk() below to get union of all windows' dirty
- * regions.
+ * Update the per-window accumulated dirty region.
+ * This is used when our virtual framebuffer is double-bufferd.
+ * Basically, we have an accumulated dirty region for both buffers.
+ * When we swap, we discard the previous-accum-dirty buffer, replace it
+ * with the current-accum-dirty buffer, then reset the current-accum-dirty
+ * buffer to empty.
+ *
+ * Called by crHashtableWalk().
  */
 static void
-windowUnionCB(unsigned long key, void *windowData, void *regionData)
+WindowUpdateAccumCB(unsigned long key, void *windowData, void *regionData)
+{
+	WindowInfo *window = (WindowInfo *) windowData;
+
+	CRASSERT(miValidRegion(&window->prevAccumDirtyRegion));
+	CRASSERT(miValidRegion(&window->accumDirtyRegion));
+
+	MOVE_REGION(&window->prevAccumDirtyRegion,
+							&window->accumDirtyRegion);
+
+	CRASSERT(miValidRegion(&window->prevAccumDirtyRegion));
+}
+
+
+/**
+ * Union the window's accum-dirty and prev-accum-dirty regions with the
+ * incoming region.  Called during SwapBuffers to determine the current
+ * dirty rendering region.
+ *
+ * Called by crHashtableWalk().
+ */
+static void
+WindowDirtyUnionCB(unsigned long key, void *windowData, void *regionData)
 {
 	WindowInfo *window = (WindowInfo *) windowData;
 	RegionPtr regionUnion = (RegionPtr) regionData;
+	RegionRec accumScrn; /* accumulated region, in screen coords */
+	Bool overlap;
+
+	miRegionInit(&accumScrn, NULL, 0); /* init local var */
+
+	CRASSERT(miValidRegion(&window->accumDirtyRegion));
+	CRASSERT(miValidRegion(&window->prevAccumDirtyRegion));
+
+	/*
+	crDebug("accum area: %d   prev accum: %d",
+					miRegionArea(&window->accumDirtyRegion),
+					miRegionArea(&window->prevAccumDirtyRegion));
+	*/
+
+	/* at first, accumScrn region is in window coords */
+	REGION_UNION(&accumScrn,
+							 &window->accumDirtyRegion,
+							 &window->prevAccumDirtyRegion);
+
+	/* intersect with window bounds */
+	REGION_INTERSECT(&accumScrn,
+									 &accumScrn,
+									 &window->clipRegion);
+
+	REGION_VALIDATE(&accumScrn, &overlap);
 
 	/* change y=0=bottom to y=0=top */
-	InvertRegion(&window->accumDirtyRegion, window->height ? window->height : 1);
+	InvertRegion(&accumScrn, window->height ? window->height : 1);
 
-	if (REGION_NUM_RECTS(&window->accumDirtyRegion) == 1 &&
-			window->accumDirtyRegion.extents.x1 == 0 &&
-			window->accumDirtyRegion.extents.y1 == 0 &&
-			window->accumDirtyRegion.extents.x2 == 1 &&
-			window->accumDirtyRegion.extents.y2 == 1) {
+	if (REGION_NUM_RECTS(&accumScrn) == 1 &&
+			accumScrn.extents.x1 == 0 &&
+			accumScrn.extents.y1 == 0 &&
+			accumScrn.extents.x2 == 1 &&
+			accumScrn.extents.y2 == 1) {
 		/* empty / sentinal region */
 	}
 	else {
 		/* add window offset */
-		miTranslateRegion(&window->accumDirtyRegion, window->xPos, window->yPos);
+		miTranslateRegion(&accumScrn, window->xPos, window->yPos);
 	}
 
-	/* XXX intersect w/ window bounds here? */
-	REGION_UNION(regionUnion, regionUnion, &window->accumDirtyRegion);
-	REGION_EMPTY(&window->accumDirtyRegion);
+	/* now, accumScrn region is in screen coords */
+
+	REGION_UNION(regionUnion, regionUnion, &accumScrn);
+
+	REGION_UNINIT(&accumScrn); /* done with local var */
 }
 
 
 /**
- * Check/return list of dirty rects in our frame buffer.
+ * Get list of dirty rects in current virtual frame buffer.
  * This is the union of all Cr/GL windows.
+ * NOTE: Called from vnc server thread.
+ * \return  GL_TRUE if any dirty rects, GL_FALSE if no dirty rects
  */
 GLboolean
 vncspuGetDirtyRects(RegionPtr region)
 {
-	GLboolean retval;
-	RegionRec dirtyUnion;
+	GLboolean retVal;
 
-	crLockMutex(&vnc_spu.lock);
+	crLockMutex(&vnc_spu.fblock);
 
-	miRegionInit(&dirtyUnion, NULL, 0);
-	crHashtableWalk(vnc_spu.windowTable, windowUnionCB, &dirtyUnion);
-
-	if (REGION_NOTEMPTY(&dirtyUnion)) {
-#if 1
-		/* XXX this _should_ work, and be faster */
-		REGION_EMPTY(region);
-		*region = dirtyUnion;
-#else
-		REGION_COPY(region, &dirtyUnion);
-		REGION_EMPTY(&dirtyUnion);
-#endif
-
-		retval = GL_TRUE;
+	if (REGION_NUM_RECTS(&vnc_spu.screen_buffer[0]->dirtyRegion) > 0) {
+		REGION_COPY(region, &vnc_spu.screen_buffer[0]->dirtyRegion);
+		REGION_EMPTY(&vnc_spu.screen_buffer[0]->dirtyRegion);
+		retVal = GL_TRUE;
 	}
 	else {
-		retval = GL_FALSE;
+		retVal = GL_FALSE;
 	}
 
-	crUnlockMutex(&vnc_spu.lock);
-	return retval;
+	crUnlockMutex(&vnc_spu.fblock);
+
+	return retVal;
 }
 
 
 /**
- * Wait until there's new "dirty" rectangles (changed window/screen
- * regions) that lie inside the given region of interest.
+ * Wait until there's some new data inside the given region of interest (roi).
+ * Return the region in 'region' and return GL_TRUE.
+ * NOTE: Called from vnc server thread.
  */
 GLboolean
 vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi, int serial_no)
 {
-	GLboolean ready;
-	RegionRec clipRegion;
+	RegionRec roiRegion;
 
-  REGION_INIT(&clipRegion, roi, 1);
+  REGION_INIT(&roiRegion, roi, 1);
 
-	/* XXX this is a bit of a hack - using a condition variable instead of
-	 * a semaphore would probably be best.
-	 */
-#ifdef NETLOGGER
-	if (vnc_spu.netlogger_url) {
-		NL_info("vncspu", "spu.wait.rects", "NODE=s NUMBER=i",
-						vnc_spu.hostname, serial_no);
-	}
-#endif
-
-	do {
+	while (1) {
 		/* wait until something is rendered/changed */
 		crWaitSemaphore(&vnc_spu.dirtyRectsReady);
+
+		crLockMutex(&vnc_spu.fblock);
+
 		/* Get the new region and see if it intersects the region of interest */
-		ready = vncspuGetDirtyRects(region);
-		if (ready) {
-			REGION_INTERSECT(region, region, &clipRegion);
-			if (REGION_NUM_RECTS(region) == 0) {
-				/* the dirty region was outside the specified region of interest */
-				ready = 0;
-			}
+		REGION_INTERSECT(region,
+										 &vnc_spu.screen_buffer[0]->dirtyRegion,
+										 &roiRegion);
+
+		if (REGION_NUM_RECTS(region) > 0) {
+			vnc_spu.screen_buffer_locked = GL_TRUE;
+			REGION_EMPTY(&vnc_spu.screen_buffer[0]->dirtyRegion);
+
+			/*
+			crDebug("Wait: region area %d", miRegionArea(region));
+			*/
+
+			crUnlockMutex(&vnc_spu.fblock);
+			return GL_TRUE;
 		}
-	} while (!ready);
 
-#ifdef NETLOGGER
-	if (vnc_spu.netlogger_url) {
-		NL_info("vncspu", "spu.obtain.rects", "NODE=s NUMBER=i",
-						vnc_spu.hostname, serial_no);
+		crUnlockMutex(&vnc_spu.fblock);
 	}
-#endif
-
-	return ready;
 }
 
 
 /**
- * Read back a window region and place in the screen buffer.
+ * Read back a window rectangle, placing pixels in the screen buffer.
  * \param scrx, scry - destination position in screen coords (y=0=top)
  * \param winx, winy - source position in window coords (y=0=bottom)
  * \param width, height - size of region to copy
  * Note:  y = 0 = top of screen or window
  */
 static void
-ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
+ReadbackRect(int scrx, int scry, int winx, int winy, int width, int height)
 {
 	ScreenBuffer *sb = vnc_spu.double_buffer
 		? vnc_spu.screen_buffer[1] : vnc_spu.screen_buffer[0];
@@ -491,56 +549,103 @@ ReadbackRegion(int scrx, int scry, int winx, int winy, int width, int height)
 }
 
 
-/**
- * Compute a hash value for the given rectangle list.
- */
-static GLint
-ComputeRectListHash(int numRects, const BoxPtr rects)
-{
-	int hash = numRects, i;
 
-	/* XXX improve this hash computation! */
-	for (i = 0; i < numRects; i++) {
-		hash += rects[i].x1 + rects[i].y1 + rects[i].x2 + rects[i].y2;
+/**
+ * Called at end-of-frame to swap the ScreenBuffers, if double-buffering
+ * is enabled.
+ * Note that this has nothing to do with double-buffered OpenGL windows.
+ * Our virtual framebuffer / screenbuffer can be double buffered so that
+ * the application can write to one buffer while the VNC encoder/server
+ * thread uses the other ScreenBuffer.
+ *
+ * We can only swap buffers while the encoder thread does not have a
+ * ScreenBuffer locked.
+ *
+ * The screen buffer that the main thread puts pixels into and the RFB
+ * encoders grab pixels from is double-buffered to avoid a big lock around
+ * a single buffer.
+ * screen_buffer[0] is read by the encoders while screen_buffer[1] is written
+ * by the main thread/glReadPixels.
+ *
+ * \return GL_TRUE if we actually swapped, GL_FALSE otherwise.
+ */
+static GLboolean
+SwapScreenBuffers(void)
+{
+	GLboolean retVal = GL_FALSE;
+	ScreenBuffer *sb;
+
+	crLockMutex(&vnc_spu.fblock);
+
+	if (vnc_spu.double_buffer) {
+		if (!vnc_spu.screen_buffer_locked) {
+			/* swap [0] [1] ScreenBuffer pointers */
+			ScreenBuffer *tmp;
+			tmp = vnc_spu.screen_buffer[0];
+			vnc_spu.screen_buffer[0] = vnc_spu.screen_buffer[1];
+			vnc_spu.screen_buffer[1] = tmp;
+			retVal = GL_TRUE;
+		}
+		else {
+			/*crDebug("No swap - locked");*/
+			retVal = GL_FALSE;
+		}
 	}
-	return hash;
+	else {
+		/* Not double buffering, but return TRUE so that dirty regions get
+		 * handled properly.
+		 */
+		retVal = GL_TRUE;
+	}
+
+	/* check if the screenbuffer's dirty region was sent to client */
+	sb = vnc_spu.double_buffer
+		? vnc_spu.screen_buffer[1] : vnc_spu.screen_buffer[0];
+	if (sb->regionSent) {
+		/* for all windows, update the accumulated region info */
+		crHashtableWalk(vnc_spu.windowTable, WindowUpdateAccumCB, NULL);
+		sb->regionSent = GL_FALSE;
+	}
+
+	/* get new screen-space dirty rectangle list by walking over all windows */
+	sb = vnc_spu.screen_buffer[0];
+	REGION_EMPTY(&sb->dirtyRegion);
+	crHashtableWalk(vnc_spu.windowTable, WindowDirtyUnionCB,
+									&sb->dirtyRegion);
+
+	/* If we can't drop frames, we always have to send _something_ */
+	if (vnc_spu.frame_drop == 0 && REGION_NIL(&sb->dirtyRegion)) {
+		/* make dummy 1x1 region */
+		BoxRec b;
+		b.x1 = b.y1 = 0;
+		b.x2 = b.y2 = 1;
+		REGION_INIT(&sb->dirtyRegion, &b, 1);
+		CRASSERT(miRegionArea(&sb->dirtyRegion) > 0);
+	}
+
+	if (miRegionArea(&sb->dirtyRegion) > 0) {
+		/* Tell vnc server thread that new pixel data is available */
+#ifdef NETLOGGER_foo
+		if (vnc_spu.netlogger_url) {
+			NL_info("vncspu", "spu.signal.rects", "NUMBER=i",
+							window->frameCounter);
+		}
+#endif
+		crSignalSemaphore(&vnc_spu.dirtyRectsReady);
+	}
+
+	crUnlockMutex(&vnc_spu.fblock);
+
+	return retVal;
 }
 
 
-#if 0
-static void
-WindowCleanUp(WindowInfo *window)
-{
-	 vnc_spu.dpy, window->nativeWindow,
-}
-#endif
-
-
 /**
- * Read back the image from the OpenGL window and store in the screen buffer
- * (i.e. vnc_spu.screen_buffer) at the given x/y screen position.
- * Then, update the dirty rectangle info.
+ * Update window's width, height fields.
  */
 static void
-DoReadback(WindowInfo *window)
+GetWindowSize(WindowInfo *window)
 {
-	BoxRec wholeWindowRect;
-	int i;
-	BoxPtr clipRects;
-	int numClipRects;
-	RegionRec dirtyRegion;
-	GLint hash;
-	float ratio;
-	const float ratioThreshold = 0.8;
-
-	CRASSERT(window);
-
-#ifdef NETLOGGER
-	if (vnc_spu.netlogger_url) {
-		NL_info("vncspu", "spu.readback.begin", "NUMBER=i", window->frameCounter);
-	}
-#endif
-
 	/* get window size and position (in screen coords) */
 	if (window->nativeWindow) {
 		int size[2], pos[2];
@@ -559,23 +664,23 @@ DoReadback(WindowInfo *window)
 	else {
 		window->width = window->height = window->xPos = window->yPos = 0;
 	}
+}
 
-	/** Get window clip rects **/
+
+/**
+ * Update window's clipRegion field.
+ */
+static void
+GetWindowBounds(WindowInfo *window)
+{
+	REGION_UNINIT(&window->clipRegion);
+
 #if defined(HAVE_XCLIPLIST_EXT)
-	if (vnc_spu.haveXClipListExt) {
-		if (!window->nativeWindow) {
-			clipRects = NULL;
-			numClipRects = 0;
-		}
-		else {
-			clipRects = XGetClipList(vnc_spu.dpy, window->nativeWindow,
-															 &numClipRects);
-		}
-		if (numClipRects == 0) {
-			/* whole window is obscured */
-			CRASSERT(!clipRects);
-		}
-		/* convert to y=0=bottom */
+	if (vnc_spu.haveXClipListExt && window->nativeWindow) {
+		int numClipRects, i;
+		BoxPtr clipRects = XGetClipList(vnc_spu.dpy, window->nativeWindow,
+																		&numClipRects);
+		/* convert to y=0=bottom (OpenGL style) */
 		for (i = 0; i < numClipRects; i++) {
 			const int y1 = clipRects[i].y1;
 			const int y2 = clipRects[i].y2;
@@ -587,24 +692,54 @@ DoReadback(WindowInfo *window)
 				clipRects[i].x2, clipRects[i].y2);
 			*/
 		}
+		miBoxesToRegion(&window->clipRegion, numClipRects, clipRects);
+		XFree(clipRects);
 	}
 	else
 #endif /* HAVE_XCLIPLIST_EXT */
 	{
 		/* use whole window */
-		wholeWindowRect.x1 = 0;
-		wholeWindowRect.y1 = 0;
-		wholeWindowRect.x2 = window->width;
-		wholeWindowRect.y2 = window->height;
-		clipRects = &wholeWindowRect;
-		numClipRects = 1;
+		BoxRec windowRect;
+		windowRect.x1 = 0;
+		windowRect.y1 = 0;
+		windowRect.x2 = window->width;
+		windowRect.y2 = window->height;
+		miRegionInit(&window->clipRegion, &windowRect, 1);
 	}
+}
 
-	/* check for clipping change */
-	hash = ComputeRectListHash(numClipRects, clipRects);
+
+
+/**
+ * Read back the image from the OpenGL window and store in the screen buffer
+ * (i.e. vnc_spu.screen_buffer) at the given x/y screen position.
+ * Then, update the dirty rectangle info.
+ */
+static void
+DoReadback(WindowInfo *window)
+{
+	int i;
+	RegionRec dirtyRegion;
+	GLint hash;
+	float ratio;
+	const float ratioThreshold = 0.8;
+	GLboolean swap;
+
+	CRASSERT(window);
+
+	miRegionInit(&dirtyRegion, NULL, 0); /* init this local var */
+
+#ifdef NETLOGGER
+	if (vnc_spu.netlogger_url) {
+		NL_info("vncspu", "spu.readback.begin", "NUMBER=i", window->frameCounter);
+	}
+#endif
+
+	GetWindowSize(window);
+	GetWindowBounds(window);
+	hash = RegionHash(&window->clipRegion);
 	if (hash != window->clippingHash) {
 		/* clipping has changed */
-		crDebug("Clipping change");
 		window->clippingHash = hash;
 		window->newSize = 3;
 	}
@@ -615,32 +750,46 @@ DoReadback(WindowInfo *window)
 	 ** (for region rects: y=0=bottom)
 	 **/
 	if (vnc_spu.use_bounding_boxes) {
-		/* use dirty rects / regions */
+		/* use the window's curr/prev dirty regions */
 
-		if ((window->newSize || window->isClear) && window->width && window->height) {
+		if ((window->newSize || window->isClear)
+				&& window->width && window->height) {
 			/* dirty region is whole window */
-			BoxRec initRec;
-			initRec.x1 = 0;
-			initRec.y1 = 0;
-			initRec.x2 = window->width;
-			initRec.y2 = window->height;
-			/* curr region will replace prev region at end of frame */
-			REGION_UNINIT(&window->currDirtyRegion);
-			REGION_UNINIT(&window->prevDirtyRegion);
-			REGION_INIT(&window->prevDirtyRegion, &initRec, 1);
-			REGION_INIT(&dirtyRegion, &initRec, 1);
+			BoxRec windowBox;
+			windowBox.x1 = 0;
+			windowBox.y1 = 0;
+			windowBox.x2 = window->width;
+			windowBox.y2 = window->height;
+			/* discard accum dirty region */
+			REGION_EMPTY(&window->accumDirtyRegion);
+			/* discard prev dirty region */
+			REGION_EMPTY(&window->prevDirtyRegion);
+			/* set curr dirty region to whole window */
+			REGION_EMPTY(&window->currDirtyRegion);
+			REGION_INIT(&window->currDirtyRegion, &windowBox, 1);
+			/* decrement counter */
 			if (window->newSize > 0)
 				window->newSize--;
 		}
-		else {
-			/* The dirty region is the union of the previous frame's bounding
-			 * boxes and this frame's bounding boxes.
-			 */
-			miRegionInit(&dirtyRegion, NULL, 0);
-			REGION_UNION(&dirtyRegion,
-									 &window->currDirtyRegion, &window->prevDirtyRegion);
-		}
 
+		/* The dirty region is the union of the previous frame's bounding
+		 * boxes and this frame's bounding boxes.
+		 */
+		REGION_UNION(&dirtyRegion,
+								 &window->currDirtyRegion, &window->prevDirtyRegion);
+
+		/* Add the dirty region to the accumulated dirty region */
+		REGION_UNION(&window->accumDirtyRegion,
+								 &window->accumDirtyRegion,
+								 &dirtyRegion);
+		/*
+		crDebug("new accum dirty area: %d", miRegionArea(&window->accumDirtyRegion));
+		*/
+
+		/* add previous ScreenBuffer's dirty region */
+		REGION_UNION(&dirtyRegion,
+								 &dirtyRegion,
+								 &window->prevAccumDirtyRegion);
 
 		/* OPTIMIZATION:  Rather than send a bunch of little rects, see if we
 		 * can just send one big rect containing the little rects.
@@ -660,7 +809,7 @@ DoReadback(WindowInfo *window)
 			*/
 			if (ratio >= ratioThreshold) {
 				BoxRec extents = *REGION_EXTENTS(&dirtyRegion);
-				REGION_UNINIT(&dirtyRegion);
+				REGION_EMPTY(&dirtyRegion);
 				miRegionInit(&dirtyRegion, &extents, 1);
 				/*
 				crDebug("Optimized region %d,%d .. %d, %d (%.2f ratio)",
@@ -670,26 +819,13 @@ DoReadback(WindowInfo *window)
 		}
 
 		/* window clipping */
-		if (clipRects != &wholeWindowRect) {
-			/* intersect dirty region with window clipping region */
-			if (numClipRects > 0) {
-				RegionRec clipRegion;
-				miRegionInit(&clipRegion, NULL, 0);
-				miBoxesToRegion(&clipRegion, numClipRects, clipRects);
-				REGION_INTERSECT(&dirtyRegion, &dirtyRegion, &clipRegion);
-				REGION_UNINIT(&clipRegion);
-			}
-			else {
-				/* dirty region is empty */
-				REGION_EMPTY(&dirtyRegion);
-			}
-		}
+		REGION_INTERSECT(&dirtyRegion, &dirtyRegion, &window->clipRegion);
 	}
 	else {
-		/* no object bounding boxes, just use window cliprect regions */
-		miRegionInit(&dirtyRegion, NULL, 0);
-		if (numClipRects > 0)
-			miBoxesToRegion(&dirtyRegion, numClipRects, clipRects);
+		/* no object bounding boxes, so dirty region = window cliprect region */
+		REGION_COPY(&dirtyRegion, &window->clipRegion);
+		/* the window's accumulated dirty region is the clip region */
+		REGION_COPY(&window->accumDirtyRegion, &window->clipRegion);
 	}
 
 	/**
@@ -723,11 +859,9 @@ DoReadback(WindowInfo *window)
 				/* dest in scrn coords, y=0=top */
 				int destx = window->xPos + rects[i].x1;
 				int desty = window->yPos + (window->height - rects[i].y2);
-				ReadbackRegion(destx, desty, srcx, srcy, width, height);
+				ReadbackRect(destx, desty, srcx, srcy, width, height);
 			}
 		}
-
-		SwapFrameBuffers();
 
 #ifdef NETLOGGER
 		if (vnc_spu.netlogger_url) {
@@ -736,54 +870,15 @@ DoReadback(WindowInfo *window)
 #endif
 	}
 
-	/* Having a nil dirty region is a special case */
-	if (miRegionArea(&dirtyRegion) == 0) {
-		if (window->isClear && window->width > 0 && window->height > 0) {
-			/* send whole-window (which is blank) */
-			BoxRec box;
-			box.x1 = 0;
-			box.y1 = 0;
-			box.x2 = window->width;
-			box.y2 = window->height;
-			REGION_INIT(&dirtyRegion, &box, 1);
-			CRASSERT(window->width > 0);
-			CRASSERT(window->height > 0);
-		}
-		else {
-			/* Add empty/dummy rect so we have _something_ to send.
-			 * This is needed for framesync.  We always need to send something
-			 * in response to an RFB update request in that case.
-			 */
-			BoxRec mtBox = {0, 0, 1, 1};  /* XXX not really empty! */
-			REGION_INIT(&dirtyRegion, &mtBox, 1);
-		}
-	}
-
-
-	/*
-	 * Update accumulated window dirty region.  This keeps track of all dirty
-	 * regions found between RFB update requests from the client.
-	 *
-	 * window->accumDirtyRegion is accessed by both threads, so we need locking.
-	 */
-	crLockMutex(&vnc_spu.lock);
-	CRASSERT(miValidRegion(&window->accumDirtyRegion));
-	REGION_UNION(&window->accumDirtyRegion,
-							 &window->accumDirtyRegion, &dirtyRegion);
-	CRASSERT(miValidRegion(&window->accumDirtyRegion));
 	vnc_spu.frameCounter++;
-	crUnlockMutex(&vnc_spu.lock);
-#ifdef NETLOGGER
-	if (vnc_spu.netlogger_url) {
-		NL_info("vncspu", "spu.signal.rects", "NUMBER=i", window->frameCounter);
-	}
-#endif
-	/* Tell vnc server thread that an update is ready */
-	crSignalSemaphore(&vnc_spu.dirtyRectsReady);
 
-	/* free dynamic allocations */
-	if (clipRects && clipRects != &wholeWindowRect) {
-		XFree(clipRects);
+	swap = SwapScreenBuffers();
+	if (swap && vnc_spu.use_bounding_boxes) {
+		/* If we really did swap, shift curr dirty region to prev dirty region.
+		 * Afterward, currDirtyRegion will be empty.
+		 */
+		MOVE_REGION(&window->prevDirtyRegion,
+								&window->currDirtyRegion);
 	}
 
 
@@ -841,7 +936,7 @@ LookupWindow(GLint win, GLint nativeWindow)
 
 
 static ScreenBuffer *
-alloc_screenbuffer(void)
+AllocScreenbuffer(void)
 {
 	ScreenBuffer *s = crCalloc(sizeof(ScreenBuffer));
 	if (s) {
@@ -874,12 +969,12 @@ vncspuUpdateFramebuffer(WindowInfo *window)
 
 	/* check/alloc the screen buffer(s) now */
 	if (!vnc_spu.screen_buffer[0]) {
-		vnc_spu.screen_buffer[0] = alloc_screenbuffer();
+		vnc_spu.screen_buffer[0] = AllocScreenbuffer();
 		if (!vnc_spu.screen_buffer[0])
 			return;
 	}
 	if (!vnc_spu.screen_buffer[1]) {
-		vnc_spu.screen_buffer[1] = alloc_screenbuffer();
+		vnc_spu.screen_buffer[1] = AllocScreenbuffer();
 		if (!vnc_spu.screen_buffer[1])
 			return;
 	}
@@ -892,16 +987,6 @@ vncspuUpdateFramebuffer(WindowInfo *window)
 	DoReadback(window);
 
 	vnc_spu.super.ReadBuffer(readBuf);
-
-	if (vnc_spu.use_bounding_boxes) {
-		/* free prevDirtyRegion */
-		REGION_EMPTY(&window->prevDirtyRegion);
-		/* move currDirtyRegion to prevDirtyRegion */
-		window->prevDirtyRegion = window->currDirtyRegion;
-		/* reset curr dirty region */
-		window->currDirtyRegion.data = NULL;
-		REGION_EMPTY(&window->currDirtyRegion);
-	}
 }
 
 

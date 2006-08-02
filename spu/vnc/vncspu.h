@@ -51,12 +51,22 @@ typedef struct {
 	GLint id;             /* my id */
 	GLint nativeWindow;
 	GLuint frameCounter;
+
+	/* Current and previous frame (in terms of window-SwapBuffers) dirty regions.
+	 */
 	RegionRec currDirtyRegion;
 	RegionRec prevDirtyRegion;
+
+	/* Current and previous (in terms of ScreenBuffer swapping) dirty regions.
+	 */
 	RegionRec accumDirtyRegion;
+	RegionRec prevAccumDirtyRegion;
+
 	GLint width, height;
 	GLint xPos, yPos;
+	RegionRec clipRegion;
 	GLint clippingHash;
+
 	GLboolean isClear;  /* indicates window has only been cleared, no drawing */
 	GLuint newSize;
 	double prevSwapTime;
@@ -71,6 +81,7 @@ typedef struct {
 	GLubyte *buffer;  /* screen_width * screen_height * 4 */
 
 	RegionRec dirtyRegion;
+	GLboolean regionSent;
 } ScreenBuffer;
 
 
@@ -109,6 +120,7 @@ typedef struct {
 	CRcondition cond;
 	CRsemaphore updateRequested;
 	CRsemaphore dirtyRectsReady;
+	CRcondition newRegionReady;
 
 	CRTimer *timer;
 

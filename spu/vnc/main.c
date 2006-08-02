@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: main.c,v 1.6 2006-04-11 21:49:33 brianp Exp $
+ * $Id: main.c,v 1.7 2006-08-02 22:56:43 brianp Exp $
  * Main module
  */
 
@@ -70,7 +70,7 @@ int opt_write_coalescing = 0;
  */
 
 RFB_SCREEN_INFO g_screen_info;
-CARD32 *g_framebuffer;
+static CARD32 *g_framebuffer;
 CARD16 g_fb_width, g_fb_height;
 
 /*

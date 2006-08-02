@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.23 2006-05-26 21:28:29 brianp Exp $
+ * $Id: client_io.c,v 1.24 2006-08-02 22:56:42 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -551,6 +551,69 @@ static void wf_client_update_finished(void)
   }
 }
 
+
+
+/*
+extern CARD32 *
+GetFrameBuffer(CARD16 *w, CARD16 *h);
+*/
+
+
+static void save_ppm(const char *fname)
+{
+   const GLubyte *buffer;
+   CARD16 width, height;
+   const int binary = 0;
+   FILE *f = fopen( fname, "w" );
+
+   vnc_spu.screen_buffer_locked = 1;
+   buffer = (GLubyte *) GetFrameBuffer(&width, &height);
+   vnc_spu.screen_buffer_locked = 0;
+
+   if (f) {
+      int i, x, y;
+      const GLubyte *ptr = buffer;
+      if (binary) {
+         fprintf(f,"P6\n");
+         fprintf(f,"# ppm-file created by osdemo.c\n");
+         fprintf(f,"%i %i\n", width,height);
+         fprintf(f,"255\n");
+         fclose(f);
+         f = fopen( fname, "ab" );  /* reopen in binary append mode */
+         for (y=0; y<height; y++) {
+            for (x=0; x<width; x++) {
+               i = (y*width + x) * 4;
+               fputc(ptr[i+2], f);   /* write red */
+               fputc(ptr[i+1], f); /* write green */
+               fputc(ptr[i+0], f); /* write blue */
+            }
+         }
+      }
+      else {
+         /*ASCII*/
+         int counter = 0;
+         fprintf(f,"P3\n");
+         fprintf(f,"# ascii ppm file created by osdemo.c\n");
+         fprintf(f,"%i %i\n", width, height);
+         fprintf(f,"255\n");
+         for (y=height-1; y>=0; y--) {
+            for (x=0; x<width; x++) {
+               i = (y*width + x) * 4;
+               fprintf(f, " %3d %3d %3d", ptr[i+2], ptr[i+1], ptr[i+0]);
+               counter++;
+               if (counter % 5 == 0)
+                  fprintf(f, "\n");
+            }
+         }
+      }
+      fclose(f);
+   }
+
+}
+
+
+
+
 /*
  * Called when keyboard event is received from client.
  */
@@ -569,6 +632,7 @@ static void rf_client_keyevent(void)
 #ifdef NETLOGGER
       NL_info("vncspu", "spu.marker", "NUMBER=i", counter);
 #endif
+      save_ppm("spuimage.ppm");
     }
   }
 
@@ -831,9 +895,14 @@ static void send_update(void)
 
   /*crDebug("Enter send_update");*/
 
-  /* XXX Review locking!!!*/
-  if (!vnc_spu.double_buffer)
-    crLockMutex(&vnc_spu.lock);
+#ifdef NETLOGGER
+  if (vnc_spu.netlogger_url) {
+    NL_info("vncspu", "spu.wait.fbmutex2",
+            "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
+  }
+#endif
+  vncspuLockFrameBuffer(); /* encoder is now using buffer */
+
 
   /* Process framebuffer size change. */
   if (cl->newfbsize_pending) {
@@ -856,8 +925,7 @@ static void send_update(void)
        pseudo-rectangle, pixel data will be sent in the next update. */
     if (cl->enable_newfbsize) {
       send_newfbsize();
-      if (!vnc_spu.double_buffer)
-        crUnlockMutex(&vnc_spu.lock);
+      vncspuUnlockFrameBuffer();
       return;
     }
   } else {
@@ -894,8 +962,7 @@ static void send_update(void)
   num_copy_rects = REGION_NUM_RECTS(&cl->copy_region);
   num_all_rects = num_pending_rects + num_copy_rects;
   if (num_all_rects == 0) {
-     if (!vnc_spu.double_buffer)
-       crUnlockMutex(&vnc_spu.lock);
+    vncspuUnlockFrameBuffer();
     return;
   }
 
@@ -948,13 +1015,6 @@ static void send_update(void)
     /* Lock around fb access so other thread doesn't change contents while
      * we're encoding.
      */
-#ifdef NETLOGGER
-    if (vnc_spu.netlogger_url) {
-      NL_info("vncspu", "spu.wait.fbmutex2",
-              "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
-    }
-#endif
-    vncspuLockFrameBuffer(); /* encoder using buffer */
 #ifdef NETLOGGER
     if (vnc_spu.netlogger_url) {
       NL_info("vncspu", "spu.encode.begin",
@@ -1010,7 +1070,6 @@ static void send_update(void)
       aio_write_nocopy(NULL, block);
     }
 
-    vncspuUnlockFrameBuffer(); /* encoder done with buffer */
   } /* if num_pending_rects */
 
 
@@ -1037,8 +1096,7 @@ static void send_update(void)
   cl->update_in_progress = 1;
   cl->update_requested = 0;
 
-  if (!vnc_spu.double_buffer)
-    crUnlockMutex(&vnc_spu.lock);
+  vncspuUnlockFrameBuffer(); /* encoder done with buffer */
 
   /*crDebug("Leave send_update");*/
 
