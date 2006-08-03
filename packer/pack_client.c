@@ -182,7 +182,6 @@ crPackExpandArrayElement(GLint index, CRClientState *c)
 	if (c->array.v.enabled)
 	{
 		p = c->array.v.p + (index * c->array.v.stride);
-
 		switch (c->array.v.type)
 		{
 			case GL_SHORT:
@@ -269,54 +268,62 @@ crPackDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indice
 }
 
 
-/*
+/**
  * Expand glDrawElements into crPackBegin/Vertex/End, etc commands.
+ * Note: if mode==999, don't call glBegin/glEnd.
  */
 void
-crPackExpandDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices, CRClientState *c)
+crPackExpandDrawElements(GLenum mode, GLsizei count, GLenum type,
+												 const GLvoid *indices, CRClientState *c)
 {
 	int i;
-	GLubyte *p = (GLubyte *)indices;
 
 	if (count < 0)
 	{
-		__PackError(__LINE__, __FILE__, GL_INVALID_VALUE, "crPackDrawElements(negative count)");
+		__PackError(__LINE__, __FILE__, GL_INVALID_VALUE,
+								"crPackDrawElements(negative count)");
 		return;
 	}
 
-	if (mode > GL_POLYGON)
+	if (mode > GL_POLYGON && mode != 999)
 	{
-		__PackError(__LINE__, __FILE__, GL_INVALID_ENUM, "crPackDrawElements(bad mode)");
+		__PackError(__LINE__, __FILE__, GL_INVALID_ENUM,
+								"crPackDrawElements(bad mode)");
 		return;
 	}
 
-	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT && type != GL_UNSIGNED_INT)
+	if (type != GL_UNSIGNED_BYTE &&
+			type != GL_UNSIGNED_SHORT &&
+			type != GL_UNSIGNED_INT)
 	{
-		__PackError(__LINE__, __FILE__, GL_INVALID_ENUM, "crPackDrawElements(bad type)");
+		__PackError(__LINE__, __FILE__, GL_INVALID_ENUM,
+								"crPackDrawElements(bad type)");
 		return;
 	}
 
-	crPackBegin(mode);
-	switch (type)
-	{
+	if (mode != 999)
+		crPackBegin(mode);
+
+	switch (type)	{
 	case GL_UNSIGNED_BYTE:
-		for (i=0; i<count; i++)
 		{
-			crPackExpandArrayElement((GLint) *p++, c);
+			const GLubyte *p = (const GLubyte *) indices;
+			for (i = 0; i < count; i++)
+				crPackExpandArrayElement(p[i], c);
 		}
 		break;
 	case GL_UNSIGNED_SHORT:
-		for (i=0; i<count; i++)
 		{
-			crPackExpandArrayElement((GLint) * (GLushort *) p, c);
-			p += sizeof(GLushort);
+			const GLushort *p = (const GLushort *) indices;
+			for (i=0; i<count; i++)
+				crPackExpandArrayElement(p[i], c);
 		}
 		break;
 	case GL_UNSIGNED_INT:
-		for (i=0; i<count; i++)
 		{
-			crPackExpandArrayElement((GLint) * (GLuint *) p, c);
-			p += sizeof(GLuint);
+			const GLushort *p = (const GLushort *) indices;
+			for (i = 0; i < count; i++)
+				crPackExpandArrayElement(p[i], c);
 		}
 		break;
 	default:
@@ -324,8 +331,50 @@ crPackExpandDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *
 								 "crPackDrawElements(bad type)");
 		break;
 	}
-	crPackEnd();
+
+	if (mode != 999)
+		crPackEnd();
 }
+
+
+/**
+ * Convert a glDrawElements command into a sequence of ArrayElement() calls.
+ * NOTE: Caller must issue the glBegin/glEnd.
+ */
+void
+crPackUnrollDrawElements(GLsizei count, GLenum type,
+												 const GLvoid *indices)
+{
+	int i;
+
+	switch (type) {
+	case GL_UNSIGNED_BYTE:
+		{
+			const GLubyte *p = (const GLubyte *) indices;
+			for (i = 0; i < count; i++)
+				crPackArrayElement(p[i]);
+		}
+		break;
+	case GL_UNSIGNED_SHORT:
+		{
+			const GLushort *p = (const GLushort *) indices;
+			for (i = 0; i < count; i++) 
+				crPackArrayElement(p[i]);
+		}
+		break;
+	case GL_UNSIGNED_INT:
+		{
+			const GLuint *p = (const GLuint *) indices;
+			for (i = 0; i < count; i++) 
+				crPackArrayElement(p[i]);
+		}
+		break;
+	default:
+		__PackError(__LINE__, __FILE__, GL_INVALID_ENUM,
+								 "crPackUnrollDrawElements(bad type)");
+	}
+}
+
 
 
 /*
@@ -334,7 +383,8 @@ crPackExpandDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *
  * vertex buffer) and not the actual indices.
  */
 void PACK_APIENTRY
-crPackDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
+crPackDrawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count,
+												GLenum type, const GLvoid *indices)
 {
 	unsigned char *data_ptr;
 	int packet_length = sizeof(int) + sizeof(mode) + sizeof(start)

@@ -114,6 +114,9 @@ void crNetworkPointerWrite( CRNetworkPointer *, void * );
 void crPackExpandDrawArrays(GLenum mode, GLint first, GLsizei count, CRClientState *c);
 void crPackExpandDrawArraysSWAP(GLenum mode, GLint first, GLsizei count, CRClientState *c);
 
+void crPackUnrollDrawElements(GLsizei count, GLenum type, const GLvoid *indices);
+void crPackUnrollDrawElementsSWAP(GLsizei count, GLenum type, const GLvoid *indices);
+
 void crPackExpandDrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices, CRClientState *c);
 void crPackExpandDrawElementsSWAP(GLenum mode, GLsizei count, GLenum type, const GLvoid *indices, CRClientState *c);
 

@@ -159,6 +159,7 @@ functions = [
 	'crPackVertexAttribs4ubvNV',
 	'crPackExpandDrawArrays',
 	'crPackExpandDrawElements',
+	'crPackUnrollDrawElements',
 	'crPackExpandDrawRangeElements',
 	'crPackExpandArrayElement',
 	'crPackExpandMultiDrawArraysEXT',
