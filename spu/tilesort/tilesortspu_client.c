@@ -10,7 +10,9 @@
 #include "tilesortspu.h"
 #include "tilesortspu_gen.h"
 
-void TILESORTSPU_APIENTRY tilesortspu_ArrayElement( GLint index )
+
+void TILESORTSPU_APIENTRY
+tilesortspu_ArrayElement( GLint index )
 {
 	GET_THREAD(thread);
 	CRClientState *clientState = &(thread->currentContext->State->client);
@@ -29,7 +31,9 @@ void TILESORTSPU_APIENTRY tilesortspu_ArrayElement( GLint index )
 	}
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_DrawArrays( GLenum mode, GLint first, GLsizei count )
+
+void TILESORTSPU_APIENTRY
+tilesortspu_DrawArrays( GLenum mode, GLint first, GLsizei count )
 {
 	GET_CONTEXT(ctx);
 	CRClientState *clientState = &(thread->currentContext->State->client);
@@ -86,115 +90,84 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawArrays( GLenum mode, GLint first, GLsi
 	}
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_DrawElements( GLenum mode, GLsizei count, GLenum type, const GLvoid *indices)
+
+void TILESORTSPU_APIENTRY
+tilesortspu_DrawElements(GLenum mode, GLsizei count, GLenum type,
+												 const GLvoid *indices)
 {
 	GET_CONTEXT(ctx);
 	CRClientState *clientState = &(thread->currentContext->State->client);
 	GLenum dlMode = thread->currentContext->displayListMode;
+
 	if (dlMode != GL_FALSE && tilesort_spu.lazySendDLists) {
 		crDLMCompileDrawElements(mode, count, type, indices, clientState);
 		return;
 	}
 
-	if (count < 0)
-	{
-		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE, "tilesortspu_DrawElements(count=%d)", count);
+	if (count < 0) {
+		crStateError( __LINE__, __FILE__, GL_INVALID_VALUE,
+									"tilesortspu_DrawElements(count=%d)", count);
 		return;
 	}
 
-	if (mode > GL_POLYGON)
-	{
-		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "tilesortspu_DrawElements(mode=%d)", mode);
+	if (mode > GL_POLYGON) {
+		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM,
+									"tilesortspu_DrawElements(mode=%d)", mode);
 		return;
 	}
 
-	if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_SHORT && type != GL_UNSIGNED_INT)
-	{
-		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "tilesortspu_DrawElements(type=%d)", type);
+	if (type != GL_UNSIGNED_BYTE &&
+			type != GL_UNSIGNED_SHORT &&
+			type != GL_UNSIGNED_INT) {
+		crStateError( __LINE__, __FILE__, GL_INVALID_ENUM,
+									"tilesortspu_DrawElements(type=%d)", type);
 		return;
 	}
 
-	if (ctx->current.inBeginEnd)
-	{
-		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION,  "tilesortspu_DrawElements called in a Begin/End" );
+	if (ctx->current.inBeginEnd) {
+		crStateError( __LINE__, __FILE__, GL_INVALID_OPERATION,
+									"tilesortspu_DrawElements called in a Begin/End" );
 		return;
 	}
 
-	if (crStateUseServerArrays()) {
+	if (crStateUseServerArrays() &&
+			crStateUseServerArrayElements()) {
+		/* Both array data and element indices are on server */
 		/* This is like a glBegin, have to flush all preceeding state changes */
 		tilesortspuFlush( thread );
-		crPackDrawElements( mode, count, type, indices );
+		if (tilesort_spu.swap)
+			crPackDrawElementsSWAP( mode, count, type, indices );
+		else
+			crPackDrawElements( mode, count, type, indices );
 		/* then broadcast the drawing command */
 		tilesortspuBroadcastGeom(1);
 	}
+	else if (crStateUseServerArrays()) {
+		/* array vertex data is on server, but element indices are local */
+		tilesort_spu.self.Begin(mode);
+		if (tilesort_spu.swap)
+			crPackUnrollDrawElementsSWAP(count, type, indices);
+		else
+			crPackUnrollDrawElements(count, type, indices);
+		tilesort_spu.self.End();
+	}
 	else {
 		/* client-side arrays, expand into simpler commands */
-		GLubyte *p = (GLubyte *)indices;
-		int i;
-		tilesort_spu.self.Begin( mode );
-		switch (type) 
-		{
-		case GL_UNSIGNED_BYTE:
-			if (tilesort_spu.swap)
-			{
-				for (i=0; i<count; i++)
-				{
-					crPackExpandArrayElementSWAP((GLint) *p++, clientState);
-				}
-			}
-			else
-			{
-				for (i=0; i<count; i++)
-				{
-					crPackExpandArrayElement((GLint) *p++, clientState);
-				}
-			}
-			break;
-		case GL_UNSIGNED_SHORT:
-			if (tilesort_spu.swap)
-			{
-				for (i=0; i<count; i++) 
-				{
-					crPackExpandArrayElementSWAP((GLint) * (GLushort *) p, clientState);
-					p+=sizeof (GLushort);
-				}
-			}
-			else
-			{
-				for (i=0; i<count; i++) 
-				{
-					crPackExpandArrayElement((GLint) * (GLushort *) p, clientState);
-					p+=sizeof (GLushort);
-				}
-			}
-			break;
-		case GL_UNSIGNED_INT:
-			if (tilesort_spu.swap)
-			{
-				for (i=0; i<count; i++) 
-				{
-					crPackExpandArrayElementSWAP((GLint) * (GLuint *) p, clientState);
-					p+=sizeof (GLuint);
-				}
-			}
-			else
-			{
-				for (i=0; i<count; i++) 
-				{
-					crPackExpandArrayElement((GLint) * (GLuint *) p, clientState);
-					p+=sizeof (GLuint);
-				}
-			}
-			break;
-		default:
-			crStateError( __LINE__, __FILE__, GL_INVALID_ENUM, "tilesortspu_DrawElements(type=0x%s)", type);
-			return;
-		}
+		tilesort_spu.self.Begin(mode);
+		/* Note: 999 indicates that glBegin/End should not be called */
+		if (tilesort_spu.swap)
+			crPackExpandDrawElementsSWAP(999, count, type, indices, clientState);
+		else
+			crPackExpandDrawElements(999, count, type, indices, clientState);
 		tilesort_spu.self.End();
 	}
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
+
+void TILESORTSPU_APIENTRY
+tilesortspu_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
+															GLsizei count, GLenum type,
+															const GLvoid *indices)
 {
 	GET_CONTEXT(ctx);
 	CRClientState *clientState = &(thread->currentContext->State->client);
@@ -302,8 +275,11 @@ void TILESORTSPU_APIENTRY tilesortspu_DrawRangeElements( GLenum mode, GLuint sta
 	}
 }
 
+
 #ifdef CR_EXT_multi_draw_arrays
-void TILESORTSPU_APIENTRY tilesortspu_MultiDrawArraysEXT( GLenum mode, GLint *first, GLsizei *count, GLsizei primcount )
+void TILESORTSPU_APIENTRY
+tilesortspu_MultiDrawArraysEXT(GLenum mode, GLint *first, GLsizei *count,
+															 GLsizei primcount)
 {
 	GET_THREAD(thread);
 	CRClientState *clientState = &(thread->currentContext->State->client);
@@ -322,7 +298,11 @@ void TILESORTSPU_APIENTRY tilesortspu_MultiDrawArraysEXT( GLenum mode, GLint *fi
 	}
 }
 
-void TILESORTSPU_APIENTRY tilesortspu_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type, const GLvoid **indices, GLsizei primcount )
+
+void TILESORTSPU_APIENTRY
+tilesortspu_MultiDrawElementsEXT(GLenum mode, const GLsizei *count,
+																 GLenum type, const GLvoid **indices,
+																 GLsizei primcount )
 {
 	GET_THREAD(thread);
 	CRClientState *clientState = &(thread->currentContext->State->client);
