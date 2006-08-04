@@ -113,6 +113,7 @@ void crStateClientInit(CRClientState *c);
 void crStateClientDestroy(CRClientState *c);
 
 GLboolean crStateUseServerArrays(void);
+GLboolean crStateUseServerArrayElements(void);
 
 #ifdef __cplusplus
 }

@@ -1362,6 +1362,28 @@ GLboolean crStateUseServerArrays(void)
 }
 
 
+/**
+ * Determine if there's a server-side array element buffer.
+ * Called by glDrawElements() in packing SPUs to determine if glDrawElements
+ * should be evaluated (unrolled) locally or if glDrawElements should be
+ * packed and sent to the server.
+ */
+GLboolean
+crStateUseServerArrayElements(void)
+{
+#ifdef CR_ARB_vertex_buffer_object
+	CRContext *g = GetCurrentContext();
+	if (g->bufferobject.elementsBuffer &&
+			g->bufferobject.elementsBuffer->name > 0)
+		return GL_TRUE;
+	else
+		return GL_FALSE;
+#else
+	return GL_FALSE;
+#endif
+}
+
+
 void
 crStateClientDiff(CRClientBits *cb, CRbitvalue *bitID,
 									CRContext *fromCtx, CRContext *toCtx)
