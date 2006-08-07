@@ -321,7 +321,7 @@ crPackExpandDrawElements(GLenum mode, GLsizei count, GLenum type,
 		break;
 	case GL_UNSIGNED_INT:
 		{
-			const GLushort *p = (const GLushort *) indices;
+			const GLuint *p = (const GLuint *) indices;
 			for (i = 0; i < count; i++)
 				crPackExpandArrayElement(p[i], c);
 		}
