@@ -39,7 +39,7 @@
 static XVisualInfo *
 chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
 {
-  while (1) {
+	while (1) {
 		XVisualInfo *vis = crChooseVisual(&tilesort_spu.ws, dpy, screen,
 																			GL_FALSE, visAttribs);
 		if (vis)
@@ -55,7 +55,7 @@ chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
 			visAttribs &= ~CR_ALPHA_BIT;
 		else
 			return NULL;
-  }
+	}
 }
 
 
@@ -108,10 +108,10 @@ tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 #else
 		if (!DMXGetScreenInformation(winInfo->dpy, i, dmxScreenInfo + i)) {
 #endif
-		  crDebug("Could not get screen information for screen %d\n", i);
-		  crFree(dmxScreenInfo);
-		  crFree(dmxWinInfo);
-		  return;
+			crDebug("Could not get screen information for screen %d\n", i);
+			crFree(dmxScreenInfo);
+			crFree(dmxWinInfo);
+			return;
 		}
 	}
 		
@@ -519,7 +519,8 @@ WindowInfo *tilesortspuGetWindowInfo(GLint window, GLint xwindowID)
  * Free a WindowInfo object.  The caller is responsible for removing
  * the object from the hash table if needed.
  */
-void tilesortspuFreeWindowInfo(WindowInfo *winInfo)
+void
+tilesortspuFreeWindowInfo(WindowInfo *winInfo)
 {
 #ifdef USE_DMX
 	int i;
@@ -551,7 +552,8 @@ void tilesortspuFreeWindowInfo(WindowInfo *winInfo)
  * We'll try to find a new tiling for the new window size either by
  * contacting the mothership, DMX, etc.
  */
-void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint newWidth, GLint newHeight)
+void TILESORTSPU_APIENTRY
+tilesortspu_WindowSize(GLint window, GLint newWidth, GLint newHeight)
 {
 	WindowInfo *winInfo = tilesortspuGetWindowInfo(window, 0);
 
@@ -615,7 +617,8 @@ void TILESORTSPU_APIENTRY tilesortspu_WindowSize(GLint window, GLint newWidth, G
  * API function: set the position of the named window.
  * If running DMX, we need to get a new tiling too.
  */
-void TILESORTSPU_APIENTRY tilesortspu_WindowPosition(GLint window, GLint x, GLint y)
+void TILESORTSPU_APIENTRY
+tilesortspu_WindowPosition(GLint window, GLint x, GLint y)
 {
 	/* we only care about the window position when we're running on DMX */
 #ifdef USE_DMX
