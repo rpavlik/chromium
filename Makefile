@@ -15,7 +15,7 @@ ifeq ($(DOXYGEN), 1)
 DOXYGEN_DIR = doxygen
 endif
 
-SUBDIRS = util $(DMX_DIR) mothership spu_loader packer state_tracker \
+SUBDIRS = util mothership spu_loader packer state_tracker $(DMX_DIR) \
 	unpacker dlm spu app_faker opengl_stub crserverlib crserver \
 	crutapi crutclientapi crutproxy crutserver progs $(DOXYGEN_DIR)
 
