@@ -165,7 +165,9 @@ struct window_info_t {
 
 	GLint visBits;               /**< CR_RGB_BIT | CR_DOUBLE_BIT, etc */
 
+#ifdef USE_DMX
 	CRDMXBackendWindowInfo *backendWindows;       /**< array [num_servers] */
+#endif
 	int numBackendsRealized;
 
 	/**
