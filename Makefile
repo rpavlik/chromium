@@ -7,12 +7,17 @@ TOP = .
 
 include $(TOP)/arch.mk
 
-SUBDIRS = util mothership spu_loader packer state_tracker \
-	unpacker dlm spu app_faker opengl_stub crserverlib crserver \
-	crutapi crutclientapi crutproxy crutserver progs 
-ifeq ($(DOXYGEN), 1)
-SUBDIRS += doxygen
+ifeq ($(USE_DMX), 1)
+DMX_DIR = dmx
 endif
+
+ifeq ($(DOXYGEN), 1)
+DOXYGEN_DIR = doxygen
+endif
+
+SUBDIRS = util $(DMX_DIR) mothership spu_loader packer state_tracker \
+	unpacker dlm spu app_faker opengl_stub crserverlib crserver \
+	crutapi crutclientapi crutproxy crutserver progs $(DOXYGEN_DIR)
 
 include ${TOP}/cr.mk
 
