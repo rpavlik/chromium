@@ -22,6 +22,9 @@
 #include "cr_threads.h"
 #include "cr_dlm.h"
 #include "cr_mem.h"
+#ifdef USE_DMX
+#include "cr_dmx.h"
+#endif
 
 #include "state/cr_limits.h"
 #include "state/cr_statetypes.h"
@@ -83,7 +86,6 @@ typedef struct server_context_info_t ServerContextInfo;
 typedef struct thread_info_t ThreadInfo;
 typedef struct context_info_t ContextInfo;
 typedef struct window_info_t WindowInfo;
-typedef struct backend_window_info_t BackendWindowInfo;
 typedef struct warp_display_info_t WarpDisplayInfo;
 
 /**
@@ -132,18 +134,6 @@ struct context_info_t {
 	/*@}*/
 };
 
-/**
- * For DMX
- */
-struct backend_window_info_t {
-#ifdef GLX
-	GLXDrawable xwin;     /**< backend server's X window */
-	GLXDrawable xsubwin;  /**< child of xwin, clipped to screen bounds */
-	Display *dpy;         /**< DMX back-end server display */
-#endif
-	CRrecti visrect; /**< visible rect, in front-end screen coords */
-};
-
 struct server_window_info_t {
 	int window;           /**< window number on server */
 	int num_extents;
@@ -175,7 +165,7 @@ struct window_info_t {
 
 	GLint visBits;               /**< CR_RGB_BIT | CR_DOUBLE_BIT, etc */
 
-	BackendWindowInfo *backendWindows;       /**< array [num_servers] */
+	CRDMXBackendWindowInfo *backendWindows;       /**< array [num_servers] */
 	int numBackendsRealized;
 
 	/**

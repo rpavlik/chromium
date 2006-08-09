@@ -660,7 +660,7 @@ getTilingFromDMX( WindowInfo *winInfo )
 
 	/* Compute the new tile bounds from the DMX backend visrect information */
 	for (i = 0; i < tilesort_spu.num_servers; i++) {
-		const BackendWindowInfo *backend = winInfo->backendWindows + i;
+		const CRDMXBackendWindowInfo *backend = winInfo->backendWindows + i;
 		/* set tile pos/size in mural coords (front-end window coords) */
 		if (backend->visrect.x1 < backend->visrect.x2 &&
 				backend->visrect.y1 < backend->visrect.y2) {

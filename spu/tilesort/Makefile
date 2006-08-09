@@ -49,6 +49,10 @@ else
 LIBRARIES = crutil crmothership crdlm spuload crstate
 endif
 
+ifeq ($(USE_DMX), 1)
+LIBRARIES += dmxutil
+endif
+
 ifdef BINUTIL_LINK_HACK
 TRACKS_STATE = 1
 LIBRARIES -= crstate

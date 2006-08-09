@@ -11,11 +11,6 @@
 #include "cr_mothership.h"
 #include "cr_packfunctions.h"
 #include "cr_string.h"
-#ifdef USE_DMX
-#include <X11/Xlib.h>
-#include <X11/extensions/dmxext.h>
-#endif
-
 
 
 #ifdef CHROMIUM_THREADSAFE
@@ -396,8 +391,7 @@ void TILESORTSPU_APIENTRY tilesortspu_MakeCurrent( GLint window, GLint nativeWin
 				 * Check if it's a DMX window.
 				 */
 #if USE_DMX
-				int event_base, error_base;
-				if (DMXQueryExtension(winInfo->dpy, &event_base, &error_base))
+				if (crDMXSupported(winInfo->dpy))
 					winInfo->isDMXWindow = GL_TRUE;
 				else
 					crWarning("tilesort SPU: use_dmx is set, but %s doesn't support DMX",

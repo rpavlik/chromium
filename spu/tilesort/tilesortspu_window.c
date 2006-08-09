@@ -17,228 +17,47 @@
 #include "cr_packfunctions.h"
 #include "cr_string.h"
 
-#ifdef USE_DMX
-#include <X11/Xlib.h>
-#include <X11/extensions/dmxext.h>
-/* XXX Remove all the old API version 1 stuff someday - it's pretty old */
-#ifdef DmxBadXinerama
-#define DMX_API_VERSION 2
-#else
-#define DMX_API_VERSION 1
-#endif
-#endif
-
 
 #ifdef USE_DMX
-
-/**
- * Try to get an XVisualInfo that satisfies the visAttribs mask.
- * If we can't get multisample, try without.  If we can't get stereo,
- * try without, etc.
- */
-static XVisualInfo *
-chooseVisualRetry( Display *dpy, int screen, GLbitfield visAttribs )
-{
-	while (1) {
-		XVisualInfo *vis = crChooseVisual(&tilesort_spu.ws, dpy, screen,
-																			GL_FALSE, visAttribs);
-		if (vis)
-			return vis;
-
-		if (visAttribs & CR_MULTISAMPLE_BIT)
-			visAttribs &= ~CR_MULTISAMPLE_BIT;
-		else if (visAttribs & CR_STEREO_BIT)
-			visAttribs &= ~CR_STEREO_BIT;
-		else if (visAttribs & CR_ACCUM_BIT)
-			visAttribs &= ~CR_ACCUM_BIT;
-		else if (visAttribs & CR_ALPHA_BIT)
-			visAttribs &= ~CR_ALPHA_BIT;
-		else
-			return NULL;
-	}
-}
-
-
 /**
  * DMX only: for the given WindowInfo, query DMX to get the X window
  * IDs for the corresponding back-end windows.  Create back-end sub
  * windows if needed.  Compute new tiling.
  */
-static void
+static GLboolean
 tilesortspuGetBackendWindowInfo(WindowInfo *winInfo)
 {
-	int numScreens, count, i;
-#if DMX_API_VERSION == 2
-	DMXScreenAttributes *dmxScreenInfo;
-	DMXWindowAttributes *dmxWinInfo;
-#else
-	DMXScreenInformation *dmxScreenInfo;
-	DMXWindowInformation *dmxWinInfo;
-#endif
-
-	CRASSERT(winInfo->dpy);
-	DMXGetScreenCount(winInfo->dpy, &numScreens);
-	CRASSERT(numScreens == tilesort_spu.num_servers);
-
-#if DMX_API_VERSION == 2
-	dmxScreenInfo = (DMXScreenAttributes *) crAlloc(tilesort_spu.num_servers
-																									 * sizeof(*dmxScreenInfo));
-#else
-	dmxScreenInfo = (DMXScreenInformation *) crAlloc(tilesort_spu.num_servers
-																									 * sizeof(*dmxScreenInfo));
-#endif
-	if (!dmxScreenInfo)
-		return;
-
-#if DMX_API_VERSION == 2
-	dmxWinInfo = (DMXWindowAttributes *) crAlloc(tilesort_spu.num_servers
-																						* sizeof(*dmxWinInfo));
-#else
-	dmxWinInfo = (DMXWindowInformation *) crAlloc(tilesort_spu.num_servers
-																						* sizeof(*dmxWinInfo));
-#endif
-	if (!dmxWinInfo) {
-		crFree(dmxScreenInfo);
-		return;
-	}
-
-	for (i = 0; i < numScreens; i++) {
-#if DMX_API_VERSION == 2
-		if (!DMXGetScreenAttributes(winInfo->dpy, i, dmxScreenInfo + i)) {
-#else
-		if (!DMXGetScreenInformation(winInfo->dpy, i, dmxScreenInfo + i)) {
-#endif
-			crDebug("Could not get screen information for screen %d\n", i);
-			crFree(dmxScreenInfo);
-			crFree(dmxWinInfo);
-			return;
-		}
-	}
-		
-#if DMX_API_VERSION == 2
-	if (!DMXGetWindowAttributes(winInfo->dpy, winInfo->xwin, &count,
-															 tilesort_spu.num_servers, dmxWinInfo)) {
-#else
-	if (!DMXGetWindowInformation(winInfo->dpy, winInfo->xwin, &count,
-															 tilesort_spu.num_servers, dmxWinInfo)) {
-#endif
-		crDebug("Could not get window information for 0x%x\n", (int) winInfo->xwin);
-		crFree(dmxScreenInfo);
-		crFree(dmxWinInfo);
-		return;
-	}
-
-	winInfo->numBackendsRealized = 0;
-
-	/* From the DMX info, compute tiling info.
-	 * Also setup child X windows for back-end rendering.
-	 * We'll count the number of back-end windows in existance (see the
-	 * numBackendsRealized field) and will set the newBackendWindows flag
-	 * if we create any new backend windows.  These are tested elsewhere
-	 * to determine if/when we need to update the tiling info.
+	/* This is a bit clunky, but we're using the crOpenGLInterface parameter
+	 * as a flag to indicate whether or not child windows (of the back-end
+	 * X windows) should be created if not already present.
+	 * We need to be careful about that when a parallel application is
+	 * using tilesort to drive a DMX display.
 	 */
-	for (i = 0; i < count; i++) {
-		int server = dmxWinInfo[i].screen;
-		BackendWindowInfo *backend = winInfo->backendWindows + server;
-		int subwinX, subwinY, subwinW, subwinH;
+	const crOpenGLInterface *openglInterface
+		= (tilesort_spu.rank == 0) ? &tilesort_spu.ws : NULL;
 
-		if (!backend->dpy) {
-			/* Open display connection to backend if we don't have one. */
-			backend->dpy = XOpenDisplay(dmxScreenInfo[server].displayName);
-			CRASSERT(backend->dpy);
-		}
+	GLboolean b;
 
-		backend->xwin = dmxWinInfo[i].window;
+	b = crDMXGetBackendWindowInfo(winInfo->dpy, winInfo->xwin,
+																tilesort_spu.num_servers,
+																winInfo->backendWindows,
+																openglInterface,
+																winInfo->visBits);
 
-		/* save tiling information */
-		backend->visrect.x1 = dmxWinInfo[i].vis.x;
-		backend->visrect.y1 = dmxWinInfo[i].vis.y;
-		backend->visrect.x2 = dmxWinInfo[i].vis.x + dmxWinInfo[i].vis.width;
-		backend->visrect.y2 = dmxWinInfo[i].vis.y + dmxWinInfo[i].vis.height;
-
-		/* subwindow pos and size (at least 1x1) */
-		subwinX = backend->visrect.x1;
-		subwinY = backend->visrect.y1;
-		subwinW = backend->visrect.x2 - backend->visrect.x1;
-		subwinH = backend->visrect.y2 - backend->visrect.y1;
-		if (subwinW <= 0)
-			subwinW = 1;
-		if (subwinH <= 0)
-			subwinH = 1;
-
-		if (backend->xwin != 0 && backend->xsubwin == 0) {
-			{
-				/* Create a child of the back-end X window.  We do this to work
-				 * around a memory allocation problem found with NVIDIA drivers.
-				 * See discussion from Feb 2002 on the DMX-devel mailing list.
-				 * This also gives us flexibility in choosing the window's visual.
-				 */
-				XSetWindowAttributes attribs;
-				Window root;
-				unsigned long attribMask;
-				int scr;
-				XVisualInfo *visInfo;
-
-				scr = DefaultScreen(backend->dpy);
-				root = RootWindow(backend->dpy, scr);
-
-				visInfo = chooseVisualRetry(backend->dpy, scr, winInfo->visBits);
-				CRASSERT(visInfo);
-
-				attribs.background_pixel = 0;
-				attribs.border_pixel = 0;
-				attribs.colormap = XCreateColormap(backend->dpy, root,
-																					 visInfo->visual, AllocNone);
-				attribMask = CWBorderPixel | CWColormap;
-
-				backend->xsubwin = XCreateWindow(backend->dpy,
-																				 backend->xwin, /* parent */
-																				 subwinX, subwinY,
-																				 subwinW, subwinH,
-																				 0, /* border width */
-																				 visInfo->depth, /* depth */
-																				 InputOutput, /* class */
-																				 visInfo->visual,
-																				 attribMask, &attribs);
-
-				/*
-				crDebug("Created child 0x%x of 0x%x on server %d with visual 0x%x\n",
-							 (int)backend->xsubwin, (int)backend->xwin, i,
-							 (int) visInfo->visualid);
-				*/
-				CRASSERT(backend->xsubwin);
-				XMapWindow(backend->dpy, backend->xsubwin);
-				XSync(backend->dpy, 0);
-				winInfo->newBackendWindows = GL_TRUE;
+	if (b) {
+		/* Update the tally of the number of back-end windows which have
+		 * actually been realized.
+		 */
+		int i;
+		winInfo->numBackendsRealized = 0;
+		for (i = 0; i < tilesort_spu.num_servers; i++) {
+			if (winInfo->backendWindows[i].xsubwin) {
+				winInfo->numBackendsRealized++;
 			}
 		}
-		else if (backend->xsubwin) {
-			 /* Move/resize the existing child window.  We want the child to
-				* basically have the same pos/size as the parent, but clipped to
-				* the screen.
-				*/
-			XMoveResizeWindow(backend->dpy, backend->xsubwin, subwinX, subwinY,
-												(unsigned int) subwinW, (unsigned int) subwinH);
-			XSync(backend->dpy, 0);
-		}
-
-		if (backend->xsubwin) {
-			winInfo->numBackendsRealized++;
-		}
-
-#if 0
-		printf("Backend Window %d:  scrn %d  backwin 0x%x  childwin 0x%x:\n",
-					 i, server, (int) backend->xwin, (int) backend->xsubwin);
-		printf("  screen offset: %d, %d\n", dmxScreenInfo[server].xorigin,
-			   dmxScreenInfo[server].yorigin);
-		printf("  visrect = %d, %d .. %d, %d\n", 
-			   backend->visrect.x1, backend->visrect.y1,
-			   backend->visrect.x2, backend->visrect.y2);
-#endif
 	}
 
-	crFree(dmxWinInfo);
-	crFree(dmxScreenInfo);
+	return b;
 }
 #endif /* USE_DMX */
 
@@ -371,7 +190,8 @@ tilesortspuUpdateWindowInfo(WindowInfo *winInfo)
 				 winInfo->lastWidth != (int)width ||
 				 winInfo->lastHeight != (int)height))
 		{
-			tilesortspuGetBackendWindowInfo(winInfo);
+			/* Get/update the backend window information for this window. */
+			winInfo->newBackendWindows |= tilesortspuGetBackendWindowInfo(winInfo);
 		}
 #endif
 	}
@@ -408,15 +228,19 @@ WindowInfo *tilesortspuCreateWindowInfo(GLint window, GLint visBits)
 
 	CRASSERT(tilesort_spu.num_servers > 0);
 
-	winInfo->backendWindows = (BackendWindowInfo *) crCalloc(tilesort_spu.num_servers * sizeof(BackendWindowInfo));
+#ifdef USE_DMX
+	winInfo->backendWindows = crDMXAllocBackendWindowInfo(tilesort_spu.num_servers);
 	if (!winInfo->backendWindows) {
 		crFree(winInfo);
 		return NULL;
 	}
+#endif
 
 	winInfo->server = (ServerWindowInfo *) crCalloc(tilesort_spu.num_servers * sizeof(ServerWindowInfo));
 	if (!winInfo->server) {
+#ifdef USE_DMX
 		crFree(winInfo->backendWindows);
+#endif
 		crFree(winInfo);
 		return NULL;
 	}
@@ -523,25 +347,9 @@ void
 tilesortspuFreeWindowInfo(WindowInfo *winInfo)
 {
 #ifdef USE_DMX
-	int i;
-
-	for (i = 0; i < tilesort_spu.num_servers; i++) {
-#if 0
-		/* Don't destroy the window - its parent was probably
-		 * already destroyed!
-		 */
-		if (winInfo->backendWindows[i].xsubwin) {
-			XDestroyWindow(winInfo->backendWindows[i].dpy,
-										 winInfo->backendWindows[i].xsubwin);
-		}
-#endif
-		if (winInfo->backendWindows[i].dpy) {
-			XCloseDisplay(winInfo->backendWindows[i].dpy);
-		}
-	}
+	crDMXFreeBackendWindowInfo(tilesort_spu.num_servers, winInfo->backendWindows);
 #endif
 
-	crFree(winInfo->backendWindows);
 	crFree(winInfo->server);
 	crFree(winInfo);
 }
@@ -565,7 +373,7 @@ tilesortspu_WindowSize(GLint window, GLint newWidth, GLint newHeight)
 
 #ifdef USE_DMX
 	if (winInfo->isDMXWindow && winInfo->xwin) {
-		tilesortspuGetBackendWindowInfo(winInfo);
+		winInfo->newBackendWindows |= tilesortspuGetBackendWindowInfo(winInfo);
 	}
 #endif
 
@@ -624,8 +432,10 @@ tilesortspu_WindowPosition(GLint window, GLint x, GLint y)
 #ifdef USE_DMX
 	WindowInfo *winInfo = tilesortspuGetWindowInfo(window, 0);
 	if (winInfo->isDMXWindow) {
-		if (winInfo->xwin) /* if window's realized */
-			 tilesortspuGetBackendWindowInfo(winInfo);
+		if (winInfo->xwin){
+			/* if window's realized */
+			winInfo->newBackendWindows |= tilesortspuGetBackendWindowInfo(winInfo);
+		}
 		tilesortspuGetNewTiling(winInfo);
 	}
 #endif
@@ -647,10 +457,6 @@ tilesortspu_WindowCreate( const char *dpyName, GLint visBits)
 	static GLint freeWinID = 1 /*400*/;
 	WindowInfo *winInfo;
 	int i;
-
-	/*
-	crDebug("Tilesort SPU: WindowCreate(%s, 0x%x)", dpyName, visBits);
-	*/
 
 	if (tilesort_spu.forceQuadBuffering && tilesort_spu.stereoMode == CRYSTAL)
 		visBits |= CR_STEREO_BIT;
