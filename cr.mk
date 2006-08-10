@@ -598,23 +598,28 @@ endif
 
 
 # Make CRNAME.tar.gz and CRNAME.zip files
-CRNAME = cr-1.1
-tarball: clean
-#	remove old files
+CRNAME = cr-1.9
+tarballs:
+	@echo "Removing generated files"
+	make clean
+	rm -rf built bin lib
+
+#	remove old archive files
 	-rm -rf ../$(CRNAME)
 	-rm -f ../$(CRNAME).tar.gz
 	-rm -f ../$(CRNAME).zip
+
 #	make copy of cr directory
 	cp -r ../cr ../$(CRNAME)
+
 #	remove CVS files and other unneeded files
 	-find ../$(CRNAME) -name CVS -exec rm -rf '{}' \;
 	rm -f ../$(CRNAME)/mothership/server/crconfig.py
-	rm -rf ../$(CRNAME)/built
-	rm -rf ../$(CRNAME)/bin
-	rm -rf ../$(CRNAME)/lib
+
 #	make tarball and zip file
 	cd .. ; tar cvf $(CRNAME).tar $(CRNAME) ; gzip $(CRNAME).tar
 	cd .. ; zip -r $(CRNAME).zip $(CRNAME)
+
 
 docs:
 	cd doxygen; make
