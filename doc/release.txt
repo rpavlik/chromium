@@ -1,6 +1,6 @@
 
                    How to make a Chromium release
-                 (on Linux, using 1.8 as an example)
+                 (on Linux, using 1.9 as an example)
 
 
 
@@ -22,20 +22,10 @@ Update doc/versions.html with info about the new version
 Make the tarballs
 =================
 
-mkdir Chromium-1.8
-cd Chromium-1.8
-cvs -z3 -d:ext:YOURNAME@cvs.sf.net:/cvsroot/chromium co .
-cp -r cr cr-1.8
-find cr-1.8 -name CVS -exec rm -rf '{}' \;
-find cr-1.8 -name .cvsignore -exec rm -rf '{}' \;
-rm -f cr-1.8/mothership/server/crconfig.py
-Edit cr-1.8/options.mk and set RELEASE=1
-tar cf cr-1.8.tar cr-1.8
-gzip cr-1.8.tar
+Update cr.mk so that CRNAME is "cr-1.9"
+run 'make tarballs'
 
-zip -r cr-1.8.zip cr-1.8
-
-Now, copy cr-1.8.tar.gz to a temporary directory, unpack, build and test.
+Now, copy the cr-1.9.tar.gz to a temporary directory, unpack, build and test.
 
 
 
@@ -48,11 +38,11 @@ Upload tarballs to sourceforge:
    passwd: email address
    cd incoming
    bin
-   put cr-1.8.tar.gz
-   put cr-1.8.zip
+   put cr-1.9.tar.gz
+   put cr-1.9.zip
    bye
 
-Via "Admin" interface on SF, create a new source release named "Chromium 1.8".
+Via "Admin" interface on SF, create a new source release named "Chromium 1.9".
 Add the .tar.gz and .zip files to the release.
 
 Send an email to chromium-dev, chromium-users, and chromium-announce.
