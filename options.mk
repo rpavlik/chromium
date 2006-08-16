@@ -38,6 +38,12 @@ USE_REPLICATE=0
 # Xcliplist.h headers in the usual X directories.
 USE_VNC=0
 
+# Set USE_XCLIPLIST to 1 if you want the "vnc" SPU build to use
+# the XClipList extension.  This is necessary for the Chromium Render
+# Server project.  Youll need the libXcliplist.so library and
+# the X11/extensions/Xcliplist.h file in the usual X directories.
+USE_XCLIPLIST=1
+
 # Set USE_OSMESA to 1 if you want to enable off screen rendering using Mesa.
 USE_OSMESA=0
 
