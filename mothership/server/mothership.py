@@ -1267,7 +1267,15 @@ class CR:
 		"""Accept routine for TCP/IP (see do_acceptrequest())"""
 		(p, hostname, port_str, endianness_str) = accept_info
 		assert p == "tcpip"
-		hostname = socket.gethostbyname(QualifyHostname(hostname))
+		# If the mothership doesn't recognize the remote host,
+		# the QualifyHostname() call can fail with a cryptic exception.
+		# This is fatal; but we can still give a better error
+		# than the cryptic message.
+		try:
+			hostname = socket.gethostbyname(QualifyHostname(hostname))
+		except:
+			Fatal( "Mothership error: could not qualify hostname '%s' - check /etc/hosts" % hostname)
+
 		port = int(port_str)
 		endianness = int(endianness_str)
 		# Loop over all of the mothership's socket wrappers, looking for
