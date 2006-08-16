@@ -16,6 +16,15 @@ static void __setDefaults( void )
 	print_spu.fp = stderr;
 }
 
+static void set_marker_text( void *foo, const char *response )
+{
+	print_spu.marker_text = crStrdup(response);
+}
+static void set_marker_signal( void *foo, const char *response )
+{
+	print_spu.marker_signal = crStrToInt(response);
+}
+
 static void set_log_file( void *foo, const char *response )
 {
 	if (crStrcmp( response, "stderr" ) == 0)
@@ -47,6 +56,13 @@ SPUOptions printSPUOptions[] = {
 
 	{ "log_file", CR_STRING, 1, "stderr", NULL, NULL, 
 		"Log file name (or stdout,stderr)", (SPUOptionCB)set_log_file },
+
+	{ "marker_signal", CR_INT, 1, "0", NULL, NULL, 
+		"Signal number to issue marker text", (SPUOptionCB)set_marker_signal },
+	{ "marker_text", CR_STRING, 1, 
+		"Received marker signal $(signal) at $(date) $(time)",
+		NULL, NULL, 
+		"Marker text to issue on receipt of signal", (SPUOptionCB)set_marker_text },
 
 	{ NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };

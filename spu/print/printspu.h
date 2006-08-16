@@ -22,6 +22,11 @@ typedef struct {
 	int id;
 	SPUDispatchTable passthrough;
 	FILE *fp;
+
+	/* These handle marker signals */
+	int marker_signal;
+	char *marker_text;
+	void (*old_signal_handler)(int);
 } PrintSpu;
 
 extern PrintSpu print_spu;
