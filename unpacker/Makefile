@@ -49,7 +49,7 @@ LIB_COPIES = crserver \
 
 include $(TOP)/options.mk
 
-ifeq ($(USE_VNC), 1)
+ifeq ($(USE_REPLICATE), 1)
 LIB_COPIES += vncviewer
 endif
 
