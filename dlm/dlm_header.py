@@ -10,53 +10,53 @@ mode = sys.argv[1]
 # Each function has its return type, function name, and parameters provided.
 # We'll use these to generate both a header file, and a definition file.
 additionalFunctions = [
-    ('CRDLM DLM_APIENTRY *', 'crDLMNewDLM', 'unsigned int configSize, const CRDLMConfig *config'),
-    ('CRDLMContextState DLM_APIENTRY *', 'crDLMNewContext', 'CRDLM *dlm'),
-    ('void DLM_APIENTRY', 'crDLMFreeContext', 'CRDLMContextState *state'),
-    ('void DLM_APIENTRY', 'crDLMUseDLM', 'CRDLM *dlm'),
-    ('void DLM_APIENTRY','crDLMFreeDLM', 'CRDLM *dlm'),
-    ('void DLM_APIENTRY', 'crDLMSetCurrentState', 'CRDLMContextState *state'),
-    ('CRDLMContextState DLM_APIENTRY *', 'crDLMGetCurrentState', 'void'),
-    ('CRDLMReplayState DLM_APIENTRY', 'crDLMGetReplayState', 'void'),
-    ('void DLM_APIENTRY', 'crDLMSetupClientState', 'SPUDispatchTable *dispatchTable'),
-    ('void DLM_APIENTRY', 'crDLMRestoreClientState', 'CRClientState *clientState, SPUDispatchTable *dispatchTable'),
-    ('void DLM_APIENTRY', 'crDLMSendAllDLMLists', 'CRDLM *dlm, SPUDispatchTable *dispatchTable'),
-    ('void DLM_APIENTRY', 'crDLMSendAllLists', 'SPUDispatchTable *dispatchTable'),
-    ('void DLM_APIENTRY', 'crDLMSendDLMList', 'CRDLM *dlm, unsigned long listIdentifier, SPUDispatchTable *dispatchTable'),
-    ('void DLM_APIENTRY', 'crDLMSendList', 'unsigned long listIdentifier, SPUDispatchTable *dispatchTable'),
-    ('void DLM_APIENTRY', 'crDLMReplayDLMList', 'CRDLM *dlm, unsigned long listIdentifier, SPUDispatchTable *dispatchTable'),
-    ('void DLM_APIENTRY', 'crDLMReplayList', 'unsigned long listIdentifier, SPUDispatchTable *dispatchTable'),
-    ('void DLM_APIENTRY', 'crDLMReplayDLMListState', 'CRDLM *dlm, unsigned long listIdentifier, SPUDispatchTable *dispatchTable'),
-    ('void DLM_APIENTRY', 'crDLMReplayListState', 'unsigned long listIdentifier, SPUDispatchTable *dispatchTable'),
-    ('void DLM_APIENTRY', 'crDLMReplayDLMLists', 'CRDLM *dlm, GLsizei n, GLenum type, const GLvoid *lists, SPUDispatchTable *dispatchTable'),
-    ('void DLM_APIENTRY', 'crDLMReplayLists', 'GLsizei n, GLenum type, const GLvoid *lists, SPUDispatchTable *dispatchTable'),
-    ('void DLM_APIENTRY', 'crDLMReplayDLMListsState', 'CRDLM *dlm, GLsizei n, GLenum type, const GLvoid *lists, SPUDispatchTable *dispatchTable'),
-    ('void DLM_APIENTRY', 'crDLMReplayListsState', 'GLsizei n, GLenum type, const GLvoid *lists, SPUDispatchTable *dispatchTable'),
-    ('CRDLMError DLM_APIENTRY', 'crDLMDeleteListContent', 'CRDLM *dlm, unsigned long listIdentifier'),
-    ('int DLM_APIENTRY', 'crDLMGetReferences', 'CRDLM *dlm, unsigned long listIdentifier, int firstIndex, int sizeofBuffer, unsigned int *buffer'),
-    ('CRDLMError DLM_APIENTRY', 'crDLMGetDLMBounds', 'CRDLM *dlm, unsigned long listIdentifier, CRDLMBounds *bounds'),
-    ('CRDLMError DLM_APIENTRY', 'crDLMGetBounds', 'unsigned long listIdentifier, CRDLMBounds *bounds'),
-    ('void DLM_APIENTRY', 'crDLMSetDLMBounds', 'CRDLM *dlm, unsigned long listIdentifier, double xmin, double ymin, double zmin, double xmax, double ymax, double zmax'),
-    ('void DLM_APIENTRY', 'crDLMSetBounds', 'unsigned long listIdentifier, double xmin, double ymin, double zmin, double xmax, double ymax, double zmax'),
+	('CRDLM DLM_APIENTRY *', 'crDLMNewDLM', 'unsigned int configSize, const CRDLMConfig *config'),
+	('CRDLMContextState DLM_APIENTRY *', 'crDLMNewContext', 'CRDLM *dlm'),
+	('void DLM_APIENTRY', 'crDLMFreeContext', 'CRDLMContextState *state'),
+	('void DLM_APIENTRY', 'crDLMUseDLM', 'CRDLM *dlm'),
+	('void DLM_APIENTRY','crDLMFreeDLM', 'CRDLM *dlm'),
+	('void DLM_APIENTRY', 'crDLMSetCurrentState', 'CRDLMContextState *state'),
+	('CRDLMContextState DLM_APIENTRY *', 'crDLMGetCurrentState', 'void'),
+	('CRDLMReplayState DLM_APIENTRY', 'crDLMGetReplayState', 'void'),
+	('void DLM_APIENTRY', 'crDLMSetupClientState', 'SPUDispatchTable *dispatchTable'),
+	('void DLM_APIENTRY', 'crDLMRestoreClientState', 'CRClientState *clientState, SPUDispatchTable *dispatchTable'),
+	('void DLM_APIENTRY', 'crDLMSendAllDLMLists', 'CRDLM *dlm, SPUDispatchTable *dispatchTable'),
+	('void DLM_APIENTRY', 'crDLMSendAllLists', 'SPUDispatchTable *dispatchTable'),
+	('void DLM_APIENTRY', 'crDLMSendDLMList', 'CRDLM *dlm, unsigned long listIdentifier, SPUDispatchTable *dispatchTable'),
+	('void DLM_APIENTRY', 'crDLMSendList', 'unsigned long listIdentifier, SPUDispatchTable *dispatchTable'),
+	('void DLM_APIENTRY', 'crDLMReplayDLMList', 'CRDLM *dlm, unsigned long listIdentifier, SPUDispatchTable *dispatchTable'),
+	('void DLM_APIENTRY', 'crDLMReplayList', 'unsigned long listIdentifier, SPUDispatchTable *dispatchTable'),
+	('void DLM_APIENTRY', 'crDLMReplayDLMListState', 'CRDLM *dlm, unsigned long listIdentifier, SPUDispatchTable *dispatchTable'),
+	('void DLM_APIENTRY', 'crDLMReplayListState', 'unsigned long listIdentifier, SPUDispatchTable *dispatchTable'),
+	('void DLM_APIENTRY', 'crDLMReplayDLMLists', 'CRDLM *dlm, GLsizei n, GLenum type, const GLvoid *lists, SPUDispatchTable *dispatchTable'),
+	('void DLM_APIENTRY', 'crDLMReplayLists', 'GLsizei n, GLenum type, const GLvoid *lists, SPUDispatchTable *dispatchTable'),
+	('void DLM_APIENTRY', 'crDLMReplayDLMListsState', 'CRDLM *dlm, GLsizei n, GLenum type, const GLvoid *lists, SPUDispatchTable *dispatchTable'),
+	('void DLM_APIENTRY', 'crDLMReplayListsState', 'GLsizei n, GLenum type, const GLvoid *lists, SPUDispatchTable *dispatchTable'),
+	('CRDLMError DLM_APIENTRY', 'crDLMDeleteListContent', 'CRDLM *dlm, unsigned long listIdentifier'),
+	('int DLM_APIENTRY', 'crDLMGetReferences', 'CRDLM *dlm, unsigned long listIdentifier, int firstIndex, int sizeofBuffer, unsigned int *buffer'),
+	('CRDLMError DLM_APIENTRY', 'crDLMGetDLMBounds', 'CRDLM *dlm, unsigned long listIdentifier, CRDLMBounds *bounds'),
+	('CRDLMError DLM_APIENTRY', 'crDLMGetBounds', 'unsigned long listIdentifier, CRDLMBounds *bounds'),
+	('void DLM_APIENTRY', 'crDLMSetDLMBounds', 'CRDLM *dlm, unsigned long listIdentifier, double xmin, double ymin, double zmin, double xmax, double ymax, double zmax'),
+	('void DLM_APIENTRY', 'crDLMSetBounds', 'unsigned long listIdentifier, double xmin, double ymin, double zmin, double xmax, double ymax, double zmax'),
 	('void DLM_APIENTRY', 'crDLMComputeBoundingBox', 'unsigned long listId'),
-    ('GLboolean DLM_APIENTRY', 'crDLMListHasDLMBounds', 'CRDLM *dlm, unsigned long listIdentifier'),
-    ('GLboolean DLM_APIENTRY', 'crDLMListHasBounds', 'unsigned long listIdentifier'),
-    ('GLuint DLM_APIENTRY', 'crDLMGetCurrentList', 'void'),
-    ('GLenum DLM_APIENTRY', 'crDLMGetCurrentMode', 'void'),
-    ('void DLM_APIENTRY', 'crDLMErrorFunction', 'CRDLMErrorCallback callback'),
-    ('void DLM_APIENTRY', 'crDLMNewList', 'GLuint listIdentifier, GLenum mode'),
-    ('void DLM_APIENTRY', 'crDLMEndList', 'void'),
-    ('void DLM_APIENTRY', 'crDLMDeleteLists', 'GLuint firstListIdentifier, GLsizei range'),
-    ('GLboolean DLM_APIENTRY', 'crDLMIsList', 'GLuint list'),
-    ('GLuint DLM_APIENTRY', 'crDLMGenLists', 'GLsizei range'),
-    ('void DLM_APIENTRY', 'crDLMListBase', 'GLuint base'),
-    #('void DLM_APIENTRY', 'crDLMListSent', 'CRDLM *dlm, unsigned long listIdentifier'),
-    #('GLboolean DLM_APIENTRY', 'crDLMIsListSent', 'CRDLM *dlm, unsigned long listIdentifier'),
-    #('GLint DLM_APIENTRY', 'crDLMListSize', 'CRDLM *dlm, unsigned long listIdentifier'),
+	('GLboolean DLM_APIENTRY', 'crDLMListHasDLMBounds', 'CRDLM *dlm, unsigned long listIdentifier'),
+	('GLboolean DLM_APIENTRY', 'crDLMListHasBounds', 'unsigned long listIdentifier'),
+	('GLuint DLM_APIENTRY', 'crDLMGetCurrentList', 'void'),
+	('GLenum DLM_APIENTRY', 'crDLMGetCurrentMode', 'void'),
+	('void DLM_APIENTRY', 'crDLMErrorFunction', 'CRDLMErrorCallback callback'),
+	('void DLM_APIENTRY', 'crDLMNewList', 'GLuint listIdentifier, GLenum mode'),
+	('void DLM_APIENTRY', 'crDLMEndList', 'void'),
+	('void DLM_APIENTRY', 'crDLMDeleteLists', 'GLuint firstListIdentifier, GLsizei range'),
+	('GLboolean DLM_APIENTRY', 'crDLMIsList', 'GLuint list'),
+	('GLuint DLM_APIENTRY', 'crDLMGenLists', 'GLsizei range'),
+	('void DLM_APIENTRY', 'crDLMListBase', 'GLuint base'),
+	#('void DLM_APIENTRY', 'crDLMListSent', 'CRDLM *dlm, unsigned long listIdentifier'),
+	#('GLboolean DLM_APIENTRY', 'crDLMIsListSent', 'CRDLM *dlm, unsigned long listIdentifier'),
+	#('GLint DLM_APIENTRY', 'crDLMListSize', 'CRDLM *dlm, unsigned long listIdentifier'),
 ]
 
 if mode == 'header':
-    print """#ifndef CR_DLM_H
+	print """#ifndef CR_DLM_H
 
 /* DO NOT EDIT.  This file is auto-generated by %s. */
 #define CR_DLM_H
@@ -84,9 +84,9 @@ typedef struct {
 
 /* Indicates whether we're currently involved in playback or not */
 typedef enum {
-    CRDLM_IMMEDIATE = 0,
-    CRDLM_REPLAY_STATE_FUNCTIONS = 1,
-    CRDLM_REPLAY_ALL_FUNCTIONS = 2
+	CRDLM_IMMEDIATE = 0,
+	CRDLM_REPLAY_STATE_FUNCTIONS = 1,
+	CRDLM_REPLAY_ALL_FUNCTIONS = 2
 } CRDLMReplayState;
 
 /* This is enough information to hold an instance of a single function call. */
@@ -189,50 +189,50 @@ extern "C" {
 #endif
 """ % os.path.basename(sys.argv[0])
 elif mode == 'defs':
-    apiutil.CopyrightDef()
-    print '''\t; DO NOT EDIT.  This code is generated by %s.
+	apiutil.CopyrightDef()
+	print '''\t; DO NOT EDIT.  This code is generated by %s.
 
 DESCRIPTION ""
 EXPORTS''' % os.path.basename(sys.argv[0])
 else:
-    raise "unknown generation mode '%s'" % mode
+	raise "unknown generation mode '%s'" % mode
 
 # Generate the list of functions, starting with those coded into
 # the module
 for (returnValue, name, parameters) in additionalFunctions:
-    if mode == 'header':
-	print "extern %s %s(%s);" % (returnValue, name, parameters)
-    elif mode == 'defs':
-	print "%s" % name
+	if mode == 'header':
+		print "extern %s %s(%s);" % (returnValue, name, parameters)
+	elif mode == 'defs':
+		print "%s" % name
 
 # Continue with functions that are auto-generated.
 
 if mode == 'header':
-    print 
-    print "/* auto-generated compilation functions begin here */"
+	print 
+	print "/* auto-generated compilation functions begin here */"
 
 
 keys = apiutil.GetDispatchedFunctions()
 for func_name in keys:
-    props = apiutil.Properties(func_name)
-    # We're interested in intercepting all calls that:
-    #   - can be put into a display list (i.e. "not ("nolist" in props)")
-    #   - change client-side state that affects saving DL elements (i.e. "setclient" in props)
+	props = apiutil.Properties(func_name)
+	# We're interested in intercepting all calls that:
+	#   - can be put into a display list (i.e. "not ("nolist" in props)")
+	#   - change client-side state that affects saving DL elements (i.e. "setclient" in props)
 
-    if apiutil.CanCompile(func_name):
-	params = apiutil.Parameters(func_name)
-	argstring = apiutil.MakeDeclarationString(params)
-	if "useclient" in props or "pixelstore" in props:
-	    argstring = argstring + ", CRClientState *c"
+	if apiutil.CanCompile(func_name):
+		params = apiutil.Parameters(func_name)
+		argstring = apiutil.MakeDeclarationString(params)
+		if "useclient" in props or "pixelstore" in props:
+			argstring = argstring + ", CRClientState *c"
 
-	if mode == 'header':
-	    print 'extern void DLM_APIENTRY crDLMCompile%s( %s );' % (func_name, argstring)
-	elif mode == 'defs':
-	    print "crDLMCompile%s" % func_name
+		if mode == 'header':
+			print 'extern void DLM_APIENTRY crDLMCompile%s( %s );' % (func_name, argstring)
+		elif mode == 'defs':
+			print "crDLMCompile%s" % func_name
 
 # Next make declarations for all the checklist functions.
 if mode == 'header':
-    print """
+	print """
 /* auto-generated CheckList functions begin here.  There is one for each
  * function that has a dual nature: even when there's an active glNewList,
  * sometimes they are compiled into the display list, and sometimes they
@@ -243,19 +243,19 @@ if mode == 'header':
  */
 """
 elif mode == 'defs':
-    pass
+	pass
 
 for func_name in keys:
-    if "checklist" in apiutil.ChromiumProps(func_name):
-	params = apiutil.Parameters(func_name)
-	argstring = apiutil.MakeDeclarationString(params)
+	if "checklist" in apiutil.ChromiumProps(func_name):
+		params = apiutil.Parameters(func_name)
+		argstring = apiutil.MakeDeclarationString(params)
 	if mode == 'header':
-	    print 'int DLM_APIENTRY crDLMCheckList%s( %s );' % (func_name, argstring)
+		print 'int DLM_APIENTRY crDLMCheckList%s( %s );' % (func_name, argstring)
 	elif mode == 'defs':
-	    print "crDLMCheckList%s" % func_name
+		print "crDLMCheckList%s" % func_name
 
 if mode == 'header':
-    print """
+	print """
 #ifdef __cplusplus
 }
 #endif
