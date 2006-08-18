@@ -35,6 +35,8 @@ static void crUnpackExtend(void);
 #
 
 def ReadData( offset, arg_type ):
+	"""Emit a READ_DOUBLE or READ_DATA call for pulling a GL function
+	argument out of the buffer's operand area."""
 	if arg_type == "GLdouble" or arg_type == "GLclampd":
 		retval = "READ_DOUBLE( %d )" % offset
 	else:
@@ -43,6 +45,8 @@ def ReadData( offset, arg_type ):
 
 
 def FindReturnPointer( return_type, params ):
+	"""For GL functions that return values (either as the return value or
+	through a pointer parameter) emit a SET_RETURN_PTR call."""
 	arg_len = apiutil.PacketLength( params )
 	if (return_type != 'void'):
 		print '\tSET_RETURN_PTR( %d );' % (arg_len + 8) # extended opcode plus packet length
@@ -52,6 +56,7 @@ def FindReturnPointer( return_type, params ):
 
 
 def FindWritebackPointer( return_type, params ):
+	"""Emit a SET_WRITEBACK_PTR call."""
 	arg_len = apiutil.PacketLength( params )
 	if return_type != 'void':
 		paramList = [ ('foo', 'void *', 0) ]
@@ -61,7 +66,7 @@ def FindWritebackPointer( return_type, params ):
 
 
 def MakeNormalCall( return_type, func_name, params, counter_init = 0 ):
-	counter = counter_init;
+	counter = counter_init
 	copy_of_params = params[:]
 
 	for i in range( 0, len(params) ):
@@ -76,8 +81,8 @@ def MakeNormalCall( return_type, func_name, params, counter_init = 0 ):
 		counter += apiutil.sizeof(copy_of_params[i][1])
 
 	if ("get" in apiutil.Properties(func_name)):
-		FindReturnPointer( return_type, params );
-		FindWritebackPointer( return_type, params );
+		FindReturnPointer( return_type, params )
+		FindWritebackPointer( return_type, params )
 
 	if return_type != "void":
 		print "\t(void)",
