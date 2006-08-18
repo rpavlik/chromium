@@ -105,10 +105,10 @@
 # 	('GL_BACK', 'GL_AMBIENT_AND_DIFFUSE')
 # 	('GL_FRONT_AND_BACK', 'GL_AMBIENT_AND_DIFFUSE')
 #
-#  paramlist An optional list of properties for a function for non glEnums
+#  paramlist An optional list of properties for a function for non GLenums
 #	The values are used in the generation of the permuted arguments.
-#	If paramlist is not used, a single default (specified in packertest.py) is
-#	used instead.
+#	If paramlist is not used, a single default (specified in packertest.py)
+#	is used instead.
 #
 #	example:
 #	param         s               GLdouble
