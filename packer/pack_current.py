@@ -49,9 +49,9 @@ for k in current_fns.keys():
 				ptr += "[i]"
 				indent = "\t"
 			print "%s\tif ( %s )" % (indent, ptr)
-                        print "%s\t{" % indent
+			print "%s\t{" % indent
 			print "%s\t\t%s += offset;" % (indent, ptr )
-                        print "%s\t}" % indent
+			print "%s\t}" % indent
 	if current_fns[k].has_key( 'array' ):
 		print '\t}'
 print """

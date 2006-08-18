@@ -40,14 +40,12 @@ pack_specials = []
 # mechanisms used in replicatespu_proto.py and 
 # replicatespu_generate.py.
 for func_name in keys:
-    if (
-	apiutil.FindSpecial("replicate", func_name) or
-	apiutil.IsQuery(func_name) or
-	apiutil.CanCompile(func_name) or
-	apiutil.FindSpecial("replicatespu_flush", func_name) or
-	apiutil.SetsTrackedState(func_name)
-    ):
-	pack_specials.append( func_name )
+	if (apiutil.FindSpecial("replicate", func_name) or
+		apiutil.IsQuery(func_name) or
+		apiutil.CanCompile(func_name) or
+		apiutil.FindSpecial("replicatespu_flush", func_name) or
+		apiutil.SetsTrackedState(func_name)):
+		pack_specials.append( func_name )
 
 print '\nvoid replicatespuCreateFunctions( void )'
 print '{'

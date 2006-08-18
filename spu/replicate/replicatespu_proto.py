@@ -34,17 +34,16 @@ keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
 # code must be equivalent to the selection algorithm used in
 # replicatespu_generate.py and in replicate.py.
 for func_name in keys:
-    if (
-	apiutil.FindSpecial("replicate", func_name) or
-	apiutil.IsQuery(func_name) or
-	apiutil.CanCompile(func_name) or
-	apiutil.FindSpecial("replicatespu_flush", func_name) or
-	apiutil.SetsTrackedState(func_name)
-    ):
-	return_type = apiutil.ReturnType(func_name)
-	props = apiutil.Properties(func_name)
-	params = apiutil.Parameters(func_name)
-	print 'extern %s REPLICATESPU_APIENTRY replicatespu_%s( %s );' % ( return_type, func_name, apiutil.MakeDeclarationString(params) )
+	if (apiutil.FindSpecial("replicate", func_name) or
+		apiutil.IsQuery(func_name) or
+		apiutil.CanCompile(func_name) or
+		apiutil.FindSpecial("replicatespu_flush", func_name) or
+		apiutil.SetsTrackedState(func_name)):
+
+		return_type = apiutil.ReturnType(func_name)
+		props = apiutil.Properties(func_name)
+		params = apiutil.Parameters(func_name)
+		print 'extern %s REPLICATESPU_APIENTRY replicatespu_%s( %s );' % ( return_type, func_name, apiutil.MakeDeclarationString(params) )
 
 print """
 #endif
