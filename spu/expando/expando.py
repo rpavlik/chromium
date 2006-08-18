@@ -20,11 +20,11 @@ allFunctions = []
 generatedFunctions = []
 
 for func_name in apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt"):
-    if apiutil.FindSpecial("expando", func_name):
-	allFunctions.append(func_name)
-    elif apiutil.CanCompile(func_name) or apiutil.SetsClientState(func_name):
-	generatedFunctions.append(func_name)
-	allFunctions.append(func_name)
+	if apiutil.FindSpecial("expando", func_name):
+		allFunctions.append(func_name)
+	elif apiutil.CanCompile(func_name) or apiutil.SetsClientState(func_name):
+		generatedFunctions.append(func_name)
+		allFunctions.append(func_name)
 
 for func_name in generatedFunctions:
 	params = apiutil.Parameters(func_name)
@@ -36,33 +36,33 @@ for func_name in generatedFunctions:
 
 	needClientState = 0
 	if apiutil.UsesClientState(func_name):
-	    dlmCallString = basicCallString + ", clientState"
-	    needClientState = 1
+		dlmCallString = basicCallString + ", clientState"
+		needClientState = 1
 
 	needDL = 0
 	if apiutil.CanCompile(func_name):
-	    needDL = 1
+		needDL = 1
 
 	print 'static %s EXPANDOSPU_APIENTRY expando%s( %s )' % ( return_type, func_name, declarationString)
 	print '{'
 	if needDL:
-	    print '\tGLenum dlMode = crDLMGetCurrentMode();'
+		print '\tGLenum dlMode = crDLMGetCurrentMode();'
 	if needClientState:
-	    print '\tCRContext *stateContext = crStateGetCurrent();'
-	    print '\tCRClientState *clientState = NULL;'
-	    print '\tif (stateContext != NULL) {'
-	    print '\t\tclientState = &(stateContext->client);'
-	    print '\t}'
+		print '\tCRContext *stateContext = crStateGetCurrent();'
+		print '\tCRClientState *clientState = NULL;'
+		print '\tif (stateContext != NULL) {'
+		print '\t\tclientState = &(stateContext->client);'
+		print '\t}'
 
 	if needDL:
-	    if "checklist" in chromiumProps:
-		print '\tif (dlMode != GL_FALSE && crDLMCheckList%s(%s)) {' % (func_name, basicCallString)
-	    else:
-		print '\tif (dlMode != GL_FALSE) {'
-	    print '\t\tcrDLMCompile%s(%s);' % (func_name, dlmCallString)
-	    # If we're only compiling, return now.
-	    print '\t\tif (dlMode == GL_COMPILE) return;'
-	    print '\t}'
+		if "checklist" in chromiumProps:
+			print '\tif (dlMode != GL_FALSE && crDLMCheckList%s(%s)) {' % (func_name, basicCallString)
+		else:
+			print '\tif (dlMode != GL_FALSE) {'
+		print '\t\tcrDLMCompile%s(%s);' % (func_name, dlmCallString)
+		# If we're only compiling, return now.
+		print '\t\tif (dlMode == GL_COMPILE) return;'
+		print '\t}'
 
 	# If it gets this far, we're either just executing, or executing
 	# and compiling.  Either way, pass the call to the super SPU,
@@ -70,7 +70,7 @@ for func_name in generatedFunctions:
 	# track client-side state, not all state).
 	print '\texpando_spu.super.%s(%s);' % (func_name, basicCallString)
 	if apiutil.SetsClientState(func_name):
-	    print '\tcrState%s( %s );' % (func_name, basicCallString)	
+		print '\tcrState%s( %s );' % (func_name, basicCallString)	
 
 	print '}'
 	print ''
