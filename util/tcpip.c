@@ -190,8 +190,6 @@ void crCloseSocket( CRSocket sock )
 	}
 }
 
-static unsigned short last_port = 0;
-
 cr_tcpip_data cr_tcpip;
 
 /**
@@ -374,47 +372,62 @@ spankSocket( CRSocket sock )
 typedef int socklen_t;
 #endif
 
-void
-crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
+
+/**
+ * Create a listening socket using the given port.
+ * Caller can then pass the socket to accept().
+ * If the port is one that's been seen before, we'll reuse/return the
+ * previously create socket.
+ */
+static int
+CreateListeningSocket(int port)
 {
-	int err;
-	socklen_t		addr_length;
+	/* XXX should use an unbounded list here instead of parallel arrays... */
+#define MAX 100
+	static int ports[MAX];
+	static int sockets[MAX];
+	static int count = 0;
+	int i, sock;
+
+	/* search to see if we've seen this port before */
+	for (i = 0; i < count; i++) {
+		if (ports[i] == port) {
+			return sockets[i];
+		}
+	}
+
+	/* new port so create new socket */
+	{
+		int err;
 #ifndef ADDRINFO
-	struct sockaddr_in	servaddr;
-	struct sockaddr		addr;
-	struct hostent		*host;
-	struct in_addr		sin_addr;
-#else
-	struct sockaddr_storage	addr;
-	char			host[NI_MAXHOST];
+		struct sockaddr_in	servaddr;
+		struct in_addr		sin_addr;
 #endif
 
-	if (port != last_port)
-	{
 		/* with the new OOB stuff, we can have multiple ports being 
 		 * accepted on, so we need to redo the server socket every time.
 		 */
 #ifndef ADDRINFO
-		cr_tcpip.server_sock = socket( AF_INET, SOCK_STREAM, 0 );
-		if ( cr_tcpip.server_sock == -1 )
+		sock = socket( AF_INET, SOCK_STREAM, 0 );
+		if ( sock == -1 )
 		{
 			err = crTCPIPErrno( );
 			crError( "Couldn't create socket: %s", crTCPIPErrorString( err ) );
 		}
-		spankSocket( cr_tcpip.server_sock );
+		spankSocket( sock );
 
 		servaddr.sin_family = AF_INET;
 		servaddr.sin_addr.s_addr = INADDR_ANY;
 		servaddr.sin_port = htons( port );
 
-		if ( bind( cr_tcpip.server_sock, (struct sockaddr *) &servaddr, sizeof(servaddr) ) )
+		if ( bind( sock, (struct sockaddr *) &servaddr, sizeof(servaddr) ) )
 		{
 			err = crTCPIPErrno( );
-			crError( "Couldn't bind to socket (port=%d): %s", port, crTCPIPErrorString( err ) );
+			crError( "Couldn't bind to socket (port=%d): %s",
+							 port, crTCPIPErrorString( err ) );
 		}
-		last_port = port;
 
-		if ( listen( cr_tcpip.server_sock, 100 /* max pending connections */ ) )
+		if ( listen( sock, 100 /* max pending connections */ ) )
 		{
 			err = crTCPIPErrno( );
 			crError( "Couldn't listen on socket: %s", crTCPIPErrorString( err ) );
@@ -433,36 +446,36 @@ crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 
 		err = getaddrinfo( NULL, port_s, &hints, &res );
 		if ( err )
-			crError( "Couldn't find local TCP port %s: %s", port_s, gai_strerror(err) );
+			crError( "Couldn't find local TCP port %s: %s",
+							 port_s, gai_strerror(err) );
 
 		for (cur=res;cur;cur=cur->ai_next)
 		{
-			cr_tcpip.server_sock = socket( cur->ai_family, cur->ai_socktype, cur->ai_protocol );
-			if ( cr_tcpip.server_sock == -1 )
+			sock = socket( cur->ai_family, cur->ai_socktype, cur->ai_protocol );
+			if ( sock == -1 )
 			{
 				err = crTCPIPErrno( );
 				if (err != EAFNOSUPPORT)
-					crWarning( "Couldn't create socket of family %i: %s, trying another", 
-						   cur->ai_family, crTCPIPErrorString( err ) );
+					crWarning("Couldn't create socket of family %i: %s, trying another", 
+										cur->ai_family, crTCPIPErrorString( err ) );
 				continue;
 			}
-			spankSocket( cr_tcpip.server_sock );
+			spankSocket( sock );
 
-			if ( bind( cr_tcpip.server_sock, cur->ai_addr, cur->ai_addrlen ) )
+			if ( bind( sock, cur->ai_addr, cur->ai_addrlen ) )
 			{
 				err = crTCPIPErrno( );
 				crWarning( "Couldn't bind to socket (port=%d): %s", 
 					   port, crTCPIPErrorString( err ) );
-				crCloseSocket( cr_tcpip.server_sock );
+				crCloseSocket( sock );
 				continue;
 			}
-			last_port = port;
 
-			if ( listen( cr_tcpip.server_sock, 100 /* max pending connections */ ) )
+			if ( listen( sock, 100 /* max pending connections */ ) )
 			{
 				err = crTCPIPErrno( );
-				crWarning( "Couldn't listen on socket: %s", crTCPIPErrorString( err ) );
-				crCloseSocket( cr_tcpip.server_sock );
+				crWarning("Couldn't listen on socket: %s", crTCPIPErrorString(err));
+				crCloseSocket( sock );
 				continue;
 			}
 			break;
@@ -473,6 +486,35 @@ crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 #endif
 	}
 	
+	/* save the new port/socket */
+	if (count == MAX) {
+		crError("Fatal error in tcpip layer: too many listening ports/sockets");
+	}
+	ports[count] = port;
+	sockets[count] = sock;
+	count++;
+
+	return sock;
+}
+
+
+
+
+void
+crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
+{
+	int err;
+	socklen_t		addr_length;
+#ifndef ADDRINFO
+	struct hostent		*host;
+	struct in_addr		sin_addr;
+#else
+	struct sockaddr_storage	addr;
+	char			host[NI_MAXHOST];
+#endif
+
+	cr_tcpip.server_sock = CreateListeningSocket(port);
+
 	/* If brokered, we'll contact the mothership to broker the network
 	 * connection.  We'll send the mothership our hostname, the port and
 	 * our endianness and will get in return a connection ID number.
