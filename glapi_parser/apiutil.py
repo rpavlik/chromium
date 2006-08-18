@@ -113,13 +113,13 @@ def ProcessSpecFile(filename, userFunc):
 				result = []
 				for i in range(len(line)):
 					tset = line[i]
-                                	if tset == '[':
-                                        	nlist = []
-                                	elif tset == ']':
-                                        	result.append(nlist)
+					if tset == '[':
 						nlist = []
-                                	else:
-                                        	nlist.append(tset)
+					elif tset == ']':
+						result.append(nlist)
+						nlist = []
+					else:
+						nlist.append(tset)
 				if result != []:
 					record.paramset.append(result)
 
@@ -240,33 +240,40 @@ def GetDispatchedFunctions(specFile = ""):
 #======================================================================
 
 def ReturnType(funcName):
-	"""Return the C return type of named function."""
+	"""Return the C return type of named function.
+	Examples: "void" or "const GLubyte *". """
 	d = GetFunctionDict()
 	return d[funcName].returnType
 
 
 def Parameters(funcName):
-	"""Return list of tuples (name, type, vecSize) of function parameters."""
+	"""Return list of tuples (name, type, vecSize) of function parameters.
+	Example: if funcName=="ClipPlane" return
+	[ ("plane", "GLenum", 0), ("equation", "const GLdouble *", 4) ] """
 	d = GetFunctionDict()
 	return d[funcName].params
 
 def ParamAction(funcName):
-	"""Return list of names of actions for testing."""
+	"""Return list of names of actions for testing.
+	For PackerTest only."""
 	d = GetFunctionDict()
 	return d[funcName].paramaction
 
 def ParamList(funcName):
-	"""Return list of tuples (name, list of values) of function parameters."""
+	"""Return list of tuples (name, list of values) of function parameters.
+	For PackerTest only."""
 	d = GetFunctionDict()
 	return d[funcName].paramlist
 
 def ParamVec(funcName):
-	"""Return list of tuples (name, vector of values) of function parameters."""
+	"""Return list of tuples (name, vector of values) of function parameters.
+	For PackerTest only."""
 	d = GetFunctionDict()
 	return d[funcName].paramvec
 
 def ParamSet(funcName):
-	"""Return list of tuples (name, list of values) of function parameters."""
+	"""Return list of tuples (name, list of values) of function parameters.
+	For PackerTest only."""
 	d = GetFunctionDict()
 	return d[funcName].paramset
 
@@ -280,8 +287,8 @@ def AllWithProperty(property):
 	"""Return list of functions that have the named property."""
 	funcs = []
 	for funcName in GetDispatchedFunctions():
-	    if property in Properties(funcName):
-		funcs.append(funcName)
+		if property in Properties(funcName):
+			funcs.append(funcName)
 	return funcs
 
 def Category(funcName):
@@ -369,11 +376,11 @@ def HasChromiumProperty(funcName, propertyList):
 	"""Return 1 if the function or any alias has any property in the
 	propertyList"""
 	for funcAlias in [funcName, NonVectorFunction(funcName), VectorFunction(funcName)]:
-	    if funcAlias:
-		props = ChromiumProps(funcAlias)
-		for p in propertyList:
-		    if p in props:
-			return 1
+		if funcAlias:
+			props = ChromiumProps(funcAlias)
+			for p in propertyList:
+				if p in props:
+					return 1
 	return 0
 
 def CanPack(funcName):
@@ -398,16 +405,16 @@ def SetsState(funcName):
 	# and can be compiled.  They are control functions
 	# that are not trackable via state.
 	if funcName in ['Bitmap', 'DeleteTextures', 'FeedbackBuffer', 
-	    'RenderMode', 'BindBufferARB', 'DeleteFencesNV']:
-	    return 1
+		'RenderMode', 'BindBufferARB', 'DeleteFencesNV']:
+		return 1
 	elif funcName in ['ExecuteProgramNV']:
-	    return 0
+		return 0
 
 	# All compilable functions that do not render and that do
 	# not set or use client-side state (e.g. DrawArrays, et al.), set
 	# server-side state.
 	if CanCompile(funcName) and "render" not in props and "useclient" not in props and "setclient" not in props:
-	    return 1
+		return 1
 
 	# All others don't set server-side state.
 	return 0
@@ -416,7 +423,7 @@ def SetsClientState(funcName):
 	"""Return 1 if the function sets client-side state, else 0."""
 	props = Properties(funcName)
 	if "setclient" in props:
-	    return 1
+		return 1
 	return 0
 
 def SetsTrackedState(funcName):
@@ -432,29 +439,29 @@ def SetsTrackedState(funcName):
 	# - because they require a round-trip to the server (e.g.
 	#   the CopyTexImage calls, SetFenceNV, TrackMatrixNV)
 	if funcName in [
-	    'CopyTexImage1D', 'CopyTexImage2D',
-	    'CopyTexSubImage1D', 'CopyTexSubImage2D', 'CopyTexSubImage3D',
-	    'CallList', 'CallLists',
-	    'CompressedTexImage1DARB', 'CompressedTexSubImage1DARB',
-	    'CompressedTexImage2DARB', 'CompressedTexSubImage2DARB',
-	    'CompressedTexImage3DARB', 'CompressedTexSubImage3DARB',
-	    'SetFenceNV'
-	    ]:
-	    return 0
+		'CopyTexImage1D', 'CopyTexImage2D',
+		'CopyTexSubImage1D', 'CopyTexSubImage2D', 'CopyTexSubImage3D',
+		'CallList', 'CallLists',
+		'CompressedTexImage1DARB', 'CompressedTexSubImage1DARB',
+		'CompressedTexImage2DARB', 'CompressedTexSubImage2DARB',
+		'CompressedTexImage3DARB', 'CompressedTexSubImage3DARB',
+		'SetFenceNV'
+		]:
+		return 0
 
 	# Anything else that affects client-side state is trackable.
 	if SetsClientState(funcName):
-	    return 1
+		return 1
 
 	# Anything else that doesn't set state at all is certainly
 	# not trackable.
 	if not SetsState(funcName):
-	    return 0
+		return 0
 
 	# Per-vertex state isn't tracked the way other state is
 	# tracked, so it is specifically excluded.
 	if "pervertex" in Properties(funcName):
-	    return 0
+		return 0
 
 	# Everything else is fine
 	return 1
@@ -463,14 +470,14 @@ def UsesClientState(funcName):
 	"""Return 1 if the function uses client-side state, else 0."""
 	props = Properties(funcName)
 	if "pixelstore" in props or "useclient" in props:
-	    return 1
+		return 1
 	return 0
 
 def IsQuery(funcName):
 	"""Return 1 if the function returns information to the user, else 0."""
 	props = Properties(funcName)
 	if "get" in props:
-	    return 1
+		return 1
 	return 0
 
 def FuncGetsState(funcName):
