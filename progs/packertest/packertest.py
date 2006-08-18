@@ -35,47 +35,47 @@ verbose = 0
 debug = 0
 
 def permute(Lists):
-  import operator
-  if Lists:
-    result = map(lambda I: (I,), Lists[0])
+	import operator
+	if Lists:
+		result = map(lambda I: (I,), Lists[0])
 
-    for list in Lists[1:]:
-      curr = []
-      for item in list:
-        new = map(operator.add, result, [(item,)]*len(result))
-        curr[len(curr):] = new
-      result = curr
-  else:
-    result = []
+		for list in Lists[1:]:
+			curr = []
+			for item in list:
+				new = map(operator.add, result, [(item,)]*len(result))
+				curr[len(curr):] = new
+			result = curr
+	else:
+		result = []
 
-  return result
+	return result
 
 # This version was written by Tim Peters and is somewhat faster,
 # especially for large numbers of small lists.
 def permute2(seqs):
-    n = len(seqs)
-    if n == 0:
-        return []
-    if n == 1:
-        return map(lambda i: (i,), seqs[0])
-    # find good splitting point
-    prods = []
-    prod = 1
-    for x in seqs:
-        prod = prod * len(x)
-        prods.append(prod)
-    for i in range(n):
-        if prods[i] ** 2 >= prod:
-            break
-    n = min(i + 1, n - 1)
-    a = permute2(seqs[:n])
-    b = permute2(seqs[n:])
-    sprayb = []
-    lena = len(a)
-    for x in b:
-        sprayb[len(sprayb):] = [x] * lena
-    import operator
-    return map(operator.add, a * len(b), sprayb)
+	n = len(seqs)
+	if n == 0:
+		return []
+	if n == 1:
+		return map(lambda i: (i,), seqs[0])
+	# find good splitting point
+	prods = []
+	prod = 1
+	for x in seqs:
+		prod = prod * len(x)
+		prods.append(prod)
+	for i in range(n):
+		if prods[i] ** 2 >= prod:
+			break
+	n = min(i + 1, n - 1)
+	a = permute2(seqs[:n])
+	b = permute2(seqs[n:])
+	sprayb = []
+	lena = len(a)
+	for x in b:
+		sprayb[len(sprayb):] = [x] * lena
+	import operator
+	return map(operator.add, a * len(b), sprayb)
 
 #
 # Debug funcs
@@ -150,42 +150,42 @@ def CopyrightDef(f):
 #======================================================================
 
 printf_mapping = {
-        'GLint':      ('%d','int'),
-        'GLshort':    ('%hd','short'),
-        'GLbyte':     ('%d','int'),
-        'GLubyte':    ('%u','unsigned'),
-        'GLuint':     ('%u','unsigned'),
-        'GLushort':   ('%hu','unsigned short'),
-        'GLenum':     ('%s','' ),
-        'GLfloat':    ('%f','float'),
-        'GLclampf':   ('%f','float'),
-        'GLdouble':   ('%f','float'),
-        'GLclampd':   ('%f','float'),
-        'GLbitfield': ('0x%x','int'),
-        'GLboolean':  ('%s',''),
-        'GLsizei':    ('%u','unsigned'),
-        'GLsizeiptrARB':    ('%u','unsigned'),
-        'GLintptrARB':    ('%u','unsigned')
+  'GLint':      ('%d','int'),
+  'GLshort':    ('%hd','short'),
+  'GLbyte':     ('%d','int'),
+  'GLubyte':    ('%u','unsigned'),
+  'GLuint':     ('%u','unsigned'),
+  'GLushort':   ('%hu','unsigned short'),
+  'GLenum':     ('%s','' ),
+  'GLfloat':    ('%f','float'),
+  'GLclampf':   ('%f','float'),
+  'GLdouble':   ('%f','float'),
+  'GLclampd':   ('%f','float'),
+  'GLbitfield': ('0x%x','int'),
+  'GLboolean':  ('%s',''),
+  'GLsizei':    ('%u','unsigned'),
+  'GLsizeiptrARB':    ('%u','unsigned'),
+  'GLintptrARB':    ('%u','unsigned')
 }
 
 # currently not used
 printf_pointer_mapping = {
-        'GLint *':      ('%d','int'),
-        'GLshort *':    ('%hd','short'),
-        'GLbyte *':     ('%d','int'),
-        'GLubyte *':    ('%u','unsigned'),
-        'GLuint *':     ('%u','unsigned'),
-        'GLushort *':   ('%hu','unsigned short'),
-        'GLenum *':     ('%s','' ),
-        'GLfloat *':    ('%f','float'),
-        'GLclampf *':   ('%f','float'),
-        'GLdouble *':   ('%f','float'),
-        'GLclampd *':   ('%f','float'),
-        'GLbitfield *': ('0x%x','int'),
-        'GLboolean *':  ('%s',''),
-        'GLsizeiptrARB':    ('%u','unsigned'),
-        'GLintptrARB':    ('%u','unsigned'),
-        'GLsizei *':    ('%u','unsigned')
+  'GLint *':      ('%d','int'),
+  'GLshort *':    ('%hd','short'),
+  'GLbyte *':     ('%d','int'),
+  'GLubyte *':    ('%u','unsigned'),
+  'GLuint *':     ('%u','unsigned'),
+  'GLushort *':   ('%hu','unsigned short'),
+  'GLenum *':     ('%s','' ),
+  'GLfloat *':    ('%f','float'),
+  'GLclampf *':   ('%f','float'),
+  'GLdouble *':   ('%f','float'),
+  'GLclampd *':   ('%f','float'),
+  'GLbitfield *': ('0x%x','int'),
+  'GLboolean *':  ('%s',''),
+  'GLsizeiptrARB':    ('%u','unsigned'),
+  'GLintptrARB':    ('%u','unsigned'),
+  'GLsizei *':    ('%u','unsigned')
 }
 
 #
@@ -205,8 +205,8 @@ limit_mapping = {
 	'GLushort': ([0, 65535]),
 	'GLclampf': ([-3.40282347e+38, 3.40282347e+38]),
 	'GLclampd': ([-1.7976931348623157e+308, 1.7976931348623157e+308]),
-        'GLsizeiptrARB': ([0]),
-        'GLintptrARB': ([0]),
+	'GLsizeiptrARB': ([0]),
+	'GLintptrARB': ([0]),
 	'GLboolean': ['GL_FALSE', 'GL_TRUE']
 }
 
@@ -227,8 +227,8 @@ range_mapping1 = {
 	'GLushort': ([0, 400]),
 	'GLclampf': ([-3.40282347e+3, 3.40282347e+8]),
 	'GLclampd': ([-1.7976931348623157e+3, 1.7976931348623157e+3]),
-        'GLsizeiptrARB': ([0]),
-        'GLintptrARB': ([0]),
+	'GLsizeiptrARB': ([0]),
+	'GLintptrARB': ([0]),
 	'GLboolean': ['GL_FALSE', 'GL_TRUE']
 }
 
@@ -246,8 +246,8 @@ range_mapping = {
 	'GLushort': ([5]),
 	'GLclampf': ([ 245.66]),
 	'GLclampd': ([1234.33]),
-        'GLsizeiptrARB': ([0]),
-        'GLintptrARB': ([0]),
+	'GLsizeiptrARB': ([0]),
+	'GLintptrARB': ([0]),
 	'GLboolean': ['GL_FALSE', 'GL_TRUE']
 }
 
@@ -380,30 +380,30 @@ def enableTex(f):
 
 void enableTex(void)
 {
-    glEnable(GL_TEXTURE_1D);
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_TEXTURE_3D);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_MAP1_COLOR_4);
-    glEnable(GL_MAP1_INDEX);
-    glEnable(GL_MAP1_NORMAL);
-    glEnable(GL_MAP1_TEXTURE_COORD_1);
-    glEnable(GL_MAP1_TEXTURE_COORD_2);
-    glEnable(GL_MAP1_TEXTURE_COORD_3);
-    glEnable(GL_MAP1_TEXTURE_COORD_4);
-    glEnable(GL_MAP1_VERTEX_3);
-    glEnable(GL_MAP1_VERTEX_4);
-    glEnable(GL_MAP2_COLOR_4);
-    glEnable(GL_MAP2_INDEX);
-    glEnable(GL_MAP2_NORMAL);
-    glEnable(GL_MAP2_TEXTURE_COORD_1);
-    glEnable(GL_MAP2_TEXTURE_COORD_2);
-    glEnable(GL_MAP2_TEXTURE_COORD_3);
-    glEnable(GL_MAP2_TEXTURE_COORD_4);
-    glEnable(GL_MAP2_VERTEX_3);
-    glEnable(GL_MAP2_VERTEX_4);
-    glFrontFace(GL_CCW);
-    glActiveTextureARB(GL_TEXTURE0_ARB);
+	glEnable(GL_TEXTURE_1D);
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_TEXTURE_3D);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_MAP1_COLOR_4);
+	glEnable(GL_MAP1_INDEX);
+	glEnable(GL_MAP1_NORMAL);
+	glEnable(GL_MAP1_TEXTURE_COORD_1);
+	glEnable(GL_MAP1_TEXTURE_COORD_2);
+	glEnable(GL_MAP1_TEXTURE_COORD_3);
+	glEnable(GL_MAP1_TEXTURE_COORD_4);
+	glEnable(GL_MAP1_VERTEX_3);
+	glEnable(GL_MAP1_VERTEX_4);
+	glEnable(GL_MAP2_COLOR_4);
+	glEnable(GL_MAP2_INDEX);
+	glEnable(GL_MAP2_NORMAL);
+	glEnable(GL_MAP2_TEXTURE_COORD_1);
+	glEnable(GL_MAP2_TEXTURE_COORD_2);
+	glEnable(GL_MAP2_TEXTURE_COORD_3);
+	glEnable(GL_MAP2_TEXTURE_COORD_4);
+	glEnable(GL_MAP2_VERTEX_3);
+	glEnable(GL_MAP2_VERTEX_4);
+	glFrontFace(GL_CCW);
+	glActiveTextureARB(GL_TEXTURE0_ARB);
 }
 
 	""")
@@ -415,32 +415,32 @@ static GLuint mid1,mid2,mid3;
 
 void makeStripeImage( GLubyte *stripeImage)
 {  
-   int j;
+	int j;
  
-   glGenTextures(1, &mid1);
-   glGenTextures(1, &mid2);
-   glGenTextures(1, &mid3);
-   glBindTexture(GL_TEXTURE_1D, mid1);
-   glBindTexture(GL_TEXTURE_2D, mid2);
-   glBindTexture(GL_TEXTURE_3D, mid3);
+	glGenTextures(1, &mid1);
+	glGenTextures(1, &mid2);
+	glGenTextures(1, &mid3);
+	glBindTexture(GL_TEXTURE_1D, mid1);
+	glBindTexture(GL_TEXTURE_2D, mid2);
+	glBindTexture(GL_TEXTURE_3D, mid3);
 
-   for (j = 0; j < 32; j++) {
-      stripeImage[4*j] = (GLubyte) ((j<=4) ? 255 : 0);
-      stripeImage[4*j+1] = (GLubyte) ((j>4) ? 255 : 0);
-      stripeImage[4*j+2] = (GLubyte) 0;
-      stripeImage[4*j+3] = (GLubyte) 255;
-   }
-   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-   glPixelStorei(GL_PACK_ALIGNMENT, 1);
-   glEnable(GL_TEXTURE_1D);
-   glEnable(GL_TEXTURE_2D);
-   glEnable(GL_TEXTURE_3D);
+	for (j = 0; j < 32; j++) {
+		stripeImage[4*j] = (GLubyte) ((j<=4) ? 255 : 0);
+		stripeImage[4*j+1] = (GLubyte) ((j>4) ? 255 : 0);
+		stripeImage[4*j+2] = (GLubyte) 0;
+		stripeImage[4*j+3] = (GLubyte) 255;
+	}
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glEnable(GL_TEXTURE_1D);
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_TEXTURE_3D);
 
-   glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
-   glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB, 8, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
+	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB, 8, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
 
-}  
+}
 	""")
 
 
@@ -451,29 +451,29 @@ static GLuint sid1,sid2,sid3;
 
 void genTexture( GLubyte *stripeImage)
 {  
-   int j;
+	int j;
  
-   glGenTextures(1, &sid1);
-   glGenTextures(1, &sid2);
-   glGenTextures(1, &sid3);
-   glBindTexture(GL_TEXTURE_1D, sid1);
-   glBindTexture(GL_TEXTURE_2D, sid2);
-   glBindTexture(GL_TEXTURE_3D, sid3);
+	glGenTextures(1, &sid1);
+	glGenTextures(1, &sid2);
+	glGenTextures(1, &sid3);
+	glBindTexture(GL_TEXTURE_1D, sid1);
+	glBindTexture(GL_TEXTURE_2D, sid2);
+	glBindTexture(GL_TEXTURE_3D, sid3);
 
-   for (j = 0; j < 32; j++) {
-      stripeImage[4*j] = (GLubyte) ((j<=4) ? 255 : 0);
-      stripeImage[4*j+1] = (GLubyte) ((j>4) ? 255 : 0);
-      stripeImage[4*j+2] = (GLubyte) 0;
-      stripeImage[4*j+3] = (GLubyte) 255;
-   }
-   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-   glPixelStorei(GL_PACK_ALIGNMENT, 1);
-   glEnable(GL_TEXTURE_1D);
-   glEnable(GL_TEXTURE_2D);
-   glEnable(GL_TEXTURE_3D);
-   glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
-   glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB, 8, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
+	for (j = 0; j < 32; j++) {
+		stripeImage[4*j] = (GLubyte) ((j<=4) ? 255 : 0);
+		stripeImage[4*j+1] = (GLubyte) ((j>4) ? 255 : 0);
+		stripeImage[4*j+2] = (GLubyte) 0;
+		stripeImage[4*j+3] = (GLubyte) 255;
+	}
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glEnable(GL_TEXTURE_1D);
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_TEXTURE_3D);
+	glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB, 8, 8, 8, 0, GL_RGB, GL_UNSIGNED_BYTE, (const GLvoid *)stripeImage);
 }  
 	""")
 
@@ -507,9 +507,9 @@ def initMap1(f):
 
 void initMap1(double *parray)
 {
-    int i;
+	int i;
 
-    static double points[10 * 4] = {
+	static double points[10 * 4] = {
 	-0.5, 0.0, 0.0, 1.0,
 	-0.4, 0.5, 0.0, 1.0,
 	-0.3, -0.5, 0.0, 1.0,
@@ -520,12 +520,12 @@ void initMap1(double *parray)
 	0.2, 0.5, 0.0, 1.0,
 	0.3, -0.5, 0.0, 1.0,
 	0.4, 0.0, 0.0, 1.0,
-    };
+	};
 
-    glFrontFace(GL_CCW);
-    glEnable(GL_DEPTH_TEST);
+	glFrontFace(GL_CCW);
+	glEnable(GL_DEPTH_TEST);
 
-    for (i = 0; i < 40; i++)
+	for (i = 0; i < 40; i++)
 	parray[i] = points[i];
 }
 	""")
@@ -583,36 +583,36 @@ def initBuffer(f):
 # 
 
 def GenParmSetLists(func_name):
-        pset = apiutil.ParamSet(func_name)
+	pset = apiutil.ParamSet(func_name)
 	params = apiutil.Parameters(func_name)
 	for index in range(len(params)):
 		(name, type, vecSize) = params[index]
 	
-        returnlist = []
+	returnlist = []
 	rlist = []
-        if pset != []:
+	if pset != []:
 		# number of disjoint sets
 			
-                for i in range(len(pset)):
+		for i in range(len(pset)):
 			parset = pset[i]
 			namelist = parset[0]
 			setlist = parset[1:]
 			for j in range(len(namelist)):
 				returnlist.append((namelist[j],setlist[j]))
 			rlist.append(returnlist)
-        return rlist
+	return rlist
+
 
 
 def GenParmLists(func_name,f):
 
 	# Fetch the parameter properties
-
-        params = apiutil.Parameters(func_name)
-        return_type = apiutil.ReturnType(func_name)
-        if return_type != 'void':
-                # Yet another gross hack for glGetString
-                if string.find( return_type, '*' ) == -1:
-                        return_type = return_type + " *"
+	params = apiutil.Parameters(func_name)
+	return_type = apiutil.ReturnType(func_name)
+	if return_type != 'void':
+		# Yet another gross hack for glGetString
+		if string.find( return_type, '*' ) == -1:
+			return_type = return_type + " *"
 
 
 	#print ""
@@ -804,6 +804,7 @@ def GenParmLists(func_name,f):
 			#print argLists[i]
 		multiList.append(argLists)
 	return multiList
+
 
 def PerformAction(func_name,f):
 	action = apiutil.ParamAction(func_name)
@@ -1222,7 +1223,7 @@ def PrintHeaders (f):
 	CopyrightC(f)
 
 	f.write( "\n")
-	f.write( "/* DO NOT EDIT - THIS FILE GENERATED BY THE opcodes.py SCRIPT */\n")
+	f.write( "/* DO NOT EDIT - THIS FILE GENERATED BY THE packertest.py SCRIPT */\n")
 	f.write( "\n")
 	f.write( "\n")
 
@@ -1243,18 +1244,16 @@ extern int verbose;
 void printError(char *name);
 """)
 
-def PrintDynProto(func_name,f):
-        if apiutil.FindSpecial( "packertest", func_name ):
-                return
+def PrintDynProto(func_name, f):
+	if apiutil.FindSpecial( "packertest", func_name ):
+		return
 
 	if not allfuncs:
-        	if not apiutil.HasPackOpcode(func_name):
-                	return
+		if not apiutil.HasPackOpcode(func_name):
+			return
 
-        pointers_ok = 0
-
-
-        params = apiutil.Parameters(func_name)
+	pointers_ok = 0
+	params = apiutil.Parameters(func_name)
 
 	if "Chromium" ==  apiutil.Category(func_name):
 		is_extended = 1
@@ -1265,24 +1264,25 @@ def PrintDynProto(func_name,f):
 		f.write( "typedef %s (APIENTRY *gl%s_t) (%s);\n" % (return_type,func_name,apiutil.MakeDeclarationString(params)))
 		f.write( "static gl%s_t %s_func;\n" % (func_name,func_name))
 
+
 #
 # Generate function prototypes
 #
 def PrintProto(func_name,f,no_special):
 	if no_special == 1:
-        	if apiutil.FindSpecial( "packertest", func_name ):
-                	return
+		if apiutil.FindSpecial( "packertest", func_name ):
+			return
 
 	if not allfuncs:
-        	if not apiutil.HasPackOpcode(func_name):
-                	return
+		if not apiutil.HasPackOpcode(func_name):
+			return
 
-        pointers_ok = 0
+	pointers_ok = 0
 
-        return_type = apiutil.ReturnType(func_name)
-        params = apiutil.Parameters(func_name)
+	return_type = apiutil.ReturnType(func_name)
+	params = apiutil.Parameters(func_name)
 
-	if "Chromium" ==  apiutil.Category(func_name):
+	if "Chromium" == apiutil.Category(func_name):
 		is_extended = 1
 	else:
 		is_extended = 0
@@ -1290,18 +1290,19 @@ def PrintProto(func_name,f,no_special):
 	if is_extended:
 		f.write( "gl%s gl%s_func = (gl%s_t)crGetProcAddress(\"gl%s\");\n" % (func_name,func_name,func_name,func_name))
 
-        if return_type != 'void':
-                # Yet another gross hack for glGetString
-                if string.find( return_type, '*' ) == -1:
-                        return_type = return_type + " *"
+	if return_type != 'void':
+		# Yet another gross hack for glGetString
+		if string.find( return_type, '*' ) == -1:
+			return_type = return_type + " *"
 
-        #if "get" in apiutil.Properties(func_name):
-                #pointers_ok = 1
+	#if "get" in apiutil.Properties(func_name):
+			#pointers_ok = 1
 
-        if func_name == 'Writeback':
-                pointers_ok = 1
+	if func_name == 'Writeback':
+		pointers_ok = 1
 
-        f.write( 'void crPackTest%s (void);\n' % func_name)
+	f.write( 'void crPackTest%s (void);\n' % func_name)
+
 
 #
 # Generate the body of the test functions
@@ -1309,30 +1310,30 @@ def PrintProto(func_name,f,no_special):
 def PrintBodies(func_name,f,no_special, gentables):
 	#print "func_name = %s  no_special = %d" % (func_name, no_special)
 	if no_special == 1:
-        	if apiutil.FindSpecial( "packertest", func_name ):
-                	return
+		if apiutil.FindSpecial( "packertest", func_name ):
+			return
 
 	if not allfuncs:
-        	if not apiutil.HasPackOpcode(func_name):
-                	return
+		if not apiutil.HasPackOpcode(func_name):
+			return
 
-        pointers_ok = 0
+	pointers_ok = 0
 
-        return_type = apiutil.ReturnType(func_name)
-        params = apiutil.Parameters(func_name)
+	return_type = apiutil.ReturnType(func_name)
+	params = apiutil.Parameters(func_name)
 
-        if "get" in apiutil.Properties(func_name):
-                pointers_ok = 1
+	if "get" in apiutil.Properties(func_name):
+		pointers_ok = 1
 
-        if func_name == 'Writeback':
-                pointers_ok = 1
+	if func_name == 'Writeback':
+		pointers_ok = 1
 
 	#print "func_name = %s pointers_ok = %d no_special = %d" % (func_name, pointers_ok,no_special)
 	#print params
 	if gentables == 1:
-        	PrintTableFunc( func_name, params,  pointers_ok ,f)
+		PrintTableFunc( func_name, params, pointers_ok ,f)
 	else:
-        	PrintFunc( func_name, params,  pointers_ok ,f)
+		PrintFunc( func_name, params, pointers_ok ,f)
 
 
 
@@ -1506,17 +1507,17 @@ int main(int argc, char *argv[])
 #
 def GenCalls(func_name,f,no_special):
 	if no_special == 1:
-        	if apiutil.FindSpecial( "packertest", func_name ):
-                	return
+		if apiutil.FindSpecial( "packertest", func_name ):
+			return
 
 	if not allfuncs:
-        	if not apiutil.HasPackOpcode(func_name):
-                	return
+		if not apiutil.HasPackOpcode(func_name):
+			return
 
-        pointers_ok = 0
+	pointers_ok = 0
 
-        return_type = apiutil.ReturnType(func_name)
-        params = apiutil.Parameters(func_name)
+	return_type = apiutil.ReturnType(func_name)
+	params = apiutil.Parameters(func_name)
 
 	if "Chromium" ==  apiutil.Category(func_name):
 		is_extended = 1
@@ -1526,21 +1527,22 @@ def GenCalls(func_name,f,no_special):
 	if is_extended:
 		f.write( "gl%s gl%s_func = (gl%s_t)crGetProcAddress(\"gl%s\");\n" % (func_name,func_name,func_name,func_name))
 
-        if return_type != 'void':
-                # Yet another gross hack for glGetString
-                if string.find( return_type, '*' ) == -1:
-                        return_type = return_type + " *"
+	if return_type != 'void':
+		# Yet another gross hack for glGetString
+		if string.find( return_type, '*' ) == -1:
+			return_type = return_type + " *"
 
-        #if "get" in apiutil.Properties(func_name):
-                #pointers_ok = 1
+	#if "get" in apiutil.Properties(func_name):
+		#pointers_ok = 1
 
-        if func_name == 'Writeback':
-                pointers_ok = 1
+	if func_name == 'Writeback':
+		pointers_ok = 1
 
 	#print "func_name = %s pointers_ok = %d" % (func_name, pointers_ok)
 	#print params
-        f.write( '\tcrPackTest%s ();\n' % func_name)
-        #f.write( '\tglutSwapBuffers ();\n')
+		f.write( '\tcrPackTest%s ();\n' % func_name)
+	#f.write( '\tglutSwapBuffers ();\n')
+
 
 def EndGenCalls(f):
 	f.write("\tglFinish();\n\tif(errChk)\n\t\tprintError(\"glFinish()\");\n")
@@ -1574,25 +1576,25 @@ def PrintPart3(file):
 
 	i = 0
 	for fname in special_funcs:
-		GenCalls(fname,file,0)
+		GenCalls(fname, file, 0)
 		i = i + 1
 		if i % 20 == 0:
-        		file.write( '\tglutSwapBuffers ();\n')
+			file.write( '\tglutSwapBuffers ();\n')
 
 	for func_name in keys:
-		GenCalls(func_name,file,1)
+		GenCalls(func_name, file, 1)
 		i = i + 1
 		if i % 20 == 0:
-        		file.write( '\tglutSwapBuffers ();\n')
+			file.write( '\tglutSwapBuffers ();\n')
 
 	for fname in special_keys:
-		GenCalls(fname,file,0)
+		GenCalls(fname, file, 0)
 		i = i + 1
 		if i % 20 == 0:
-        		file.write( '\tglutSwapBuffers ();\n')
+			file.write( '\tglutSwapBuffers ();\n')
 
 
-  	file.write( '\tglutSwapBuffers ();\n')
+	file.write( '\tglutSwapBuffers ();\n')
 	EndGenCalls(file)
 	printTail(file)
 
@@ -1622,7 +1624,7 @@ if __name__ == "__main__":
 	gentables = 0
 	addpath = []
 	exclude = []
-	for o, a in opts:
+	for (o, a) in opts:
 		if o == '-a':
 			allfuncs = 1
 		if o == '-d':
@@ -1659,14 +1661,15 @@ if __name__ == "__main__":
 	d = []
 	if allfuncs == 1:
 		funcs = apiutil.GetFunctionDict("../../glapi_parser/APIspec.txt")
-        	keys = []
+		keys = []
 		for key in funcs.keys():
 			keys.append(key)
-        	keys.sort()
+		keys.sort()
 
 	else:
 		keys = apiutil.GetDispatchedFunctions("../../glapi_parser/APIspec.txt")
 	nkeys = len(keys)
+	assert nkeys > 0
 	file = open("packertest.h","w")
 	#
 	# Generate prototypes for dynanimically loaded funcs
@@ -1697,7 +1700,7 @@ if __name__ == "__main__":
 	for func_name in keys:
 		if debug:
 			print "Generating for %s" % func_name
-		if i  % 25 == 0:
+		if i % 25 == 0:
 			file.close()
 			fname = "packertest" + str(i) + ".c"
 			file = open(fname,"w")
