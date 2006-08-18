@@ -15,7 +15,8 @@ extended_params = {}
 
 input = open( "state_get.txt", 'r' )
 for line in input.readlines():
-	if line[0] == '#': continue
+	if line[0] == '#':
+		continue
 	match = line_re.match( line )
 	if match:
 		type = match.group(1)
@@ -25,7 +26,8 @@ for line in input.readlines():
 
 input = open( "state_extensions_get.txt", 'r' )
 for line in input.readlines():
-	if line[0] == '#': continue
+	if line[0] == '#':
+		continue
 	match = extensions_line_re.match( line )
 	if match:
 		type = match.group(1)
@@ -35,70 +37,70 @@ for line in input.readlines():
 		extended_params[pname] = ( type, ifdef, fields )
 
 convert = {
-	       'GLenum' : {
+		   'GLenum' : {
 			  'Boolean' : '(GLboolean) ( %s != 0 )',
 			  'Double'  : '(GLdouble) %s',
 			  'Float'   : '(GLfloat) %s',
 			  'Integer' : '(GLint) %s'
 			 },
-	       'GLboolean' : {
+		   'GLboolean' : {
 			  'Boolean' : '(GLboolean) ( %s != 0 )',
 			  'Double'  : '(GLdouble) %s',
 			  'Float'   : '(GLfloat) %s',
 			  'Integer' : '(GLint) %s'
 			 },
-	       'GLint'  : {
+		   'GLint'  : {
 			  'Boolean' : '(GLboolean) ( %s != 0 )',
 			  'Double'  : '(GLdouble) %s',
 			  'Float'   : '(GLfloat) %s',
 			  'Integer' : '(GLint) %s'
 			 },
-	       'GLuint'  : {
+		   'GLuint'  : {
 			  'Boolean' : '(GLboolean) ( %s != 0 )',
 			  'Double'  : '(GLdouble) %s',
 			  'Float'   : '(GLfloat) %s',
 			  'Integer' : '(GLint) %s'
 			 },
-	       'GLfloat' : {
+		   'GLfloat' : {
 			  'Boolean' : '(GLboolean) ( %s != 0.0f )',
 			  'Double'  : '(GLdouble) %s',
 			  'Float'   : '%s',
 			  'Integer' : '(GLint) %s'
 			 },
-	       'GLdouble' : {
+		   'GLdouble' : {
 			  'Boolean' : '(GLboolean) ( %s != 0.0 )',
 			  'Double'  : '%s',
 			  'Float'   : '(GLfloat) %s',
 			  'Integer' : '(GLint) %s'
 			 },
-	       'GLdefault' : {
+		   'GLdefault' : {
 			  'Boolean' : '(GLboolean) ( %s != (GLdefault) 0.0 )',
 			  'Double'  : '(GLdouble) %s',
 			  'Float'   : '(GLfloat) %s',
 			  'Integer' : '(GLint) %s'
 			 },
-	       'GLclampd' : {
+		   'GLclampd' : {
 			  'Boolean' : '(GLboolean) ( %s != 0.0 )',
 			  'Double'  : '%s',
 			  'Float'   : '(GLfloat) %s',
 			  'Integer' : '__clampd_to_int(%s)'
 			 },
-	       'GLclampf' : {
+		   'GLclampf' : {
 			  'Boolean' : '(GLboolean) ( %s != 0.0f )',
 			  'Double'  : '(GLdouble) %s',
 			  'Float'   : '%s',
 			  'Integer' : '__clampf_to_int(%s)'
 			 }
-	      }
+		  }
 
 types = [ "Boolean", "Double", "Float", "Integer" ]
 
 ctypes = { 
-	      'Boolean' : 'GLboolean',
-	      'Double'  : 'GLdouble',
-	      'Float'   : 'GLfloat',
-	      'Integer' : 'GLint'
-	     }
+		  'Boolean' : 'GLboolean',
+		  'Double'  : 'GLdouble',
+		  'Float'   : 'GLfloat',
+		  'Integer' : 'GLint'
+		 }
 
 apiutil.CopyrightC()
 
@@ -143,7 +145,7 @@ header = """
 	}
 
 	if ( pname == GL_CURRENT_INDEX || pname == GL_CURRENT_COLOR ||
-	    pname == GL_CURRENT_SECONDARY_COLOR_EXT ||
+		pname == GL_CURRENT_SECONDARY_COLOR_EXT ||
 		pname == GL_CURRENT_FOG_COORDINATE_EXT ||
 		pname == GL_CURRENT_NORMAL || pname == GL_EDGE_FLAG ||
 		pname == GL_CURRENT_TEXTURE_COORDS )
@@ -167,7 +169,7 @@ for rettype in types:
 
 	keys = params.keys()
 	keys.sort()
-  	for pname in keys:
+	for pname in keys:
 		print '\t\tcase %s:' % pname
 		(srctype,fields) = params[pname]
 		try:
@@ -184,7 +186,7 @@ for rettype in types:
 
 	keys = extended_params.keys();
 	keys.sort()
-  	for pname in keys:
+	for pname in keys:
 		(srctype,ifdef,fields) = extended_params[pname]
 		ext = ifdef[3:]  # the extension name with the "GL_" prefix removed
 		#print '#ifdef %s' % ifdef
@@ -216,7 +218,7 @@ for rettype in types:
 		print "\t\t\tbreak;"
 		#print '#endif /* %s */' % ifdef
 		print '#endif /* CR_%s */' % ext
-  
+
 	print '\t\tdefault:'
 	print '\t\t\tcrStateError(__LINE__, __FILE__, GL_INVALID_ENUM, "glGet: Unknown enum: 0x%x", pname);'
 	print '\t\t\treturn;'
