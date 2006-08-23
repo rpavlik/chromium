@@ -46,9 +46,11 @@ packspu_MapBufferARB( GLenum target, GLenum access )
 	}
 	bufObj->pointer = buffer;
 
-	/* get current buffer data from server if necessary */
-	if (bufObj->access != GL_WRITE_ONLY_ARB)
-		packspu_GetBufferSubDataARB(target, 0, bufObj->size, buffer);
+	/* Get current buffer data from server.
+	 * Ideally, if we could detect that the entire buffer was being
+	 * rewritten, we wouldn't have to fetch the current data here.
+	 */
+	packspu_GetBufferSubDataARB(target, 0, bufObj->size, buffer);
 
 	return buffer;
 }
