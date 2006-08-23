@@ -51,8 +51,9 @@ VECTOR(GLushort,GLvectorus);
 VECTOR(GLshort,GLvectors);
 VECTOR(GLint,GLvectori);
 VECTOR(GLuint,GLvectorui);
-VECTOR(GLfloat,GLvectorf);
-VECTOR(GLdouble,GLvectord);
+/* These two are defined in cr_matrix.h */
+/* VECTOR(GLfloat,GLvectorf); */
+/* VECTOR(GLdouble,GLvectord); */
 COLOR(GLdefault,GLcolor);
 COLOR(GLenum,GLcolore);
 COLOR(GLubyte,GLcolorub);

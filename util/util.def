@@ -156,8 +156,12 @@ crMatrixIsOrthographic
 crMatrixCopy
 crMatrixMultiply
 crMatrixInvertTranspose
+crMatrixTranspose
 crMatrixTranslate
 crMatrixRotate
 crMatrixScale
 crMatrixFrustum
 crMatrixOrtho
+crMatrixTransformPointf
+crMatrixTransformPointd
+

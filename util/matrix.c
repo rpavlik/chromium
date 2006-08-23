@@ -192,7 +192,6 @@ crMatrixMultiply(CRmatrix *p, const CRmatrix *a, const CRmatrix *b)
 }
 
 
-#if 0
 void
 crMatrixTransformPointf(const CRmatrix *m, GLvectorf *p) 
 {
@@ -221,7 +220,6 @@ crMatrixTransformPointd(const CRmatrix *m, GLvectord *p)
 	p->z = (double) (m->m02*x + m->m12*y + m->m22*z + m->m32*w);
 	p->w = (double) (m->m03*x + m->m13*y + m->m23*z + m->m33*w);
 }
-#endif
 
 
 void
@@ -344,6 +342,18 @@ crMatrixInvertTranspose(CRmatrix *inv, const CRmatrix *mat)
 	inv->m23 = cof32 * inv_det; inv->m33 = cof33 * inv_det;
 }
 
+void 
+crMatrixTranspose(CRmatrix *t, const CRmatrix *m)
+{
+  CRmatrix c;
+
+	c.m00 = m->m00;  c.m10 = m->m01;  c.m20 = m->m02;  c.m30 = m->m03;
+	c.m01 = m->m10;  c.m11 = m->m11;  c.m21 = m->m12;  c.m31 = m->m13;
+	c.m02 = m->m20;  c.m12 = m->m21;  c.m22 = m->m22;  c.m32 = m->m23;
+	c.m03 = m->m30;  c.m13 = m->m31;  c.m23 = m->m32;  c.m33 = m->m33;
+
+	*t = c;
+}
 
 /*
  * Apply a translation to the given matrix.

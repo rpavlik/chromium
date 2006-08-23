@@ -9,7 +9,10 @@
 
 import math
 
-
+def det3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3):
+  return (a1 * (b2 * c3 - b3 * c2) + 
+       	  b1 * (c2 * a3 - a2 * c3) + 
+       	  c1 * (a2 * b3 - a3 * b2))
 
 class CRMatrix:
 	"""4x4 matrix transformation class.
@@ -287,6 +290,118 @@ class CRMatrix:
 			isPerspective = 0
 		return (left, right, bottom, top, near, far, isPerspective)
 
+	def Invert(self):
+		"""Invert this matrix"""
+		m00 = self.Get(0, 0)
+		m01 = self.Get(1, 0)
+		m02 = self.Get(2, 0)
+		m03 = self.Get(3, 0)
+
+		m10 = self.Get(0, 1)
+		m11 = self.Get(1, 1)
+		m12 = self.Get(2, 1)
+		m13 = self.Get(3, 1)
+
+		m20 = self.Get(0, 2)
+		m21 = self.Get(1, 2)
+		m22 = self.Get(2, 2)
+		m23 = self.Get(3, 2)
+		
+		m30 = self.Get(0, 3)
+		m31 = self.Get(1, 3)
+		m32 = self.Get(2, 3)
+		m33 = self.Get(3, 3)
+    
+		cof00 =  det3x3( m11, m12, m13,
+                     m21, m22, m23,
+                     m31, m32, m33 )
+
+		cof01 = -det3x3( m12, m13, m10,
+                     m22, m23, m20,
+                     m32, m33, m30 )
+
+		cof02 =  det3x3( m13, m10, m11,
+                     m23, m20, m21,
+                     m33, m30, m31 )
+
+		cof03 = -det3x3( m10, m11, m12,
+                     m20, m21, m22,
+                     m30, m31, m32 )
+
+
+		inv_det = 1.0 / ( m00 * cof00 + m01 * cof01 + m02 * cof02 + m03 * cof03 )
+
+
+		cof10 = -det3x3( m21, m22, m23,
+                     m31, m32, m33,
+                     m01, m02, m03 )
+
+		cof11 =  det3x3( m22, m23, m20,
+                     m32, m33, m30,
+                     m02, m03, m00 )
+
+		cof12 = -det3x3( m23, m20, m21,
+                     m33, m30, m31,
+                     m03, m00, m01 )
+
+		cof13 =  det3x3( m20, m21, m22,
+                     m30, m31, m32,
+                     m00, m01, m02 )
+
+
+		cof20 =  det3x3( m31, m32, m33,
+                     m01, m02, m03,
+                     m11, m12, m13 )
+
+		cof21 = -det3x3( m32, m33, m30,
+                     m02, m03, m00,
+                     m12, m13, m10 )
+
+		cof22 =  det3x3( m33, m30, m31,
+                     m03, m00, m01,
+                     m13, m10, m11 )
+
+		cof23 = -det3x3( m30, m31, m32,
+                     m00, m01, m02,
+                     m10, m11, m12 )
+
+
+		cof30 = -det3x3( m01, m02, m03,
+                     m11, m12, m13,
+                     m21, m22, m23 )
+
+		cof31 =  det3x3( m02, m03, m00,
+                     m12, m13, m10,
+                     m22, m23, m20 )
+
+		cof32 = -det3x3( m03, m00, m01,
+                     m13, m10, m11,
+                     m23, m20, m21 )
+
+		cof33 =  det3x3( m00, m01, m02,
+                     m10, m11, m12,
+                     m20, m21, m22 )
+
+		self.Set(0, 0, cof00 * inv_det)
+		self.Set(0, 1, cof01 * inv_det)
+		self.Set(0, 2, cof02 * inv_det)
+		self.Set(0, 3, cof03 * inv_det)
+
+		self.Set(1, 0, cof10 * inv_det)
+		self.Set(1, 1, cof11 * inv_det)
+		self.Set(1, 2, cof12 * inv_det)
+		self.Set(1, 3, cof13 * inv_det)
+
+		self.Set(2, 0, cof20 * inv_det)
+		self.Set(2, 1, cof21 * inv_det)
+		self.Set(2, 2, cof22 * inv_det)
+		self.Set(2, 3, cof23 * inv_det)
+
+		self.Set(3, 0, cof30 * inv_det)
+		self.Set(3, 1, cof31 * inv_det)
+		self.Set(3, 2, cof32 * inv_det)
+		self.Set(3, 3, cof33 * inv_det)
+
 
 if __name__ == "__main__":
 	# unit test
@@ -315,4 +430,14 @@ if __name__ == "__main__":
 	(l1, r1, b1, t1, n1, f1, p) = p.DecomposeProjection()
 	print "frustum in:  %f, %f, %f, %f, %f, %f" % (l0, r0, b0, t0, n0, f0)
 	print "frustum out: %f, %f, %f, %f, %f, %f" % (l1, r1, b1, t1, n1, f1)
+
+	p = CRMatrix()
+	p.Load([12, 57, 58, 111, -54, 45, -1544, 554, -415, 121, 4, 55, 1, 44, -77, -1])
+	q = CRMatrix()
+	q.Load(p.ToList())
+	q.Invert();
+	q.Multiply(p.ToList())
+	print "\np*p^-1 = "
+	q.Print()
+	
 

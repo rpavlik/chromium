@@ -2,6 +2,8 @@
 #ifndef CR_MATRIX_H
 #define CR_MATRIX_H
 
+#include "chromium.h"
+
 /*
  * Note: m[col][row] matches OpenGL's column-major memory layout
  */
@@ -11,6 +13,9 @@ typedef struct {
 	float m20, m21, m22, m23;
 	float m30, m31, m32, m33;
 } CRmatrix;
+
+typedef struct { GLfloat x,y,z,w; } GLvectorf;
+typedef struct { GLdouble x,y,z,w; } GLvectord;
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,16 +54,17 @@ crMatrixCopy(CRmatrix *dest, const CRmatrix *src);
 extern void
 crMatrixMultiply(CRmatrix *p, const CRmatrix *a, const CRmatrix *b);
 
-#if 0
 extern void
 crMatrixTransformPointf(const CRmatrix *m, GLvectorf *p);
 
 extern void
 crMatrixTransformPointd(const CRmatrix *m, GLvectord *p);
-#endif
 
 extern void
 crMatrixInvertTranspose(CRmatrix *inv, const CRmatrix *mat);
+
+extern void 
+crMatrixTranspose(CRmatrix *t, const CRmatrix *m);
 
 extern void
 crMatrixTranslate(CRmatrix *m, float x, float y, float z);

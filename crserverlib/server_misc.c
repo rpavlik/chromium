@@ -119,10 +119,28 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 			const GLfloat *v = (const GLfloat *) values;
 			const int eye = v[1] == 0.0 ? 0 : 1;
 			crMatrixInitFromFloats(&cr_server.viewMatrix[eye], v + 2);
-			/*
-			printf("Got SERVER_VIEW Matrix %d\n", eye);
-			crMatrixPrint("view", &cr_server.viewMatrix[eye]);
-			*/
+			
+			crDebug("Got SERVER_VIEW Matrix \n" 
+							"  %f %f %f %f\n"
+							"  %f %f %f %f\n"
+							"  %f %f %f %f\n"
+							"  %f %f %f %f\n",
+							cr_server.viewMatrix[eye].m00,
+							cr_server.viewMatrix[eye].m10,
+							cr_server.viewMatrix[eye].m20,
+							cr_server.viewMatrix[eye].m30,
+							cr_server.viewMatrix[eye].m01,
+							cr_server.viewMatrix[eye].m11,
+							cr_server.viewMatrix[eye].m21,
+							cr_server.viewMatrix[eye].m31,
+							cr_server.viewMatrix[eye].m02,
+							cr_server.viewMatrix[eye].m12,
+							cr_server.viewMatrix[eye].m22,
+							cr_server.viewMatrix[eye].m32,
+							cr_server.viewMatrix[eye].m03,
+							cr_server.viewMatrix[eye].m13,
+							cr_server.viewMatrix[eye].m23,
+							cr_server.viewMatrix[eye].m33);
 		}
 		cr_server.viewOverride = GL_TRUE;
 		break;
@@ -139,10 +157,48 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 			const GLfloat *v = (const GLfloat *) values;
 			const int eye = v[1] == 0.0 ? 0 : 1;
 			crMatrixInitFromFloats(&cr_server.projectionMatrix[eye], v + 2);
-			/*
-			printf("Got SERVER_PROJ Matrix %d\n", eye);
-			crMatrixPrint("proj", &cr_server.projectionMatrix[eye]);
-			*/
+      
+			crDebug("Got SERVER_PROJ Matrix \n" 
+							"  %f %f %f %f\n"
+							"  %f %f %f %f\n"
+							"  %f %f %f %f\n"
+							"  %f %f %f %f\n",
+							cr_server.projectionMatrix[eye].m00,
+							cr_server.projectionMatrix[eye].m10,
+							cr_server.projectionMatrix[eye].m20,
+							cr_server.projectionMatrix[eye].m30,
+							cr_server.projectionMatrix[eye].m01,
+							cr_server.projectionMatrix[eye].m11,
+							cr_server.projectionMatrix[eye].m21,
+							cr_server.projectionMatrix[eye].m31,
+							cr_server.projectionMatrix[eye].m02,
+							cr_server.projectionMatrix[eye].m12,
+							cr_server.projectionMatrix[eye].m22,
+							cr_server.projectionMatrix[eye].m32,
+							cr_server.projectionMatrix[eye].m03,
+							cr_server.projectionMatrix[eye].m13,
+							cr_server.projectionMatrix[eye].m23,
+							cr_server.projectionMatrix[eye].m33);
+
+			if (cr_server.projectionMatrix[eye].m33 == 0.0f) {
+				float x = cr_server.projectionMatrix[eye].m00;
+				float y = cr_server.projectionMatrix[eye].m11;
+				float a = cr_server.projectionMatrix[eye].m20;
+				float b = cr_server.projectionMatrix[eye].m21;
+				float c = cr_server.projectionMatrix[eye].m22;
+				float d = cr_server.projectionMatrix[eye].m32;
+				float znear = -d / (1.0f - c);
+				float zfar = (c - 1.0f) * znear / (c + 1.0f);
+				float left = znear * (a - 1.0f) / x;
+				float right = 2.0f * znear / x + left;
+				float bottom = znear * (b - 1.0f) / y;
+			  float top = 2.0f * znear / y + bottom;
+			  crDebug("Frustum: left, right, bottom, top, near, far: %f, %f, %f, %f, %f, %f", left, right, bottom, top, znear, zfar);	
+			}
+			else {
+				/* Todo: Add debug output for orthographic projection*/
+			}
+
 		}
 		cr_server.projectionOverride = GL_TRUE;
 		break;
