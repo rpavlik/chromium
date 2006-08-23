@@ -120,11 +120,11 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 			const int eye = v[1] == 0.0 ? 0 : 1;
 			crMatrixInitFromFloats(&cr_server.viewMatrix[eye], v + 2);
 			
-			crDebug("Got SERVER_VIEW Matrix \n" 
+			crDebug("Got GL_SERVER_VIEW_MATRIX_CR:\n" 
 							"  %f %f %f %f\n"
 							"  %f %f %f %f\n"
 							"  %f %f %f %f\n"
-							"  %f %f %f %f\n",
+							"  %f %f %f %f",
 							cr_server.viewMatrix[eye].m00,
 							cr_server.viewMatrix[eye].m10,
 							cr_server.viewMatrix[eye].m20,
@@ -158,11 +158,11 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchChromiumParametervCR(GLenum target
 			const int eye = v[1] == 0.0 ? 0 : 1;
 			crMatrixInitFromFloats(&cr_server.projectionMatrix[eye], v + 2);
       
-			crDebug("Got SERVER_PROJ Matrix \n" 
+			crDebug("Got GL_SERVER_PROJECTION_MATRIX_CR:\n" 
 							"  %f %f %f %f\n"
 							"  %f %f %f %f\n"
 							"  %f %f %f %f\n"
-							"  %f %f %f %f\n",
+							"  %f %f %f %f",
 							cr_server.projectionMatrix[eye].m00,
 							cr_server.projectionMatrix[eye].m10,
 							cr_server.projectionMatrix[eye].m20,
