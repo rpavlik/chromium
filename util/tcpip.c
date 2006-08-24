@@ -383,9 +383,9 @@ static int
 CreateListeningSocket(int port)
 {
 	/* XXX should use an unbounded list here instead of parallel arrays... */
-#define MAX 100
-	static int ports[MAX];
-	static int sockets[MAX];
+#define MAX_PORTS 100
+	static int ports[MAX_PORTS];
+	static int sockets[MAX_PORTS];
 	static int count = 0;
 	int i, sock;
 
@@ -486,7 +486,7 @@ CreateListeningSocket(int port)
 	}
 	
 	/* save the new port/socket */
-	if (count == MAX) {
+	if (count == MAX_PORTS) {
 		crError("Fatal error in tcpip layer: too many listening ports/sockets");
 	}
 	ports[count] = port;
