@@ -44,7 +44,7 @@ static void printspu_signal_handler(int signum)
 		while (nextVariable != NULL) {
 			/* Print the constant text up to the variable. */
 			if (nextVariable > text) {
-				fprintf(print_spu.fp, "%.*s", nextVariable - text, text);
+				fprintf(print_spu.fp, "%.*s", (int) (nextVariable - text), text);
 				text = nextVariable;
 			}
 
@@ -81,7 +81,7 @@ static void printspu_signal_handler(int signum)
 					}
 					else {
 					    /* Unknown variable.  Print it verbatim. */
-					    fprintf(print_spu.fp, "%.*s", endOfVariable - nextVariable + 1, nextVariable);
+					    fprintf(print_spu.fp, "%.*s", (int) (endOfVariable - nextVariable + 1), nextVariable);
 					}
 					
 					/* In all cases, advance our internal text pointer to after the endOfVariable indicator */
