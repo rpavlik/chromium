@@ -249,10 +249,10 @@ for func_name in keys:
 	if "checklist" in apiutil.ChromiumProps(func_name):
 		params = apiutil.Parameters(func_name)
 		argstring = apiutil.MakeDeclarationString(params)
-	if mode == 'header':
-		print 'int DLM_APIENTRY crDLMCheckList%s( %s );' % (func_name, argstring)
-	elif mode == 'defs':
-		print "crDLMCheckList%s" % func_name
+		if mode == 'header':
+			print 'int DLM_APIENTRY crDLMCheckList%s( %s );' % (func_name, argstring)
+		elif mode == 'defs':
+			print "crDLMCheckList%s" % func_name
 
 if mode == 'header':
 	print """
