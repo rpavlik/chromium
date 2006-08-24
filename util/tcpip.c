@@ -401,7 +401,6 @@ CreateListeningSocket(int port)
 		int err;
 #ifndef ADDRINFO
 		struct sockaddr_in	servaddr;
-		struct in_addr		sin_addr;
 #endif
 
 		/* with the new OOB stuff, we can have multiple ports being 
@@ -418,7 +417,7 @@ CreateListeningSocket(int port)
 
 		servaddr.sin_family = AF_INET;
 		servaddr.sin_addr.s_addr = INADDR_ANY;
-		servaddr.sin_port = htons( port );
+		servaddr.sin_port = htons( (short) port );
 
 		if ( bind( sock, (struct sockaddr *) &servaddr, sizeof(servaddr) ) )
 		{
@@ -508,6 +507,7 @@ crTCPIPAccept( CRConnection *conn, const char *hostname, unsigned short port )
 #ifndef ADDRINFO
 	struct hostent		*host;
 	struct in_addr		sin_addr;
+	struct sockaddr 	addr;
 #else
 	struct sockaddr_storage	addr;
 	char			host[NI_MAXHOST];
