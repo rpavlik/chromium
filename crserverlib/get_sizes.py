@@ -331,6 +331,7 @@ extensions_num_get_values = {
 	'GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB': (1, 'CR_ARB_vertex_buffer_object'),
 	'GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB': (1, 'CR_ARB_vertex_buffer_object'),
 	'GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB': (1, 'CR_ARB_vertex_buffer_object'),
+	'GL_MAX_TEXTURE_IMAGE_UNITS_ARB': (1, 'CR_ARB_fragment_program'),
 }
 
 get_keys = num_get_values.keys() + extensions_num_get_values.keys()
