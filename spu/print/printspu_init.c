@@ -10,7 +10,9 @@
 #include "printspu.h"
 #include <stdio.h>
 #include <signal.h>
+#ifndef WINDOWS
 #include <sys/time.h>
+#endif
 
 extern SPUNamedFunctionTable _cr_print_table[];
 
@@ -22,6 +24,7 @@ static SPUFunctions print_functions = {
 
 PrintSpu print_spu;
 
+#ifndef WINDOWS
 static void printspu_signal_handler(int signum)
 {
 	/* If we receive a signal here, we should issue a marker. */
@@ -101,6 +104,7 @@ static void printspu_signal_handler(int signum)
 		(*print_spu.old_signal_handler)(signum);
 	}
 }
+#endif
 
 static SPUFunctions *
 printSPUInit( int id, SPU *child, SPU *self,
@@ -117,10 +121,12 @@ printSPUInit( int id, SPU *child, SPU *self,
 	crSPUInitDispatchTable( &(print_spu.passthrough) );
 	crSPUCopyDispatchTable( &(print_spu.passthrough), &(self->superSPU->dispatch_table) );
 
+#ifndef WINDOWS
 	/* If we were given a marker signal, install our signal handler. */
 	if (print_spu.marker_signal) {
 		print_spu.old_signal_handler = signal(print_spu.marker_signal, printspu_signal_handler);
 	}
+#endif
 	return &print_functions;
 }
 
