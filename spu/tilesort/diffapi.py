@@ -53,7 +53,7 @@ for func_name in keys:
 
 
 print """
-static const GLubyte *
+static const GLubyte * TILESORTSPU_APIENTRY
 diffGetString(GLenum cap)
 {
   GET_CONTEXT(ctx);

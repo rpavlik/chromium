@@ -54,6 +54,7 @@ crStateExtensionsInit
 crStateSetExtensionString
 crStateNativePixelPacking
 crStateUseServerArrays
+crStateUseServerArrayElements
 crStateComputeVersion
 crStateTransformXformPointMatrixf
 crStateTransformXformPointMatrixd
