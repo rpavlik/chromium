@@ -387,7 +387,7 @@ CreateListeningSocket(int port)
 	static int ports[MAX_PORTS];
 	static int sockets[MAX_PORTS];
 	static int count = 0;
-	int i, sock;
+	int i, sock = -1;
 
 	/* search to see if we've seen this port before */
 	for (i = 0; i < count; i++) {
