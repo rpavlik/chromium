@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.24 2006-08-02 22:56:42 brianp Exp $
+ * $Id: client_io.c,v 1.25 2006-08-31 18:50:00 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -558,7 +558,7 @@ extern CARD32 *
 GetFrameBuffer(CARD16 *w, CARD16 *h);
 */
 
-
+#if 0
 static void save_ppm(const char *fname)
 {
    const GLubyte *buffer;
@@ -610,7 +610,7 @@ static void save_ppm(const char *fname)
    }
 
 }
-
+#endif
 
 
 
@@ -632,7 +632,9 @@ static void rf_client_keyevent(void)
 #ifdef NETLOGGER
       NL_info("vncspu", "spu.marker", "NUMBER=i", counter);
 #endif
+#if 0
       save_ppm("spuimage.ppm");
+#endif
     }
   }
 
