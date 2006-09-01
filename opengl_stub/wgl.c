@@ -171,12 +171,15 @@ BOOL WINAPI wglMakeCurrent_prox( HDC hdc, HGLRC hglrc )
 
 HGLRC WINAPI wglGetCurrentContext_prox( void )
 {
-	return (HGLRC) NULL; /*__wiregl_globals.context; */
+	return (HGLRC) stub.currentContext;
 }
 
 HDC WINAPI wglGetCurrentDC_prox( void )
 {
-	return (HDC) NULL; /*__wiregl_globals.client_hdc; */
+	if (stub.currentContext && stub.currentContext->currentDrawable)
+		return (HDC) stub.currentContext->currentDrawable->drawable;
+	else
+		return (HDC) NULL;
 }
 
 int WINAPI wglGetPixelFormat_prox( HDC hdc )
