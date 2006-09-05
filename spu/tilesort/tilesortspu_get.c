@@ -430,7 +430,12 @@ const GLubyte * TILESORTSPU_APIENTRY tilesortspu_GetString( GLenum pname )
 {
 	if (pname == GL_EXTENSIONS)
 	{
-		GET_CONTEXT(ctx);
+		CRContext *ctx;
+		GET_THREAD(thread);
+		if (!thread->currentContext)
+			return NULL;
+		ctx = thread->currentContext->State;
+
 		if (!ctx->limits.extensions) {
 			/* Query all servers for their extensions, return the intersection */
 			ctx->limits.extensions = tilesortspuGetExtensionsString();
