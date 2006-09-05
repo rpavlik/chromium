@@ -637,12 +637,18 @@ HaveBufferObjectExtension(void)
 		}
 		CRASSERT(diff_api.GetString);
 		ext = (const char *) diff_api.GetString(GL_EXTENSIONS);
-		if (crStrstr(ext, "GL_ARB_vertex_buffer_object") ||
-				crStrstr(ext, "GL_ARB_pixel_buffer_object")) {
-			haveBufferObjectExt = 1;
+		if (ext) {
+			if (crStrstr(ext, "GL_ARB_vertex_buffer_object") ||
+					crStrstr(ext, "GL_ARB_pixel_buffer_object")) {
+				haveBufferObjectExt = 1;
+			}
+			else {
+				haveBufferObjectExt = 0;
+			}
 		}
 		else {
-			haveBufferObjectExt = 0;
+			/* Return GL_FALSE now, retest later */
+			return GL_FALSE;
 		}
 	}
 	return haveBufferObjectExt;
