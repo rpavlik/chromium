@@ -195,7 +195,7 @@ for func_name in keys:
 	if needUnimplemented:
 		for (name, type, vecSize) in params:
 			print '\t(void) %s;' % name
-		print '\tcrWarning("Unimplemented tilesort function %s\\n");' % func_name
+		print '\tcrWarning("Unimplemented tilesort function %s");' % func_name
 		if return_type != 'void':
 			print '\t return 0;'
 
