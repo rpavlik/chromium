@@ -51,6 +51,10 @@ include $(TOP)/options.mk
 
 ifeq ($(USE_REPLICATE), 1)
 LIB_COPIES += vncviewer
+else
+ifeq ($(USE_VNC), 1)
+LIB_COPIES += vncviewer
+endif
 endif
 
 include $(TOP)/cr.mk
