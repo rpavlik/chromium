@@ -690,6 +690,7 @@ class NetworkNode(Node):
 		self.__Tiles = [ [] ]
 		# Server node options, defined just like SPU options
 		self._Options = OptionList( [
+			Option("exit_if_no_clients", "Exit if no clients", "BOOL", 1, [1], [], []),
 			Option("optimize_bucket", "Optimized Extent Bucketing", "BOOL", 1, [1], [], []),
 			Option("lighting2", "Generate Lightning-2 Strip Headers", "BOOL", 1, [0], [], []),
 			Option("only_swap_once", "Only swap once for N clients", "BOOL", 1, [0], [], []),
