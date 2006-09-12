@@ -283,9 +283,16 @@ BOOL WINAPI wglCopyContext_prox( HGLRC src, HGLRC dst, UINT mask )
 
 HGLRC WINAPI wglCreateLayerContext_prox( HDC hdc, int layerPlane )
 {
+  /* We return a standard context if layerPlane == 0. This enhances compatibility
+     for applications which always call CreateLayerContext() even though a call to
+     CreateContext() will do (i.e. qt 4.0). */
 	stubInit();
-	crWarning( "wglCreateLayerContext: unsupported" );
-	return 0;
+  if (layerPlane) {
+  	crWarning( "wglCreateLayerContext: unsupported" );
+    return 0;
+  }
+  else 
+    return wglCreateContext_prox(hdc);
 }
 
 PROC WINAPI wglGetProcAddress_prox( LPCSTR name )
