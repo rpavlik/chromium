@@ -1386,9 +1386,11 @@ crTCPIPDoConnect( CRConnection *conn )
 void
 crTCPIPDoDisconnect( CRConnection *conn )
 {
+#if 0
 	int num_conns = cr_tcpip.num_conns;
 	int none_left = 1;
 	int i;
+#endif
 
 	/* If this connection has already been disconnected (e.g.
 	 * if the connection has been lost and disabled through
@@ -1399,7 +1401,8 @@ crTCPIPDoDisconnect( CRConnection *conn )
 	 * valid connection by mistake, leaving us unable to
 	 * receive inbound data on that connection.
 	 */
-	if (conn->type == CR_NO_CONNECTION) return;
+	if (conn->type == CR_NO_CONNECTION)
+		return;
 
 	crCloseSocket( conn->tcp_socket );
 	if (conn->hostname) {
@@ -1410,6 +1413,13 @@ crTCPIPDoDisconnect( CRConnection *conn )
 	conn->type = CR_NO_CONNECTION;
 	cr_tcpip.conns[conn->index] = NULL;
 
+	crNetCallCloseCallbacks(conn);
+
+#if 0
+ /* disabled on 13 Dec 2005 by BrianP - this prevents future client
+	* connections after the last one goes away.
+	*/
+
 	/* see if any connections remain */
 	for (i = 0; i < num_conns; i++) 
 	{
@@ -1417,9 +1427,6 @@ crTCPIPDoDisconnect( CRConnection *conn )
 			none_left = 0; /* found a live connection */
 	}
 
-#if 0 /* disabled on 13 Dec 2005 by BrianP - this prevents future client
-			 * connections after the last one goes away.
-			 */
 	if (none_left && cr_tcpip.server_sock != -1)
 	{
 		crDebug("Closing master socket (probably quitting).");
