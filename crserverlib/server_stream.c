@@ -267,7 +267,6 @@ getNextClient(GLboolean block)
 
 			if (all_blocked)
 			{
-				 /* XXX crError is fatal?  Should this be an info/warning msg? */
 				crWarning( "CRServer: DEADLOCK! (numClients=%d, all blocked)",
 									 cr_server.numClients );
 				if (cr_server.numClients < (int) cr_server.maxBarrierCount) {
