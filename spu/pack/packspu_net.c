@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <stdlib.h>
 #include "cr_pack.h"
 #include "cr_mem.h"
 #include "cr_net.h"
@@ -211,8 +212,20 @@ void packspuHuge( CROpcode opcode, void *buf )
 	crNetSend( thread->netServer.conn, NULL, src, len );
 }
 
+
+static void
+packspuCloseCallback(CRConnection *conn)
+{
+   GET_THREAD(thread);
+   if (conn == thread->netServer.conn) {
+	  crDebug("Pack SPU: Server connection closed - exiting.");
+	  exit(0);
+   }
+}
+
+
 void packspuConnectToServer( CRNetServer *server )
 {
-	crNetInit( packspuReceiveData, NULL );
+	crNetInit( packspuReceiveData, packspuCloseCallback );
 	crNetServerConnect( server );
 }
