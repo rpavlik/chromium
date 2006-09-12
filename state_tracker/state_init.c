@@ -175,7 +175,7 @@ crStateCreateContextId(int i, const CRLimitsState *limits,
 }
 
 
-static void
+void
 crStateFreeContext(CRContext *ctx)
 {
 	crStateClientDestroy( &(ctx->client) );

@@ -31,6 +31,7 @@ crStateReadPixels
 crStateGetChromiumParametervCR
 crStateCreateContext
 crStateDestroyContext
+crStateFreeContext
 crStateDiffContext
 crStateSwitchContext
 crStateMakeCurrent
