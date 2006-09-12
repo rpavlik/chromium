@@ -597,10 +597,9 @@ crutClientRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
 }
 
 static void 
-crutClientClose( unsigned int id )
+crutClientClose( CRConnection *conn )
 {
     crError( "Client disconnected!" );
-    (void) id;
 }
 
 void 

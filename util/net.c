@@ -462,6 +462,20 @@ void crNetInit( CRNetReceiveFunc recvFunc, CRNetCloseFunc closeFunc )
 }
 
 
+/**
+ * Call all the connection-close callback functions passing the given
+ * connection ptr.
+ */
+void
+crNetCallCloseCallbacks(CRConnection *conn)
+{
+	CRNetCloseFuncList *cfl;
+	for (cfl = cr_net.close_list; cfl; cfl = cfl->next) {
+		cfl->close(conn);
+	}
+}
+
+
 CRConnection** crNetDump( int* num )
 {
 	CRConnection **c;

@@ -61,8 +61,7 @@ typedef int    CRSocket;
 
 typedef void (*CRVoidFunc)( void );
 typedef int (*CRNetReceiveFunc)( CRConnection *conn, CRMessage *msg, unsigned int len );
-typedef int (*CRNetConnectFunc)( CRConnection *conn );
-typedef void (*CRNetCloseFunc)( unsigned int sender_id );
+typedef void (*CRNetCloseFunc)( CRConnection *conn );
 
 typedef struct __recvFuncList {
 	CRNetReceiveFunc recv;

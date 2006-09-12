@@ -85,10 +85,9 @@ crutProxyRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
 }
 
 static void 
-crutProxyClose( unsigned int id )
+crutProxyClose( CRConnection *conn )
 {
     crError( "Client disconnected!" );
-    (void) id;
 }
 
 static void 

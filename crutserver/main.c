@@ -42,10 +42,9 @@ crutServerRecv( CRConnection *conn, CRMessage *msg, unsigned int len )
 #endif
 
 static void 
-crutServerClose( unsigned int id )
+crutServerClose( CRConnection *conn )
 {
 	crError( "Client disconnected!" );
-	(void) id;
 }
 
 /* GLUT needs a function for the display callback */

@@ -172,4 +172,6 @@ extern unsigned int crGmPortNum( void );
 
 extern CRConnection** crNetDump( int *num );
 
+extern void crNetCallCloseCallbacks(CRConnection *conn);
+
 #endif /* NET_INTERNALS_H */
