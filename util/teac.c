@@ -1001,6 +1001,7 @@ void crTeacDoDisconnect( CRConnection *conn )
 #ifdef CHROMIUM_THREADSAFE
   crUnlockMutex(&cr_teac.teacAPIMutex);
 #endif
+  crNetCallCloseCallbacks(conn);
 }
 
 void

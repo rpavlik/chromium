@@ -1089,6 +1089,11 @@ crSDPDoDisconnect( CRConnection *conn )
 	conn->type = CR_NO_CONNECTION;
 	cr_sdp.conns[conn->index] = NULL;
   
+	crNetCallCloseCallbacks(conn);
+
+	/*
+	 * XXX the rest of this should probably go away.
+	 */
 	for (i = 0; i < num_conns; i++) 
 	{
 		if ( cr_sdp.conns[i] && cr_sdp.conns[i]->type != CR_NO_CONNECTION )

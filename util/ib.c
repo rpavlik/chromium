@@ -691,7 +691,7 @@ async_events_handler( VAPI_hca_hndl_t hca_hndl,
  * Function: clean_up
  *
  * Description:
- *   Clean all IB reasources and memory allocations
+ *   Clean all IB resources and memory allocations
  *
  *************************************************************************/ 
 static void
@@ -1545,6 +1545,9 @@ crIBDoDisconnect( CRConnection *conn )
 	CRIBConnection* ib_conn;
 	ib_conn = crIBConnectionLookup(conn->id);
 	crWarning("IB: Disconnect being called!  Bad mojo?");
+
+	crNetCallCloseCallbacks(conn);
+
 	clean_up( &ib_conn->params );
 }
 

@@ -719,6 +719,7 @@ crTcscommDoConnect( CRConnection *conn )
 
 void crTcscommDoDisconnect( CRConnection *conn )
 {
+	crNetCallCloseCallbacks(conn);
   if ( cr_tcscomm.num_conns <= 0 ) {
     crTcscommCloseConnection( conn );
   }
