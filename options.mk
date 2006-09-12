@@ -12,7 +12,7 @@ RELEASE=0
 
 
 # Set THREADSAFE to 1 if you want thread safety for parallel applications.
-THREADSAFE=0
+THREADSAFE=1
 
 
 # Set to 1 if you want to force building 32-bit objects on a 64-bit system.

@@ -31,7 +31,7 @@ ReceiveFunc( CRConnection *conn, CRMessage *msg, unsigned int len )
 
 
 static void
-CloseFunc( unsigned int sender_id )
+CloseFunc( CRConnection *conn )
 {
 }
 

@@ -115,13 +115,16 @@ static void crServerTearDown( void )
 	crUnloadOpenGL();
 }
 
-static void crServerClose( unsigned int id )
+
+static void
+crServerClose( CRConnection *conn )
 {
 	crError( "Client disconnected!" );
-	(void) id;
 }
 
-static void crServerCleanup( int sigio )
+
+static void
+crServerCleanup( int sigio )
 {
 	crServerTearDown();
 

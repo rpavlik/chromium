@@ -65,9 +65,8 @@ ReceiveFunc( CRConnection *conn, CRMessage *msg, unsigned int len )
  * Called when connection is closed.
  */
 static void
-CloseFunc( unsigned int sender_id )
+CloseFunc( CRConnection *conn )
 {
-	/*printf("In %s\n", __FUNCTION__);*/
 }
 
 
