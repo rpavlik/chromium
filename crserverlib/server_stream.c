@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <stdlib.h>
 #include "server.h"
 #include "cr_unpack.h"
 #include "cr_error.h"
@@ -267,10 +268,14 @@ getNextClient(GLboolean block)
 			if (all_blocked)
 			{
 				 /* XXX crError is fatal?  Should this be an info/warning msg? */
-				crError( "crserver: DEADLOCK! (numClients=%d, all blocked)",
-								 cr_server.numClients );
+				crWarning( "CRServer: DEADLOCK! (numClients=%d, all blocked)",
+									 cr_server.numClients );
 				if (cr_server.numClients < (int) cr_server.maxBarrierCount) {
-					crError("Waiting for more clients!!!");
+					if (cr_server.exitIfNoClients) {
+						crWarning("CRServer: exiting.");
+						exit(0);
+					}
+					crWarning("CRServer: Waiting for more clients.");
 					while (cr_server.numClients < (int) cr_server.maxBarrierCount) {
 						crNetRecv();
 					}
