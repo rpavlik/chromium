@@ -4,6 +4,7 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
+#include <stdlib.h>
 #include "tilesortspu.h"
 #include "tilesortspu_gen.h"
 #include "cr_pack.h"
@@ -52,7 +53,23 @@ tilesortspuReceiveData( CRConnection *conn, CRMessage *msg, unsigned int len )
 	return 0; /* NOT HANDLED */
 }
 
-void tilesortspuConnectToServers( void )
+
+static void
+tilesortspuCloseCallback(CRConnection *conn)
+{
+	int i;
+	GET_THREAD(thread);
+	for (i = 0; i < tilesort_spu.num_servers; i++) {
+		if (thread->netServer[i].conn == conn) {
+				crDebug("Tilesort SPU: server socket closed - exiting.");
+			exit(0);
+		}
+	}
+}
+
+
+void
+tilesortspuConnectToServers( void )
 {
 	ThreadInfo *thread0 = &(tilesort_spu.thread[0]);
 	int i;
@@ -64,7 +81,7 @@ void tilesortspuConnectToServers( void )
 	CRASSERT(thread0->netServer);
 	CRASSERT(thread0->buffer);
 
-	crNetInit( tilesortspuReceiveData, NULL );
+	crNetInit( tilesortspuReceiveData, tilesortspuCloseCallback );
 
 	for (i = 0 ; i < tilesort_spu.num_servers; i++)
 	{
