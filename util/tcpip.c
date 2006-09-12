@@ -975,9 +975,6 @@ crTCPIPRecv( void )
 	int num_ready, max_fd, i;
 	fd_set read_fds;
 	int msock = -1; /* assumed mothership socket */
-#if CRAPPFAKER_SHOULD_DIE
-	int none_left = 1;
-#endif
 
 #ifdef CHROMIUM_THREADSAFE
 	crLockMutex(&cr_tcpip.recvmutex);
@@ -995,10 +992,6 @@ crTCPIPRecv( void )
 		if ( !conn || conn->type == CR_NO_CONNECTION )
 			continue;
 
-#if CRAPPFAKER_SHOULD_DIE
-		none_left = 0;
-#endif
-
 		if ( conn->recv_credits > 0 || conn->type != CR_TCPIP )
 		{
 			/* 
@@ -1008,14 +1001,6 @@ crTCPIPRecv( void )
 			 * (MSG_PEEK flag to recv()?) if the connection isn't
 			 * enabled. 
 			 */
-#if 0 /* not used - see below */
-#ifndef ADDRINFO
-			struct sockaddr s;
-#else
-			struct sockaddr_storage s;
-#endif
-			socklen_t slen;
-#endif
 			fd_set only_fd; /* testing single fd */
 			CRSocket sock = conn->tcp_socket;
 
@@ -1045,28 +1030,6 @@ crTCPIPRecv( void )
 			FD_ZERO(&only_fd);
 			FD_SET( sock, &only_fd );
 
-#if 0 /* Disabled on Dec 13 2005 by BrianP - seems to cause trouble */
-			slen = sizeof( s );
-			/* Check that the socket is REALLY connected */
-			/* Doesn't this call introduce some inefficiency??? (BP) */
-			if (getpeername(sock, (struct sockaddr *) &s, &slen) < 0) {
-				/* Another kludge.....
-				 * If we disconnect a socket without writing
-				 * anything to it, we end up here. Detect
-				 * the disconnected socket by checking if
-				 * we've ever sent something and then
-				 * disconnect it.
-				 * 
-				 * I think the networking layer needs
-				 * a bit of a re-write.... Alan.
-				 */
-				if (conn->total_bytes_sent > 0) {
-					crTCPIPDoDisconnect( conn );
-				}
-				FD_CLR(sock, &read_fds);
-				msock = sock;
-			}
-#endif
 			/* 
 			 * Nope, that last socket we've just caught in
 			 * the connecting phase. We've probably found
@@ -1077,21 +1040,6 @@ crTCPIPRecv( void )
 				FD_CLR(sock, &read_fds);
 		}
 	}
-
-#if CRAPPFAKER_SHOULD_DIE
-	if (none_left) {
-		/*
-		 * Caught no more connections.
-		 * Review this if we want to try 
-		 * restarting crserver's dynamically.
-		 */
-#ifdef CHROMIUM_THREADSAFE
-		crUnlockMutex(&cr_tcpip.recvmutex);
-#endif
-		crError("No more connections to process, terminating...\n");
-		exit(0); /* shouldn't get here */
-	}
-#endif
 
 	if (!max_fd) {
 #ifdef CHROMIUM_THREADSAFE
@@ -1386,12 +1334,6 @@ crTCPIPDoConnect( CRConnection *conn )
 void
 crTCPIPDoDisconnect( CRConnection *conn )
 {
-#if 0
-	int num_conns = cr_tcpip.num_conns;
-	int none_left = 1;
-	int i;
-#endif
-
 	/* If this connection has already been disconnected (e.g.
 	 * if the connection has been lost and disabled through
 	 * a call to __tcpip_dead_connection(), which will then
@@ -1414,34 +1356,6 @@ crTCPIPDoDisconnect( CRConnection *conn )
 	cr_tcpip.conns[conn->index] = NULL;
 
 	crNetCallCloseCallbacks(conn);
-
-#if 0
- /* disabled on 13 Dec 2005 by BrianP - this prevents future client
-	* connections after the last one goes away.
-	*/
-
-	/* see if any connections remain */
-	for (i = 0; i < num_conns; i++) 
-	{
-		if ( cr_tcpip.conns[i] && cr_tcpip.conns[i]->type != CR_NO_CONNECTION )
-			none_left = 0; /* found a live connection */
-	}
-
-	if (none_left && cr_tcpip.server_sock != -1)
-	{
-		crDebug("Closing master socket (probably quitting).");
-		crCloseSocket( cr_tcpip.server_sock );
-		cr_tcpip.server_sock = -1;
-#ifdef CHROMIUM_THREADSAFE
-		crFreeMutex(&cr_tcpip.mutex);
-		crFreeMutex(&cr_tcpip.recvmutex);
-#endif
-		crBufferPoolFree( cr_tcpip.bufpool );
-		cr_tcpip.bufpool = NULL;
-		last_port = 0;
-		cr_tcpip.initialized = 0;
-	}
-#endif
 }
 
 
