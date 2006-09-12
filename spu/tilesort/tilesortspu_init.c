@@ -139,22 +139,22 @@ tilesortSPUSelfDispatch(SPUDispatchTable *self)
 
 static void freeContextCallback(void *data)
 {
-	 ContextInfo *contextInfo = (ContextInfo *) data;
-	 crFree(contextInfo->server);
-	 crStateDestroyContext(contextInfo->State);
-	 crFree(contextInfo);
+	ContextInfo *contextInfo = (ContextInfo *) data;
+	crFree(contextInfo->server);
+	crStateFreeContext(contextInfo->State);
+	crFree(contextInfo);
 }
 
 static void freeWindowCallback(void *data)
 {
-	 WindowInfo *winInfo = (WindowInfo *) data;
-	 tilesortspuFreeWindowInfo(winInfo);
+	WindowInfo *winInfo = (WindowInfo *) data;
+	tilesortspuFreeWindowInfo(winInfo);
 }
 
 static void freeListCallback(void *data)
 {
-	 int *listSent = (int *) data;
-	 crFree(listSent);
+	int *listSent = (int *) data;
+	crFree(listSent);
 }
 
 static int
