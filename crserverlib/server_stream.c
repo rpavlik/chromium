@@ -502,7 +502,7 @@ crServerServiceClients(void)
 void
 crServerSerializeRemoteStreams(void)
 {
-	while (cr_server.run_queue)
+	while (cr_server.run_queue || !cr_server.exitIfNoClients)
 	{
 		crServerServiceClients();
 	}
