@@ -27,14 +27,25 @@ for the Chromium server.</p>
 <table border="1" width="100%">
   <tr class="ConfigTableHeader">
     <td width="19%">Parameter Name</td>
-    <td width="12%">Value Types</td>
+    <td width="12%">Type</td>
     <td width="115%">Description</td>
+  </tr>
+    <td width="19%" class="ConfigOption">exit_if_no_clients</td>
+    <td width="12%" class="ConfigType">Boolean</td>
+    <td width="115%" class="ConfigDesc">
+       Determines whether or not the crserver exits when there are no more
+       client connections (or we'd otherwise deadlock on a synchronization
+       call.)
+       The default is 1 (true).
+    </td>
+  </tr>
+
   </tr>
     <td width="19%" class="ConfigOption">debug_barriers</td>
     <td width="12%" class="ConfigType">Boolean</td>
     <td width="115%" class="ConfigDesc">
        When set, this option prints debugging information related to barriers.
-       The default is 0.
+       The default is 0 (off).
     </td>
   </tr>
 
