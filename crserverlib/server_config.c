@@ -317,6 +317,11 @@ crServerGatherConfiguration(char *mothership)
 		cr_server.projectionOverride = GL_TRUE;
 	}
 
+	if (crMothershipGetServerParam(conn, response, "exit_if_no_clients"))
+	{
+		cr_server.exitIfNoClients = GL_TRUE;
+	}
+
 
 	crDebug("CRServer: my port number is %d", cr_server.tcpip_port);
 

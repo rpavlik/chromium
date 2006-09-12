@@ -149,6 +149,7 @@ typedef struct {
 	const char *vpProjectionMatrixVariable;
 	int stereoView;
 	int vncMode;   /* cmd line option */
+	int exitIfNoClients;
 	/*@}*/
 	/** view_matrix config */
 	/*@{*/

@@ -117,9 +117,23 @@ static void crServerTearDown( void )
 
 
 static void
-crServerClose( CRConnection *conn )
+crServerConnCloseCallback( CRConnection *conn )
 {
-	crError( "Client disconnected!" );
+	int i, closingClient = -1, connCount = 0;
+	crDebug("CRServer: client connection closed");
+	/* count number of connections remaining */
+	for (i = 0; i < cr_server.numClients; i++) {
+		if (cr_server.clients[i] && cr_server.clients[i]->conn) {
+			connCount++;
+			if (conn == cr_server.clients[i]->conn) {
+				closingClient = i;
+			}
+		}
+	}
+	if (closingClient >= 0 && connCount == 1 && cr_server.exitIfNoClients) {
+		crWarning("Last client disconnected - exiting.");
+		exit(0);
+	}
 }
 
 
@@ -224,7 +238,7 @@ crServerInit(int argc, char *argv[])
 
 	cr_server.programTable = crAllocHashtable();
 
-	crNetInit(crServerRecv, crServerClose);
+	crNetInit(crServerRecv, crServerConnCloseCallback);
 	crStateInit();
 
 	crServerGatherConfiguration(mothership);
