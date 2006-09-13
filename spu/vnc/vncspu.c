@@ -35,7 +35,7 @@
     *(DST) = *(SRC); \
     (SRC)->data = NULL; \
     REGION_EMPTY((SRC)); \
-	} while (0)
+  } while (0)
 
 
 void
@@ -495,6 +495,14 @@ ReadbackRect(int scrx, int scry, int winx, int winy, int width, int height)
 {
 	ScreenBuffer *sb = vnc_spu.double_buffer
 		? vnc_spu.screen_buffer[1] : vnc_spu.screen_buffer[0];
+
+	/* clip region against screen buffer size */
+	if (scrx + width > vnc_spu.screen_width)
+		width = vnc_spu.screen_width - scrx;
+	if (scry + height > vnc_spu.screen_height)
+		height = vnc_spu.screen_height - scry;
+	if (width < 1 || height < 1)
+		return;
 
 #if RASTER_BOTTOM_TO_TOP
 	{
@@ -964,6 +972,7 @@ static void
 vncspuUpdateFramebuffer(WindowInfo *window)
 {
 	GLint readBuf;
+	GLint alignment, skipPixels, skipRows, rowLength;
 
 	CRASSERT(window);
 
@@ -981,12 +990,22 @@ vncspuUpdateFramebuffer(WindowInfo *window)
 
 	window->frameCounter++;
 
+	/* Save GL state */
 	vnc_spu.super.GetIntegerv(GL_READ_BUFFER, &readBuf);
 	vnc_spu.super.ReadBuffer(GL_FRONT);
+	vnc_spu.super.GetIntegerv(GL_PACK_ALIGNMENT, &alignment);
+	vnc_spu.super.GetIntegerv(GL_PACK_SKIP_PIXELS, &skipPixels);
+	vnc_spu.super.GetIntegerv(GL_PACK_SKIP_ROWS, &skipRows);
+	vnc_spu.super.GetIntegerv(GL_PACK_ROW_LENGTH, &rowLength);
 
 	DoReadback(window);
 
+	/* Restore GL state */
 	vnc_spu.super.ReadBuffer(readBuf);
+	vnc_spu.super.PixelStorei(GL_PACK_ALIGNMENT, alignment);
+	vnc_spu.super.PixelStorei(GL_PACK_SKIP_PIXELS, skipPixels);
+	vnc_spu.super.PixelStorei(GL_PACK_SKIP_ROWS, skipRows);
+	vnc_spu.super.PixelStorei(GL_PACK_ROW_LENGTH, rowLength);
 }
 
 
