@@ -49,7 +49,8 @@ spu.Conf('fog_color', [ 1.0, 0.5, 0.25 ])
 SPU index
 </h3>
 <ul>
-<li><a href="#array">Array</a>
+<li><a href="#apihistogram">API Histogram</a>
+</li><li><a href="#array">Array</a>
 </li><li><a href="#binaryswap">Binaryswap</a>
 </li><li><a href="#dist_texture">Distributed Texture</a>
 </li><li><a href="#expando">Expando</a>
@@ -76,12 +77,60 @@ SPU index
 
 
 
+<a name="apihistogram"></a>
+<h2 class="PageSubHeading">API Histogram SPU</h2>
+<p>
+The <code>apihistogram</code> SPU counts the number of calls to each
+OpenGL API function (like glVertex3fv, glEnable, glClear, etc).  When
+Chromium exits, the SPU lists each GL function and the number of calls
+to it.  The list is sorted by number of calls.
+</p>
+<p>
+Example output:
+</p>
+<pre>
+122350868  Vertex3fv
+13239480  DrawArrays
+7957746  Begin
+7957746  End
+2003542  Color3fv
+1718608  GetFloatv
+935986  Materialfv
+349959  PopMatrix
+349959  PushMatrix
+349262  MultMatrixf
+86148  Disable
+83088  Enable
+80162  LineStipple
+[...]
+
+</pre>
+<table border="1" width="100%">
+<tbody>
+  <tr class="ConfigTableHeader">
+    <td width="19%">Parameter Name</td>
+    <td width="12%">Value Types</td>
+    <td width="100%">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">log_file</td>
+    <td width="12%" class="ConfigType">String</td>
+    <td width="100%" class="ConfigDesc">Filename for writing results.
+    May be a filename or <code>stdout</code> or <code>stderr</code>.
+          The default is <code>stderr</code>.
+    </td>
+  </tr>
+</tbody>
+</table>
+
+
+
 <a name="array"></a>
 <h2 class="PageSubHeading">Array SPU</h2>
 <p>
-The Array SPU implement's OpenGL's vertex arrays.  If your application uses
-vertex arrays, the array SPU should be the first one in the SPU chain.
-The Array SPU has no configuration options.
+The <code>array</code> SPU implement's OpenGL's vertex arrays.  If
+your application uses vertex arrays, the array SPU should be the first
+one in the SPU chain.  The Array SPU has no configuration options.
 </p>
 
 
@@ -89,7 +138,7 @@ The Array SPU has no configuration options.
 <a name="binaryswap"></a>
 <h2 class="PageSubHeading">Binaryswap SPU</h2>
 <p>
-The Binaryswap SPU implements the well known
+The <code>binaryswap</code> SPU implements the well known
 <i>binary swap</i> method of image compositing for parallel rendering.
 It works similar to the Readback SPU.
 Since the Binaryswap SPU is derived from the Render SPU, all the Render SPU
@@ -171,7 +220,7 @@ Parallel Volume Rendering Using Binary-Swap Image Composition</a> (pdf).
 <a name="dist_texture"></a>
 <h2 class="PageSubHeading">Distributed Texture</h2>
 <p>
-The dist_texture SPU supports server-side loading of texture images.
+The <code>dist_texture</code> SPU supports server-side loading of texture images.
 The goal is to avoid the cost of transmitting texture image data over
 the "wire" with the Pack and Tilesort SPUs.
 </p>
@@ -228,8 +277,9 @@ The dist_texture SPU has no configuration options.
 <a name="expando"></a>
 <h2 class="PageSubHeading">Expando SPU</h2>
 <p>
-The Expando SPU records the contents of display lists, then replays the
-commands when glCallList is called.  The Expando SPU has no options.
+The <code>expando</code> SPU records the contents of display lists,
+then replays the commands when glCallList is called.  The Expando SPU
+has no options.
 </p>
 
 
@@ -237,9 +287,9 @@ commands when glCallList is called.  The Expando SPU has no options.
 <a name="feedback"></a>
 <h2 class="PageSubHeading">Feedback SPU</h2>
 <p>
-The Feedback SPU implement's OpenGL's selection and feedback features.
-If your application needs either of these features, you should use the
-Feedback SPU in your configuration.
+The <code>feedback</code> SPU implement's OpenGL's selection and
+feedback features.  If your application needs either of these
+features, you should use the Feedback SPU in your configuration.
 </p>
 <table border="1" width="100%" height="149">
 <tbody>
@@ -266,7 +316,7 @@ Feedback SPU in your configuration.
 <a name="fps"></a>
 <h2 class="PageSubHeading">FPS SPU</h2>
 <p>
-The FPS SPU measures the time between calls to
+The <code>fps</code> SPU measures the time between calls to
 <code>glXSwapBuffers()</code>, and issues performance 
 reports to <code>stderr</code> at regular intervals.  It's useful 
 for determining rendering performance of a Chromium configuration.
@@ -318,7 +368,7 @@ for determining rendering performance of a Chromium configuration.
 <a name="hiddenline"></a>
 <h2 class="PageSubHeading">Hiddenline SPU</h2>
 <p>
-The Hiddenline SPU draws objects in hidden-line mode.
+The <code>hiddenline</code> SPU draws objects in hidden-line mode.
 </p>
 <table border="1" width="100%" height="149">
 <tbody>
@@ -411,7 +461,7 @@ XXX no description?
 <a name="matte"></a>
 <h2 class="PageSubHeading">Matte SPU</h2>
 <p>
-The Matte SPU forces all rendering to be within
+The <code>matte</code> SPU forces all rendering to be within
 a subwindow of a render window, initializing the area outside
 of the subwindow to a matte color.
 </p>
@@ -500,7 +550,7 @@ moving objects.
 <a name="motionblur"></a>
 <h2 class="PageSubHeading">Motionblur SPU</h2>
 <p>
-The Motionblur SPU uses the accumulation buffer to simulate motion blur of
+The <code>motionblur</code> SPU uses the accumulation buffer to simulate motion blur of
 moving objects.
 </p>
 <table border="1" width="100%" height="149">
@@ -527,7 +577,7 @@ moving objects.
 <a name="nop"></a>
 <h2 class="PageSubHeading">Nop SPU</h2>
 <p>
-The Nop (No-operation) SPU effectively discards all commands sent to it.
+The <code>nop</code> (No-operation) SPU effectively discards all commands sent to it.
 One use of the Nop SPU is to replace the Render SPU in order to measure
 system performance without doing any rendering.
 </p>
@@ -537,7 +587,7 @@ system performance without doing any rendering.
 <a name="pack"></a>
 <h2 class="PageSubHeading">Pack SPU</h2>
 <p>
-The Pack SPU simply packs all the OpenGL commands into buffer which are
+The <code>pack</code> SPU simply packs all the OpenGL commands into buffer which are
 sent to the downstream server.
 </p>
 
@@ -570,8 +620,8 @@ sent to the downstream server.
 <a name="perf">
 </a><h2 class="PageSubHeading"><a name="perf">Perf SPU</a></h2>
 <p>
-<a name="perf">The </a><a href="performance.html">Perf SPU</a> is used to collect
-performance statistics while running Chromium.
+<a name="perf">The </a><a href="performance.html"><code>perf</code></a> is
+used to collect performance statistics while running Chromium.
 </p>
 <table border="1" width="100%" height="149">
 <tbody>
@@ -644,7 +694,7 @@ performance statistics while running Chromium.
 <a name="print"></a>
 <h2 class="PageSubHeading">Print SPU</h2>
 <p>
-The Print SPU prints each OpenGL command to stderr or a file.
+The <code>print</code> SPU prints each OpenGL command to stderr or a file.
 It's useful for debugging Chromium and inspecting the OpenGL commands
 issued by applications
 </p>
@@ -659,8 +709,8 @@ issued by applications
     <td width="19%" class="ConfigOption">log_file</td>
     <td width="12%" class="ConfigType">String</td>
     <td width="100%" class="ConfigDesc">Name of log file to generate.&nbsp;
-          If this parameter is not specified, the Print SPU will send
-          its output to standard error.  
+    May be a filename or <code>stdout</code> or <code>stderr</code>.
+          The default is <code>stderr</code>.
 	  If this is a relative path, the file will be created relative
 	  to the current directory, which will usually be either the directory
 	  that the server was launched from, or the start directory specified
@@ -677,7 +727,7 @@ issued by applications
 <a name="readback"></a>
 <h2 class="PageSubHeading">Readback SPU</h2>
 <p>
-The Readback SPU is very similar to the Render SPU.  It's special in
+The <code>readback</code> SPU is very similar to the Render SPU.  It's special in
 that when SwapBuffers is called, the Readback SPU uses glReadPixels to
 read the contents of the color/depth buffer(s) and sends them to the
 next SPU in the chain with glDrawPixels.
@@ -748,7 +798,7 @@ configuration options that the render SPU accepts, plus a few more:
 <a name="render"></a>
 <h2 class="PageSubHeading">Render SPU</h2>
 <p>
-The Render SPU renders OpenGL commands into a window.  Virtually every
+The <code>render</code> SPU renders OpenGL commands into a window.  Virtually every
 Chromium configuration uses this SPU.
 </p>
 <table border="1" width="100%" height="149">
@@ -994,7 +1044,7 @@ Chromium configuration uses this SPU.
 <a name="replicate"></a>
 <h2 class="PageSubHeading">Replicate SPU</h2>
 <p>
-The Replicate SPU works in conjunction with the 
+The <code>replicate</code> SPU works in conjunction with the 
 <a href="http://xf4vnc.sourceforge.net" target="_parent">
 XF4VNC project</a>.  It gives a specially enhanced-VNC client
 developed by Tungsten Graphics, Inc. the ability to do direct
@@ -1023,7 +1073,7 @@ viewer.  Contact <a href="http://www.tungstengraphics.com" target="_parent"> Tun
 <a name="saveframe"></a>
 <h2 class="PageSubHeading">Saveframe SPU</h2>
 <p>
-The Savefame SPU saves the image from the colorbuffer to a file whenever
+The <code>savefame</code> SPU saves the image from the colorbuffer to a file whenever
 SwapBuffers is called.  It's useful for "screengrabs".
 </p>
 <table border="1" width="100%" height="149">
@@ -1150,8 +1200,9 @@ SwapBuffers is called.  It's useful for "screengrabs".
 <a name="simplequery">
 </a><h2 class="PageSubHeading"><a name="simplequery">Simplequery SPU</a></h2>
 <p>
-<a name="simplequery">The Simplequery SPU intercepts all OpenGL glGet*() functions and returns
-simple default values.  This is useful when using <i>file networking</i>
+The <code>simplequery</code> SPU intercepts all OpenGL glGet*() functions and
+returns simple default values.
+This is useful when using <i>file networking</i>
 which records command streams to files.
 </a></p>
 
@@ -1159,7 +1210,7 @@ which records command streams to files.
 <h2 class="PageSubHeading"><a name="tilesort">Tilesort SPU</a></h2>
 
 <p>
-The Tilesort SPU is used to divide the framebuffer into tiles which are
+The <code>tilesort</code> SPU is used to divide the framebuffer into tiles which are
 rendered by separate render servers.
 The tilesort SPU is usually used to drive tiled, cluster displays (murals).
 The tilesort SPU must be the last SPU in the chain and be connected to
@@ -1477,7 +1528,7 @@ one or more downstream servers.
 <a name="vnc">
 </a><h2 class="PageSubHeading"><a name="vnc">VNC SPU</a></h2>
 <p>
-The VNC SPU allows one to view Chromium rendering remotely with a VNC viewer.
+The <code>vnc</code> SPU allows one to view Chromium rendering remotely with a VNC viewer.
 The VNC SPU is derived from the Render SPU.
 It renders the incoming OpenGL command stream into a window.
 Upon SwapBuffers, the window contents are read back and saved into a buffer.
@@ -1530,7 +1581,7 @@ For more information about VNC see
 <a name="wet">
 </a><h2 class="PageSubHeading"><a name="wet">Wet SPU</a></h2>
 <p>
-The Wet SPU causes the image to appear wavy, as if viewed through water.
+The <code>wet</code> SPU causes the image to appear wavy, as if viewed through water.
 </p>
 <table border="1" width="100%" height="149">
   <tbody><tr class="ConfigTableHeader">
@@ -1594,14 +1645,10 @@ The Wet SPU causes the image to appear wavy, as if viewed through water.
 
 
 
-
-
-
-
 <a name="zpix">
 </a><h2 class="PageSubHeading"><a name="zpix">ZPix SPU</a></h2>
 <p>
-The ZPix SPU offers frame differencing and some simple-minded compression 
+The <code>zpix</code> SPU offers frame differencing and some simple-minded compression 
 schemes to reduce network bandwidth for glDrawPixels.
 ZPix was built to work with the ReadbackSPU and currently only
 handles frame buffer writes which begin at 0,0. 
