@@ -218,14 +218,14 @@ tilesortspu_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
 		case GL_UNSIGNED_BYTE:
 			if (tilesort_spu.swap)
 			{
-				for (i=start; i<count; i++)
+				for (i = 0; i < count; i++)
 				{
 					crPackExpandArrayElementSWAP((GLint) *p++, clientState);
 				}
 			}
 			else
 			{
-				for (i=start; i<count; i++)
+				for (i = 0; i < count; i++)
 				{
 					crPackExpandArrayElement((GLint) *p++, clientState);
 				}
@@ -234,36 +234,36 @@ tilesortspu_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
 		case GL_UNSIGNED_SHORT:
 			if (tilesort_spu.swap)
 			{
-				for (i=start; i<count; i++) 
+				for (i = 0; i < count; i++) 
 				{
 					crPackExpandArrayElementSWAP((GLint) * (GLushort *) p, clientState);
-					p+=sizeof (GLushort);
+					p += sizeof(GLushort);
 				}
 			}
 			else
 			{
-				for (i=start; i<count; i++) 
+				for (i = 0; i < count; i++) 
 				{
 					crPackExpandArrayElement((GLint) * (GLushort *) p, clientState);
-					p+=sizeof (GLushort);
+					p += sizeof(GLushort);
 				}
 			}
 			break;
 		case GL_UNSIGNED_INT:
 			if (tilesort_spu.swap)
 			{
-				for (i=start; i<count; i++) 
+				for (i = 0; i < count; i++) 
 				{
 					crPackExpandArrayElementSWAP((GLint) * (GLuint *) p, clientState);
-					p+=sizeof (GLuint);
+					p += sizeof(GLuint);
 				}
 			}
 			else
 			{
-				for (i=start; i<count; i++) 
+				for (i = 0; i < count; i++) 
 				{
 					crPackExpandArrayElement((GLint) * (GLuint *) p, clientState);
-					p+=sizeof (GLuint);
+					p += sizeof(GLuint);
 				}
 			}
 			break;
