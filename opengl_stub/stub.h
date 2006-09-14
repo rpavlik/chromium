@@ -155,6 +155,7 @@ typedef struct {
 	CRmutex mutex;
 #endif
 
+	CRConnection *mothershipConn;
 	CRpid mothershipPID;
 
 	/* contexts */

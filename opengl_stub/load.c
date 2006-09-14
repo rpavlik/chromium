@@ -170,8 +170,10 @@ static void stubExitHandler(void)
 	/* kill the mothership we spawned earlier */
 	if (stub.mothershipPID)
 		crKill(stub.mothershipPID);
-	else {
+	else if (stub.mothershipConn) {
 		/* send 'exit' message to mothership */
+		crMothershipExit(stub.mothershipConn);
+		crMothershipDisconnect(stub.mothershipConn);
 	}
 
 	stubSPUTearDown();
@@ -684,7 +686,6 @@ stubInit(void)
 	 * HOW can I pass the mothership address to this if I already know it?
 	 */
 	
-	CRConnection *conn = NULL;
 	char response[1024];
 	char **spuchain;
 	int num_spus;
@@ -723,13 +724,13 @@ stubInit(void)
 	 * auto-start set up we'll still get warning messages eventually.
 	 */
 	crEnableWarnings(0);
-	conn = crMothershipConnect();
+	stub.mothershipConn = crMothershipConnect();
 	crEnableWarnings(1);
-	if (!conn) {
+	if (!stub.mothershipConn) {
 		/* No mothership running.  Try spawning it ourselves now */
 		if (StartMothership()) {
-			conn = crMothershipConnect();
-			if (!conn) {
+			stub.mothershipConn = crMothershipConnect();
+			if (!stub.mothershipConn) {
 				crDebug("Unable to connect to spawned mothership.  Exiting.");
 				exit(0);
 			}
@@ -745,9 +746,9 @@ stubInit(void)
 		}
 	}
 
-	if (conn) {
+	if (stub.mothershipConn) {
 		/* Identify myself to mothership - response will be client's SPU chain */
-		crMothershipIdentifyOpenGL( conn, response, app_id );
+		crMothershipIdentifyOpenGL( stub.mothershipConn, response, app_id );
 	}
 
 
@@ -762,9 +763,8 @@ stubInit(void)
 		crDebug( "SPU %d/%d: (%d) \"%s\"", i+1, num_spus, spu_ids[i], spu_names[i] );
 	}
 
-	if (conn) {
-		getConfigurationOptions(conn);
-		crMothershipDisconnect( conn );
+	if (stub.mothershipConn) {
+		getConfigurationOptions(stub.mothershipConn);
 	}
 
 	stub.spu = crSPULoadChain( num_spus, spu_ids, spu_names, stub.spu_dir, NULL );
