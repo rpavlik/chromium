@@ -504,6 +504,16 @@ static void ARRAYSPU_APIENTRY arrayspu_DrawElements(GLenum mode, GLsizei count,
 	array_spu.self.End();
 }
 
+
+static void ARRAYSPU_APIENTRY
+arrayspu_DrawRangeElements(GLenum mode, GLuint start, GLuint end,
+													 GLsizei count, GLenum type, const GLvoid *indices)
+{
+	arrayspu_DrawElements(mode, count, type, indices);
+}
+
+
+
 static void ARRAYSPU_APIENTRY arrayspu_ColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid *pointer )
 {
 	crStateColorPointer( size, type, stride, pointer );
@@ -758,6 +768,7 @@ SPUNamedFunctionTable _cr_array_table[] = {
 	{ "ArrayElement", (SPUGenericFunction) arrayspu_ArrayElement },
 	{ "DrawArrays", (SPUGenericFunction) arrayspu_DrawArrays},
 	{ "DrawElements", (SPUGenericFunction)  arrayspu_DrawElements},
+	{ "DrawRangeElements", (SPUGenericFunction) arrayspu_DrawRangeElements },
 	{ "ColorPointer", (SPUGenericFunction) arrayspu_ColorPointer},
 	{ "SecondaryColorPointerEXT", (SPUGenericFunction) arrayspu_SecondaryColorPointerEXT},
 	{ "VertexPointer", (SPUGenericFunction) arrayspu_VertexPointer},
