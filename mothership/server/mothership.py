@@ -940,7 +940,27 @@ class CR:
 		return
 
 	def do_exit( self, sock, args ):
+		"""This is called in response to an 'exit' message from a client."""
 		raise KeyboardInterrupt
+
+	def get_mothership_port(self):
+		"""Get the mothership port.  Use CRMOTHERSHIP env var if it's set,
+		otherwise return default value."""
+		# Port was not specified.  Get it from
+		# CRMOTHERSHIP environment variable if possible..
+		PORT = DefaultMothershipPort  # default value
+		if os.environ.has_key('CRMOTHERSHIP'):
+			motherString = os.environ['CRMOTHERSHIP']
+			loc = string.find(motherString,':')
+			if loc >= 0:
+				try:
+					PORT = int(motherString[loc+1:])
+					CRDebug("Using PORT %d"%PORT)
+				except Exception, val:
+					CRInfo("Could not parse port number from <%s>: %s"%(motherString,val))
+					CRInfo("Using default PORT!")
+		return PORT
+
 
 	def Go( self, PORT = -1 ):
 		"""Go(portNumber)
@@ -956,19 +976,7 @@ class CR:
 			CRInfo("This is Chromium, Version " + Version)
 		try:
 			if PORT == -1:
-				# Port was not specified.  Get it from
-				# CRMOTHERSHIP environment variable if possible..
-				PORT = DefaultMothershipPort  # default value
-				if os.environ.has_key('CRMOTHERSHIP'):
-					motherString = os.environ['CRMOTHERSHIP']
-					loc = string.find(motherString,':')
-					if loc >= 0:
-						try:
-							PORT = int(motherString[loc+1:])
-							CRDebug("Using PORT %d"%PORT)
-						except Exception, val:
-							CRInfo("Could not parse port number from <%s>: %s"%(motherString,val))
-							CRInfo("Using default PORT!")
+				PORT = self.get_mothership_port()
 
 			for res in socket.getaddrinfo(None, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
 				(af, socktype, proto, canonname, sa) = res
