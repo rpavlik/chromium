@@ -218,6 +218,7 @@ static void stubInitVars(void)
 	stub.trackWindowPos = 0;
 	stub.trackWindowVisibility = 0;
 	stub.mothershipPID = 0;
+	stub.mothershipConn = NULL;
 	stub.spu_dir = NULL;
 
 	stub.freeContextNumber = MAGIC_CONTEXT_BASE;
