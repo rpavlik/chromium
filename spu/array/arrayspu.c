@@ -298,7 +298,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 				array_spu.self.SecondaryColor3dvEXT((GLdouble *)p); break;
 		}
 	}
-#endif // CR_EXT_secondary_color
+#endif /* CR_EXT_secondary_color */
 #ifdef CR_EXT_fog_coord
 	if (array->f.enabled && !(vpEnabled && array->a[VERT_ATTRIB_FOG].enabled))
 	{
@@ -313,7 +313,7 @@ static void ARRAYSPU_APIENTRY arrayspu_ArrayElement( GLint index )
 
 		array_spu.self.FogCoordfEXT( *((GLfloat *) p) );
 	}
-#endif // CR_EXT_fog_coord
+#endif /* CR_EXT_fog_coord */
 
 	/* Need to do attrib[0] / vertex position last */
 	if (array->a[VERT_ATTRIB_POS].enabled) {
