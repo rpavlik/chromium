@@ -1057,7 +1057,7 @@ vncspuSwapBuffers(GLint win, GLint flags)
 
 /**
  * For both glFlush and glFinish.
- * Update VNC data if single-buffered.
+ * Update VNC data if single-buffered or drawing to non-back buffer.
  */
 static void VNCSPU_APIENTRY
 vncspuFinish(void)
@@ -1067,7 +1067,6 @@ vncspuFinish(void)
 	vnc_spu.self.GetBooleanv(GL_DOUBLEBUFFER, &db);
 	vnc_spu.self.GetIntegerv(GL_DRAW_BUFFER, &drawBuf);
 	if (!db || drawBuf != GL_BACK) {
-		/* single buffered: update VNC info */
 		WindowInfo *window = vnc_spu.currentWindow;
 		if (window) {
 			vncspuUpdateFramebuffer(window);
