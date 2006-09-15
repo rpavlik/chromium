@@ -24,13 +24,15 @@
 >{
 >unsigned int activeUnit = (unsigned int) -1;
 >for (i = 0; i < CR_MAX_TEXTURE_UNITS; i++) {
-:coordReplacement[i]:*GLint replacement = to->coordReplacement[i];
-:coordReplacement[i]:*if (activeUnit != i) {
-:coordReplacement[i]:*	 diff_api.ActiveTextureARB(i + GL_TEXTURE0_ARB );
-:coordReplacement[i]:*	 activeUnit = i;
+:coordReplacement[i]:*if (from->coordReplacement[i] != to->coordReplacement[i]) {
+:coordReplacement[i]:*	GLint replacement = to->coordReplacement[i];
+:coordReplacement[i]:*	if (activeUnit != i) {
+:coordReplacement[i]:*		diff_api.ActiveTextureARB(i + GL_TEXTURE0_ARB );
+:coordReplacement[i]:*		activeUnit = i;
+:coordReplacement[i]:*	}
+:coordReplacement[i]:*	diff_api.TexEnviv(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, &replacement);
++:coordReplacement[i]:*	from->coordReplacement[i] = to->coordReplacement[i];
 :coordReplacement[i]:*}
-:coordReplacement[i]:*diff_api.TexEnviv(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, &replacement);
-+:coordReplacement[i]:*from->coordReplacement[i] = to->coordReplacement[i];
 %flush
 >}
 >if (activeUnit != toCtx->texture.curTextureUnit)
