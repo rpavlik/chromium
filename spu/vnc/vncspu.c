@@ -750,6 +750,7 @@ DoReadback(WindowInfo *window)
 		/* clipping has changed */
 		window->clippingHash = hash;
 		window->newSize = 3;
+		crDebug("VNC SPU: New clipping rects");
 	}
 
 
@@ -1062,8 +1063,10 @@ static void VNCSPU_APIENTRY
 vncspuFinish(void)
 {
 	GLboolean db;
+	GLint drawBuf;
 	vnc_spu.self.GetBooleanv(GL_DOUBLEBUFFER, &db);
-	if (!db) {
+	vnc_spu.self.GetIntegerv(GL_DRAW_BUFFER, &drawBuf);
+	if (!db || drawBuf != GL_BACK) {
 		/* single buffered: update VNC info */
 		WindowInfo *window = vnc_spu.currentWindow;
 		if (window) {
