@@ -39,22 +39,22 @@ LOADMATRIX( const CRmatrix *a )
 
 static void _math_transposef( GLfloat to[16], const GLfloat from[16] )
 {
-   to[0] = from[0];
-   to[1] = from[4];
-   to[2] = from[8];
-   to[3] = from[12];
-   to[4] = from[1];
-   to[5] = from[5];
-   to[6] = from[9];
-   to[7] = from[13];
-   to[8] = from[2];
-   to[9] = from[6];
-   to[10] = from[10];
-   to[11] = from[14];
-   to[12] = from[3];
-   to[13] = from[7];
-   to[14] = from[11];
-   to[15] = from[15];
+	to[0] = from[0];
+	to[1] = from[4];
+	to[2] = from[8];
+	to[3] = from[12];
+	to[4] = from[1];
+	to[5] = from[5];
+	to[6] = from[9];
+	to[7] = from[13];
+	to[8] = from[2];
+	to[9] = from[6];
+	to[10] = from[10];
+	to[11] = from[14];
+	to[12] = from[3];
+	to[13] = from[7];
+	to[14] = from[11];
+	to[15] = from[15];
 }
 
 static void _math_transposed( GLdouble to[16], const GLdouble from[16] )
@@ -505,18 +505,20 @@ void STATE_APIENTRY crStateLoadMatrixd(const GLdouble *m1)
 
 void STATE_APIENTRY crStateLoadTransposeMatrixfARB(const GLfloat *m1) 
 {
-   GLfloat tm[16];
-   if (!m1) return;
-   _math_transposef(tm, m1);
-   crStateLoadMatrixf(tm);
+	GLfloat tm[16];
+	if (!m1)
+		return;
+	_math_transposef(tm, m1);
+	crStateLoadMatrixf(tm);
 }
 
 void STATE_APIENTRY crStateLoadTransposeMatrixdARB(const GLdouble *m1) 
 {
-   GLdouble tm[16];
-   if (!m1) return;
-   _math_transposed(tm, m1);
-   crStateLoadMatrixd(tm);
+	GLdouble tm[16];
+	if (!m1)
+		return;
+	_math_transposed(tm, m1);
+	crStateLoadMatrixd(tm);
 }
 
 /* This code is based on the Pomegranate stuff.
@@ -671,18 +673,20 @@ void STATE_APIENTRY crStateMultMatrixd(const GLdouble *m1)
 
 void STATE_APIENTRY crStateMultTransposeMatrixfARB(const GLfloat *m1) 
 {
-   GLfloat tm[16];
-   if (!m1) return;
-   _math_transposef(tm, m1);
-   crStateMultMatrixf(tm);
+	GLfloat tm[16];
+	if (!m1)
+		return;
+	_math_transposef(tm, m1);
+	crStateMultMatrixf(tm);
 }
 
 void STATE_APIENTRY crStateMultTransposeMatrixdARB(const GLdouble *m1) 
 {
-   GLdouble tm[16];
-   if (!m1) return;
-   _math_transposed(tm, m1);
-   crStateMultMatrixd(tm);
+	GLdouble tm[16];
+	if (!m1)
+		return;
+	_math_transposed(tm, m1);
+	crStateMultMatrixd(tm);
 }
 
 void STATE_APIENTRY crStateTranslatef(GLfloat x_arg, GLfloat y_arg, GLfloat z_arg) 
