@@ -133,7 +133,7 @@ __findSystemLib( const char *provided_system_path, char *lib )
 		 * version if it exists; otherwise, we'll use /usr/lib.
 		 */
 		crStrcpy(system_path, "/usr/lib");
-#if defined(__linux__) && defined(__amd64__)
+#if defined(__linux__) && (defined(__amd64__) || defined(__x86_64__))
 		if (sizeof(void *) == 8 && FileExists("/usr/lib64", lib)) {
 			crStrcat(system_path, "64");
 		}
