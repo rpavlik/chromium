@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.25 2006-08-31 18:50:00 brianp Exp $
+ * $Id: client_io.c,v 1.26 2006-09-26 18:43:12 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -246,6 +246,7 @@ static void rf_client_initmsg(void)
   cl->fb_width = g_screen_info.width;
   cl->fb_height = g_screen_info.height;
   cl->enable_newfbsize = 0;
+  cl->enable_cliprects_enc = 0;
 
   /* Send ServerInitialisation message */
   buf_put_CARD16(msg_server_init, cl->fb_width);
@@ -269,6 +270,7 @@ static void rf_client_initmsg(void)
   REGION_INIT(&cl->pending_region, NullBox, 16);
   REGION_INIT(&cl->copy_region, NullBox, 8);
   cl->newfbsize_pending = 0;
+  cl->new_cliprects = 0;
 
   /* We are connected. */
   cl->connected = 1;
@@ -379,6 +381,7 @@ static void rf_client_encodings_data(void)
   cl->jpeg_quality = -1;
   cl->enable_lastrect = 0;
   cl->enable_newfbsize = 0;
+  cl->enable_cliprects_enc = 0;
   cl->enable_frame_sync = 0;
   for (i = 1; i < NUM_ENCODINGS; i++)
     cl->enc_enable[i] = 0;
@@ -416,6 +419,10 @@ static void rf_client_encodings_data(void)
     } else if (enc == RFB_ENCODING_NEWFBSIZE) {
       cl->enable_newfbsize = 1;
       log_write(LL_DETAIL, "Client %s supports desktop geometry changes",
+                cur_slot->name);
+    } else if (enc == RFB_ENCODING_CLIPRECTS) {
+      cl->enable_cliprects_enc = 1;
+      log_write(LL_DETAIL, "Client %s supports cliprects",
                 cur_slot->name);
     } else if (enc == RFB_ENCODING_FRAME_SYNC) {
       cl->enable_frame_sync = 1;
@@ -524,6 +531,7 @@ static void rf_client_updatereq(void)
 
   if (!cl->update_in_progress) {
     int k = (cl->newfbsize_pending ||
+             cl->new_cliprects ||
              REGION_NOTEMPTY(&cl->copy_region) ||
              vncspuWaitDirtyRects(&cl->pending_region, &cl->update_rect,
                                   cl->serial_number));
@@ -545,6 +553,7 @@ static void wf_client_update_finished(void)
   cl->update_in_progress = 0;
   if (cl->update_requested &&
       (cl->newfbsize_pending ||
+       cl->new_cliprects ||
        REGION_NOTEMPTY(&cl->pending_region) ||
        REGION_NOTEMPTY(&cl->copy_region))) {
     send_update();
@@ -764,6 +773,7 @@ void fn_client_send_rects(AIO_SLOT *slot)
 
   if (!cl->update_in_progress && cl->update_requested &&
       (cl->newfbsize_pending ||
+       cl->new_cliprects ||
        REGION_NOTEMPTY(&cl->copy_region) ||
        vncspuGetDirtyRects(&cl->pending_region))) {
     cur_slot = slot;
@@ -873,6 +883,61 @@ static void send_newfbsize(void)
   cl->update_requested = 0;
 }
 
+
+static BoxRec NewClipBounds;
+
+static void fn_new_clip(AIO_SLOT *s)
+{
+  CL_SLOT *cl = (CL_SLOT *) s;
+  assert(cl->s.type == TYPE_CL_SLOT);
+  if (cl->enable_cliprects_enc)
+    cl->new_cliprects = 1;
+  cl->new_clip_bounds = NewClipBounds;
+}
+
+void signal_new_clipping(const BoxPtr bounds)
+{
+   NewClipBounds = *bounds;
+   aio_walk_slots(fn_new_clip, TYPE_CL_SLOT);
+}
+
+
+static void send_new_cliprects(void)
+{
+  CL_SLOT *cl = (CL_SLOT *)cur_slot;
+  CARD8 msg_hdr[4] = {
+    0, 0, 0, 1
+  };
+  CARD8 rect_hdr[12];
+  FB_RECT rect;
+
+  crDebug("Sending new cliprects to proxy: %d, %d .. %d, %d",
+          cl->new_clip_bounds.x1,
+          cl->new_clip_bounds.y1,
+          cl->new_clip_bounds.x2,
+          cl->new_clip_bounds.y2);
+
+  log_write(LL_DEBUG, "Sending NewCliprects (%dx%d) to %s",
+            (int)cl->fb_width, (int)cl->fb_height, cur_slot->name);
+
+  buf_put_CARD16(&msg_hdr[2], 1); /* one rect */
+  aio_write(NULL, msg_hdr, 4);
+
+  rect.x = cl->new_clip_bounds.x1;
+  rect.y = cl->new_clip_bounds.y1;
+  rect.w = cl->new_clip_bounds.x2 - cl->new_clip_bounds.x1;
+  rect.h = cl->new_clip_bounds.y2 - cl->new_clip_bounds.y1;
+  rect.enc = RFB_ENCODING_CLIPRECTS;
+
+  put_rect_header(rect_hdr, &rect);
+  aio_write(wf_client_update_finished, rect_hdr, 12);
+
+  /* Something has been queued for sending. */
+  cl->update_in_progress = 1;
+  cl->update_requested = 0;
+}
+
+
 /*
  * Send pending framebuffer update.
  * FIXME: Function too big.
@@ -933,6 +998,13 @@ static void send_update(void)
   } else {
     /* Exclude CopyRect areas covered by pending_region. */
     REGION_SUBTRACT(&cl->copy_region, &cl->copy_region, &cl->pending_region);
+  }
+
+  if (cl->enable_cliprects_enc && cl->new_cliprects) {
+    send_new_cliprects();
+    vncspuUnlockFrameBuffer();
+    cl->new_cliprects = 0;
+    return;
   }
 
   /* Clip regions to the rectangle requested by the client. */

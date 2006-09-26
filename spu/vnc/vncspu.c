@@ -747,12 +747,18 @@ DoReadback(WindowInfo *window)
 	GetWindowBounds(window);
 	hash = RegionHash(&window->clipRegion);
 	if (hash != window->clippingHash) {
+		BoxRec bounds;
 		/* clipping has changed */
 		window->clippingHash = hash;
 		window->newSize = 3;
 		crDebug("VNC SPU: New clipping rects");
+		bounds = *miRegionExtents(&window->clipRegion);
+		bounds.x1 += window->xPos;
+		bounds.y1 += window->yPos;
+		bounds.x2 += window->xPos;
+		bounds.y2 += window->yPos;
+		signal_new_clipping(&bounds);
 	}
-
 
 	/**
 	 ** Compute dirtyRegion - the pixel areas to read back.
