@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: translate.c,v 1.2 2005-08-26 19:17:33 brianp Exp $
+ * $Id: translate.c,v 1.3 2006-09-27 17:33:09 brianp Exp $
  * Pixel format translation.
  */
 
@@ -104,23 +104,12 @@ void transfunc_null(void *dst_buf, FB_RECT *r, void *table)
   g_framebuffer = GetFrameBuffer(&g_fb_width, &g_fb_height);
 #endif
 
-#if RASTER_BOTTOM_TO_TOP
-  fb_ptr = g_framebuffer + (g_fb_height - 1 - r->y) * g_fb_width + r->x;
-
+  fb_ptr = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height, r->x, r->y);
   for (y = 0; y < r->h; y++) {
     memcpy(dst_ptr, fb_ptr, r->w * sizeof(CARD32));
-    fb_ptr -= g_fb_width;
+    fb_ptr += ROW_STRIDE(g_fb_width);
     dst_ptr += r->w;
   }
-#else
-  fb_ptr = &g_framebuffer[r->y * g_fb_width + r->x];
-
-  for (y = 0; y < r->h; y++) {
-    memcpy(dst_ptr, fb_ptr, r->w * sizeof(CARD32));
-    fb_ptr += g_fb_width;
-    dst_ptr += r->w;
-  }
-#endif
 }
 
 /*
@@ -136,9 +125,8 @@ void transfunc8(void *dst_buf, FB_RECT *r, void *table)         \
   CARD32 *fb_ptr;                                               \
   CARD8 *dst_ptr = (CARD8 *)dst_buf;                            \
   int x, y;                                                     \
-  assert(RASTER_BOTTOM_TO_TOP==0);/*XXX FIX*/                   \
                                                                 \
-  fb_ptr = &g_framebuffer[r->y * g_fb_width + r->x];            \
+  fb_ptr = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height, r->x, r->y);  \
   for (y = 0; y < r->h; y++) {                                  \
     for (x = 0; x < r->w; x++) {                                \
       *dst_ptr++ =                                              \
@@ -147,7 +135,7 @@ void transfunc8(void *dst_buf, FB_RECT *r, void *table)         \
          (((*fb_ptr & 0xFF) * 3 + 127) / 255 << 6));            \
       fb_ptr++;                                                 \
     }                                                           \
-    fb_ptr += (g_fb_width - r->w);                              \
+    fb_ptr += ROW_STRIDE(g_fb_width - r->w);                    \
   }                                                             \
 }
 
@@ -170,9 +158,8 @@ void transfunc##bpp(void *dst_buf, FB_RECT *r, void *table)     \
   CARD32 *g_framebuffer;                                        \
   CARD16 g_fb_width, g_fb_height;                               \
   g_framebuffer = GetFrameBuffer(&g_fb_width, &g_fb_height);    \
-  assert(RASTER_BOTTOM_TO_TOP==0);/*XXX FIX*/                   \
                                                                 \
-  fb_ptr = &g_framebuffer[r->y * g_fb_width + r->x];            \
+  fb_ptr = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height, r->x, r->y);  \
   for (y = 0; y < r->h; y++) {                                  \
     for (x = 0; x < r->w; x++) {                                \
       *dst_ptr++ = (tbl_ptr[*fb_ptr >> 16 & 0xFF] |             \
@@ -180,7 +167,7 @@ void transfunc##bpp(void *dst_buf, FB_RECT *r, void *table)     \
                     tbl_ptr[512 + (*fb_ptr & 0xFF)]);           \
       fb_ptr++;                                                 \
     }                                                           \
-    fb_ptr += (g_fb_width - r->w);                              \
+    fb_ptr += ROW_STRIDE(g_fb_width - r->w);                    \
   }                                                             \
 }
 
@@ -208,9 +195,7 @@ void transfunc##bpp(void *dst_buf, FB_RECT *r, void *table)     \
   CARD16 g_fb_width, g_fb_height;                               \
   g_framebuffer = GetFrameBuffer(&g_fb_width, &g_fb_height);    \
                                                                 \
-  assert(RASTER_BOTTOM_TO_TOP==0);/*XXX FIX*/                   \
-                                                                \
-  fb_ptr = &g_framebuffer[r->y * g_fb_width + r->x];            \
+  fb_ptr = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height, r->x, r->y);  \
   w = r->w;                                                     \
   h = r->h;                                                     \
                                                                 \
@@ -227,7 +212,7 @@ void transfunc##bpp(void *dst_buf, FB_RECT *r, void *table)     \
       }                                                         \
       *dst_ptr++ = pixel;                                       \
     }                                                           \
-    fb_ptr += (g_fb_width - w);                                 \
+    fb_ptr += ROW_STRIDE(g_fb_width - w);                       \
   }                                                             \
 }
 
