@@ -31,7 +31,7 @@ static void set_screen_size( VncSPU *vnc_spu, const char *response )
 {
 	CRASSERT(response[0] == '[');
 	sscanf(response, "[ %d, %d ]",
-				 &vnc_spu->screen_width,	&vnc_spu->screen_height);
+				 &vnc_spu->screen_width, &vnc_spu->screen_height);
 }
 
 static void set_max_update_rate(VncSPU *vnc_spu, const char *response)
