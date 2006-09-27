@@ -522,6 +522,16 @@ ReadbackRect(int scrx, int scry, int winx, int winy, int width, int height)
 			vnc_spu.super.ReadPixels(winx, winy, width, height,
 															 GL_BGRA, GL_UNSIGNED_BYTE, sb->buffer);
 		}
+
+#if 0
+		if (0*vnc_spu.half_rez)	{
+			GLubyte *src = sb->buffer
+				+ (scryFlipped * vnc_spu.screen_width + scrx) * 4;
+			vncspuHalfImage(width, height, vnc_spu.screen_width,	src,
+											vnc_spu.screen_width, src, GL_BGRA);
+		}
+#endif
+
 	}
 #else
 	{

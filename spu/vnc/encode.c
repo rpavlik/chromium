@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode.c,v 1.6 2006-04-25 22:09:07 brianp Exp $
+ * $Id: encode.c,v 1.7 2006-09-27 18:40:49 brianp Exp $
  * Encoding screen rectangles.
  */
 
@@ -141,7 +141,6 @@ void free_enc_cache(void)
 /*
  * Raw encoder
  */
-
 AIO_BLOCK *rfb_encode_raw_block(CL_SLOT *cl, FB_RECT *r)
 {
   AIO_BLOCK *block;
@@ -156,10 +155,59 @@ AIO_BLOCK *rfb_encode_raw_block(CL_SLOT *cl, FB_RECT *r)
   return block;
 }
 
+
+
+/*
+ * Raw encoder, half rez.
+ */
+AIO_BLOCK *rfb_encode_raw_block_halfrez(CL_SLOT *cl, FB_RECT *r)
+{
+  const int hw = (r->w + 1) / 2, hh = (r->h + 1) / 2;
+  int payload_size;
+  AIO_BLOCK *block;
+
+  payload_size = 12 + hw * hh * (cl->format.bits_pixel / 8);
+  block = aio_new_block(payload_size);
+  if (block) {
+    const CARD32 *g_framebuffer, *src;
+    CARD16 g_fb_width, g_fb_height;
+    CARD32 *dest;
+    int i, j;
+    FB_RECT rect2;
+    int k = 0;
+
+    rect2.enc = RFB_ENCODING_HALF_REZ;
+    rect2.x = r->x;
+    rect2.y = r->y;
+    rect2.w = hw;
+    rect2.h = hh;
+
+    put_rect_header(block->data, &rect2);
+    dest = (CARD32 *) &block->data[12];
+
+    g_framebuffer = GetFrameBuffer(&g_fb_width, &g_fb_height);
+    src = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height, r->x, r->y);
+
+    for (i = 0; i < 2 * hh; i += 2) {
+      for (j = 0; j < 2 * hw; j += 2) {
+         *dest++ = src[j];
+         k++;
+      }
+      src += 2 * ROW_STRIDE(g_fb_width);
+    }
+
+    assert(k == hh * hw);
+
+    block->data_size = payload_size;
+  }
+
+  return block;
+}
+
+
 /*
  * Raw24 encoder
  */
-
 AIO_BLOCK *rfb_encode_raw24_block(CL_SLOT *cl, FB_RECT *r)
 {
   AIO_BLOCK *block;
@@ -204,7 +252,7 @@ AIO_BLOCK *rfb_encode_copyrect_block(CL_SLOT *cl, FB_RECT *r)
  * Tiny function to fill in rectangle header in an RFB update
  */
 
-int put_rect_header(CARD8 *buf, FB_RECT *r)
+int put_rect_header(CARD8 *buf, const FB_RECT *r)
 {
 
   buf_put_CARD16(buf, r->x);

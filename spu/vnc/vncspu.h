@@ -106,6 +106,7 @@ typedef struct {
 	char *netlogger_url;
 	char *hostname;
 #endif
+	int half_rez;
 
 	ScreenBuffer *screen_buffer[2];
 	GLboolean screen_buffer_locked; /* True while accessed by encoder */
@@ -155,5 +156,11 @@ extern GLboolean vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi,
 void
 PrintRegion(const char *s, const RegionPtr r);
 
+
+extern void
+vncspuHalfImage(int origWidth, int origHeight, int origStride,
+                const GLubyte *origImage,
+                int newStride, GLubyte *newImage,
+                GLenum format);
 
 #endif /* VNC_SPU_H */

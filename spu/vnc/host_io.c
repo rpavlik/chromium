@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: host_io.c,v 1.2 2005-08-11 20:10:33 brianp Exp $
+ * $Id: host_io.c,v 1.3 2006-09-27 18:40:49 brianp Exp $
  * Asynchronous interaction with VNC host.
  */
 
@@ -331,8 +331,8 @@ static void rf_host_fbupdate_recthdr(void)
               cur_rect.w * cur_rect.h * sizeof(CARD32));
     rect_cur_row = 0;
     aio_setread(rf_host_fbupdate_raw,
-                &g_framebuffer[cur_rect.y * (int)g_fb_width +
-                               cur_rect.x],
+                PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height,
+                           cur_rect.x, cur_rect.y),
                 cur_rect.w * sizeof(CARD32));
     break;
   case RFB_ENCODING_COPYRECT:
@@ -356,7 +356,6 @@ static void rf_host_fbupdate_recthdr(void)
 
 static void rf_host_fbupdate_raw(void)
 {
-  int idx;
 #ifdef CHROMIUM
   CARD32 *g_framebuffer;
   CARD16 g_fb_width, g_fb_height;
@@ -367,8 +366,9 @@ static void rf_host_fbupdate_raw(void)
 
   if (++rect_cur_row < cur_rect.h) {
     /* Read next row */
-    idx = (cur_rect.y + rect_cur_row) * (int)g_fb_width + cur_rect.x;
-    aio_setread(rf_host_fbupdate_raw, &g_framebuffer[idx],
+     CARD32 *dst = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height,
+                              cur_rect.x, cur_rect.y + rect_cur_row);
+    aio_setread(rf_host_fbupdate_raw, dst,
                 cur_rect.w * sizeof(CARD32));
   } else {
     /* Done with this rectangle */

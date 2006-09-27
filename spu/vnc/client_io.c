@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.26 2006-09-26 18:43:12 brianp Exp $
+ * $Id: client_io.c,v 1.27 2006-09-27 18:40:49 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -423,6 +423,10 @@ static void rf_client_encodings_data(void)
     } else if (enc == RFB_ENCODING_CLIPRECTS) {
       cl->enable_cliprects_enc = 1;
       log_write(LL_DETAIL, "Client %s supports cliprects",
+                cur_slot->name);
+    } else if (enc == RFB_ENCODING_HALF_REZ) {
+      vnc_spu.half_rez = 1;
+      log_write(LL_DETAIL, "Client %s supports half rez",
                 cur_slot->name);
     } else if (enc == RFB_ENCODING_FRAME_SYNC) {
       cl->enable_frame_sync = 1;
@@ -1136,7 +1140,12 @@ static void send_update(void)
       } else {
         /* Use Raw encoding */
         rect.enc = RFB_ENCODING_RAW;
-        block = rfb_encode_raw_block(cl, &rect);
+        if (vnc_spu.half_rez) {
+           block = rfb_encode_raw_block_halfrez(cl, &rect);
+        }
+        else {
+           block = rfb_encode_raw_block(cl, &rect);
+        }
       }
 
       /* Send the rectangle.
