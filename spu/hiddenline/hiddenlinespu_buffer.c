@@ -1,6 +1,11 @@
 #include "hiddenlinespu.h"
 #include "cr_mem.h"
 
+#define RECLAIM_PACK_FREE 0
+#define RECLAIM_POOL 1
+#define RECLAIM_HUGE 2
+
+
 /*
  * Get an empty packing buffer from the buffer pool, or allocate a new one.
  * Then tell the packer to use it.
@@ -27,14 +32,22 @@ void hiddenlineProvidePackBuffer(void)
  */
 void hiddenlineReclaimPackBuffer( BufList *bl )
 {
-	if (bl->can_reclaim)
+	if (bl->can_reclaim == RECLAIM_POOL)
 	{
 		GET_CONTEXT(context);
 		crBufferPoolPush( context->bufpool, bl->buf, hiddenline_spu.buffer_size );
 	}
-	else
+	else if (bl->can_reclaim == RECLAIM_PACK_FREE)
 	{
 		crPackFree( bl->buf );
+	}
+	else if (bl->can_reclaim == RECLAIM_HUGE)
+	{
+		crDebug("FREE %p", bl->buf);
+		crFree(bl->buf);
+	}
+	else {
+		CRASSERT(0);
 	}
 }
 
@@ -45,7 +58,9 @@ void hiddenlineReclaimPackBuffer( BufList *bl )
  * buffers which we'll replay later.
  * Called by the Flush/Huge functions below.
  */
-static void hiddenlineRecord( void *buf, void *data, void *opcodes, unsigned int num_opcodes, int can_reclaim )
+static void
+hiddenlineRecord( void *buf, void *data, void *opcodes,
+									unsigned int num_opcodes, int reclaim )
 {
 	GET_CONTEXT(context);
 	BufList *bl;
@@ -54,7 +69,7 @@ static void hiddenlineRecord( void *buf, void *data, void *opcodes, unsigned int
 	bl->data = data;
 	bl->opcodes = opcodes;
 	bl->num_opcodes = num_opcodes;
-	bl->can_reclaim = can_reclaim;
+	bl->can_reclaim = reclaim;
 	bl->next = NULL;
 
 	CRASSERT(context);
@@ -85,7 +100,9 @@ void hiddenlineFlush( void *arg )
 	/* release previous buffer if any */
 	crPackReleaseBuffer( context->packer );
 
-	hiddenlineRecord( buf->pack, buf->data_start, buf->opcode_start, buf->opcode_start - buf->opcode_current , 1 );
+	if (buf->opcode_start - buf->opcode_current > 0)
+		hiddenlineRecord( buf->pack, buf->data_start, buf->opcode_start,
+											buf->opcode_start - buf->opcode_current , RECLAIM_POOL );
 
 	hiddenlineProvidePackBuffer();
 	(void) arg;
@@ -97,11 +114,15 @@ void hiddenlineFlush( void *arg )
  */
 void hiddenlineHuge( CROpcode opcode, void *buf )
 {
-	/* write the opcode in just before the packet length */
+	const unsigned int len = ((unsigned int *) buf)[-1];
+	char *newData;
 
-	((unsigned char *) buf)[-5] = (unsigned char) opcode;
+	/* need to make copy of the huge buffer, as the packing function will free
+	 * the data when we return.
+	 */
+	newData = (char *) crAlloc(len + 2);
+	newData[0] = opcode;
+	crMemcpy(newData + 1, (unsigned char *) buf - 4, len);
 
-	/* Just record the actual buffer; it will be free'd properly by
-	 * crPackFree later. */
-	hiddenlineRecord( buf, (unsigned char *) buf - 4, (unsigned char *) buf - 5, 1, 0 );
+	hiddenlineRecord( newData, newData + 1, newData, 1, RECLAIM_HUGE );
 }
