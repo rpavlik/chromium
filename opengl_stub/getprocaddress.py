@@ -63,7 +63,7 @@ print """
 CR_PROC CR_APIENTRY crGetProcAddress( const char *name )
 {
 	int i;
-	stubInit();
+	stubInit(); /*this can cause problems with threaded apps */
 
 	for (i = 0; functions[i].name; i++) {
 		if (crStrcmp(name, functions[i].name) == 0) {
