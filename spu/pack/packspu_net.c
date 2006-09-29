@@ -109,7 +109,8 @@ __prependHeader( CRPackBuffer *buf, unsigned int *len, unsigned int senderID )
  * This is called from either the Pack SPU and the packer library whenever
  * we need to send a data buffer to the server.
  */
-void packspuFlush(void *arg )
+void
+packspuFlush(void *arg )
 {
 	ThreadInfo *thread = (ThreadInfo *) arg;
 	ContextInfo *ctx;
@@ -168,7 +169,8 @@ void packspuFlush(void *arg )
  * XXX NOTE: there's a lot of duplicate code here common to the
  * pack, tilesort and replicate SPUs.  Try to simplify someday!
  */
-void packspuHuge( CROpcode opcode, void *buf )
+void
+packspuHuge( CROpcode opcode, void *buf )
 {
 	GET_THREAD(thread);
 	unsigned int          len;
@@ -216,15 +218,16 @@ void packspuHuge( CROpcode opcode, void *buf )
 static void
 packspuCloseCallback(CRConnection *conn)
 {
-   GET_THREAD(thread);
-   if (thread && conn == thread->netServer.conn) {
-	  crDebug("Pack SPU: Server connection closed - exiting.");
-	  exit(0);
-   }
+	GET_THREAD(thread);
+	if (thread && conn == thread->netServer.conn) {
+		crDebug("Pack SPU: Server connection closed - exiting.");
+		exit(0);
+	}
 }
 
 
-void packspuConnectToServer( CRNetServer *server )
+void
+packspuConnectToServer( CRNetServer *server )
 {
 	crNetInit( packspuReceiveData, packspuCloseCallback );
 	crNetServerConnect( server );
