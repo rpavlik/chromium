@@ -227,7 +227,8 @@ crNetConnectToServer( const char *server, unsigned short default_port,
 
 #ifdef SDP_SUPPORT
 	/* This makes me ill, but we need to "fix" the hostname for sdp. MCH */
-	if (!crStrcmp(protocol, "sdp")) {
+	/* But only if it's non-numeric */
+	if (!crStrcmp(protocol, "sdp") && strspn(hostname, "0123456789.") != strlen(hostname)) {
 		char* temp;
 		temp = strtok(hostname, ".");
 		crStrcat(temp, crGetSDPHostnameSuffix());
