@@ -43,7 +43,6 @@ void hiddenlineReclaimPackBuffer( BufList *bl )
 	}
 	else if (bl->can_reclaim == RECLAIM_HUGE)
 	{
-		crDebug("FREE %p", bl->buf);
 		crFree(bl->buf);
 	}
 	else {
