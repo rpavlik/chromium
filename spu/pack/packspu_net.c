@@ -217,7 +217,7 @@ static void
 packspuCloseCallback(CRConnection *conn)
 {
    GET_THREAD(thread);
-   if (conn == thread->netServer.conn) {
+   if (thread && conn == thread->netServer.conn) {
 	  crDebug("Pack SPU: Server connection closed - exiting.");
 	  exit(0);
    }
