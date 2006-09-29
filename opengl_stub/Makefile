@@ -29,9 +29,15 @@ FILES += $(ARCH)_$(MACHTYPE)_exports glx xfont
 ARCH_EXPORTS_PY = $(ARCH)_$(MACHTYPE)_exports.py
 ARCH_EXPORTS = $(ARCH)_$(MACHTYPE)_exports.s
 else
+ifeq ($(MACHTYPE),x86_64)
+FILES += $(ARCH)_$(MACHTYPE)_exports glx xfont
+ARCH_EXPORTS_PY = $(ARCH)_$(MACHTYPE)_exports.py
+ARCH_EXPORTS = $(ARCH)_$(MACHTYPE)_exports.c
+else
 FILES += $(ARCH)_exports glx xfont
 ARCH_EXPORTS_PY = $(ARCH)_exports.py
 ARCH_EXPORTS = $(ARCH)_exports.c 
+endif
 endif
 endif
 
