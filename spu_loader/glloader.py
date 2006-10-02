@@ -77,7 +77,7 @@ fillin( SPUNamedFunctionTable *entry, const char *funcName, SPUGenericFunction f
 }
 
 #ifndef WINDOWS
-static int FileExists(char *directory, const char *filename)
+static int FileExists(const char *directory, const char *filename)
 {
 	FILE *f;
 	char fullFilename[8096];
