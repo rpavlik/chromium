@@ -4,6 +4,8 @@
 # See the file LICENSE.txt for information on redistributing this software.
 
 TOP = ../
+include ${TOP}/arch.mk
+
 SHARED = 1
 LIBRARY = spuload
 LIBRARIES = crutil crmothership
