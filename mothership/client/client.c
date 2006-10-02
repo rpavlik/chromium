@@ -78,14 +78,20 @@ int crMothershipSendString( CRConnection *conn, char *response_buf, const char *
  */
 int crMothershipReadResponse( CRConnection *conn, void *buf )
 {
-	char codestr[4];
-	int code;
-
-	crNetSingleRecv( conn, codestr, 4 );
-	crNetReadline( conn, buf );
-
-	code = crStrToInt( codestr );
-	return (code == 200);
+	/* The connection may be already broken if we're called via the
+	 * crMothershipExit() function.
+	 */
+	if (conn->type != CR_NO_CONNECTION) {
+		char codestr[4];
+		int code;
+		crNetSingleRecv( conn, codestr, 4 );
+		crNetReadline( conn, buf );
+		code = crStrToInt( codestr );
+		return (code == 200);
+	}
+	else {
+		return 0;
+	}
 }
 
 
