@@ -653,6 +653,10 @@ getTilingFromDMX( WindowInfo *winInfo )
 	/* XXX check return value to see if anything really changed */
 	(void) tilesortspuUpdateWindowInfo(winInfo);
 
+	/* The mural size matches the DMX window size, no scaling */
+	winInfo->muralWidth = winInfo->lastWidth;
+	winInfo->muralHeight = winInfo->lastHeight;
+
 	if (!winInfo->xwin) {
 		crDebug("Can't get DMX info!  winInfo->xwin is NULL!");
 		return GL_FALSE;
