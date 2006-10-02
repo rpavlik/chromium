@@ -4,7 +4,12 @@
  * See the file LICENSE.txt for information on redistributing this software.
  */
 
-/* 1 = Use Chromium parallel API, 0 = use GLUT */
+/*
+ * 1 = Use Chromium parallel API, 0 = use GLUT.
+ *
+ * gcc spheres.c -DUSE_CHROMIUM=0 -L/usr/X11R6/lib -lglut -lGLU -lGL -lXi -lXmu -lXext -lX11 -lm -o spheres
+ */
+
 #ifndef USE_CHROMIUM
 #define USE_CHROMIUM 1
 #endif
@@ -104,14 +109,12 @@ static const GLfloat colors[7][4] = {
 	{1,1,1,1}
 };
 
-typedef void (APIENTRYP glDrawRangeElements_t) (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
-
 
 static PFNGLGENBUFFERSARBPROC glGenBuffersARB_ptr;
 static PFNGLBINDBUFFERARBPROC glBindBufferARB_ptr;
 static PFNGLBUFFERDATAARBPROC glBufferDataARB_ptr;
 static PFNGLBUFFERSUBDATAARBPROC glBufferSubDataARB_ptr;
-static glDrawRangeElements_t glDrawRangeElements_ptr;
+static PFNGLDRAWRANGEELEMENTSPROC glDrawRangeElements_ptr;
 
 
 #if USE_CHROMIUM
@@ -459,6 +462,7 @@ DrawFrame(const TriangleMesh *mesh, const Options *options, int frame,
 {
 	GLuint tris = 0;
 	int i;
+	float theta = 360.0f / (float) options->numSpheres;
 
 	glPushMatrix();
 		/* scene rotation */
@@ -469,7 +473,7 @@ DrawFrame(const TriangleMesh *mesh, const Options *options, int frame,
 		/* draw a ring of spheres */
 		for (i = 0; i < options->numSpheres; i++) {
 			glPushMatrix();
-				glRotatef(i * options->theta, 0.0f, 0.0f, 1.0f);
+				glRotatef(i * theta, 0.0f, 0.0f, 1.0f);
 				glTranslatef(0.65f, 0.0f, options->zPos);
 #if USE_CHROMIUM
 				if (options->useBBox) {
@@ -496,7 +500,8 @@ DrawFrame(const TriangleMesh *mesh, const Options *options, int frame,
 static void
 Reshape(int w, int h)
 {
-	float aspect = (float) w / (float) h;
+	float size = 0.5;
+	float aspect = size * (float) h / (float) w;
 	WinWidth = w;
 	WinHeight = h;
 
@@ -504,7 +509,7 @@ Reshape(int w, int h)
 
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity();
-	glFrustum( -aspect, aspect, -1.0, 1.0, 2.0, 13.0 );
+	glFrustum( -size, size, -aspect, aspect, 2.0, 13.0 );
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();
 	glTranslatef( 0.0, 0.0, -3.5 );
@@ -523,7 +528,7 @@ InitGL(const Options *options)
 	glBindBufferARB_ptr = (PFNGLBINDBUFFERARBPROC) crGetProcAddress("glBindBufferARB");
 	glBufferDataARB_ptr = (PFNGLBUFFERDATAARBPROC) crGetProcAddress("glBufferDataARB");
 	glBufferSubDataARB_ptr = (PFNGLBUFFERSUBDATAARBPROC) crGetProcAddress("glBufferSubDataARB");
-	glDrawRangeElements_ptr = (glDrawRangeElements_t) crGetProcAddress("glDrawRangeElements");
+	glDrawRangeElements_ptr = (PFNGLDRAWRANGEELEMENTSPROC) crGetProcAddress("glDrawRangeElements");
 
 	extensions = (char*)glGetString(GL_EXTENSIONS);
 	if (!strstr(extensions, "GL_ARB_vertex_buffer_object")) {
@@ -818,8 +823,10 @@ ChromiumMain(const Options *options)
 #else /* USE_CHROMIUM */
 
 static GLuint CurrentFrame = 0;
+
+/* Can't pass user data to GLUT callbacks, so use these globals */
 static TriangleMesh *TheMesh = NULL;
-static const Options *TheOptions = NULL;
+static Options *TheOptions = NULL;
 
 
 static void
@@ -873,6 +880,16 @@ Key( unsigned char key, int x, int y )
 		DrawingMode = (DrawingMode + 1) % 3;
 		printf("spheres:  DrawMode: %s\n", DrawModeString[DrawingMode]);
 		break;
+  case 'S':
+		TheOptions->numSpheres++;
+		printf("Num Spheres = %d\n", TheOptions->numSpheres);
+		break;
+  case 's':
+		TheOptions->numSpheres--;
+		if (TheOptions->numSpheres <= 1)
+			TheOptions->numSpheres = 1;
+		printf("Num Spheres = %d\n", TheOptions->numSpheres);
+		break;
 	case 27:
 		exit(0);
 		break;
@@ -882,7 +899,7 @@ Key( unsigned char key, int x, int y )
 
 
 static void
-GlutMain(const Options *options)
+GlutMain(Options *options)
 {
 	glutInitWindowPosition( 0, 0 );
 	glutInitWindowSize( WinWidth, WinHeight );
@@ -899,7 +916,9 @@ GlutMain(const Options *options)
 	TheMesh = MakeDemoMesh(options);
 	TheOptions = options;
 
-	printf("spheres:  Press 'm' to change rendering mode\n");
+	printf("spheres:  keyboard options:\n");
+	printf("  m    change rendering mode\n");
+	printf("  s/S  decrease/increase number of spheres\n");
 	glutMainLoop();
 }
 
