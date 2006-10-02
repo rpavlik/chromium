@@ -22,6 +22,7 @@ void crMothershipDisconnect( CRConnection *conn );
 /* Identification functions */
 void crMothershipIdentifySPU( CRConnection *conn, int spu );
 void crMothershipIdentifyOpenGL( CRConnection *conn, char *response, const char *app_id );
+void crMothershipIdentify( const char *type, const char *hostname, CRConnection *conn, char *response);
 void crMothershipIdentifyFaker( CRConnection *conn, char *response );
 void crMothershipIdentifyServer( CRConnection *conn, char *response );
 void crMothershipIdentifyCRUTServer( CRConnection *conn, char *response );

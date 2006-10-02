@@ -118,14 +118,29 @@ void crMothershipIdentifySPU( CRConnection *conn, int spu )
  * \param response  returns the result of contacting the mothership - a
  *                  string of the form "ID arg0 arg1 arg2 ..."
  */
-void crMothershipIdentifyFaker( CRConnection *conn, char *response )
+
+void crMothershipIdentify( const char *type, const char *hostname, CRConnection *conn, char *response)
+{
+	INSIST( crMothershipSendString( conn, response, "%s %s", type, hostname ));
+}
+
+/**
+ * Helper function for below.
+ */
+static void
+crMothershipIdentifySelf(const char *type, CRConnection *conn, char *response)
 {
 	char hostname[1024];
 	if ( crGetHostname( hostname, sizeof(hostname) ) )
 	{
 		crError( "Couldn't get my own hostname?" );
 	}
-	INSIST( crMothershipSendString( conn, response, "faker %s", hostname ));
+	crMothershipIdentify(type, hostname, conn, response);
+}
+	
+void crMothershipIdentifyFaker( CRConnection *conn, char *response )
+{
+	crMothershipIdentifySelf("faker", conn, response);
 }
 
 /* Called by OpenGL faker library to identify itself to the mothership */
@@ -143,45 +158,25 @@ void crMothershipIdentifyOpenGL( CRConnection *conn, char *response, const char 
 /* Called by crserver/network nodes to identify themselves to the mothership */
 void crMothershipIdentifyServer( CRConnection *conn, char *response )
 {
-	char hostname[1024];
-	if ( crGetHostname( hostname, sizeof(hostname) ) )
-	{
-		crError( "Couldn't get my own hostname?" );
-	}
-	INSIST( crMothershipSendString( conn, response, "server %s", hostname ));
+	crMothershipIdentifySelf("server", conn, response);
 }
 
 /* Called by CRUT client nodes to identify themselves to the mothership */
 void crMothershipIdentifyCRUTClient( CRConnection *conn, char *response )
 {
-	char hostname[1024];
-	if ( crGetHostname( hostname, sizeof(hostname) ) )
-	{
-		crError( "Couldn't get my own hostname?" );
-	}
-	INSIST( crMothershipSendString( conn, response, "crutclient %s", hostname ));
+	crMothershipIdentifySelf("crutclient", conn, response);
 }
 
 /* Called by CRUT server nodes to identify themselves to the mothership */
 void crMothershipIdentifyCRUTServer( CRConnection *conn, char *response )
 {
-	char hostname[1024];
-	if ( crGetHostname( hostname, sizeof(hostname) ) )
-	{
-		crError( "Couldn't get my own hostname?" );
-	}
-	INSIST( crMothershipSendString( conn, response, "crutserver %s", hostname ));
+	crMothershipIdentifySelf("crutserver", conn, response);
 }
 
 /* Called by CRUT proxy nodes to identify themselves to the mothership */
 void crMothershipIdentifyCRUTProxy( CRConnection *conn, char *response )
 {
-	char hostname[1024];
-	if ( crGetHostname( hostname, sizeof(hostname) ) )
-	{
-		crError( "Couldn't get my own hostname?" );
-	}
-	INSIST( crMothershipSendString( conn, response, "crutproxy %s", hostname ));
+	crMothershipIdentifySelf("crutproxy", conn, response);
 }
 
 
