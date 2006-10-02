@@ -65,9 +65,8 @@ struct building
 #define WALL_HEIGHT 256
 #define WALL_BYTES_PER_PIXEL 4
 
-#define MAX_BUILDINGS 200
-
-static struct building Buildings[MAX_BUILDINGS];
+static struct building *Buildings;
+static GLuint NumAllocatedBuildings = 200;
 static GLuint NumBuildings = 150;
 
 static GLint WinWidth = 400, WinHeight = 250;
@@ -189,9 +188,9 @@ DrawBuilding(const struct building *b)
 static void
 GenerateBuildings(void)
 {
-	int i;
+	unsigned int i;
 	printf("Generating new buildings...\n");
-	for (i = 0; i < MAX_BUILDINGS; i++)
+	for (i = 0; i < NumAllocatedBuildings; i++)
 	{
 		struct building *b = Buildings + i;
 		GLfloat atten;
@@ -628,12 +627,14 @@ Key(unsigned char key, int x, int y)
 		}
 		break;
 	case 'b':
-		if (NumBuildings > 1)
-			NumBuildings--;
+		if (NumBuildings > 0) {
+		    NumBuildings--;
+		}
 		break;
 	case 'B':
-		if (NumBuildings < MAX_BUILDINGS)
-			NumBuildings++;
+		if (NumBuildings < NumAllocatedBuildings) {
+		    NumBuildings++;
+		}
 		break;
 	case 'd':
 		UseDisplayLists = !UseDisplayLists;
@@ -782,8 +783,8 @@ Init(void)
 							 GL_UNSIGNED_BYTE, roof.pixel_data);
 
 	/* allocat display list IDs for buildings */
-	firstList = glGenLists(MAX_BUILDINGS);
-	for (i = 0; i < MAX_BUILDINGS; i++)
+	firstList = glGenLists(NumAllocatedBuildings);
+	for (i = 0; i < NumAllocatedBuildings; i++)
 		Buildings[i].dlist = firstList + i;
 
 	GenerateBuildings();
@@ -846,6 +847,11 @@ main(int argc, char *argv[])
 	memcpy(wall + sizeof(walldata1) + sizeof(walldata2), walldata3,
 				 sizeof(walldata3));
 
+	/* This must be *before* glutInit, so that the user can
+	 * override the defaults with the -geometry option.
+	 */
+	glutInitWindowSize(WinWidth, WinHeight);
+
 	glutInit(&argc, argv);
 	mode = GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH;
 
@@ -858,6 +864,9 @@ main(int argc, char *argv[])
 		else if (strcmp(argv[i], "-b") == 0 && i + 1 < argc)
 		{
 			NumBuildings = atoi(argv[i + 1]);
+			if (NumAllocatedBuildings < NumBuildings) {
+			    NumAllocatedBuildings = NumBuildings;
+			}
 			i++;
 		}
 		else if (strcmp(argv[i], "-c") == 0)
@@ -878,6 +887,22 @@ main(int argc, char *argv[])
 			NumTilesPerView = atoi(argv[i + 1]);
 			i++;
 		}
+		else if (strcmp(argv[i], "-fs") == 0) 
+		{
+			int width, height;
+			width = glutGet(GLUT_SCREEN_WIDTH);
+			height = glutGet(GLUT_SCREEN_HEIGHT);
+			if (width > 0 && height > 0)
+			{
+				glutInitWindowSize(width, height);
+			}
+			else 
+			{
+				printf("Cannot get full screen size\n");
+				help = 1;
+				break;
+			}
+		}
 		else
 		{
 			printf("Bad option: %s\n", argv[i]);
@@ -894,6 +919,7 @@ main(int argc, char *argv[])
 		printf("  -c    enable CAVE mode (for cavetest1.conf)\n");
 		printf("  -v N  specify number of views for CAVE mode\n");
 		printf("  -t N  specify number of tiles per view for CAVE mode\n");
+		printf("  -fs   create a full-screen window\n");
 		exit(0);
 	}
 
@@ -910,7 +936,12 @@ main(int argc, char *argv[])
 	printf("  f                         - toggle fog on/off\n");
 	printf("  q/ESC                     - exit\n");
 
-	glutInitWindowSize(WinWidth, WinHeight);
+	Buildings = malloc(NumAllocatedBuildings * sizeof(*Buildings));
+	if (Buildings == NULL) {
+	    printf("Couldn't malloc space for %d buildings\n", NumAllocatedBuildings);
+	    exit(1);
+	}
+
 	glutInitDisplayMode(mode);
 	glutCreateWindow(argv[0]);
 	glutReshapeFunc(Reshape);
