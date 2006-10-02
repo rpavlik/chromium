@@ -77,7 +77,7 @@ fillin( SPUNamedFunctionTable *entry, const char *funcName, SPUGenericFunction f
 }
 
 #ifndef WINDOWS
-static int FileExists(char *directory, char *filename)
+static int FileExists(char *directory, const char *filename)
 {
 	FILE *f;
 	char fullFilename[8096];
@@ -103,7 +103,7 @@ static int FileExists(char *directory, char *filename)
  * handle.
  */
 static CRDLL *
-__findSystemLib( const char *provided_system_path, char *lib )
+__findSystemLib( const char *provided_system_path, const char *lib )
 {
 	CRDLL *dll;
 	char system_path[8096];
