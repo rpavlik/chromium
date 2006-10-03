@@ -155,10 +155,10 @@ void crGetProcName( char *name, int maxLen )
 	if (f) {
 		char buffer[1000], cmd[1000];
 		while (!feof(f)) {
-			int id;
+			int id, k;
 			fgets(buffer, 999, f);
-			sscanf(buffer, "%d %*s %*s %999s", &id, cmd);
-			if (id == pid) {
+			k = sscanf(buffer, "%d %*s %*s %999s", &id, cmd);
+			if (k == 2 && id == pid) {
 				crStrncpy(name, cmd, maxLen);
 				break;
 			}
