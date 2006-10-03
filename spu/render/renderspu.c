@@ -310,8 +310,8 @@ renderspuWindowCreate( const char *dpyName, GLint visBits )
 				window->title[i] = render_spu.window_title[i];
 			k = sprintf(window->title + i, "%d", window->id);
 			CRASSERT(k < 10);
-			i++; /* skip the 'i' after the '%' */
 			j = i + k;
+			i = 2; /* skip the %i in s */
 			for (; (window->title[j] = s[i]) != 0; i++, j++)
 				;
 		}
