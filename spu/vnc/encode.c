@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode.c,v 1.7 2006-09-27 18:40:49 brianp Exp $
+ * $Id: encode.c,v 1.8 2006-10-03 22:16:51 brianp Exp $
  * Encoding screen rectangles.
  */
 
@@ -310,6 +310,7 @@ AIO_BLOCK *rfb_encode_hextile_block(CL_SLOT *cl, FB_RECT *r)
   int rx1, ry1;
   FB_RECT tile_r;
   CARD8 *data_ptr;
+  int size;
 
   /* Calculate number of tiles per this rectangle */
   num_tiles = ((r->w + 15) / 16) * ((r->h + 15) / 16);
@@ -318,8 +319,9 @@ AIO_BLOCK *rfb_encode_hextile_block(CL_SLOT *cl, FB_RECT *r)
   aligned_f = (r->x & 0x0F) == 0 && (r->y & 0x0F) == 0;
 
   /* Allocate a memory block of maximum possible size */
-  block = aio_new_block(12 + r->w * r->h * (cl->format.bits_pixel / 8) +
-                        num_tiles);
+  size = 12 + r->w * r->h * (cl->format.bits_pixel / 8) + num_tiles + 1;
+  size += 1; /* to silence valgrind */
+  block = aio_new_block(size);
   if (block == NULL)
     return NULL;
 
