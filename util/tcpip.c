@@ -708,8 +708,8 @@ crTCPIPSend( CRConnection *conn, void **bufp,
 void
 __tcpip_dead_connection( CRConnection *conn )
 {
-	crDebug( "Dead connection (sock=%d, host=%s), removing from pool",
-  				   conn->tcp_socket, conn->hostname );
+	crDebug("Dead TCP/IP connection (sock=%d, host=%s)",
+					conn->tcp_socket, conn->hostname);
 	/* remove from connection pool */
 	crTCPIPDoDisconnect( conn );
 }

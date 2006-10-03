@@ -585,9 +585,8 @@ crSDPSend( CRConnection *conn, void **bufp,
 static void
 __sdp_dead_connection( CRConnection *conn )
 {
-	crDebug( "Dead connection (sock=%d, host=%s), removing from pool",
-           conn->sdp_socket, conn->hostname );
-  
+	crDebug("Dead SDP connection (sock=%d, host=%s)",
+					conn->sdp_socket, conn->hostname);
 	/* remove from connection pool */
 	crSDPDoDisconnect( conn );
 }
