@@ -105,9 +105,11 @@ vncSPUSelfDispatch(SPUDispatchTable *self)
 static void
 free_screenbuffer(ScreenBuffer *b)
 {
+#if 0 /* disabled for now - causes a segfault in NVIDIA libGL upon exit */
 	if (b->buffer)
 		crFree(b->buffer);
 	crFree(b);
+#endif
 }
 
 static int
