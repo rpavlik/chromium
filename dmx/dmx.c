@@ -94,13 +94,13 @@ crDMXGetBackendWindowInfo(Display *dpy,
 													GLint subwindowVisBits)
 {
 	GLboolean newBackendWindows = GL_FALSE; /* return value */
-	unsigned int numScreens, count, i;
+	int numScreens, count, i;
 	DMXScreenAttributes *dmxScreenInfo;
 	DMXWindowAttributes *dmxWinInfo;
 
 	CRASSERT(dpy);
 	DMXGetScreenCount(dpy, &numScreens);
-	CRASSERT(numScreens == numBackendWindows);
+	CRASSERT(numScreens == (int) numBackendWindows);
 
 	dmxScreenInfo = (DMXScreenAttributes *) crAlloc(numScreens * sizeof(*dmxScreenInfo));
 	if (!dmxScreenInfo) {
