@@ -339,6 +339,9 @@ ifdef PROGRAM
 	@$(ECHO) "Linking $(PROGRAM) for $(ARCH)"
 ifdef WINDOWS
 	@$(CR_CXX) $(OBJS) /Fe$(PROG_TARGET)$(EXESUFFIX) $(LIBRARIES) $(LDFLAGS)
+ifdef MT
+	@$(MT) -manifest $(PROG_TARGET)$(EXESUFFIX).manifest -outputresource:$(PROG_TARGET)$(EXESUFFIX)\;1
+endif
 else
 ifdef BINUTIL_LINK_HACK
 ifdef PERSONAL_LIBRARIES
@@ -356,6 +359,9 @@ ifdef LIBRARY
 ifdef WINDOWS
 ifdef SHARED
 	@$(LD) $(SHARED_LDFLAGS) /Fe$(LIBNAME) $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
+ifdef MT
+	@$(MT) -manifest $(LIBNAME).manifest -outputresource:$(LIBNAME)\;2
+endif
 else
 	@LIB.EXE /nologo $(OBJS) $(LIBRARIES) /OUT:$(LIBNAME)
 endif #shared
@@ -417,6 +423,9 @@ $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)%_$(SHORT_TARGET_NAME)_cop
 	$(MKDIR) $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)
 ifdef WINDOWS
 	@$(LD) $(SHARED_LDFLAGS) /Fe$@ $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
+ifdef MT
+	@$(MT) -manifest $@.manifest -outputresource:$@\;2
+endif
 else
 ifdef AIXSHAREDLIB
 	@$(ECHO) "AIX shared obj link"
@@ -449,6 +458,9 @@ $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH)/$(LIBPREFIX)%$(DLLSUFFIX): $(OBJS) $(S
 	$(MKDIR) $(TOP)/built/$*/$(ARCH)
 ifdef WINDOWS
 	@$(LD) $(SHARED_LDFLAGS) /Fe$@ $(OBJS) $(LIBRARIES) $(LIB_DEFS) $(LDFLAGS)
+ifdef MT
+	@$(MT) -manifest $@.manifest -outputresource:$@\;2
+endif
 else
 ifdef AIXSHAREDLIB
 	@$(ECHO) "AIX shared obj link"

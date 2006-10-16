@@ -137,7 +137,7 @@ void crPackExpandMultiDrawElementsEXTSWAP( GLenum mode, const GLsizei *count, GL
 extern CRtsd _PackerTSD;
 #define GET_PACKER_CONTEXT(C) CRPackContext *C = (CRPackContext *) crGetTSD(&_PackerTSD)
 #else
-extern DLLDATA CRPackContext cr_packer_globals;
+extern CRPackContext cr_packer_globals;
 #define GET_PACKER_CONTEXT(C) CRPackContext *C = &cr_packer_globals
 #endif
 

@@ -11,6 +11,25 @@ CC = cl
 # NOTE:  If you're compiling on Windows and find that some code warnings
 # stop compilation, remove the /WX flags in the next few lines.
 
+# Check for VC8
+VC=$(shell if cl /Yd 2>&1 | grep -q "Version 14" ; then echo 8; fi)
+
+# Options for VC8
+ifeq ($(VC), 8)
+MT = mt -nologo
+
+CXXFLAGS          += /nologo /DWIN32 /DWINDOWS /TP /W3 /WX /EHsc /D_CRT_SECURE_NO_DEPRECATE /wd4996 
+CXX_RELEASE_FLAGS += /MD /Ox /DNDEBUG
+# This is just not working for me on VC++ 7 --> CXX_DEBUG_FLAGS   += /GZ
+CXX_DEBUG_FLAGS   += /MDd /Zi
+
+CFLAGS          += /nologo /DWIN32 /DWINDOWS /W3 /WX /TC /EHsc /Zm1024 /D_CRT_SECURE_NO_DEPRECATE /wd4996 
+C_RELEASE_FLAGS += /MD /Ox /DNDEBUG
+# This is just not working for me on VC++ 7 --> C_DEBUG_FLAGS   += /GZ
+C_DEBUG_FLAGS   += /MDd /Zi
+
+# Options for VC other than 8
+else
 CXXFLAGS          += /nologo /DWIN32 /DWINDOWS /TP /W3 /WX /GX /QIfist
 CXX_RELEASE_FLAGS += /MD /Ox /DNDEBUG
 # This is just not working for me on VC++ 7 --> CXX_DEBUG_FLAGS   += /GZ
@@ -20,6 +39,7 @@ CFLAGS          += /nologo /DWIN32 /DWINDOWS /W3 /WX /TC /GX /QIfist /Zm1024
 C_RELEASE_FLAGS += /MD /Ox /DNDEBUG
 # This is just not working for me on VC++ 7 --> C_DEBUG_FLAGS   += /GZ
 C_DEBUG_FLAGS   += /MDd /Yd /Z7
+endif
 
 LDFLAGS          += /nologo
 LD_RELEASE_FLAGS += 
@@ -58,3 +78,4 @@ JGRAPH = jgraph
 MPI_CC = cl
 MPI_CXX = cl
 MPI_LDFLAGS += mpichd.lib
+

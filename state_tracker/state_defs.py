@@ -11,7 +11,7 @@ import apiutil
 
 apiutil.CopyrightDef()
 
-print """DESCRIPTION ""
+print """
 EXPORTS
 """
 

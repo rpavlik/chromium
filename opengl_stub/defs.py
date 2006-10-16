@@ -10,7 +10,6 @@ import apiutil
 
 apiutil.CopyrightDef()
 
-print "DESCRIPTION \"\""
 print "EXPORTS"
 
 # XXX can't these values be automatically computed by analyzing parameters?

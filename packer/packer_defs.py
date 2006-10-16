@@ -14,7 +14,6 @@ import apiutil
 
 apiutil.CopyrightDef()
 
-print "DESCRIPTION \"\""
 print "EXPORTS"
 
 keys = apiutil.GetDispatchedFunctions()
