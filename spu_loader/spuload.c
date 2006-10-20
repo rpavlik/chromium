@@ -207,7 +207,12 @@ crSPUUnloadChain(SPU *headSPU)
 			the_spu->cleanup();
 
 		next_spu = the_spu->superSPU;
+#if 0
+		/* unfortunately, we sometimes get crashes in glibc when exiting if
+		 * we close the SPU library.  So, disable for now.
+		 */
 		crDLLClose(the_spu->dll);
+#endif
 		crFree(the_spu);
 		the_spu = next_spu;
 	}
