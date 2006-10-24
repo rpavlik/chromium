@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.27 2006-09-27 18:40:49 brianp Exp $
+ * $Id: client_io.c,v 1.28 2006-10-24 23:27:52 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -481,6 +481,7 @@ static void rf_client_updatereq(void)
   RegionRec tmp_region;
   BoxRec rect;
 
+  /*crDebug("Got Update request from %s", cur_slot->name);*/
 #ifdef NETLOGGER
   if (vnc_spu.netlogger_url) {
     cl->serial_number++;
@@ -508,9 +509,20 @@ static void rf_client_updatereq(void)
   cl->update_rect = rect;
   cl->update_requested = 1;
 
-  if (!vnc_spu.frame_drop) {
+  cl->num_update_requests++;
+
+  if (1/*!vnc_spu.frame_drop*/) {
     /*crDebug("VNC SPU: Got FB Update request - signaling");*/
     crSignalSemaphore(&vnc_spu.updateRequested);
+    if (cl->num_update_requests < 2) {
+			/* sometimes we'll deadlock upon start-up, not sure why.
+			 * This seems to fix the problem though.
+			 */
+			int i;
+			for (i = 0; i < 4; i++) {
+				crSignalSemaphore(&vnc_spu.updateRequested);
+			}
+		}
   }
 
   if (!cur_slot->readbuf[0]) {
@@ -964,7 +976,7 @@ static void send_update(void)
   aio_set_serial_number(&cl->s, cl->serial_number);
 #endif
 
-  /*crDebug("Enter send_update");*/
+  /*crDebug("Enter send_update to %s", cur_slot->name);*/
 
 #ifdef NETLOGGER
   if (vnc_spu.netlogger_url) {
