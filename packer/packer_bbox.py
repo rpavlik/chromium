@@ -44,7 +44,7 @@ void crPackResetBoundingBox( CRPackContext *pc )
 
 /**
  * Query current bounding box.
- * \return GL_TRUE if non-empty box, GL_FALSE if empty box.
+ * \\return GL_TRUE if non-empty box, GL_FALSE if empty box.
  */
 GLboolean crPackGetBoundingBox( CRPackContext *pc,
                                 GLfloat *xmin, GLfloat *ymin, GLfloat *zmin,
@@ -170,6 +170,15 @@ def PrintFunction( func_name, extSuffix, num_coords, argtype,
 	print "\tGET_PACKER_CONTEXT(pc);"
 	print "\tunsigned char *data_ptr;"
 
+	print "\tGET_BUFFERED%s_POINTER( pc, %d );" % (countSuffix, packet_length)
+
+	# Begin bounding box code
+	if isVertexAttrib:
+		print "\tif (pc->updateBBOX && index == 0)"
+	else:
+		print "\tif (pc->updateBBOX)"
+	print "\t{"
+
 	if normalized:
 		if argtype == "Nb":
 			t = "B"
@@ -186,28 +195,17 @@ def PrintFunction( func_name, extSuffix, num_coords, argtype,
 		else:
 			abort()
 		if do_vector:
-			print "\tCREATE_%dD_VFLOATS_%s_NORMALIZED();" % (num_coords, t)
+			print "\t\tUPDATE_WITH_%dD_VFLOATS_%s_NORMALIZED();" % (num_coords, t)
 		else:
-			print "\tCREATE_%dD_FLOATS_%s_NORMALIZED();" % (num_coords, t)
+			print "\t\tUPDATE_WITH_%dD_FLOATS_%s_NORMALIZED();" % (num_coords, t)
 	else:
 		if do_vector:
-			print "\tCREATE_%dD_VFLOATS();" % num_coords
+			print "\t\tUPDATE_WITH_%dD_VFLOATS();" % num_coords
 		else:
-			print "\tCREATE_%dD_FLOATS();" % num_coords
+			print "\t\tUPDATE_WITH_%dD_FLOATS();" % num_coords
 
-	print "\tGET_BUFFERED%s_POINTER( pc, %d );" % (countSuffix, packet_length)
-
-	# Bounding box code
-	if isVertexAttrib:
-		print "\tif (pc->updateBBOX && index == 0)"
-	else:
-		print "\tif (pc->updateBBOX)"
-	print "\t{"
-	if num_coords < 4:
-		print "\t\tUPDATE_%dD_BBOX();" % num_coords
-	else:
-		print "\t\tUPDATE_3D_BBOX();"
 	print "\t}"
+	# End bounding box code
 
 	if isVertexAttrib:
 		print "\tif (index > 0) {"
