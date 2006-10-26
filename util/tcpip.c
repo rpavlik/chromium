@@ -826,6 +826,11 @@ crTCPIPReceiveMessage(CRConnection *conn)
 	unsigned int len, total, leftover;
 	const int sock = conn->tcp_socket;
 
+	if (conn->type == CR_NO_CONNECTION || !sock) {
+		/* this might happen during app shut-down */
+		return;
+	}
+
 	/* Our gigE board is acting odd. If we recv() an amount
 	 * less than what is already in the RECVBUF, performance
 	 * goes into the toilet (somewhere around a factor of 3).

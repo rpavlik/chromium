@@ -710,6 +710,11 @@ crSDPReceiveMessage(CRConnection *conn)
 	unsigned int len, total, leftover;
 	const CRSocket sock = conn->sdp_socket;
 
+	if (conn->type == CR_NO_CONNECTION || !sock) {
+		/* this might happen during app shut-down */
+		return;
+	}
+
 	/* this reads the length of the message */
 	if ( __sdp_read_exact( sock, &len, sizeof(len)) <= 0 )
 	{
