@@ -207,42 +207,26 @@ __tcpip_read_exact( CRSocket sock, void *buf, unsigned int len )
 	if ( sock <= 0 )
 		return 1;
 
-	while ( len > 0 )
-	{
+	while (len > 0) {
 		const int num_read = recv( sock, dst, (int) len, 0 );
-
-#ifdef WINDOWS_XXXX
-		/* MWE: why is this necessary for windows???  Does it return a
-			 "good" value for num_bytes despite having a reset
-			 connection? */
-		if ( crTCPIPErrno( ) == ECONNRESET )
-			return -1;
-#endif
-
-		if ( num_read < 0 )
-		{
-			int error = crTCPIPErrno();
-			switch( error )
-			{
-				case EINTR:
-					crWarning( "__tcpip_read_exact(TCPIP): "
-							"caught an EINTR, looping for more data" );
-					continue;
-				case EFAULT:
-					crWarning( "EFAULT" );
-					break;
-				case EINVAL:
-					crWarning( "EINVAL" );
-					break;
-				default:
-					break;
+		if (num_read < 0) {
+			const int error = crTCPIPErrno();
+			switch (error) {
+			case EINTR:
+				crWarning("__tcpip_read_exact() got EINTR, looping");
+				continue;
+			case EAGAIN:
+				continue;
+			case EFAULT:
+				/* fallthrough */
+			case EINVAL:
+				/* fallthrough */
+			default:
+				crWarning("__tcpip_read_exact() error: %s",	crTCPIPErrorString(error));
+				return -1;
 			}
-			crWarning( "Bad bad bad socket error: %s", crTCPIPErrorString( error ) );
-			return -1;
 		}
-
-		if ( num_read == 0 ) 
-		{
+		else if (num_read == 0) {
 			/* client exited gracefully */
 			return 0;
 		}

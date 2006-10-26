@@ -231,34 +231,26 @@ __sdp_read_exact( CRSocket sock, void *buf, unsigned int len )
 	if ( sock <= 0 )
 		return 1;
 
-	while ( len > 0 )
-	{
-		int num_read = recv( sock, dst, (int) len, 0 );
-    
-		if ( num_read < 0 )
-		{
-			int error = crSDPErrno();
-			switch( error )
-			{
+	while (len > 0) {
+		const int num_read = recv( sock, dst, (int) len, 0 );
+		if (num_read < 0) {
+			const int error = crSDPErrno();
+			switch (error) {
 			case EINTR:
-				crWarning( "__sdp_read_exact(SDP): "
-						   "caught an EINTR, looping for more data" );
+				crWarning("__sdp_read_exact() got EINTR, looping");
+				continue;
+			case EAGAIN:
 				continue;
 			case EFAULT:
-				crWarning( "EFAULT" );
-				break;
+				/* fallthrough */
 			case EINVAL:
-				crWarning( "EINVAL" );
-				break;
+				/* fallthrough */
 			default:
-				break;
+				crWarning("__sdp_read_exact() error: %s",	crSDPErrorString(error));
+				return -1;
 			}
-			crWarning( "Bad bad bad socket error: %s", crSDPErrorString( error ) );
-			return -1;
 		}
-    
-		if ( num_read == 0 ) 
-		{
+		else if (num_read == 0) {
 			/* client exited gracefully */
 			return 0;
 		}
