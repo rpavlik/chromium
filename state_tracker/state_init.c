@@ -232,6 +232,7 @@ void crStateInit(void)
 	g_availableContexts[0] = 1; /* in use forever */
 
 #ifdef CHROMIUM_THREADSAFE
+	crInitTSD(&__contextTSD);
 	crSetTSD(&__contextTSD, defaultContext);
 #else
 	__currentContext = defaultContext;

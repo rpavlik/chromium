@@ -42,6 +42,10 @@ matteSPUInit( int id, SPU *child, SPU *self, unsigned int context_id, unsigned i
 	(void) context_id;
 	(void) num_contexts;
 
+#ifdef CHROMIUM_THREADSAFE
+	crInitTSD(&matteTSD);
+#endif
+
 	matte_spu.id = id;
 	matte_spu.has_child = 0;
 	matte_spu.server = NULL;

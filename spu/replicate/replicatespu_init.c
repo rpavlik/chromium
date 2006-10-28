@@ -38,6 +38,7 @@ replicateSPUInit( int id, SPU *child, SPU *self,
 
 #ifdef CHROMIUM_THREADSAFE_notyet
 	crInitMutex(&_ReplicateMutex);
+	crInitTSD(&_ReplicateTSD);
 #endif
 
 	replicate_spu.id = id;

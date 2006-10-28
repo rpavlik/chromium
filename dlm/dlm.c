@@ -109,6 +109,7 @@ CRDLM DLM_APIENTRY *crDLMNewDLM(unsigned int userConfigSize, const CRDLMConfig *
      * exits.
      */
     crInitTSDF(&(dlm->tsdKey), threadDestructor);
+    crInitTSD(&CRDLMTSDKey);
 #endif
 
     /* Copy over any appropriate configuration values */

@@ -39,6 +39,7 @@ packSPUInit( int id, SPU *child, SPU *self,
 	(void) self;
 
 #ifdef CHROMIUM_THREADSAFE
+	crInitTSD(&_PackTSD);
 	crInitMutex(&_PackMutex);
 #endif
 

@@ -33,6 +33,7 @@ readbackSPUInit( int id, SPU *child, SPU *self,
 
 #ifdef CHROMIUM_THREADSAFE
 	crDebug("Readback SPU: thread-safe");
+	crInitTSD(&_ReadbackTSD);
 #endif
 
 	crMemZero(&readback_spu, sizeof(readback_spu));

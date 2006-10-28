@@ -204,6 +204,7 @@ binaryswapspuInit( int id, SPU *child, SPU *self,
 	
 #ifdef CHROMIUM_THREADSAFE
 	crDebug("Binaryswap SPU: thread-safe");
+	crInitTSD(&_BinaryswapTSD);
 #endif
 	
 	crMemZero(&binaryswap_spu, sizeof(binaryswap_spu));

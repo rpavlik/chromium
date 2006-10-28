@@ -31,6 +31,10 @@ CRPackContext *crPackNewContext( int swapping )
 	pc->Flush = NULL;
 	pc->SendHuge = NULL;
 	pc->updateBBOX = 0;
+#ifdef CHROMIUM_THREADSAFE
+	/* init TSD, if needed */
+	crInitTSD(&_PackerTSD);
+#endif
 	return pc;
 }
 
