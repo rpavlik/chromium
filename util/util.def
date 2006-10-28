@@ -111,6 +111,7 @@ crInitCondition
 crFreeCondition
 crWaitCondition
 crSignalCondition
+crCreateThread
 crThreadID
 crInitBarrier
 crWaitBarrier
