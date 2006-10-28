@@ -131,7 +131,7 @@ crServerConnCloseCallback( CRConnection *conn )
 		}
 	}
 	if (closingClient >= 0 && connCount == 1 && cr_server.exitIfNoClients) {
-		crWarning("Last client disconnected - exiting.");
+		crWarning("CRServer: Last client disconnected - exiting.");
 		exit(0);
 	}
 }
