@@ -199,6 +199,7 @@ static void stubInitVars(void)
 
 #ifdef CHROMIUM_THREADSAFE
 	crInitMutex(&stub.mutex);
+	crInitTSD(&stub.dispatchTSD);
 #endif
 
 	/* At the very least we want CR_RGB_BIT. */

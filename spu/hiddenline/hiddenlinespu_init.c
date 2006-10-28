@@ -52,6 +52,7 @@ static SPUFunctions *hiddenlineSPUInit( int id, SPU *child, SPU *self,
 
 	hiddenline_spu.contextTable = crAllocHashtable();
 #ifndef CHROMIUM_THREADSAFE
+	crInitTSD(&_HiddenlineTSD);
 	hiddenline_spu.currentContext = NULL;
 #endif
 	crInitMutex(&(hiddenline_spu.mutex));
