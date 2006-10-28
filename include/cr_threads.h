@@ -23,6 +23,19 @@ extern "C" {
 #endif
 
 
+/**
+ * Thread ID/handle
+ */
+#ifdef WINDOWS
+  typedef int CRthread;
+#else
+  typedef pthread_t CRthread;
+#endif
+
+extern int crCreateThread(CRthread *thread, int flags,
+                          void * (*threadFunc)(void *), void *arg);
+
+
 /*
  * Handle for Thread-Specific Data
  */

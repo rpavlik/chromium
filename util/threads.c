@@ -18,25 +18,56 @@
 #define INIT_MAGIC 0xff8adc98
 
 
-/* Initialize a CRtsd */
-void crInitTSDF(CRtsd *tsd, void (*destructor)(void *))
+
+/**
+ * Create a new thread.
+ * \param thread  returns the new thread's info/handle
+ * \param flags  optional flags (none at this time)
+ * \param threadFunc  the function to run in new thread
+ * \param arg  argument to pass to threadFunc
+ * \return 0 for success, non-zero if error
+ */
+int
+crCreateThread(CRthread *thread, int flags,
+							 void * (*threadFunc)(void *), void *arg)
 {
 #ifdef WINDOWS
-	tsd->key = TlsAlloc();
-	if (tsd->key == 0xffffffff) {
-		crError("crInitTSD failed!");
-	}
-	(void) destructor;
+	crError("crCreateThread() not implemented for Windows yet");
 #else
-	if (pthread_key_create(&tsd->key, destructor) != 0) {
-		perror(INIT_TSD_ERROR);
-		crError("crInitTSD failed!");
-	}
+	int i = pthread_create(thread, NULL, threadFunc, arg);
+	return i;
 #endif
+}
+
+
+
+
+/**
+ * Initialize a thread-specific data handle, with destructor function.
+ */
+void crInitTSDF(CRtsd *tsd, void (*destructor)(void *))
+{
+	if (tsd->initMagic != (int) INIT_MAGIC) {
+#ifdef WINDOWS
+		tsd->key = TlsAlloc();
+		if (tsd->key == 0xffffffff) {
+			crError("crInitTSD failed!");
+		}
+		(void) destructor;
+#else
+		if (pthread_key_create(&tsd->key, destructor) != 0) {
+			perror(INIT_TSD_ERROR);
+			crError("crInitTSD failed!");
+		}
+#endif
+	}
 	tsd->initMagic = INIT_MAGIC;
 }
 
 
+/**
+ * Initialize a thread-specific data handle.
+ */
 void crInitTSD(CRtsd *tsd)
 {
     crInitTSDF(tsd, NULL);
@@ -63,6 +94,7 @@ void crFreeTSD(CRtsd *tsd)
 /* Set thread-specific data */
 void crSetTSD(CRtsd *tsd, void *ptr)
 {
+	CRASSERT(tsd->initMagic == (int) INIT_MAGIC);
 	if (tsd->initMagic != (int) INIT_MAGIC) {
 		/* initialize this CRtsd */
 		crInitTSD(tsd);
@@ -79,9 +111,14 @@ void crSetTSD(CRtsd *tsd, void *ptr)
 }
 
 
-/* Get thread-specific data */
+/**
+ * Get thread-specific data.
+ * XXX This should be an inline function/macro in cr_threads.h
+ */
 void *crGetTSD(CRtsd *tsd)
 {
+	/* XXX the TSD user should be reponsible for initialization before use */
+	CRASSERT(tsd->initMagic == (int) INIT_MAGIC);
 	if (tsd->initMagic != (int) INIT_MAGIC) {
 		crInitTSD(tsd);
 	}
