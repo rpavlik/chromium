@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.28 2006-10-24 23:27:52 brianp Exp $
+ * $Id: client_io.c,v 1.29 2006-10-28 23:02:18 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -465,8 +465,6 @@ static void rf_client_encodings_data(void)
             encoding_string(cl->enc_prefer), cl->enc_prefer);
   crDebug("VNC SPU: Using %s encoding (0x%x) for new client",
           encoding_string(cl->enc_prefer), cl->enc_prefer);
-  crDebug("VNC SPU: frame_drop = %d", vnc_spu.frame_drop);
-  crDebug("VNC SPU: double_buffer = %d", vnc_spu.double_buffer);
 
   aio_setread(rf_client_msg, NULL, 1);
 }
@@ -510,20 +508,6 @@ static void rf_client_updatereq(void)
   cl->update_requested = 1;
 
   cl->num_update_requests++;
-
-  if (1/*!vnc_spu.frame_drop*/) {
-    /*crDebug("VNC SPU: Got FB Update request - signaling");*/
-    crSignalSemaphore(&vnc_spu.updateRequested);
-    if (cl->num_update_requests < 2) {
-			/* sometimes we'll deadlock upon start-up, not sure why.
-			 * This seems to fix the problem though.
-			 */
-			int i;
-			for (i = 0; i < 4; i++) {
-				crSignalSemaphore(&vnc_spu.updateRequested);
-			}
-		}
-  }
 
   if (!cur_slot->readbuf[0]) {
     log_write(LL_DEBUG, "Received framebuffer update request (full) from %s",
@@ -911,13 +895,15 @@ static void fn_new_clip(AIO_SLOT *s)
   cl->new_clip_bounds = NewClipBounds;
 }
 
+static int NewClip = 0;
 void signal_new_clipping(const BoxPtr bounds)
 {
+	NewClip = 1;
    NewClipBounds = *bounds;
    aio_walk_slots(fn_new_clip, TYPE_CL_SLOT);
 }
 
-
+#if 0
 static void send_new_cliprects(void)
 {
   CL_SLOT *cl = (CL_SLOT *)cur_slot;
@@ -952,6 +938,7 @@ static void send_new_cliprects(void)
   cl->update_in_progress = 1;
   cl->update_requested = 0;
 }
+#endif
 
 
 /*
@@ -976,6 +963,8 @@ static void send_update(void)
   aio_set_serial_number(&cl->s, cl->serial_number);
 #endif
 
+  CRASSERT(vnc_spu.serverBuffer);
+
   /*crDebug("Enter send_update to %s", cur_slot->name);*/
 
 #ifdef NETLOGGER
@@ -984,7 +973,18 @@ static void send_update(void)
             "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
   }
 #endif
-  vncspuLockFrameBuffer(); /* encoder is now using buffer */
+
+	/* check if clipping has changed since we got the pixels and update
+	 * the pending region if needed.
+	 */
+	if (NewClip) {
+		 /*crDebug("Getting updated cliprects");*/
+		 vncspuGetScreenRects(&cl->pending_region);
+		 num_pending_rects = REGION_NUM_RECTS(&cl->pending_region);
+		 /*crDebug("Now, %d rects", num_pending_rects);*/
+		 NewClip = 0;
+	}
+	/*PrintRegion("Sending", &cl->pending_region);*/
 
 
   /* Process framebuffer size change. */
@@ -1016,12 +1016,14 @@ static void send_update(void)
     REGION_SUBTRACT(&cl->copy_region, &cl->copy_region, &cl->pending_region);
   }
 
+#if 00
   if (cl->enable_cliprects_enc && cl->new_cliprects) {
     send_new_cliprects();
     vncspuUnlockFrameBuffer();
     cl->new_cliprects = 0;
     return;
   }
+#endif
 
   /* Clip regions to the rectangle requested by the client. */
   REGION_INIT(&clip_region, &cl->update_rect, 1);
@@ -1116,13 +1118,13 @@ static void send_update(void)
     for (i = 0; i < num_pending_rects; i++) {
       FB_RECT rect;
       AIO_BLOCK *block;
-      /*
+			/*
       crDebug("sending rect %d of %d: %d, %d .. %d, %d", i, num_pending_rects,
               REGION_RECTS(&cl->pending_region)[i].x1,
               REGION_RECTS(&cl->pending_region)[i].y1,
               REGION_RECTS(&cl->pending_region)[i].x2,
               REGION_RECTS(&cl->pending_region)[i].y2);
-      */
+			*/
       rect.x = REGION_RECTS(&cl->pending_region)[i].x1;
       rect.y = REGION_RECTS(&cl->pending_region)[i].y1;
       rect.w = REGION_RECTS(&cl->pending_region)[i].x2 - rect.x;

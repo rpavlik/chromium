@@ -21,6 +21,7 @@ FILES = vncspu \
 	actions \
 	active \
 	async_io \
+	buffer \
 	client_io \
 	control \
 	d3des \

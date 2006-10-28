@@ -35,6 +35,8 @@
 #endif
 #include "region.h"
 
+#include "buffer.h"
+
 
 /**
  * We have a range of ports that we try to use.
@@ -75,17 +77,6 @@ typedef struct {
 
 
 /**
- * The screen buffer contains the pixels we'll encode and send to clients.
- */
-typedef struct {
-	GLubyte *buffer;  /* screen_width * screen_height * 4 */
-
-	RegionRec dirtyRegion;
-	GLboolean regionSent;
-} ScreenBuffer;
-
-
-/**
  * Vnc SPU descriptor
  */
 typedef struct {
@@ -108,20 +99,21 @@ typedef struct {
 #endif
 	int half_rez;
 
-	ScreenBuffer *screen_buffer[2];
-	GLboolean screen_buffer_locked; /* True while accessed by encoder */
-	int pixel_size;               /* 24 or 32 */
+  /** Empty buffers available to the main/app thread */
+	ScreenBufferQueue emptyQueue;
+	/** Buffers with pixel data waiting to be sent to client */
+	ScreenBufferQueue filledQueue;
+  /** buffer currently being encoded/sent by VNC server thread */
+	ScreenBuffer *serverBuffer;
+  /** buffer currently being filled by the main/app thread (glReadPixels) */
+	ScreenBuffer *readpixBuffer;																 
+
+	int pixel_size;               /**< 24 or 32 */
 	CRHashTable *windowTable;
 	WindowInfo *currentWindow;
-	int frameCounter;
-
-	CRmutex fblock;
 
 	CRmutex lock;
 	CRcondition cond;
-	CRsemaphore updateRequested;
-	CRsemaphore dirtyRectsReady;
-	CRcondition newRegionReady;
 
 	CRTimer *timer;
 
@@ -141,6 +133,8 @@ extern SPUNamedFunctionTable _cr_vnc_table[];
 /** Option table for SPU */
 extern SPUOptions vncSPUOptions[];
 
+extern void *vnc_main(void *);
+
 extern void vncspuGatherConfiguration( void );
 
 extern void vncspuStartServerThread(void);
@@ -153,8 +147,11 @@ extern GLboolean vncspuGetDirtyRects(RegionPtr region);
 extern GLboolean vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi,
                                       int serial_no);
 
-void
-PrintRegion(const char *s, const RegionPtr r);
+extern void vncspuUnlockFrameBuffer(void);
+
+extern void vncspuGetScreenRects(RegionPtr reg);
+
+extern void PrintRegion(const char *s, const RegionPtr r);
 
 
 extern void

@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: reflector.h,v 1.5 2006-09-27 17:33:09 brianp Exp $
+ * $Id: reflector.h,v 1.6 2006-10-28 23:02:18 brianp Exp $
  * Global include file
  */
 
@@ -53,8 +53,6 @@ extern void fbs_close_file(void);
 
 /* new */
 extern CARD32 *GetFrameBuffer(CARD16 *w, CARD16 *h);
-extern void vncspuLockFrameBuffer(void);
-extern void vncspuUnlockFrameBuffer(void);
 
 #if RASTER_BOTTOM_TO_TOP
 #define PIXEL_ADDR(FB, W, H, X, Y)  ((FB) + ((H) - 1 - (Y)) * (W) + (X))

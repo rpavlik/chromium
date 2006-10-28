@@ -52,8 +52,7 @@ vncSPUInit( int id, SPU *child, SPU *self,
 	crSPUInitDispatchTable( &(vnc_spu.super) );
 	crSPUCopyDispatchTable( &(vnc_spu.super), &(self->superSPU->dispatch_table) );
 	vncspuGatherConfiguration();
-	vnc_spu.screen_buffer[0] = NULL;
-	vnc_spu.screen_buffer[1] = NULL;
+
 	vnc_spu.windowTable = crAllocHashtable();
 
 #ifdef NETLOGGER
@@ -102,15 +101,6 @@ vncSPUSelfDispatch(SPUDispatchTable *self)
 	vnc_spu.server = (CRServer *)(self->server);
 }
 
-static void
-free_screenbuffer(ScreenBuffer *b)
-{
-#if 0 /* disabled for now - causes a segfault in NVIDIA libGL upon exit */
-	if (b->buffer)
-		crFree(b->buffer);
-	crFree(b);
-#endif
-}
 
 static int
 vncSPUCleanup(void)
@@ -121,10 +111,6 @@ vncSPUCleanup(void)
 		NL_logger_del();
 	}
 #endif
-	if (vnc_spu.screen_buffer[0])
-		free_screenbuffer(vnc_spu.screen_buffer[0]);
-	if (vnc_spu.screen_buffer[1])
-		free_screenbuffer(vnc_spu.screen_buffer[1]);
 	return 1;
 }
 

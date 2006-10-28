@@ -26,6 +26,9 @@
 #include "client_io.h"
 
 
+#define DB 0
+
+
 /*
  * Move SRC region to DST region, leaving SRC empty.
  */
@@ -177,6 +180,18 @@ vncspuInitialize(void)
 	vnc_spu.timer = crTimerNewTimer();
 
 	crDebug("VNC SPU: double buffering: %d", vnc_spu.double_buffer);
+
+	InitScreenBufferQueue(&vnc_spu.emptyQueue, "empty");
+	InitScreenBufferQueue(&vnc_spu.filledQueue, "filled");
+	{
+		int i;
+		/* create screen buffers and put them into the 'empty buffer' queue */
+		crDebug("VNC SPU: Creating %d screen buffers", vnc_spu.double_buffer + 1);
+		for (i = 0; i <= vnc_spu.double_buffer; i++) {
+			ScreenBuffer *b = AllocScreenBuffer();
+			EnqueueBuffer(b, &vnc_spu.emptyQueue);
+		}
+	}
 }
 
 
@@ -186,47 +201,38 @@ vncspuInitialize(void)
 void
 vncspuStartServerThread(void)
 {
+	CRthread thread;
+
 	/* init locks and condition vars */
-	crInitMutex(&vnc_spu.fblock);
 	crInitMutex(&vnc_spu.lock);
 	crInitCondition(&vnc_spu.cond);
-	crInitSemaphore(&vnc_spu.updateRequested, 0);
-	crInitSemaphore(&vnc_spu.dirtyRectsReady, 0);
 
-	{
-#ifdef WINDOWS
-		crError("VNC SPU not supported on Windows yet");
-#else
-		extern void * vnc_main(void *);
-		pthread_t th;
-		int id = pthread_create(&th, NULL, vnc_main, NULL);
-		(void) id;
-#endif
+	/* spawn the thread */
+	(void) crCreateThread(&thread, 0, vnc_main, NULL);
 
-		if (vnc_spu.server_port == -1) {
-			/* Wait until the child thread has successfully allocated a port
-			 * for clients to connect to.
-			 */
-			crLockMutex(&vnc_spu.lock);
-			while (vnc_spu.server_port == -1) {
-				crWaitCondition(&vnc_spu.cond, &vnc_spu.lock);
-			}
-			crUnlockMutex(&vnc_spu.lock);
-		}
-
-		crDebug("VNC SPU: VNC Server port: %d", vnc_spu.server_port);
-
-		/*
-		 * OK, we know our VNC server's port now.  Use the libVncExt library
-		 * call to tell the VNC server to send the ChromiumStart message to
-		 * all attached viewers.  Upon getting that message the viewers will
-		 * connect to the VNC server thread which we just started.
+	if (vnc_spu.server_port == -1) {
+		/* Wait until the child thread has successfully allocated a port
+		 * for clients to connect to.
 		 */
-		CRASSERT(vnc_spu.server_port != -1);
-#if defined(HAVE_VNC_EXT)
-		vncspuSendVncStartUpMsg(vnc_spu.server_port);
-#endif
+		crLockMutex(&vnc_spu.lock);
+		while (vnc_spu.server_port == -1) {
+			crWaitCondition(&vnc_spu.cond, &vnc_spu.lock);
+		}
+		crUnlockMutex(&vnc_spu.lock);
 	}
+
+	crDebug("VNC SPU: VNC Server port: %d", vnc_spu.server_port);
+
+	/*
+	 * OK, we know our VNC server's port now.  Use the libVncExt library
+	 * call to tell the VNC server to send the ChromiumStart message to
+	 * all attached viewers.  Upon getting that message the viewers will
+	 * connect to the VNC server thread which we just started.
+	 */
+	CRASSERT(vnc_spu.server_port != -1);
+#if defined(HAVE_VNC_EXT)
+	vncspuSendVncStartUpMsg(vnc_spu.server_port);
+#endif
 }
 
 
@@ -236,27 +242,10 @@ vncspuStartServerThread(void)
 CARD32 *
 GetFrameBuffer(CARD16 *w, CARD16 *h)
 {
-	CRASSERT(vnc_spu.screen_buffer_locked);
+	CRASSERT(vnc_spu.serverBuffer);
 	*w = vnc_spu.screen_width;
 	*h = vnc_spu.screen_height;
-	return (CARD32 *) vnc_spu.screen_buffer[0]->buffer;
-}
-
-
-/**
- * Called by the RFB encoder to lock access to 0th screen_buffer.
- */
-void
-vncspuLockFrameBuffer(void)
-{
-	crLockMutex(&vnc_spu.fblock);
-	vnc_spu.screen_buffer_locked = GL_TRUE;
-	if (vnc_spu.double_buffer) {
-		crUnlockMutex(&vnc_spu.fblock);
-	}
-	else {
-		/* keep/hold lock when single-buffered */
-	}
+	return (CARD32 *) vnc_spu.serverBuffer->buffer;
 }
 
 
@@ -266,29 +255,17 @@ vncspuLockFrameBuffer(void)
 void
 vncspuUnlockFrameBuffer(void)
 {
-	ScreenBuffer *sb;
+	CRASSERT(vnc_spu.serverBuffer);
+	/* put server buffer into empty queue */
+	vnc_spu.serverBuffer->regionSent = GL_TRUE;
+	REGION_EMPTY(&vnc_spu.serverBuffer->dirtyRegion);
 
-	if (vnc_spu.double_buffer) {
-		crLockMutex(&vnc_spu.fblock);
-	}
-	else {
-		/* lock is already held when single-buffered */
-	}
-
-	CRASSERT(vnc_spu.screen_buffer_locked);
-
-	sb = vnc_spu.screen_buffer[0];
-
-	sb->regionSent = GL_TRUE;
-
-	/*
-	if (miRegionArea(&sb->dirtyRegion) > 0)
-		crDebug("In %s non-empty dirty region", __FUNCTION__);
-	*/
-	REGION_EMPTY(&sb->dirtyRegion);
-
-	vnc_spu.screen_buffer_locked = GL_FALSE;
-	crUnlockMutex(&vnc_spu.fblock);
+#if DB
+	crDebug("Putting sent buffer %p into empty queue",
+					(void *) vnc_spu.serverBuffer);
+#endif
+	EnqueueBuffer(vnc_spu.serverBuffer, &vnc_spu.emptyQueue);
+	vnc_spu.serverBuffer = NULL;
 }
 
 
@@ -356,10 +333,8 @@ WindowUpdateAccumCB(unsigned long key, void *windowData, void *regionData)
 
 /**
  * Union the window's accum-dirty and prev-accum-dirty regions with the
- * incoming region.  Called during SwapBuffers to determine the current
- * dirty rendering region.
- *
- * Called by crHashtableWalk().
+ * incoming region.
+ * Called by crHashtableWalk() via vncspuGetScreenRects().
  */
 static void
 WindowDirtyUnionCB(unsigned long key, void *windowData, void *regionData)
@@ -416,70 +391,65 @@ WindowDirtyUnionCB(unsigned long key, void *windowData, void *regionData)
 
 
 /**
- * Get list of dirty rects in current virtual frame buffer.
- * This is the union of all Cr/GL windows.
- * NOTE: Called from vnc server thread.
- * \return  GL_TRUE if any dirty rects, GL_FALSE if no dirty rects
+ * Get current clip rects intersected with dirty regions for whole screen.
  */
-GLboolean
-vncspuGetDirtyRects(RegionPtr region)
+void
+vncspuGetScreenRects(RegionPtr reg)
 {
-	GLboolean retVal;
-
-	crLockMutex(&vnc_spu.fblock);
-
-	if (REGION_NUM_RECTS(&vnc_spu.screen_buffer[0]->dirtyRegion) > 0) {
-		REGION_COPY(region, &vnc_spu.screen_buffer[0]->dirtyRegion);
-		REGION_EMPTY(&vnc_spu.screen_buffer[0]->dirtyRegion);
-		retVal = GL_TRUE;
-	}
-	else {
-		retVal = GL_FALSE;
-	}
-
-	crUnlockMutex(&vnc_spu.fblock);
-
-	return retVal;
+	REGION_EMPTY(reg);
+	crHashtableWalk(vnc_spu.windowTable, WindowDirtyUnionCB, reg);
 }
 
 
 /**
- * Wait until there's some new data inside the given region of interest (roi).
+ * Get list of dirty rects in current virtual frame buffer.
+ * This is the union of all Cr/GL windows.
+ * NOTE: Called from vnc server thread.
+ * \return  GL_TRUE if any dirty rects, GL_FALSE if no dirty rects
+ * If GL_TRUE is returned, the serverBuffer will be set and will be in a
+ * locked state.
+ */
+GLboolean
+vncspuGetDirtyRects(RegionPtr region)
+{
+	vnc_spu.serverBuffer = DequeueBufferNoBlock(&vnc_spu.filledQueue);
+	if (vnc_spu.serverBuffer) {
+		ScreenBuffer *b = vnc_spu.serverBuffer;
+		if (REGION_NUM_RECTS(&b->dirtyRegion) > 0) {
+			REGION_COPY(region, &b->dirtyRegion);
+			REGION_EMPTY(&b->dirtyRegion)
+			return GL_TRUE;
+		}
+	}
+	return GL_FALSE;
+}
+
+
+/**
+ * Wait for new pixel data to send to the VNC viewer/client.
  * Return the region in 'region' and return GL_TRUE.
+ * When we return, the serverBuffer will be non-null and will be in a
+ * locked state.
  * NOTE: Called from vnc server thread.
  */
 GLboolean
 vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi, int serial_no)
 {
-	RegionRec roiRegion;
+	CRASSERT(!vnc_spu.serverBuffer);
+#if DB
+	crDebug("Getting filled buffer");
+#endif
+	vnc_spu.serverBuffer = DequeueBuffer(&vnc_spu.filledQueue);
+#if DB
+	crDebug("Got filled buffer %p", (void*) vnc_spu.serverBuffer);
+#endif
+	CRASSERT(vnc_spu.serverBuffer);
 
-  REGION_INIT(&roiRegion, roi, 1);
-
-	while (1) {
-		/* wait until something is rendered/changed */
-		crWaitSemaphore(&vnc_spu.dirtyRectsReady);
-
-		crLockMutex(&vnc_spu.fblock);
-
-		/* Get the new region and see if it intersects the region of interest */
-		REGION_INTERSECT(region,
-										 &vnc_spu.screen_buffer[0]->dirtyRegion,
-										 &roiRegion);
-
-		if (REGION_NUM_RECTS(region) > 0) {
-			vnc_spu.screen_buffer_locked = GL_TRUE;
-			REGION_EMPTY(&vnc_spu.screen_buffer[0]->dirtyRegion);
-
-			/*
-			crDebug("Wait: region area %d", miRegionArea(region));
-			*/
-
-			crUnlockMutex(&vnc_spu.fblock);
-			return GL_TRUE;
-		}
-
-		crUnlockMutex(&vnc_spu.fblock);
-	}
+	/* Get the new region and see if it intersects the region of interest */
+	/* XXX intersect with roi */
+	REGION_COPY(region, &vnc_spu.serverBuffer->dirtyRegion);
+	REGION_EMPTY(&vnc_spu.serverBuffer->dirtyRegion);
+	return GL_TRUE;
 }
 
 
@@ -493,8 +463,7 @@ vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi, int serial_no)
 static void
 ReadbackRect(int scrx, int scry, int winx, int winy, int width, int height)
 {
-	ScreenBuffer *sb = vnc_spu.double_buffer
-		? vnc_spu.screen_buffer[1] : vnc_spu.screen_buffer[0];
+	ScreenBuffer *sb = vnc_spu.readpixBuffer;
 
 	/* clip region against screen buffer size */
 	if (scrx + width > vnc_spu.screen_width)
@@ -590,35 +559,9 @@ ReadbackRect(int scrx, int scry, int winx, int winy, int width, int height)
 static GLboolean
 SwapScreenBuffers(void)
 {
-	GLboolean retVal = GL_FALSE;
-	ScreenBuffer *sb;
+	ScreenBuffer *sb = vnc_spu.readpixBuffer;
+	CRASSERT(sb);
 
-	crLockMutex(&vnc_spu.fblock);
-
-	if (vnc_spu.double_buffer) {
-		if (!vnc_spu.screen_buffer_locked) {
-			/* swap [0] [1] ScreenBuffer pointers */
-			ScreenBuffer *tmp;
-			tmp = vnc_spu.screen_buffer[0];
-			vnc_spu.screen_buffer[0] = vnc_spu.screen_buffer[1];
-			vnc_spu.screen_buffer[1] = tmp;
-			retVal = GL_TRUE;
-		}
-		else {
-			/*crDebug("No swap - locked");*/
-			retVal = GL_FALSE;
-		}
-	}
-	else {
-		/* Not double buffering, but return TRUE so that dirty regions get
-		 * handled properly.
-		 */
-		retVal = GL_TRUE;
-	}
-
-	/* check if the screenbuffer's dirty region was sent to client */
-	sb = vnc_spu.double_buffer
-		? vnc_spu.screen_buffer[1] : vnc_spu.screen_buffer[0];
 	if (sb->regionSent) {
 		/* for all windows, update the accumulated region info */
 		crHashtableWalk(vnc_spu.windowTable, WindowUpdateAccumCB, NULL);
@@ -626,13 +569,10 @@ SwapScreenBuffers(void)
 	}
 
 	/* get new screen-space dirty rectangle list by walking over all windows */
-	sb = vnc_spu.screen_buffer[0];
-	REGION_EMPTY(&sb->dirtyRegion);
-	crHashtableWalk(vnc_spu.windowTable, WindowDirtyUnionCB,
-									&sb->dirtyRegion);
+	vncspuGetScreenRects(&sb->dirtyRegion);
 
 	/* If we can't drop frames, we always have to send _something_ */
-	if (vnc_spu.frame_drop == 0 && REGION_NIL(&sb->dirtyRegion)) {
+	if (REGION_NIL(&sb->dirtyRegion)) {
 		/* make dummy 1x1 region */
 		BoxRec b;
 		b.x1 = b.y1 = 0;
@@ -641,20 +581,8 @@ SwapScreenBuffers(void)
 		CRASSERT(miRegionArea(&sb->dirtyRegion) > 0);
 	}
 
-	if (miRegionArea(&sb->dirtyRegion) > 0) {
-		/* Tell vnc server thread that new pixel data is available */
-#ifdef NETLOGGER_foo
-		if (vnc_spu.netlogger_url) {
-			NL_info("vncspu", "spu.signal.rects", "NUMBER=i",
-							window->frameCounter);
-		}
-#endif
-		crSignalSemaphore(&vnc_spu.dirtyRectsReady);
-	}
-
-	crUnlockMutex(&vnc_spu.fblock);
-
-	return retVal;
+	CRASSERT(miRegionArea(&sb->dirtyRegion) > 0);
+	return GL_TRUE;
 }
 
 
@@ -686,7 +614,7 @@ GetWindowSize(WindowInfo *window)
 
 
 /**
- * Update window's clipRegion field.
+ * Update window's clipRegion field (which is in window coords).
  */
 static void
 GetWindowBounds(WindowInfo *window)
@@ -727,7 +655,6 @@ GetWindowBounds(WindowInfo *window)
 }
 
 
-
 /**
  * Read back the image from the OpenGL window and store in the screen buffer
  * (i.e. vnc_spu.screen_buffer) at the given x/y screen position.
@@ -761,7 +688,8 @@ DoReadback(WindowInfo *window)
 		/* clipping has changed */
 		window->clippingHash = hash;
 		window->newSize = 3;
-		crDebug("VNC SPU: New clipping rects");
+		crDebug("VNC SPU: New clipping rects (%ld rects)",
+						REGION_NUM_RECTS(&window->clipRegion));
 		bounds = *miRegionExtents(&window->clipRegion);
 		bounds.x1 += window->xPos;
 		bounds.y1 += window->yPos;
@@ -807,8 +735,12 @@ DoReadback(WindowInfo *window)
 		REGION_UNION(&window->accumDirtyRegion,
 								 &window->accumDirtyRegion,
 								 &dirtyRegion);
+
 		/*
-		crDebug("new accum dirty area: %d", miRegionArea(&window->accumDirtyRegion));
+		crDebug("new accum dirty area: %d  curr: %d  prev %d",
+						miRegionArea(&window->accumDirtyRegion),
+						miRegionArea(&window->currDirtyRegion),
+						miRegionArea(&window->prevDirtyRegion));
 		*/
 
 		/* add previous ScreenBuffer's dirty region */
@@ -826,12 +758,14 @@ DoReadback(WindowInfo *window)
 			extentArea = (dirtyRegion.extents.x2 - dirtyRegion.extents.x1)
 				* (dirtyRegion.extents.y2 - dirtyRegion.extents.y1);
 			ratio = (float) regionArea / extentArea;
+
 			/*
 			crDebug("Region ratio filled: %.2f (%ld boxes) (ext area %d)",
 							ratio,
 							REGION_NUM_RECTS(&dirtyRegion),
 							extentArea);
 			*/
+
 			if (ratio >= ratioThreshold) {
 				BoxRec extents = *REGION_EXTENTS(&dirtyRegion);
 				REGION_EMPTY(&dirtyRegion);
@@ -895,8 +829,6 @@ DoReadback(WindowInfo *window)
 #endif
 	}
 
-	vnc_spu.frameCounter++;
-
 	swap = SwapScreenBuffers();
 	if (swap && vnc_spu.use_bounding_boxes) {
 		/* If we really did swap, shift curr dirty region to prev dirty region.
@@ -905,32 +837,6 @@ DoReadback(WindowInfo *window)
 		MOVE_REGION(&window->prevDirtyRegion,
 								&window->currDirtyRegion);
 	}
-
-
-	/*
-	 * frame sync
-	 */
-	if (!vnc_spu.frame_drop && num_clients() > 0) {
-#ifdef NETLOGGER
-		if (vnc_spu.netlogger_url) {
-			NL_info("vncspu", "spu.wait.signal", "NUMBER=i", window->frameCounter);
-		}
-#endif
-		/*crDebug("Waiting for updateRequested signal");*/
-		crWaitSemaphore(&vnc_spu.updateRequested);
-		/*crDebug("Got updateRequested signal");*/
-#ifdef NETLOGGER
-		if (vnc_spu.netlogger_url) {
-			NL_info("vncspu", "spu.get.signal", "NUMBER=i", window->frameCounter);
-		}
-#endif
-	}
-
-#ifdef NETLOGGER
-	if (vnc_spu.netlogger_url) {
-		NL_info("vncspu", "spu.readback.end", "NUMBER=i", window->frameCounter);
-	}
-#endif
 }
 
 
@@ -960,50 +866,33 @@ LookupWindow(GLint win, GLint nativeWindow)
 }
 
 
-static ScreenBuffer *
-AllocScreenbuffer(void)
-{
-	ScreenBuffer *s = crCalloc(sizeof(ScreenBuffer));
-	if (s) {
-		s->buffer = (GLubyte *)
-			crAlloc(vnc_spu.screen_width * vnc_spu.screen_height * 4);
-		if (!s->buffer) {
-			crFree(s);
-			s = NULL;
-		}
-	}
-	if (!s) {
-		crError("VNC SPU: Out of memory allocating %d x %d screen buffer",
-						vnc_spu.screen_width, vnc_spu.screen_height);
-	}
-	return s;
-}
-
-
 /**
  * Called by SwapBuffers, glFinish, glFlush after something's been rendered.
  * Determine which window regions have changed, call ReadPixels to store
  * those regions into the framebuffer.
  */
 static void
-vncspuUpdateFramebuffer(WindowInfo *window)
+vncspuUpdateVirtualFramebuffer(WindowInfo *window)
 {
 	GLint readBuf;
 	GLint alignment, skipPixels, skipRows, rowLength;
 
 	CRASSERT(window);
 
-	/* check/alloc the screen buffer(s) now */
-	if (!vnc_spu.screen_buffer[0]) {
-		vnc_spu.screen_buffer[0] = AllocScreenbuffer();
-		if (!vnc_spu.screen_buffer[0])
-			return;
+	CRASSERT(!vnc_spu.readpixBuffer);
+#if DB
+	crDebug("Getting empty buffer");
+#endif
+	if (vnc_spu.frame_drop && vnc_spu.double_buffer) {
+		vnc_spu.readpixBuffer = DequeueBuffer2(&vnc_spu.emptyQueue,
+																					 &vnc_spu.filledQueue);
 	}
-	if (!vnc_spu.screen_buffer[1]) {
-		vnc_spu.screen_buffer[1] = AllocScreenbuffer();
-		if (!vnc_spu.screen_buffer[1])
-			return;
+	else {
+		vnc_spu.readpixBuffer = DequeueBuffer(&vnc_spu.emptyQueue);
 	}
+#if DB
+	crDebug("Got empty buffer %p", (void*) vnc_spu.readpixBuffer);
+#endif
 
 	window->frameCounter++;
 
@@ -1016,6 +905,14 @@ vncspuUpdateFramebuffer(WindowInfo *window)
 	vnc_spu.super.GetIntegerv(GL_PACK_ROW_LENGTH, &rowLength);
 
 	DoReadback(window);
+
+	CRASSERT(vnc_spu.readpixBuffer);
+#if DB
+	crDebug("Putting filled buffer %p into filled queue",
+					(void *) vnc_spu.readpixBuffer);
+#endif
+	EnqueueBuffer(vnc_spu.readpixBuffer, &vnc_spu.filledQueue);
+	vnc_spu.readpixBuffer = NULL;
 
 	/* Restore GL state */
 	vnc_spu.super.ReadBuffer(readBuf);
@@ -1034,7 +931,7 @@ vncspuSwapBuffers(GLint win, GLint flags)
 	vnc_spu.super.SwapBuffers(win, flags);
 
 	if (window) {
-		vncspuUpdateFramebuffer(window);
+		vncspuUpdateVirtualFramebuffer(window);
 	}
 	else {
 		crWarning("VNC SPU: SwapBuffers called for invalid window id");
@@ -1085,7 +982,7 @@ vncspuFinish(void)
 	if (!db || drawBuf != GL_BACK) {
 		WindowInfo *window = vnc_spu.currentWindow;
 		if (window) {
-			vncspuUpdateFramebuffer(window);
+			vncspuUpdateVirtualFramebuffer(window);
 		}
 	}
 }
