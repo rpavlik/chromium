@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.c,v 1.10 2006-06-09 23:39:02 brianp Exp $
+ * $Id: async_io.c,v 1.11 2006-10-30 22:43:51 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
@@ -525,6 +525,7 @@ void aio_write_nocopy(AIO_FUNCPTR fn, AIO_BLOCK *block)
     /* By the way, fn may be NULL */
     block->func = fn;
     block->in_list_flag = 1;
+    block->serial_number = cur_slot->serial_number;
 
     if (cur_slot->outqueue == NULL) {
       /* Output queue was empty - init outqueue list */

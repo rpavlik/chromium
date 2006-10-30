@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.29 2006-10-28 23:02:18 brianp Exp $
+ * $Id: client_io.c,v 1.30 2006-10-30 22:43:51 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -967,24 +967,17 @@ static void send_update(void)
 
   /*crDebug("Enter send_update to %s", cur_slot->name);*/
 
-#ifdef NETLOGGER
-  if (vnc_spu.netlogger_url) {
-    NL_info("vncspu", "spu.wait.fbmutex2",
-            "NODE=s NUMBER=i", vnc_spu.hostname, cl->serial_number);
+  /* check if clipping has changed since we got the pixels and update
+   * the pending region if needed.
+   */
+  if (NewClip) {
+     /*crDebug("Getting updated cliprects");*/
+     vncspuGetScreenRects(&cl->pending_region);
+     num_pending_rects = REGION_NUM_RECTS(&cl->pending_region);
+     /*crDebug("Now, %d rects", num_pending_rects);*/
+     NewClip = 0;
   }
-#endif
-
-	/* check if clipping has changed since we got the pixels and update
-	 * the pending region if needed.
-	 */
-	if (NewClip) {
-		 /*crDebug("Getting updated cliprects");*/
-		 vncspuGetScreenRects(&cl->pending_region);
-		 num_pending_rects = REGION_NUM_RECTS(&cl->pending_region);
-		 /*crDebug("Now, %d rects", num_pending_rects);*/
-		 NewClip = 0;
-	}
-	/*PrintRegion("Sending", &cl->pending_region);*/
+  /*PrintRegion("Sending", &cl->pending_region);*/
 
 
   /* Process framebuffer size change. */
@@ -1193,10 +1186,6 @@ static void send_update(void)
   cl->update_in_progress = 1;
   cl->update_requested = 0;
 
-  vncspuUnlockFrameBuffer(); /* encoder done with buffer */
-
-  /*crDebug("Leave send_update");*/
-
 #ifdef NETLOGGER
   if (vnc_spu.netlogger_url) {
     NL_info("vncspu", "spu.encode.end",
@@ -1204,4 +1193,9 @@ static void send_update(void)
   }
   aio_set_serial_number(&cl->s, 0);
 #endif
+
+  vncspuUnlockFrameBuffer(); /* encoder done with buffer */
+
+  /*crDebug("Leave send_update");*/
+
 }

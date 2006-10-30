@@ -439,7 +439,17 @@ vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi, int serial_no)
 #if DB
 	crDebug("Getting filled buffer");
 #endif
+#ifdef NETLOGGER
+	if (vnc_spu.netlogger_url) {
+		NL_info("vncspu", "spu.wait.filledbuffer", "NODE=s NUMBER=i", vnc_spu.hostname, serial_no);
+	}
+#endif
 	vnc_spu.serverBuffer = DequeueBuffer(&vnc_spu.filledQueue);
+#ifdef NETLOGGER
+	if (vnc_spu.netlogger_url) {
+		NL_info("vncspu", "spu.got.filledbuffer", "NODE=s NUMBER=i", vnc_spu.hostname, serial_no);
+	}
+#endif
 #if DB
 	crDebug("Got filled buffer %p", (void*) vnc_spu.serverBuffer);
 #endif
@@ -799,12 +809,6 @@ DoReadback(WindowInfo *window)
 		const int n = REGION_NUM_RECTS(&dirtyRegion);
 #ifdef NETLOGGER
 		if (vnc_spu.netlogger_url) {
-			NL_info("vncspu", "spu.wait.fbmutex1", "NUMBER=i",
-							window->frameCounter);
-		}
-#endif
-#ifdef NETLOGGER
-		if (vnc_spu.netlogger_url) {
 			NL_info("vncspu", "spu.readpix.begin", "NUMBER=i", window->frameCounter);
 		}
 #endif
@@ -878,11 +882,17 @@ vncspuUpdateVirtualFramebuffer(WindowInfo *window)
 	GLint alignment, skipPixels, skipRows, rowLength;
 
 	CRASSERT(window);
+	window->frameCounter++;
 
-	CRASSERT(!vnc_spu.readpixBuffer);
 #if DB
 	crDebug("Getting empty buffer");
 #endif
+#ifdef NETLOGGER
+	if (vnc_spu.netlogger_url) {
+		NL_info("vncspu", "spu.wait.emptybuffer", "NUMBER=i", window->frameCounter);
+	}
+#endif
+	CRASSERT(!vnc_spu.readpixBuffer);
 	if (vnc_spu.frame_drop && vnc_spu.double_buffer) {
 		vnc_spu.readpixBuffer = DequeueBuffer2(&vnc_spu.emptyQueue,
 																					 &vnc_spu.filledQueue);
@@ -890,11 +900,14 @@ vncspuUpdateVirtualFramebuffer(WindowInfo *window)
 	else {
 		vnc_spu.readpixBuffer = DequeueBuffer(&vnc_spu.emptyQueue);
 	}
+#ifdef NETLOGGER
+	if (vnc_spu.netlogger_url) {
+		NL_info("vncspu", "spu.got.emptybuffer", "NUMBER=i", window->frameCounter);
+	}
+#endif
 #if DB
 	crDebug("Got empty buffer %p", (void*) vnc_spu.readpixBuffer);
 #endif
-
-	window->frameCounter++;
 
 	/* Save GL state */
 	vnc_spu.super.GetIntegerv(GL_READ_BUFFER, &readBuf);
