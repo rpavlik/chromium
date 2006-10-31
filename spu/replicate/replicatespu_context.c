@@ -27,7 +27,7 @@
  * We'll always call this function at least once even if we're not
  * using threads.
  */
-ThreadInfo *replicatespuNewThread( unsigned long id )
+ThreadInfo *replicatespuNewThread( CRthread id )
 {
 	ThreadInfo *thread;
 

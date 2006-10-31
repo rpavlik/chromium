@@ -33,11 +33,33 @@ crCreateThread(CRthread *thread, int flags,
 {
 #ifdef WINDOWS
 	crError("crCreateThread() not implemented for Windows yet");
+#if 0
+	/* something like this: */
+	SIZE_T stackSize = 1024*1024; /*fix? */
+	int i = (int) CreateThread(NULL, stackSize, threadFunc, arg, 0, thread);
+	return i;
+#endif
+	return -1;
 #else
 	int i = pthread_create(thread, NULL, threadFunc, arg);
 	return i;
 #endif
 }
+
+
+/**
+ * Return ID of calling thread.
+ */
+CRthread
+crThreadID(void)
+{
+#ifdef WINDOWS
+	return GetCurrentThreadId();
+#else
+	return pthread_self();
+#endif
+}
+
 
 
 
@@ -109,38 +131,6 @@ void crSetTSD(CRtsd *tsd, void *ptr)
 	}
 #endif
 }
-
-
-/**
- * Get thread-specific data.
- * XXX This should be an inline function/macro in cr_threads.h
- */
-void *crGetTSD(CRtsd *tsd)
-{
-	/* XXX the TSD user should be reponsible for initialization before use */
-	CRASSERT(tsd->initMagic == (int) INIT_MAGIC);
-	if (tsd->initMagic != (int) INIT_MAGIC) {
-		crInitTSD(tsd);
-	}
-#ifdef WINDOWS
-	return TlsGetValue(tsd->key);
-#else
-	return pthread_getspecific(tsd->key);
-#endif
-}
-
-
-
-/* Return ID of calling thread */
-unsigned long crThreadID(void)
-{
-#ifdef WINDOWS
-	return (unsigned long) GetCurrentThreadId();
-#else
-	return (unsigned long) pthread_self();
-#endif
-}
-
 
 
 void crInitMutex(CRmutex *mutex)

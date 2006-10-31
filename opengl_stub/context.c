@@ -41,7 +41,7 @@
     static void
 stubCheckMultithread( void )
 {
-    static unsigned long knownID;
+    static CRthread knownID;
     static GLboolean firstCall = GL_TRUE;
 
     if (stub.threadSafe)

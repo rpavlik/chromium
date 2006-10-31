@@ -20,7 +20,7 @@
  * We'll always call this function at least once even if we're not
  * using threads.
  */
-ThreadInfo *packspuNewThread( unsigned long id )
+ThreadInfo *packspuNewThread( CRthread id )
 {
 	ThreadInfo *thread;
 

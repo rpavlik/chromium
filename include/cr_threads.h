@@ -27,13 +27,15 @@ extern "C" {
  * Thread ID/handle
  */
 #ifdef WINDOWS
-  typedef int CRthread;
+  typedef DWORD CRthread;
 #else
   typedef pthread_t CRthread;
 #endif
 
 extern int crCreateThread(CRthread *thread, int flags,
                           void * (*threadFunc)(void *), void *arg);
+
+extern CRthread crThreadID(void);
 
 
 /*
@@ -53,8 +55,11 @@ extern void crInitTSD(CRtsd *tsd);
 extern void crInitTSDF(CRtsd *tsd, void (*destructor)(void *));
 extern void crFreeTSD(CRtsd *tsd);
 extern void crSetTSD(CRtsd *tsd, void *ptr);
-extern void *crGetTSD(CRtsd *tsd);
-extern unsigned long crThreadID(void);
+#ifdef WINDOWS
+#define crGetTSD(TSD) TlsGetValue((TSD)->key)
+#else
+#define crGetTSD(TSD) pthread_getspecific((TSD)->key)
+#endif
 
 
 /* Mutex datatype */

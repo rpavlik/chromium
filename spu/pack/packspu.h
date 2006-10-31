@@ -24,7 +24,7 @@ typedef struct thread_info_t ThreadInfo;
 typedef struct context_info_t ContextInfo;
 
 struct thread_info_t {
-	unsigned long id;
+	CRthread id;
 	CRNetServer netServer;
 	CRPackBuffer buffer;
 	CRPackBuffer normBuffer;
@@ -82,7 +82,7 @@ extern void packspuConnectToServer( CRNetServer *server );
 extern void packspuFlush( void *arg );
 extern void packspuHuge( CROpcode opcode, void *buf );
 
-extern ThreadInfo *packspuNewThread( unsigned long id );
+extern ThreadInfo *packspuNewThread( CRthread id );
 
 
 #endif /* CR_PACKSPU_H */

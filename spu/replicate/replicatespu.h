@@ -38,7 +38,7 @@ struct window_info_t {
 };
 
 struct thread_info_t {
-	unsigned long id;
+	CRthread id;
 	CRNetServer server;
 	CRPackBuffer buffer;
 	CRPackBuffer normBuffer;
@@ -133,7 +133,7 @@ extern void replicatespuCheckVncEvents(void);
 extern void replicatespuDestroyAllWindowsAndContexts(void);
 
 
-extern ThreadInfo *replicatespuNewThread( unsigned long id );
+extern ThreadInfo *replicatespuNewThread( CRthread id );
 
 extern void REPLICATESPU_APIENTRY replicatespu_StateCallList( GLuint list );
 extern void REPLICATESPU_APIENTRY replicatespu_StateCallLists( GLsizei n, GLenum type, const GLvoid * lists );
