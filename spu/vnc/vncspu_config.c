@@ -95,7 +95,7 @@ SPUOptions vncSPUOptions[] = {
 		"Allow frame dropping", (SPUOptionCB) set_frame_drop },
 	{ "coalesce_writes", CR_BOOL, 1, "0", NULL, NULL,
 		"Coalesce Writes", (SPUOptionCB) set_coalesce_writes },
-	{ "double_buffer", CR_BOOL, 1, "1", NULL, NULL,
+	{ "double_buffer", CR_INT, 1, "1", NULL, NULL,
 		"Double Buffer", (SPUOptionCB) set_double_buffer },
 #ifdef NETLOGGER
 	{ "netlogger_url", CR_STRING, 1, NULL, NULL, NULL,
