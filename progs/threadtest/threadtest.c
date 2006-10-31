@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
 #else
 		pthread_create( &ThreadID[i], NULL, render_loop, (void *) &(Context[i]) );
 #endif
-		printf("threadtest created thread %d (id=%d)\n", i, (int) ThreadID[i]);
+		printf("threadtest created thread %d (id=%u)\n", i, (unsigned) ThreadID[i]);
 	}
 
 	/* main thread waits here until it's time to exit */
