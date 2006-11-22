@@ -26,7 +26,43 @@
 #include "client_io.h"
 
 
-#define DB 0
+#define DB 0 /* extra debug */
+
+
+#define SIMPLE_LOGGING 1
+
+/**
+ * Simple logging.  This will be called by either thread whenever an
+ * interesting event occurs.
+ */
+void
+vncspuLog(int threadNum, const char *msg, int i)
+{
+#if SIMPLE_LOGGING
+	static FILE *logFile = NULL;
+  char tb[32];
+  int k;
+  struct timeval tv;
+
+  if (!logFile) {
+		/* one time init */
+		logFile = fopen("/tmp/vncspu.log", "w");
+		crInitMutex(&vnc_spu.logLock);
+	}
+
+	crLockMutex(&vnc_spu.logLock);
+  gettimeofday(&tv, NULL);
+  tv.tv_sec = tv.tv_sec % 10;
+  sprintf(tb, "%2u.%06u  ", (unsigned) tv.tv_sec, (unsigned) tv.tv_usec);
+
+  fputs(tb, logFile);
+  for (k = 0; k < threadNum; k++)
+     fputs("                            ", logFile);
+  fprintf(logFile, msg, i);
+  fputs("\n", logFile);
+	crUnlockMutex(&vnc_spu.logLock);
+#endif
+}
 
 
 /*
@@ -435,6 +471,9 @@ vncspuGetDirtyRects(RegionPtr region)
 GLboolean
 vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi, int serial_no)
 {
+	GLboolean wasBlocked;
+
+	vncspuLog(1, "Wait for filled buffer", 0);
 	CRASSERT(!vnc_spu.serverBuffer);
 #if DB
 	crDebug("Getting filled buffer");
@@ -444,14 +483,14 @@ vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi, int serial_no)
 		NL_info("vncspu", "spu.wait.filledbuffer", "NODE=s NUMBER=i", vnc_spu.hostname, serial_no);
 	}
 #endif
-	vnc_spu.serverBuffer = DequeueBuffer(&vnc_spu.filledQueue);
+	vnc_spu.serverBuffer = DequeueBuffer(&vnc_spu.filledQueue, &wasBlocked);
 #ifdef NETLOGGER
 	if (vnc_spu.netlogger_url) {
 		NL_info("vncspu", "spu.got.filledbuffer", "NODE=s NUMBER=i", vnc_spu.hostname, serial_no);
 	}
 #endif
 #if DB
-	crDebug("Got filled buffer %p", (void*) vnc_spu.serverBuffer);
+	crDebug("Got filled buffer");
 #endif
 	CRASSERT(vnc_spu.serverBuffer);
 
@@ -459,6 +498,10 @@ vncspuWaitDirtyRects(RegionPtr region, const BoxRec *roi, int serial_no)
 	/* XXX intersect with roi */
 	REGION_COPY(region, &vnc_spu.serverBuffer->dirtyRegion);
 	REGION_EMPTY(&vnc_spu.serverBuffer->dirtyRegion);
+	if (wasBlocked)
+		vncspuLog(1, "Got filled buffer (waited)", 0);
+	else
+		vncspuLog(1, "Got filled buffer (no wait)", 0);
 	return GL_TRUE;
 }
 
@@ -880,6 +923,7 @@ vncspuUpdateVirtualFramebuffer(WindowInfo *window)
 {
 	GLint readBuf;
 	GLint alignment, skipPixels, skipRows, rowLength;
+	GLboolean wasBlocked = GL_FALSE;
 
 	CRASSERT(window);
 	window->frameCounter++;
@@ -893,13 +937,23 @@ vncspuUpdateVirtualFramebuffer(WindowInfo *window)
 	}
 #endif
 	CRASSERT(!vnc_spu.readpixBuffer);
+	vncspuLog(0, "Wait for empty buffer", 0);
 	if (vnc_spu.frame_drop && vnc_spu.double_buffer) {
 		vnc_spu.readpixBuffer = DequeueBuffer2(&vnc_spu.emptyQueue,
 																					 &vnc_spu.filledQueue);
 	}
 	else {
-		vnc_spu.readpixBuffer = DequeueBuffer(&vnc_spu.emptyQueue);
+		vnc_spu.readpixBuffer = DequeueBuffer(&vnc_spu.emptyQueue, &wasBlocked);
+		/*
+		if (wasBlocked)
+			crDebug("VNC SPU: main thread was blocked");
+		*/
 	}
+	if (wasBlocked)
+		 vncspuLog(0, "Got empty buffer (waited)", 0);
+	else
+		 vncspuLog(0, "Got empty buffer (no wait)", 0);
+
 #ifdef NETLOGGER
 	if (vnc_spu.netlogger_url) {
 		NL_info("vncspu", "spu.got.emptybuffer", "NUMBER=i", window->frameCounter);
@@ -917,7 +971,9 @@ vncspuUpdateVirtualFramebuffer(WindowInfo *window)
 	vnc_spu.super.GetIntegerv(GL_PACK_SKIP_ROWS, &skipRows);
 	vnc_spu.super.GetIntegerv(GL_PACK_ROW_LENGTH, &rowLength);
 
+	vncspuLog(0, "Begin readpix", 0);
 	DoReadback(window);
+	vncspuLog(0, "End readpix", 0);
 
 	CRASSERT(vnc_spu.readpixBuffer);
 #if DB
@@ -940,6 +996,11 @@ static void VNCSPU_APIENTRY
 vncspuSwapBuffers(GLint win, GLint flags)
 {
 	WindowInfo *window = LookupWindow(win, 0);
+	static int counter = 0;
+
+	counter++;
+	vncspuLog(0, "Enter SwapBuffers %d", counter);
+	vnc_spu.inSwapBuffers = GL_TRUE;
 
 	vnc_spu.super.SwapBuffers(win, flags);
 
@@ -978,6 +1039,9 @@ vncspuSwapBuffers(GLint win, GLint flags)
 			}
 		}
 	}
+
+	vnc_spu.inSwapBuffers = GL_FALSE;
+	vncspuLog(0, "Leave SwapBuffers %d", counter);
 }
 
 

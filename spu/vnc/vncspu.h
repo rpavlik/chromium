@@ -112,10 +112,16 @@ typedef struct {
 	CRHashTable *windowTable;
 	WindowInfo *currentWindow;
 
+	/** Lock and condition var for thread stuff */
 	CRmutex lock;
 	CRcondition cond;
 
+	/** For computing FPS */
 	CRTimer *timer;
+
+	/** Debug */
+	GLboolean inSwapBuffers;
+	CRmutex logLock;
 
 #if defined(HAVE_XCLIPLIST_EXT) || defined(HAVE_VNC_EXT)
 	Display *dpy;
@@ -159,5 +165,8 @@ vncspuHalfImage(int origWidth, int origHeight, int origStride,
                 const GLubyte *origImage,
                 int newStride, GLubyte *newImage,
                 GLenum format);
+
+
+extern void vncspuLog(int threadNum, const char *s, int i);
 
 #endif /* VNC_SPU_H */

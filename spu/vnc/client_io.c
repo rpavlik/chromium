@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.30 2006-10-30 22:43:51 brianp Exp $
+ * $Id: client_io.c,v 1.31 2006-11-22 19:56:37 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -431,6 +431,7 @@ static void rf_client_encodings_data(void)
     } else if (enc == RFB_ENCODING_FRAME_SYNC) {
       cl->enable_frame_sync = 1;
       vnc_spu.frame_drop = 0; /* can't drop frames if trying to sync! */
+      crDebug("Frame sync requested by client, disabling frame_drop");
       log_write(LL_DETAIL, "Client %s supports frame sync encoding",
                 cur_slot->name);
     }
@@ -543,6 +544,9 @@ static void rf_client_updatereq(void)
   aio_setread(rf_client_msg, NULL, 1);
 }
 
+/**
+ * Called when we've finished sending an RFB update to the client.
+ */
 static void wf_client_update_finished(void)
 {
   CL_SLOT *cl = (CL_SLOT *)cur_slot;
@@ -554,8 +558,14 @@ static void wf_client_update_finished(void)
   if (cl->update_requested &&
       (cl->newfbsize_pending ||
        cl->new_cliprects ||
+#if 0
        REGION_NOTEMPTY(&cl->pending_region) ||
        REGION_NOTEMPTY(&cl->copy_region))) {
+#else
+       REGION_NOTEMPTY(&cl->copy_region) ||
+       vncspuWaitDirtyRects(&cl->pending_region, &cl->update_rect,
+                            cl->serial_number))) {
+#endif
     send_update();
   }
 }
@@ -764,7 +774,8 @@ void fn_client_add_rect(AIO_SLOT *slot, FB_RECT *rect)
 
 /**
  * Send the dirty rects to the given client, if an update was requested.
- * This is called as a callback by the aio_walk_slots() function.
+ * This is called as a callback by the fbupdate_rect_done() function after
+ * the last rectangle has been decoded.
  */
 void fn_client_send_rects(AIO_SLOT *slot)
 {
@@ -958,10 +969,14 @@ static void send_update(void)
   int num_copy_rects, num_pending_rects, num_all_rects;
   int raw_bytes = 0, hextile_bytes = 0;
   int i, idx, rev_order;
+  static int counter = 0;
 
 #ifdef NETLOGGER
   aio_set_serial_number(&cl->s, cl->serial_number);
 #endif
+
+  counter++;
+  vncspuLog(1, "Begin send update %d", counter);
 
   CRASSERT(vnc_spu.serverBuffer);
 
@@ -1198,4 +1213,5 @@ static void send_update(void)
 
   /*crDebug("Leave send_update");*/
 
+  vncspuLog(1, "End send update %d", counter);
 }

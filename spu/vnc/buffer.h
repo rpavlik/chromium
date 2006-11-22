@@ -44,7 +44,7 @@ extern void
 InitScreenBufferQueue(ScreenBufferQueue *q, const char *name);
 
 extern ScreenBuffer *
-DequeueBuffer(ScreenBufferQueue *q);
+DequeueBuffer(ScreenBufferQueue *q, GLboolean *wasBlocked);
 
 extern ScreenBuffer *
 DequeueBufferNoBlock(ScreenBufferQueue *q);

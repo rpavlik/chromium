@@ -60,14 +60,19 @@ DequeueLocked(ScreenBufferQueue *q)
 
 
 /**
- * Get buffer from head of queue.
+ * Get buffer from head of queue.  If the queue is empty, block until
+ * there's something to return.
+ * \param wasBlocked  returns GL_TRUE or GL_FALSE to indicate if the queue
+ *                    was empty and we had to wait.
  */
 ScreenBuffer *
-DequeueBuffer(ScreenBufferQueue *q)
+DequeueBuffer(ScreenBufferQueue *q, GLboolean *wasBlocked)
 {
    ScreenBuffer *b;
    crLockMutex(&q->mutex);
+   *wasBlocked = GL_FALSE;
    while (q->size == 0) {
+     *wasBlocked = GL_TRUE;
      /*crDebug("Wait for buffer in '%s' queue", q->name);*/
       crWaitCondition(&q->nonEmpty, &q->mutex);
    }
@@ -99,6 +104,7 @@ DequeueBufferNoBlock(ScreenBufferQueue *q)
 ScreenBuffer *
 DequeueBuffer2(ScreenBufferQueue *q1, ScreenBufferQueue *q2)
 {
+   GLboolean wasBlocked;
    ScreenBuffer *b;
    crLockMutex(&q1->mutex);
    crLockMutex(&q2->mutex);
@@ -111,7 +117,7 @@ DequeueBuffer2(ScreenBufferQueue *q1, ScreenBufferQueue *q2)
    crUnlockMutex(&q1->mutex);
    crUnlockMutex(&q2->mutex);
    /*crDebug("Dequeue 2");*/
-   return DequeueBuffer(q2);
+   return DequeueBuffer(q2, &wasBlocked);
 }
 
 
