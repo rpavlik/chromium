@@ -10,28 +10,28 @@
 #include "cr_pack.h"
 
 #define UPDATE_1D_BBOX(X) \
-if (pc->bounds_min.x > (X))   pc->bounds_min.x = (X);\
+if (pc->bounds_min.x > (GLfloat) (X))   pc->bounds_min.x = (GLfloat) (X);\
 if (pc->bounds_min.y > 0.0f)  pc->bounds_min.y = 0.0f;\
 if (pc->bounds_min.z > 0.0f)  pc->bounds_min.z = 0.0f;\
-if (pc->bounds_max.x < (X))   pc->bounds_max.x = (X);\
+if (pc->bounds_max.x < (GLfloat) (X))   pc->bounds_max.x = (GLfloat) (X);\
 if (pc->bounds_max.y < 0.0f)  pc->bounds_max.y = 0.0f;\
 if (pc->bounds_max.z < 0.0f)  pc->bounds_max.z = 0.0f
 
 #define UPDATE_2D_BBOX(X, Y) \
-if (pc->bounds_min.x > (X))   pc->bounds_min.x = (X);\
-if (pc->bounds_min.y > (Y))   pc->bounds_min.y = (Y);\
+if (pc->bounds_min.x > (GLfloat) (X))   pc->bounds_min.x = (GLfloat) (X);\
+if (pc->bounds_min.y > (GLfloat) (Y))   pc->bounds_min.y = (GLfloat) (Y);\
 if (pc->bounds_min.z > 0.0f)  pc->bounds_min.z = 0.0f;\
-if (pc->bounds_max.x < (X))   pc->bounds_max.x = (X);\
-if (pc->bounds_max.y < (Y))   pc->bounds_max.y = (Y);\
+if (pc->bounds_max.x < (GLfloat) (X))   pc->bounds_max.x = (GLfloat) (X);\
+if (pc->bounds_max.y < (GLfloat) (Y))   pc->bounds_max.y = (GLfloat) (Y);\
 if (pc->bounds_max.z < 0.0f)  pc->bounds_max.z = 0.0f
 
 #define UPDATE_3D_BBOX(X, Y, Z) \
-if (pc->bounds_min.x > (X))   pc->bounds_min.x = (X); \
-if (pc->bounds_min.y > (Y))   pc->bounds_min.y = (Y); \
-if (pc->bounds_min.z > (Z))   pc->bounds_min.z = (Z); \
-if (pc->bounds_max.x < (X))   pc->bounds_max.x = (X); \
-if (pc->bounds_max.y < (Y))   pc->bounds_max.y = (Y); \
-if (pc->bounds_max.z < (Z))   pc->bounds_max.z = (Z)
+if (pc->bounds_min.x > (GLfloat) (X))   pc->bounds_min.x = (GLfloat) (X); \
+if (pc->bounds_min.y > (GLfloat) (Y))   pc->bounds_min.y = (GLfloat) (Y); \
+if (pc->bounds_min.z > (GLfloat) (Z))   pc->bounds_min.z = (GLfloat) (Z); \
+if (pc->bounds_max.x < (GLfloat) (X))   pc->bounds_max.x = (GLfloat) (X); \
+if (pc->bounds_max.y < (GLfloat) (Y))   pc->bounds_max.y = (GLfloat) (Y); \
+if (pc->bounds_max.z < (GLfloat) (Z))   pc->bounds_max.z = (GLfloat) (Z)
 
 #define UPDATE_4D_BBOX UPDATE_3D_BBOX
 

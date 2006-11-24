@@ -80,7 +80,6 @@ crHashtableDelete
 crHashtableSearch
 crHashtableReplace
 crHashtableNumElements
-crHashtableWalk
 crAllocHashtable
 crFreeHashtable
 crDetermineEndianness
@@ -100,9 +99,6 @@ crTimerTime
 crMemcpy
 crMemcmp
 crMemZero
-crCalloc
-crSetTSD
-crGetTSD
 crInitMutex
 crFreeMutex
 crLockMutex
@@ -121,7 +117,7 @@ crSignalSemaphore
 crInitTSD
 crInitTSDF
 crSetTSD
-crGetTSD
+crGetTSD=TlsGetValue
 crFreeTSD
 crRandFloat
 crRandInt
