@@ -18,7 +18,7 @@ extern int opt_write_coalescing;
  */
 static void setDefaults( void )
 {
-	vnc_spu.pixel_size = 32;
+	vnc_spu.pixel_size = 0;
 }
 
 
