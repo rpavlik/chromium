@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: host_io.c,v 1.3 2006-09-27 18:40:49 brianp Exp $
+ * $Id: host_io.c,v 1.4 2006-12-16 17:17:20 brianp Exp $
  * Asynchronous interaction with VNC host.
  */
 
@@ -461,10 +461,9 @@ void fill_fb_rect(FB_RECT *r, CARD32 color)
 }
 
 /*
- * This function is called by decoders after the whole rectangle
+ * This function is called by decoders after each rectangle
  * has been successfully decoded.
  */
-
 void fbupdate_rect_done(void)
 {
   if (cur_rect.w != 0 && cur_rect.h != 0) {
