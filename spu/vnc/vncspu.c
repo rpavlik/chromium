@@ -29,7 +29,7 @@
 #define DB 0 /* extra debug */
 
 
-#define SIMPLE_LOGGING 1
+#define SIMPLE_LOGGING 0
 
 /**
  * Simple logging.  This will be called by either thread whenever an
