@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.32 2006-11-29 17:01:33 brianp Exp $
+ * $Id: client_io.c,v 1.33 2006-12-18 20:25:05 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -461,14 +461,18 @@ static void rf_client_encodings_data(void)
                 cur_slot->name);
     }
   }
-	else {
-		vnc_spu.pixel_size = 32;
-	}
+  else {
+    vnc_spu.pixel_size = 32;
+  }
 
   log_write(LL_DETAIL, "Using encoding %s (0x%x)",
             encoding_string(cl->enc_prefer), cl->enc_prefer);
   crDebug("VNC SPU: Using %s encoding (0x%x) for new client",
           encoding_string(cl->enc_prefer), cl->enc_prefer);
+  if (cl->enc_prefer == RFB_ENCODING_TIGHT) {
+    crDebug("VNC SPU: Tight jpeg quality level %d, compression level %d",
+            cl->jpeg_quality, cl->compress_level);
+  }
   crDebug("VNC SPU: pixel_size = %d", vnc_spu.pixel_size);
 
   aio_setread(rf_client_msg, NULL, 1);
