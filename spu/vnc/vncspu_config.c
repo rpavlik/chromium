@@ -11,6 +11,10 @@
 #include "cr_environment.h"
 
 
+int opt_write_coalescing = 0;
+int opt_force_tight_jpeg = 0;
+
+
 /**
  * Set default options for SPU
  */
