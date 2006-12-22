@@ -11,9 +11,11 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode_tight.c,v 1.7 2006-12-22 00:01:47 brianp Exp $
+ * $Id: encode_tight.c,v 1.8 2006-12-22 16:12:50 brianp Exp $
  * Tight encoder.
  */
+
+const int LARGE_JPEG_BUFFERS = 1;  /* 0 = subdivide */
 
 #include <assert.h>
 #include <stdio.h>
@@ -593,8 +595,21 @@ SendRectSimple(CL_SLOT *cl, FB_RECT *r)
   int subrectMaxWidth, subrectMaxHeight;
   FB_RECT sr;
 
-  maxRectSize = tightConf[compressLevel].maxRectSize;
-  maxRectWidth = tightConf[compressLevel].maxRectWidth;
+  if (LARGE_JPEG_BUFFERS && opt_force_tight_jpeg) {
+     /* allocate buffers for largest possible rect */
+#ifdef CHROMIUM
+     CARD32 *g_framebuffer;
+     CARD16 g_fb_width, g_fb_height;
+     g_framebuffer = GetFrameBuffer(&g_fb_width, &g_fb_height);
+     maxRectWidth = g_fb_width;
+     maxRectSize = g_fb_width * g_fb_height;
+#endif
+  }
+  else {
+     /* use table values */
+     maxRectSize = tightConf[compressLevel].maxRectSize;
+     maxRectWidth = tightConf[compressLevel].maxRectWidth;
+  }
 
   maxBeforeSize = maxRectSize * (cl->format.bits_pixel / 8);
   maxAfterSize = maxBeforeSize + (maxBeforeSize + 99) / 100 + 12;
@@ -620,15 +635,24 @@ SendRectSimple(CL_SLOT *cl, FB_RECT *r)
   if (tightBeforeBuf == NULL || tightAfterBuf == NULL)
     return 0;
 
-  if (opt_force_tight_jpeg) {
+
+  if (LARGE_JPEG_BUFFERS && opt_force_tight_jpeg) {
+    /* send one big jpeg image - don't subdivide */
     int success;
     SendTightHeader(r);
     success = SendJpegRect(r, tightConf[qualityLevel].jpegQuality);
-    /*printf("Force send tight %d\n", success);*/
     assert(success);
     return success;
   }
+  else {
+    /* the opt_force_tight_jpeg path will still be hit below, but
+     * the rectangle will get subdivided if needed.
+     */
+  }
 
+  /* Subdivide the rect into smaller pieces so that everything fits
+   * in the allocated buffers.
+   */
   if (r->w > maxRectWidth || r->w * r->h > maxRectSize) {
     subrectMaxWidth = (r->w > maxRectWidth) ? maxRectWidth : r->w;
     subrectMaxHeight = maxRectSize / subrectMaxWidth;
@@ -651,9 +675,17 @@ SendRectSimple(CL_SLOT *cl, FB_RECT *r)
   return 1;
 }
 
+
+/**
+ * Send a sub-rectangle.  The rectangle width will be less than
+ * maxRectWidth and the area will be less than maxRectSize.
+ */
 static int SendSubrect(CL_SLOT *cl, FB_RECT *r)
 {
   int success = 0;
+
+  assert(r->w <= tightConf[compressLevel].maxRectWidth);
+  assert(r->w * r->h <= tightConf[compressLevel].maxRectSize);
 
   SendTightHeader(r);
 
@@ -1486,13 +1518,18 @@ JpegInitDestination(j_compress_ptr cinfo)
   jpegDstManager.free_in_buffer = (size_t)tightAfterBufSize;
 }
 
+/**
+ * This gets called when the output buffer is filled.  This is an
+ * error for us.  We can't just write the output to the socket with
+ * SendCompressedDatat(), reset the buffer and continue because we
+ * need to know the _total_ size when we call SendCompressedData().
+ */
 static boolean
 JpegEmptyOutputBuffer(j_compress_ptr cinfo)
 {
   jpegError = TRUE;
   jpegDstManager.next_output_byte = (JOCTET *)tightAfterBuf;
   jpegDstManager.free_in_buffer = (size_t)tightAfterBufSize;
-
   return TRUE;
 }
 
@@ -1510,4 +1547,3 @@ JpegSetDstManager(j_compress_ptr cinfo)
   jpegDstManager.term_destination = JpegTermDestination;
   cinfo->dest = &jpegDstManager;
 }
-
