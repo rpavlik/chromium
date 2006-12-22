@@ -130,6 +130,10 @@ typedef struct {
 	int haveVncExt;
 } VncSPU;
 
+
+extern int opt_write_coalescing;
+extern int opt_force_tight_jpeg;
+
 /** Vnc state descriptor */
 extern VncSPU vnc_spu;
 

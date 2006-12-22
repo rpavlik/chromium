@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: main.c,v 1.8 2006-10-28 23:02:18 brianp Exp $
+ * $Id: main.c,v 1.9 2006-12-22 00:01:47 brianp Exp $
  * Main module
  */
 
@@ -62,8 +62,6 @@ static unsigned char opt_client_password[9];
 static unsigned char opt_client_ro_password[9];
 
 static char *opt_host_info_file;
-
-int opt_write_coalescing = 0;
 
 /*
  * Global variables

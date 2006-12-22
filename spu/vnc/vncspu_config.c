@@ -11,8 +11,6 @@
 #include "cr_environment.h"
 
 
-extern int opt_write_coalescing;
-
 /**
  * Set default options for SPU
  */
@@ -59,6 +57,11 @@ static void set_double_buffer(VncSPU *vnc_spu, const char *response)
 	vnc_spu->double_buffer = crStrToInt(response);
 }
 
+static void set_force_tight_jpeg(VncSPU *vnc_spu, const char *response)
+{
+  opt_force_tight_jpeg = 1;
+}
+
 #ifdef NETLOGGER
 static void set_netlogger_url(VncSPU *vnc_spu, const char *response)
 {
@@ -97,6 +100,8 @@ SPUOptions vncSPUOptions[] = {
 		"Coalesce Writes", (SPUOptionCB) set_coalesce_writes },
 	{ "double_buffer", CR_INT, 1, "1", NULL, NULL,
 		"Double Buffer", (SPUOptionCB) set_double_buffer },
+	{ "force_tight_jpeg", CR_BOOL, 1, "0", NULL, NULL,
+		"Force JPEG tight encoding", (SPUOptionCB) set_force_tight_jpeg },
 #ifdef NETLOGGER
 	{ "netlogger_url", CR_STRING, 1, NULL, NULL, NULL,
 		"NetLogger log URL", (SPUOptionCB) set_netlogger_url },
@@ -133,6 +138,8 @@ void vncspuGatherConfiguration( void )
 	crDebug("VNC SPU: use_bounding_boxes %d", vnc_spu.use_bounding_boxes);
 	crDebug("VNC SPU: screen_size %d, %d",
 					vnc_spu.screen_width, vnc_spu.screen_height);
+	crDebug("VNC SPU: force_tight_jpeg: %d",
+					opt_force_tight_jpeg);
 
 	/* We need to use the same display as the Render SPU, from which we're
 	 * derived.

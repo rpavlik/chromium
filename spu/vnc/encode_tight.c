@@ -11,7 +11,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode_tight.c,v 1.6 2006-04-18 14:22:33 brianp Exp $
+ * $Id: encode_tight.c,v 1.7 2006-12-22 00:01:47 brianp Exp $
  * Tight encoder.
  */
 
@@ -31,6 +31,7 @@
 #include "encode.h"
 
 extern int opt_write_coalescing;
+extern int opt_force_tight_jpeg;
 
 /* These parameters may be adjusted. */
 #define MIN_SPLIT_RECT_SIZE     4096
@@ -225,8 +226,11 @@ rfb_encode_tight(CL_SLOT *cl, FB_RECT *r)
     usePixelFormat24 = 0;
   }
 
-  if (!cl->enable_lastrect || r->w * r->h < MIN_SPLIT_RECT_SIZE)
+  if (opt_force_tight_jpeg ||
+      !cl->enable_lastrect ||
+      r->w * r->h < MIN_SPLIT_RECT_SIZE) {
     return SendRectSimple(cl, r);
+  }
 
   /* Make sure we can write at least one pixel into tightBeforeBuf. */
 
@@ -616,6 +620,15 @@ SendRectSimple(CL_SLOT *cl, FB_RECT *r)
   if (tightBeforeBuf == NULL || tightAfterBuf == NULL)
     return 0;
 
+  if (opt_force_tight_jpeg) {
+    int success;
+    SendTightHeader(r);
+    success = SendJpegRect(r, tightConf[qualityLevel].jpegQuality);
+    /*printf("Force send tight %d\n", success);*/
+    assert(success);
+    return success;
+  }
+
   if (r->w > maxRectWidth || r->w * r->h > maxRectSize) {
     subrectMaxWidth = (r->w > maxRectWidth) ? maxRectWidth : r->w;
     subrectMaxHeight = maxRectSize / subrectMaxWidth;
@@ -672,7 +685,10 @@ static int SendSubrect(CL_SLOT *cl, FB_RECT *r)
   switch (paletteNumColors) {
   case 0:
     /* Truecolor image */
-    if (qualityLevel != -1 && DetectSmoothImage(&cl->format, r)) {
+    if (opt_force_tight_jpeg) {
+      success = SendJpegRect(r, tightConf[qualityLevel].jpegQuality);
+    }
+    else if (qualityLevel != -1 && DetectSmoothImage(&cl->format, r)) {
       success = SendJpegRect(r, tightConf[qualityLevel].jpegQuality);
     } else {
       success = SendFullColorRect(cl, r->w, r->h);
@@ -689,7 +705,10 @@ static int SendSubrect(CL_SLOT *cl, FB_RECT *r)
     break;
   default:
     /* Up to 256 different colors */
-    if ( paletteNumColors > 96 &&
+    if (opt_force_tight_jpeg) {
+      success = SendJpegRect(r, tightConf[qualityLevel].jpegQuality);
+    }
+    else if ( paletteNumColors > 96 &&
          qualityLevel != -1 && qualityLevel <= 3 &&
          DetectSmoothImage(&cl->format, r) ) {
       success = SendJpegRect(r, tightConf[qualityLevel].jpegQuality);
