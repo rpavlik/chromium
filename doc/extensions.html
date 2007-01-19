@@ -119,13 +119,19 @@
       A short-cut to adding new extensions is to implment them for the
       application-side only. This means that the extension can only be used by
       SPUs running on the application node (such as the render SPU or readback
-      SPU when using a sort-last configuration). An examples of an
-      application-only extension is GL_NV_fence.
+      SPU when using a sort-last configuration).
+      Using the extension over a network link (via the Pack or Tilesort SPU)
+      will not work.
+      An example of an application-only extension is GL_NV_fence.
     </p>
     <p>
       Basically, only the OpenGL API dispatcher needs to be updated. The
-      extension should be added to the <code>__stateAppOnlyExtensions</code>
-      string in <span class="File">state_tracker/state_limits.c</span>.
+      extension should be added to the <code>crAppOnlyExtensions</code>
+      string in <span class="File">cr/include/cr_extstring.h</span>.
     </p>
+    <p>
+      The extension's entrypoints should be added to the
+      <span class="File">cr/glapi_parser/APIspec.txt</span> file.
+    <p>
   </body>
 </html>
