@@ -13,10 +13,11 @@
 
 
 typedef struct {
-    GLXDrawable xwin;     /**< backend server's X window */
-    GLXDrawable xsubwin;  /**< child of xwin, clipped to screen bounds */
-    Display *dpy;         /**< DMX back-end server display */
-    CRrecti visrect;      /**< visible rect, in front-end screen coords */
+	GLXDrawable xwin;     /**< backend server's X window */
+	GLXDrawable xsubwin;  /**< child of xwin, clipped to screen bounds */
+	Display *dpy;         /**< DMX back-end server display */
+	CRrecti visrect;      /**< visible rect, in front-end screen coords */
+	GLboolean clipToScreen;     /**< Clip back-end windows against screen bounds? */
 } CRDMXBackendWindowInfo;
 
 

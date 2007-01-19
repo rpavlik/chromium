@@ -41,11 +41,22 @@ chooseVisualRetry(const crOpenGLInterface *ws, Display *dpy, int screen,
 }
 
 
+/**
+ * Allocate/initialize an array of CRDMXBackendWindowInfo objects.
+ */
 CRDMXBackendWindowInfo *
 crDMXAllocBackendWindowInfo(unsigned int numBackendWindows)
 {
-	return (CRDMXBackendWindowInfo *)
-		crCalloc(numBackendWindows * sizeof(CRDMXBackendWindowInfo));
+	CRDMXBackendWindowInfo *backendInfo
+		= (CRDMXBackendWindowInfo *)
+				crCalloc(numBackendWindows * sizeof(CRDMXBackendWindowInfo));
+	if (backendInfo) {
+		unsigned i;
+		for (i = 0; i < numBackendWindows; i++) {
+			backendInfo[i].clipToScreen = GL_TRUE;
+		}
+	}
+	return backendInfo;
 }
 
 
@@ -155,14 +166,23 @@ crDMXGetBackendWindowInfo(Display *dpy,
 		backend->visrect.y2 = dmxWinInfo[i].vis.y + dmxWinInfo[i].vis.height;
 
 		/* subwindow pos and size (at least 1x1) */
-		subwinX = backend->visrect.x1;
-		subwinY = backend->visrect.y1;
-		subwinW = backend->visrect.x2 - backend->visrect.x1;
-		subwinH = backend->visrect.y2 - backend->visrect.y1;
-		if (subwinW <= 0)
-			subwinW = 1;
-		if (subwinH <= 0)
-			subwinH = 1;
+		if (backend->clipToScreen) {
+			subwinX = backend->visrect.x1;
+			subwinY = backend->visrect.y1;
+			subwinW = backend->visrect.x2 - backend->visrect.x1;
+			subwinH = backend->visrect.y2 - backend->visrect.y1;
+			if (subwinW <= 0)
+				subwinW = 1;
+			if (subwinH <= 0)
+				subwinH = 1;
+		}
+		else {
+			/* Used by dmxdirect */
+			subwinX = 0;
+			subwinY = 0;
+			subwinW = dmxWinInfo[i].pos.width;
+			subwinH = dmxWinInfo[i].pos.height;
+		}
 
 		if (backend->xwin != 0 && backend->xsubwin == 0) {
 			if (openGlInterface != NULL) {
