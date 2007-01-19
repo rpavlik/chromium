@@ -63,7 +63,7 @@ static void set_double_buffer(VncSPU *vnc_spu, const char *response)
 
 static void set_force_tight_jpeg(VncSPU *vnc_spu, const char *response)
 {
-  opt_force_tight_jpeg = 1;
+  opt_force_tight_jpeg = crStrToInt(response);
 }
 
 #ifdef NETLOGGER
