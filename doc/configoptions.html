@@ -70,6 +70,7 @@ SPU index
 </li><li><a href="#saveframe">Saveframe</a>
 </li><li><a href="#simplequery">Simplequery</a>
 </li><li><a href="#tilesort">Tilesort</a>
+</li><li><a href="#tracker">Tracker</a>
 </li><li><a href="#vnc">VNC</a>
 </li><li><a href="#wet">Wet</a>
 </li><li><a href="#zpix">ZPix</a>
@@ -1522,7 +1523,163 @@ one or more downstream servers.
   </li>
 </ul>
 
+<h2 class="PageSubHeading"><a name="tracker">Tracker SPU</a></h2>
+<p>
+The tracker SPU allows for integration of a (head) tracking device with Chromium. This is useful for example in a cave
+environment where the projection reference points needs to be updated according to the viewer's head position and orientation.
+For detailed information see <a href="http://athena.bfh.ch/mediawiki/index.php/Head_Tracking"  target="_parent">Head Tracking</a>
+and <a href="http://athena.bfh.ch/mediawiki/index.php/Integrating_Head_Tracking_with_Chromium" target="_parent">
+Integrating Head Tracking with Chromium</a>.
+</p>
+<p>
+The tracker SPU listens on an UDP socket for positional data from a tracking device. It uses the screen 
+configurations supplied by the mothership to calculate updated view and projection matrices for each screen. 
+A screen configuration consists of the location, orientation and extension of a screen. Finally the new 
+matrices are sent to the rendering servers using Chromium's <code>ChromiumParametervCR()</code> API with
+<code>GL_SERVER_VIEW_MATRIX_CR</code> and <code>GL_SERVER_PROJECTION_MATRIX_CR</code>.
+</p>
 
+<h4>Limitation</h4>
+<p>
+There is no documented way to force OpenGL to redraw. That is, to force an OpenGL application to call its display 
+function. In order to get a timely update of the projection reference point it is however necessary that the display 
+function is called frequently. An application will not run smoothly with the tracking device otherwise.
+</p>
+
+<h4>Examples</h4>
+See <code>cr/mothership/configs/tracker.conf</code> for the configuration of a three wall cave with passive stereo.
+The <code>cr/progs/headtracking/</code> directory contains a sample client for the 
+<a href="http://www.ascension-tech.com/products/flockofbirds.php" target="_parent">Ascension Flock of Birds</a>
+tracking device. The client is available either in C++ using <a href="http://en.wikipedia.org/wiki/Qt_%28toolkit%29" 
+target="_parent">Qt</a> for its GUI or in <a href="http://en.wikipedia.org/wiki/C_Sharp" target="_parent">C#</a>.
+Both clients need ascension-tech's <a href="ftp://ftp.ascension-tech.com/PRODUCTS/FLOCK_OF_BIRD/Flock_of_Birds.zip">
+bird driver</a> (bird.h and bird.dll).
+</p>
+
+<table border="1" width="100%" height="149">
+<tbody>
+  <tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="100%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">listen_ip</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="100%" class="ConfigDesc" height="38">
+       Internet address of the network interface on which the SPU listens for tracker data.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">listen_port</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+    <td width="100%" class="ConfigDesc" height="38">
+       UDP port where the SPU listens for tracker data. Default is 1234.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">screen_count</td>
+    <td width="12%" class="ConfigType" height="38">Integer</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Number of screens for which configuration options are specified. Screen configuration options are specified in 
+      <code>screen_&lt;N&gt;_&lt;screenoption&gt;</code> where <code>&lt;N&gt;</code> is an integer smaller than screen_count 
+      and <code>&lt;screenoption&gt;</code> is the name of an option. For valid options see below. Default is 1.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">cave_matrix</td>
+    <td width="12%" class="ConfigType" height="38">16 Floats</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      The cave matrix in column major order. 
+      See <a href="http://athena.bfh.ch/mediawiki/index.php/Head_Tracking#Tracker2OpenGLMapping" 
+      title="Head Tracking" target="_parent">
+      head tracking</a> for details. Default is the identity matrix.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">left_eye_matrix</td>
+    <td width="12%" class="ConfigType" height="38">16 Floats</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      The sensor matrix for the left eye in column major order. 
+      See <a href="http://athena.bfh.ch/mediawiki/index.php/Head_Tracking#AccountingForTheSensorOffset" 
+      title="Head Tracking" target="_parent">
+      head tracking</a> for details. Default is the identity matrix.
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">right_eye_matrix</td>
+    <td width="12%" class="ConfigType" height="38">16 Floats</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      The sensor matrix for the right eye in column major order. 
+      See <a href="http://athena.bfh.ch/mediawiki/index.php/Head_Tracking#AccountingForTheSensorOffset" 
+      title="Head Tracking" target="_parent">
+      head tracking</a> for details. Default is the identity matrix.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">view_matrix</td>
+    <td width="12%" class="ConfigType" height="38">16 Floats</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      A user specified view matrix. This can be used to replace an application specific view matrix. 
+      Default is the identity matrix.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">initial_pos</td>
+    <td width="12%" class="ConfigType" height="38">3 Floats</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Initial position in OpenGL units. Useful if no tracking device is connected. 
+      Default is 0, 0, 0.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">screen_&lt;N&gt;_server_index</td>
+    <td width="12%" class="ConfigType" height="38">Integer </td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Index of the server for screen <code>&lt;N&gt;</code>. 
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">screen_&lt;N&gt;_orientation</td>
+    <td width="12%" class="ConfigType" height="38">4 Floats</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      The orientation of screen <code>&lt;N&gt;</code> given as arguments to 
+      <a href="http://www.rush3d.com/reference/opengl-bluebook-1.0/ch05.html#id24094" 
+        title="glRotate" target="_parent">
+        glRotate</a>.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">screen_&lt;N&gt;_origin</td>
+    <td width="12%" class="ConfigType" height="38">4 Floats</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Position of the center of screen <code>&lt;N&gt;</code> in OpenGL units. 
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">screen_&lt;N&gt;_extent</td>
+    <td width="12%" class="ConfigType" height="38">4 Floats</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Width and height of screen <code>&lt;N&gt;</code> in OpenGL units and near and far clipping plane positions. 
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">screen_&lt;N&gt;_offset</td>
+    <td width="12%" class="ConfigType" height="38">3 Floats</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      This offset is added to the tracker position for screen <code>&lt;N&gt;</code>. Useful for implementing static mode stereo. 
+      Default is 0, 0, 0.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">screen_&lt;N&gt;_eye</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="100%" class="ConfigDesc" height="38">
+      Which eye this screen belongs to. Must be either "left" or "right". 
+      Default is "left".
+    </td>
+  </tr>
+</tbody>
+</table>
 
 
 <a name="vnc">
