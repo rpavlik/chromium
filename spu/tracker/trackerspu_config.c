@@ -73,32 +73,22 @@ static void setScreenCount(void *spu, const char *response) {
   crDebug("Tracker SPU: screen_count = %u", s->screenCount);
 }
 
-static void setTracker2Cave(void *spu, const char *response) {
+static void setTrackerMatrix(void *spu, const char *response) {
   TrackerSPU *s = (TrackerSPU*)spu;
-  crMatrixInitFromString(&(s->tracker2OpenGL), response);
-  debugPrintMatrix("Tracker SPU: tracker2OpenGL = ", &tracker_spu.tracker2OpenGL); 
+  crMatrixInitFromString(&(s->caveMatrix), response);
+  debugPrintMatrix("Tracker SPU: cave_matrix = ", &tracker_spu.caveMatrix);
 }
 
-static void setRightEyeOffset(void *spu, const char *response) {
+static void setLeftEyeMatrix(void *spu, const char *response) {
   TrackerSPU *s = (TrackerSPU*)spu;
-	const char *fmt = "%f, %f, %f";
-	const char *fmtb = "[ %f, %f, %f]";
-    
-	if (sscanf(response, (response[0] == '[' ? fmtb : fmt),
-    &(s->rightEyeOffset.x),
-    &(s->rightEyeOffset.y),
-    &(s->rightEyeOffset.z)) != 3)
-  {
-    crWarning("Tracker SPU: Invalid value '%s' for right_eye_offset. Defaulting to '[0, 0, 0]'", response);
-    s->rightEyeOffset.x = 0;
-    s->rightEyeOffset.y = 0;
-    s->rightEyeOffset.z = 0;
-  }
+  crMatrixInitFromString(&(s->leftEyeMatrix), response);
+  debugPrintMatrix("Tracker SPU: left_eye_matrix = ", &tracker_spu.leftEyeMatrix); 
+}
 
-  s->rightEyeOffset.w = 1;
-
-  crDebug("Tracker SPU: right_eye_offset = [%f, %f, %f]", 
-    s->rightEyeOffset.x, s->rightEyeOffset.y, s->rightEyeOffset.z);
+static void setRightEyeMatrix(void *spu, const char *response) {
+  TrackerSPU *s = (TrackerSPU*)spu;
+  crMatrixInitFromString(&(s->rightEyeMatrix), response);
+  debugPrintMatrix("Tracker SPU: right_eye_matrix = ", &tracker_spu.rightEyeMatrix); 
 }
 
 // Note: This option depends on right_eye_offset
@@ -108,29 +98,36 @@ static void setInitialPos(void *spu, const char *response) {
 	const char *fmtb = "[ %f, %f, %f]";
 
   s->currentPos = &(s->pos[0]);
-  s->currentIndex = 1;
-  s->hasNewPos = 1;
+  s->nextPos = &(s->pos[1]);
+  s->freePos = &(s->pos[2]);
   
 	if (sscanf(response, (response[0] == '[' ? fmtb : fmt),
-        &(s->currentPos->left.x),
-        &(s->currentPos->left.y),
-        &(s->currentPos->left.z)) != 3) 
+        &(s->freePos->left.x),
+        &(s->freePos->left.y),
+        &(s->freePos->left.z)) != 3) 
   {
     crWarning("Tracker SPU: Invalid value '%s' for initial_pos. Defaulting to '[0, 0, 0]'", response);
-    s->currentPos->left.x = 0;
-    s->currentPos->left.y = 0;
-    s->currentPos->left.z = 0;
+    s->freePos->left.x = 0;
+    s->freePos->left.y = 0;
+    s->freePos->left.z = 0;
   }
 
-  s->currentPos->right.x = s->currentPos->left.x;
-  s->currentPos->right.y = s->currentPos->left.y;
-  s->currentPos->right.z = s->currentPos->left.z;
+  s->freePos->right.x = s->freePos->left.x;
+  s->freePos->right.y = s->freePos->left.y;
+  s->freePos->right.z = s->freePos->left.z;
 
-  s->currentPos->left.w = 1;
-  s->currentPos->right.w = 1;
+  s->freePos->left.w = 1;
+  s->freePos->right.w = 1;
+  s->freePos->dirty = 1;
 
   crDebug("Tracker SPU: initial_pos = [%f, %f, %f]", 
-    s->currentPos->left.x, s->currentPos->left.y, s->currentPos->left.z);
+    s->freePos->left.x, s->freePos->left.y, s->freePos->left.z);
+}
+
+static void setViewMatrix(void *spu, const char *response) {
+  TrackerSPU *s = (TrackerSPU*)spu;
+  crMatrixInitFromString(&(s->viewMatrix), response);
+  debugPrintMatrix("Tracker SPU: vieMatrix = ", &tracker_spu.viewMatrix); 
 }
 
 static void setScreenServerIndex(crScreen *scr, const char *response, int index) {
@@ -165,10 +162,10 @@ static void setScreenOrigin(crScreen *scr, const char *response, int index) {
     crError("Tracker SPU: Invalid value '%s' for screen_%d_origin.", response, index);
 
   // Calculate screen transformation
-  scr->openGL2Screen = scr->orientation;
-  crMatrixTranslate(&scr->openGL2Screen, -x, -y, -z);
+  scr->screenMatrix = scr->orientation;
+  crMatrixTranslate(&scr->screenMatrix, -x, -y, -z);
   crDebug("Tracker SPU: screen_%d_origin = ", index);
-  debugPrintMatrix("", &scr->openGL2Screen); 
+  debugPrintMatrix("", &scr->screenMatrix); 
 }
 
 static void setScreenExtent(crScreen *scr, const char *response, int index) {
@@ -221,9 +218,11 @@ SPUOptions trackerSPUOptions[] = {
    { "listen_ip", CR_STRING, 1, NULL, NULL, NULL, "Listen IP", (SPUOptionCB)setListenIP },
    { "listen_port", CR_INT, 1, "1234", NULL, NULL, "Listen port", (SPUOptionCB)setListenPort },
    { "screen_count", CR_INT, 1, "1", NULL, NULL, "Screen count", (SPUOptionCB)setScreenCount },
-   { "tracker_to_cave", CR_STRING, 1, NULL, NULL, NULL, "Tracker to CAVE map", (SPUOptionCB)setTracker2Cave },
-   { "right_eye_offset", CR_STRING, 1, "[0, 0, 0]", NULL, NULL, "Right eye offset", (SPUOptionCB)setRightEyeOffset },
-   { "initial_pos", CR_STRING, 1, "[0, 0, 0, 0, 0, 0]", NULL, NULL, "Initial position", (SPUOptionCB)setInitialPos },
+   { "cave_matrix", CR_STRING, 1, "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL, "Transformation from tracker to world coordinates", (SPUOptionCB)setTrackerMatrix },
+   { "left_eye_matrix", CR_STRING, 1, "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL, "Transformation from sensor to left eye", (SPUOptionCB)setLeftEyeMatrix },
+   { "right_eye_matrix",CR_STRING, 1, "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL, "Transformation from sensor to right eye", (SPUOptionCB)setRightEyeMatrix },
+   { "initial_pos", CR_STRING, 1, "[0, 0, 0]", NULL, NULL, "Initial position", (SPUOptionCB)setInitialPos },
+   { "view_matrix", CR_STRING, 1, "[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]", NULL, NULL, "User view matrix", (SPUOptionCB)setViewMatrix },
    { NULL, CR_BOOL, 0, NULL, NULL, NULL, NULL, NULL },
 };
 

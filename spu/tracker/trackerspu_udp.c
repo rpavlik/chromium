@@ -52,20 +52,6 @@ static int crGetLastError() {
 #endif
 }
 
-static void* crInterlockedExchangePointer(void** target, void* value) {
-#ifdef WINDOWS
-  return InterlockedExchangePointer(target, value);
-#else
-  asm ( 
-    "lock; xchgl %0, (%1) \n\t"
-    : "=a" (value), "=d" (*target)
-    : "0" (value), "1" (*target) 
-  );
-
-  return value;
-#endif
-}
-
 static void crClose(crSocket sock) {
 #ifdef WINDOWS
   closesocket(sock);
@@ -102,7 +88,8 @@ CR_THREAD_PROC_DECL SocketThreadProc(void* arg) {
   int LastError;
   int RecvLen;
   char buf[BUF_SIZE]; 
-  TrackerPose pose;
+  CRmatrix pose;
+  static GLvectorf zero = {0.0f, 0.0f, 0.0f, 1.0f};
 
   for (;;) {
     if( (RecvLen = recvfrom(tracker_spu.listen_sock, buf, BUF_SIZE - 1, 0, NULL, NULL)) == SOCKET_ERROR ) {  
@@ -128,34 +115,32 @@ CR_THREAD_PROC_DECL SocketThreadProc(void* arg) {
     else {
       buf[RecvLen] = 0; 
 
-      if (!unpackTrackerPose(&pose, buf))
+      if (!unpackTrackerPose(&pose, buf)) 
         crWarning("Tracker SPU: Invalid datagram for tracker SPU");
 
       else {
-        GLvectorf *l = &tracker_spu.pos[tracker_spu.currentIndex].left;
-        GLvectorf *r = &tracker_spu.pos[tracker_spu.currentIndex].right;
+        GLvectorf *l = &(tracker_spu.nextPos->left);
+        GLvectorf *r = &(tracker_spu.nextPos->right);
 
-        // Converting pose.left into world coordinates yields the position of the left eye.
-        *l = pose.left;
-        crMatrixTransformPointf(&tracker_spu.tracker2OpenGL, l);
+        // Transform tracker position to left eye and convert to world coordinates
+        *l = zero;
+        crMatrixTransformPointf(&tracker_spu.leftEyeMatrix, l);
+        crMatrixTransformPointf(&pose, l);
+        crMatrixTransformPointf(&tracker_spu.caveMatrix, l);
         crDebug("Tracker SPU: Tracker left  (%f, %f, %f)", l->x, l->y, l->z);
         
-        // For the right eye rotate rightEyeOffset by the rotation matrix received.
-        // This yields the difference to the left eye. Add the left eye position 
-        // and convert to world coordinates. 
-        *r = tracker_spu.rightEyeOffset;
-        crMatrixTransformPointf(&pose.rot, r);
-        r->x += pose.left.x;   r->y += pose.left.y;  r->z += pose.left.z;
-        crMatrixTransformPointf(&tracker_spu.tracker2OpenGL, r);
+        // Transform tracker position to right eye and convert to world coordinates
+        *r = zero;
+        crMatrixTransformPointf(&tracker_spu.rightEyeMatrix, r);
+        crMatrixTransformPointf(&pose, r);
+        crMatrixTransformPointf(&tracker_spu.caveMatrix, r);
         crDebug("Tracker SPU: Tracker right (%f, %f, %f)", r->x, r->y, r->z);
 
-        // Switch pointer to the current pose and flag its availibility.
-        crInterlockedExchangePointer(
-          (void*)&tracker_spu.currentPos, 
-          &tracker_spu.pos[tracker_spu.currentIndex]);
+        // Mark this position as new by setting the dirty flag...
+        tracker_spu.nextPos->dirty = 1;
 
-        tracker_spu.currentIndex = (tracker_spu.currentIndex + 1) % 2;
-        tracker_spu.hasNewPos = 1;
+        // ...and release it such that the main thread can consume it.
+        tracker_spu.nextPos = crInterlockedExchangePointer((void*)&tracker_spu.freePos, tracker_spu.nextPos);
       }
     }
   }
@@ -224,19 +209,19 @@ static char calcChecksum(const char *buf) {
   return cs;
 }
 
-int packTrackerPose(const TrackerPose* pose, void *buf, int len) {
+int packTrackerPose(const CRmatrix* pose, void *buf, int len) {
   int l;
   char *b = (char *)buf;
 
   l = snprintf(b, len, 
-    "%f %f %f"
-    "%f %f %f"
-    "%f %f %f"
-    "%f %f %f cs", 
-    pose->left.x, pose->left.y, pose->left.z,
-    pose->rot.m00, pose->rot.m01, pose->rot.m02,
-    pose->rot.m10, pose->rot.m11, pose->rot.m12,
-    pose->rot.m20, pose->rot.m21, pose->rot.m22);
+    "%f %f %f %f"
+    "%f %f %f %f"
+    "%f %f %f %f"
+    "%f %f %f %f cs", 
+    pose->m00, pose->m10, pose->m20, pose->m30,
+    pose->m01, pose->m11, pose->m21, pose->m31,
+    pose->m02, pose->m12, pose->m22, pose->m32,
+    pose->m03, pose->m13, pose->m23, pose->m33);
 
   // Patch in checksum
   if (l <= len) {
@@ -249,23 +234,18 @@ int packTrackerPose(const TrackerPose* pose, void *buf, int len) {
     return 0;
 }
 
-int unpackTrackerPose(TrackerPose *pose, const void* buf) {
-  if (calcChecksum(buf) !=  0)
+int unpackTrackerPose(CRmatrix *pose, const void* buf) {
+  if (calcChecksum(buf) != 0)
     return 0;
 
-  pose->left.w = 1;
-  pose->rot.m03 = pose->rot.m13 = pose->rot.m23 = 0;
-  pose->rot.m30 = pose->rot.m31 = pose->rot.m32 = 0;
-  pose->rot.m33 = 1;
-
   return sscanf((char *)buf, 
-    "%f %f %f"
-    "%f %f %f"
-    "%f %f %f"
-    "%f %f %f",
-    &pose->left.x, &pose->left.y, &pose->left.z,
-    &pose->rot.m00, &pose->rot.m10, &pose->rot.m20,
-    &pose->rot.m01, &pose->rot.m11, &pose->rot.m21,
-    &pose->rot.m02, &pose->rot.m12, &pose->rot.m22) == 12;
+    "%f %f %f %f"
+    "%f %f %f %f"
+    "%f %f %f %f"
+    "%f %f %f %f",
+    &pose->m00, &pose->m10, &pose->m20, &pose->m30,
+    &pose->m01, &pose->m11, &pose->m21, &pose->m31,
+    &pose->m02, &pose->m12, &pose->m22, &pose->m32,
+    &pose->m03, &pose->m13, &pose->m23, &pose->m33) == 16;
 }
 

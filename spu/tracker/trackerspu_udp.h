@@ -24,11 +24,6 @@ extern "C" {
 #include "cr_matrix.h"
 
   
-typedef struct {
-  GLvectorf left;
-  CRmatrix rot;
-} TrackerPose;
-
 /**
  * Start UDP server which listens for changes of the pose sent from the tracker
  */
@@ -43,13 +38,13 @@ void trackerspuStopUDPServer(void);
  * Pack the tracker pose into the buffer buf for sending over the network. Returns the number of 
  * bytes copied into buf or 0 for failure (i.e. when the supplied buffer is too small).
  */
-int packTrackerPose(const TrackerPose* pose, void *buf, int len);
+int packTrackerPose(const CRmatrix* pose, void *buf, int len);
 
 /**
  * Unpack a tracker pose from a buffer buf received over the network. Returns TRUE on 
  * success, FALSE otherwise (i.e. when the buffer contains garbage).
  */
-int unpackTrackerPose(TrackerPose *pose, const void* buf);
+int unpackTrackerPose(CRmatrix *pose, const void* buf);
 
 #ifdef __cplusplus
 }

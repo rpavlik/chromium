@@ -26,6 +26,22 @@
 #include "chromium.h"
 #include "cr_matrix.h"
 
+void* crInterlockedExchangePointer(void** target, void* value) {
+#ifdef WINDOWS
+  return InterlockedExchangePointer(target, value);
+#else
+  void* ret;
+  
+  asm ( 
+    "lock; xchgl %0, (%1)"
+    : "=r" (ret)
+    : "r" (target), "0" (value) : "memory" 
+  );
+
+  return ret;
+#endif
+}
+
 static void TrackerUpdatePosition() {
   GLfloat view[18];
   CRmatrix *pv = (CRmatrix *) &view[2];
@@ -35,11 +51,14 @@ static void TrackerUpdatePosition() {
 
   int c;
 
-  // If there is tracker data available then
-  if (tracker_spu.hasNewPos) {
-    tracker_spu.hasNewPos = 0;
+  // Make freePos the currentPos 
+  tracker_spu.currentPos = crInterlockedExchangePointer((void*)&tracker_spu.freePos, tracker_spu.currentPos);
 
-    // for each screen
+  // If there is tracker data available then...
+  if (tracker_spu.currentPos->dirty) {
+    tracker_spu.currentPos->dirty = 0;
+
+    // ...for each screen
     for(c = 0; c < tracker_spu.screenCount; c++) {
       crScreen *scr = &tracker_spu.screens[c];
       GLvectorf v = scr->eye == LEFT? tracker_spu.currentPos->left : tracker_spu.currentPos->right;
@@ -52,7 +71,10 @@ static void TrackerUpdatePosition() {
       // calculate new view matrix 
       { 
         *pv = scr->orientation;
+        
+        // translate to position of tracker and apply users view matrix
         crMatrixTranslate(pv, -v.x, -v.y, -v.z);
+        crMatrixMultiply(pv, pv, &tracker_spu.viewMatrix);
 
         // and apply it on the server.
         view[0] = (GLfloat)scr->serverIndex;
@@ -68,22 +90,25 @@ static void TrackerUpdatePosition() {
         float w = scr->width;
         float h = scr->height;
         
-        crMatrixTransformPointf(&scr->openGL2Screen, &v);
+        crMatrixTransformPointf(&scr->screenMatrix, &v);
 
+#if 0
         // The following code is equivalent to directly calculating the projection matrix. 
-        //
-        // left   = -scr->znear/(2*v.z)*(scr->width  + 2*v.x);
-        // right  =  scr->znear/(2*v.z)*(scr->width  - 2*v.x);
-        // bottom = -scr->znear/(2*v.z)*(scr->height + 2*v.y);
-        // top    =  scr->znear/(2*v.z)*(scr->height - 2*v.y);
-        //
-        // crMatrixInit(pp); 
-        // crMatrixFrustum(pp, left, right, bottom, top, scr->znear , scr->zfar);
-
+        {        
+          float left   = -n/(2*v.z)*(w  + 2.0f*v.x);
+          float right  =  n/(2*v.z)*(w  - 2.0f*v.x);
+          float bottom = -n/(2*v.z)*(h + 2.0f*v.y);
+          float top    =  n/(2*v.z)*(h - 2.0f*v.y);
+        
+          crMatrixInit(pp); 
+          crMatrixFrustum(pp, left, right, bottom, top, n , f);
+        }
+#else        
         pp->m00 = 2.0f*v.z/w;   pp->m10 = 0.0f;         pp->m20 = -2.0f*v.x/w;         pp->m30 = 0.0f;
         pp->m01 = 0.0f;         pp->m11 = 2.0f*v.z/h;   pp->m21 = -2.0f*v.y/h;         pp->m31 = 0.0f;
         pp->m02 = 0.0f;         pp->m12 = 0.0f;         pp->m22 = (f + n)/(n - f);     pp->m32 = 2.0f*f*n/(n - f);
         pp->m03 = 0.0f;         pp->m13 = 0.0f;         pp->m23 = -1.0f;               pp->m33 = 0.0f;
+#endif
 
         // and apply it on the server.
         proj[0] = (GLfloat)scr->serverIndex;
@@ -106,5 +131,5 @@ static void TRACKERSPU_APIENTRY TrackerSwapBuffers( GLint window, GLint flags ) 
  */
 SPUNamedFunctionTable _cr_tracker_table[] = {
   { "SwapBuffers", (SPUGenericFunction) TrackerSwapBuffers },
-	{ NULL, NULL }
+    { NULL, NULL }
 };

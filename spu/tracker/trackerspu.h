@@ -44,12 +44,14 @@
   typedef pthread_t crThread;
 #endif
 
+// Atomically assigns value to *target. Returns the former value of *target.
+void* crInterlockedExchangePointer(void** target, void* value);
 
 typedef enum {LEFT = 0, RIGHT = 1} Eyes;
 
 typedef struct {
   CRmatrix orientation;     // Orientation of this screen
-  CRmatrix openGL2Screen;   // Transformation from OpenGL coordinates to local screen coordinates
+  CRmatrix screenMatrix;    // Transformation from world coordinates to local screen coordinates
   GLfloat width, height;    // The width and height of the screen
   GLfloat znear, zfar;      // Position of near and far clipping plane for this screen
   GLvectorf Offset;         // Offset applied to tracker data for this screen
@@ -58,8 +60,9 @@ typedef struct {
 } crScreen;
 
 typedef struct {            
-  GLvectorf left;            // Position of left eye as received from the tracker
-  GLvectorf right;           // Position of right eye as received from the tracker
+  GLvectorf left;           // Position of left eye as received from the tracker
+  GLvectorf right;          // Position of right eye as received from the tracker
+  int dirty;                // Indicates fresh data. Set by socket thread, cleared by main thread 
 } TrackerPos;
 
 /**
@@ -73,14 +76,18 @@ typedef struct {
 
   char *listenIP;           // Internet address on which to listen for incoming connections
   int listenPort;           // Port on which to listen for incoming connections
+  CRmatrix viewMatrix;      // Users view matrix
   crSocket listen_sock;     // Socket handle of listening socket for reception of tracker data
   crThread hSocketThread;   // Handle of socket thread 
-  TrackerPos pos[2];        // Receive buffers for communication with the tracker
-  int currentIndex;         // Index to the current receive buffer
-  TrackerPos *currentPos;   // Current tracker position
-  int hasNewPos;            // Indicates that new tracker data is available (i.e. currentPos has changed)
-  CRmatrix tracker2OpenGL;  // Transformation from Tracker coordinates to OpenGL coordinates
-  GLvectorf rightEyeOffset; // Multiplying rightEyeOffset with the tracker's rotation matrix yields left - right 
+
+  TrackerPos pos[3];        // Receive buffers for communication with the tracker
+  TrackerPos *nextPos;      // The socket thread writes to nextPos and then atomically exchanges nextPos with freePos
+  TrackerPos *currentPos;   // The main thread reads from then atomically exchanges currentPos with freePos
+  TrackerPos *freePos;      
+
+  CRmatrix caveMatrix;      // Transformation from tracker to world coordinates
+  CRmatrix leftEyeMatrix;   // Transformation from sensor to left eye coordinates
+  CRmatrix rightEyeMatrix;  // Transformation from sensor to right eye coordinates
   int screenCount;          // Number of screens for which we have to maintain view and projection information
   crScreen* screens;        // The screens
 } TrackerSPU;
