@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.35 2007-01-19 22:29:38 brianp Exp $
+ * $Id: client_io.c,v 1.36 2007-01-29 22:16:07 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -583,12 +583,6 @@ static void wf_client_update_finished(void)
   }
 }
 
-
-
-/*
-extern CARD32 *
-GetFrameBuffer(CARD16 *w, CARD16 *h);
-*/
 
 #if 0
 static void save_ppm(const char *fname)
