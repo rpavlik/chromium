@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: host_io.c,v 1.4 2006-12-16 17:17:20 brianp Exp $
+ * $Id: host_io.c,v 1.5 2007-01-29 22:18:06 brianp Exp $
  * Asynchronous interaction with VNC host.
  */
 
@@ -366,8 +366,8 @@ static void rf_host_fbupdate_raw(void)
 
   if (++rect_cur_row < cur_rect.h) {
     /* Read next row */
-     CARD32 *dst = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height,
-                              cur_rect.x, cur_rect.y + rect_cur_row);
+    CARD32 *dst = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height,
+                             cur_rect.x, cur_rect.y + rect_cur_row);
     aio_setread(rf_host_fbupdate_raw, dst,
                 cur_rect.w * sizeof(CARD32));
   } else {
