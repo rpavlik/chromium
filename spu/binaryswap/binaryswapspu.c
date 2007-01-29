@@ -404,32 +404,32 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
                                                     GL_RGBA, GL_UNSIGNED_BYTE,
                                                     incoming_color);
 				}
-                else
-                {
-                    if(binaryswap_spu.highlow[i])
-                    {
-                        /* over operator */
-                        binaryswap_spu.super.BlendFuncSeparateEXT(GL_SRC_ALPHA,
-                                                                  GL_ONE_MINUS_SRC_ALPHA,
-                                                                  GL_ONE, GL_ONE);
-                        binaryswap_spu.super.WindowPos2iARB(draw_x, draw_y);
-                        binaryswap_spu.super.DrawPixels(draw_width, draw_height,
-                                                        GL_RGBA, GL_UNSIGNED_BYTE,
-                                                        incoming_color);
-                    }
-                    else
-                    {
-                        /* under operator */
-                        binaryswap_spu.super.BlendFuncSeparateEXT(GL_ONE_MINUS_DST_ALPHA,
-                                                                  GL_DST_ALPHA,
-                                                                  GL_ONE,
-                                                                  GL_ONE);
-                        binaryswap_spu.super.WindowPos2iARB(draw_x, draw_y);
-                        binaryswap_spu.super.DrawPixels(draw_width, draw_height,
-                                                        GL_RGBA, GL_UNSIGNED_BYTE,
-                                                        incoming_color);
-                    }
-                }
+				else
+				{
+					if(binaryswap_spu.highlow[i])
+					{
+						/* over operator */
+						binaryswap_spu.super.BlendFuncSeparateEXT(GL_SRC_ALPHA,
+																											GL_ONE_MINUS_SRC_ALPHA,
+																											GL_ONE, GL_ONE);
+						binaryswap_spu.super.WindowPos2iARB(draw_x, draw_y);
+						binaryswap_spu.super.DrawPixels(draw_width, draw_height,
+																						GL_RGBA, GL_UNSIGNED_BYTE,
+																						incoming_color);
+					}
+					else
+					{
+						/* under operator */
+						binaryswap_spu.super.BlendFuncSeparateEXT(GL_ONE_MINUS_DST_ALPHA,
+																											GL_DST_ALPHA,
+																											GL_ONE,
+																											GL_ONE);
+						binaryswap_spu.super.WindowPos2iARB(draw_x, draw_y);
+						binaryswap_spu.super.DrawPixels(draw_width, draw_height,
+																						GL_RGBA, GL_UNSIGNED_BYTE,
+																						incoming_color);
+					}
+				}
 				if (binaryswap_spu.depth > other_depth)
 				{
 					binaryswap_spu.depth = other_depth;
