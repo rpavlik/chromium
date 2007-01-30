@@ -11,7 +11,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode_tight.c,v 1.9 2007-01-20 14:33:59 brianp Exp $
+ * $Id: encode_tight.c,v 1.10 2007-01-30 15:54:46 brianp Exp $
  * Tight encoder.
  */
 
@@ -227,8 +227,6 @@ rfb_encode_tight(CL_SLOT *cl, FB_RECT *r)
   } else {
     usePixelFormat24 = 0;
   }
-
-  printf("encode force jpeg: %d\n", opt_force_tight_jpeg);
 
   if (opt_force_tight_jpeg ||
       !cl->enable_lastrect ||
@@ -606,7 +604,6 @@ SendRectSimple(CL_SLOT *cl, FB_RECT *r)
      maxRectWidth = g_fb_width;
      maxRectSize = g_fb_width * g_fb_height;
 #endif
-     printf("encode force jpeg2: %d\n", opt_force_tight_jpeg);
   }
   else {
      /* use table values */
@@ -642,7 +639,6 @@ SendRectSimple(CL_SLOT *cl, FB_RECT *r)
   if (LARGE_JPEG_BUFFERS && opt_force_tight_jpeg) {
     /* send one big jpeg image - don't subdivide */
     int success;
-    printf("encode force jpeg3: %d\n", opt_force_tight_jpeg);
     SendTightHeader(r);
     success = SendJpegRect(r, tightConf[qualityLevel].jpegQuality);
     assert(success);
