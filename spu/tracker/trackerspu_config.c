@@ -21,17 +21,12 @@
  */
 
 #include <stdio.h>
-#include <string.h>
         
 #include "trackerspu.h"
 
 #include "cr_mothership.h"
 #include "cr_string.h"
 #include "cr_mem.h"
-
-#ifndef WINDOWS
-#  define stricmp strcasecmp
-#endif
 
 /**
  * Set default options for SPU
@@ -180,11 +175,11 @@ static void setScreenExtent(crScreen *scr, const char *response, int index) {
 }
 
 static void setScreenEye(crScreen *scr, const char *response, int index) {
-  if (stricmp(response, "left") == 0) {
+  if (crStrcasecmp(response, "left") == 0) {
     scr->eye = LEFT;
     crDebug("Tracker SPU: screen_%d_eye = LEFT", index);
   }
-  else if (stricmp(response, "right") == 0) {
+  else if (crStrcasecmp(response, "right") == 0) {
     scr->eye = RIGHT;
     crDebug("Tracker SPU: screen_%d_eye = RIGHT", index);
   }
