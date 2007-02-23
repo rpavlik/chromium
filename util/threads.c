@@ -18,7 +18,6 @@
 #define INIT_MAGIC 0xff8adc98
 
 
-
 /**
  * Create a new thread.
  * \param thread  returns the new thread's info/handle
@@ -29,22 +28,16 @@
  */
 int
 crCreateThread(CRthread *thread, int flags,
-							 void * (*threadFunc)(void *), void *arg)
+							 crThreadProc threadFunc, void *arg)
 {
 #ifdef WINDOWS
-	crError("crCreateThread() not implemented for Windows yet");
-#if 0
-	/* something like this: */
-	SIZE_T stackSize = 1024*1024; /*fix? */
-	int i = (int) CreateThread(NULL, stackSize, threadFunc, arg, 0, thread);
-	return i;
-#endif
-	return -1;
+  return CreateThread(NULL, 0, threadFunc, arg, 0, thread) != NULL;
 #else
 	int i = pthread_create(thread, NULL, threadFunc, arg);
 	return i;
 #endif
 }
+
 
 
 /**
@@ -60,8 +53,40 @@ crThreadID(void)
 #endif
 }
 
+/**
+ * Joins the given thread
+ */
+void 
+crThreadJoin(CRthread thread) 
+{
+#ifdef WINDOWS
+  HANDLE h = OpenThread(SYNCHRONIZE, 1, thread);
+  WaitForSingleObject(h, INFINITE);
+  CloseHandle(h);
+#else
+  pthread_join(thread, NULL);
+#endif
+}
 
+/**
+ * Atomical exchange of pointer values
+ */
+void* 
+crInterlockedExchangePointer(void** target, void* value) {
+#ifdef WINDOWS
+  return InterlockedExchangePointer(target, value);
+#else
+  void* ret;
+  
+  asm ( 
+    "lock; xchgl %0, (%1)"
+    : "=r" (ret)
+    : "r" (target), "0" (value) : "memory" 
+  );
 
+  return ret;
+#endif
+}
 
 
 /**

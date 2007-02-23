@@ -25,27 +25,23 @@
 
 #ifndef WINDOWS
 #  include <sys/socket.h>
-#  include <pthread.h>
 #endif
 
 #include "cr_spu.h"
 #include "cr_server.h"
 #include "trackerspu_udp.h"
 #include "cr_matrix.h"
+#include "cr_threads.h"
 
 #ifdef WINDOWS
 #  define TRACKERSPU_APIENTRY __stdcall
 #  define snprintf _snprintf
   typedef SOCKET crSocket;
-  typedef HANDLE crThread;
 #else
 #  define TRACKERSPU_APIENTRY 
   typedef int crSocket;
-  typedef pthread_t crThread;
 #endif
 
-// Atomically assigns value to *target. Returns the former value of *target.
-void* crInterlockedExchangePointer(void** target, void* value);
 
 typedef enum {LEFT = 0, RIGHT = 1} Eyes;
 
@@ -78,7 +74,7 @@ typedef struct {
   int listenPort;           // Port on which to listen for incoming connections
   CRmatrix viewMatrix;      // Users view matrix
   crSocket listen_sock;     // Socket handle of listening socket for reception of tracker data
-  crThread hSocketThread;   // Handle of socket thread 
+  CRthread socketThread;    // Socket thread 
 
   TrackerPos pos[3];        // Receive buffers for communication with the tracker
   TrackerPos *nextPos;      // The socket thread writes to nextPos and then atomically exchanges nextPos with freePos

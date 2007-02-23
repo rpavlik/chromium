@@ -22,7 +22,6 @@
 #  include <sys/socket.h>
 #  include <arpa/inet.h>
 #  include <unistd.h>
-#  include <pthread.h>
 #endif
 
 #include <stdio.h>
@@ -32,17 +31,12 @@
 #include "cr_error.h"
 
 #ifdef WINDOWS
-#  define CR_THREAD_PROC_DECL static DWORD WINAPI 
-#  define crThreadProc LPTHREAD_START_ROUTINE
-#  define CR_THREAD_EXIT(arg) return (arg);
 #  define EINTR WSAEINTR
 #else
-#  define CR_THREAD_PROC_DECL static void*
-  typedef void *(*crThreadProc) (void *);
-#  define CR_THREAD_EXIT(arg) pthread_exit(arg);
 #  define INVALID_SOCKET -1
 #  define SOCKET_ERROR -1
 #endif
+
 
 static int crGetLastError() {
 #ifdef WINDOWS
@@ -59,23 +53,6 @@ static void crClose(crSocket sock) {
   close(sock);
 #endif
 }
-
-static int __crCreateThread(crThread* ThreadHandle, crThreadProc ThreadProc, void* arg) {
-#ifdef WINDOWS
-  return (*ThreadHandle = CreateThread(NULL, 0, ThreadProc, arg, 0, NULL)) != NULL;
-#else
-  return pthread_create(ThreadHandle, NULL, ThreadProc, NULL) == 0;
-#endif
-}
-
-static void crThreadJoin(crThread thread) {
-#ifdef WINDOWS
-  WaitForSingleObject(thread, INFINITE);
-#else
-  pthread_join(thread, NULL);
-#endif
-}
-
 
 static void SocketError(char *msg, int LastError) {
   crWarning("Tracker SPU: %s", msg);
@@ -182,7 +159,7 @@ void trackerspuStartUDPServer() {
     return;
   }
 
-  if (!__crCreateThread(&tracker_spu.hSocketThread, SocketThreadProc, NULL)) {
+  if (!crCreateThread(&tracker_spu.socketThread, 0, SocketThreadProc, NULL)) {
     SocketError("Could not create socket thread for tracker SPU", crGetLastError());
     crClose(tracker_spu.listen_sock);
     return;
@@ -191,10 +168,9 @@ void trackerspuStartUDPServer() {
 
 void trackerspuStopUDPServer() {
   crClose(tracker_spu.listen_sock);
-  crThreadJoin(tracker_spu.hSocketThread);
+  crThreadJoin(tracker_spu.socketThread);
 
 #ifdef WINDOWS
-  CloseHandle(tracker_spu.hSocketThread);
   WSACleanup();
 #endif
 }

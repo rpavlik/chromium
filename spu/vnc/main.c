@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: main.c,v 1.9 2006-12-22 00:01:47 brianp Exp $
+ * $Id: main.c,v 1.10 2007-02-23 10:11:48 mduerig Exp $
  * Main module
  */
 
@@ -87,7 +87,7 @@ static int remove_pid_file(void);
  * Implementation
  */
 #ifdef CHROMIUM
-void *vnc_main(void *arg)
+CR_THREAD_PROC_DECL vnc_main(void *arg)
 #else
 int main(int argc, char **argv)
 #endif

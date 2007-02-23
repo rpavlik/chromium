@@ -28,14 +28,25 @@ extern "C" {
  */
 #ifdef WINDOWS
   typedef DWORD CRthread;
+#  define crThreadProc LPTHREAD_START_ROUTINE
+#  define CR_THREAD_PROC_DECL static DWORD WINAPI 
+#  define CR_THREAD_EXIT(arg) return (arg);
 #else
   typedef pthread_t CRthread;
+  typedef void *(*crThreadProc) (void *);
+#  define CR_THREAD_PROC_DECL static void*
+#  define CR_THREAD_EXIT(arg) pthread_exit(arg);
 #endif
 
 extern int crCreateThread(CRthread *thread, int flags,
-                          void * (*threadFunc)(void *), void *arg);
+							 crThreadProc threadFunc, void *arg);
 
 extern CRthread crThreadID(void);
+
+extern void crThreadJoin(CRthread thread);
+
+// Atomically assigns value to *target. Returns the former value of *target.
+extern void* crInterlockedExchangePointer(void** target, void* value);
 
 
 /*

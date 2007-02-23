@@ -26,22 +26,6 @@
 #include "chromium.h"
 #include "cr_matrix.h"
 
-void* crInterlockedExchangePointer(void** target, void* value) {
-#ifdef WINDOWS
-  return InterlockedExchangePointer(target, value);
-#else
-  void* ret;
-  
-  asm ( 
-    "lock; xchgl %0, (%1)"
-    : "=r" (ret)
-    : "r" (target), "0" (value) : "memory" 
-  );
-
-  return ret;
-#endif
-}
-
 static void TrackerUpdatePosition() {
   GLfloat view[18];
   CRmatrix *pv = (CRmatrix *) &view[2];

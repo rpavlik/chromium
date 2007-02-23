@@ -109,6 +109,8 @@ crWaitCondition
 crSignalCondition
 crCreateThread
 crThreadID
+crThreadJoin
+crInterlockedExchangePointer
 crInitBarrier
 crWaitBarrier
 crInitSemaphore
