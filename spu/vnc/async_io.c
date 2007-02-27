@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: async_io.c,v 1.11 2006-10-30 22:43:51 brianp Exp $
+ * $Id: async_io.c,v 1.12 2007-02-27 18:41:50 brianp Exp $
  * Asynchronous file/socket I/O
  */
 
@@ -654,8 +654,16 @@ static void aio_process_output(AIO_SLOT *slot)
 
   if (!slot->close_f) {
     AIO_BLOCK *block = slot->outqueue;
-    if (!block)
-       return;
+    if (!block) {
+      /* nothing to send, why did we get here? */
+      int k = FD_ISSET(slot->fd, &s_fdset_write);
+      if (k) {
+        /* this can happen as a side-effect of a broken-pipe, apparently */
+        FD_CLR(slot->fd, &s_fdset_write);
+      }
+      return;
+    }
+
     errno = 0;
 
 #ifdef NETLOGGER
