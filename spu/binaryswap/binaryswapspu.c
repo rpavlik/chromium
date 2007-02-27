@@ -648,6 +648,7 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 static void
 ProcessNode(WindowInfo * window)
 {
+	GLboolean bbox;
 	int x1, y1, x2, y2;
 
 	/* compute region to process */
@@ -658,6 +659,7 @@ ProcessNode(WindowInfo * window)
 		y1 = 0;
 		x2 = window->width;
 		y2 = window->height;
+		bbox = GL_FALSE;
 	}
 	else
 	{
@@ -670,18 +672,21 @@ ProcessNode(WindowInfo * window)
 		y1 = CLAMP(window->bboxUnion.y1 - border, 0, window->height - 1);
 		x2 = CLAMP(window->bboxUnion.x2 + border, 0, window->width - 1);
 		y2 = CLAMP(window->bboxUnion.y2 + border, 0, window->height - 1);
+		bbox = GL_TRUE;
 	}
 
-	/* One will typically use serverNode.Conf('only_swap_once', 1) to
-	 * prevent extraneous glClear and SwapBuffer calls on the server.
-	 */
-	if (binaryswap_spu.depth_composite)
-		binaryswap_spu.child.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	else
+	if (bbox)
+	{
+		/* Need to clear final destination window's color buffer since we
+		 * probably won't paint the whole thing, just the bbox regions.
+		 */
 		binaryswap_spu.child.Clear(GL_COLOR_BUFFER_BIT);
-
-	/* wait for everyone to finish clearing */
-	binaryswap_spu.child.BarrierExecCR(CLEAR_BARRIER);
+		/* wait for everyone to finish clearing */
+		binaryswap_spu.child.BarrierExecCR(CLEAR_BARRIER);
+	}
+	else {
+		/* glDrawPixels will cover the whole window, no need to clear it */
+	}
 
 	CompositeNode(window, x1, y1, x2, y2);
 }
@@ -965,6 +970,10 @@ binaryswapspuSwapBuffers(GLint win, GLint flags)
 	 */
 	binaryswap_spu.child.BarrierExecCR(SWAP_BARRIER);
 
+	/* One will typically use serverNode.Conf('only_swap_once', 1) to
+	 * prevent extraneous glClear and SwapBuffer calls on the server.
+	 * Otherwise, N compositing nodes will cause N SwapBuffers!
+	 */
 	binaryswap_spu.child.SwapBuffers(window->childWindow, flags);
 
 	binaryswap_spu.child.Finish();
