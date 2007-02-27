@@ -93,6 +93,7 @@ typedef struct {
 	int use_bounding_boxes;
 	int frame_drop;
 	int double_buffer;
+	int drawpixels_only;
 #ifdef NETLOGGER
 	char *netlogger_url;
 	char *hostname;

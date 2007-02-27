@@ -532,16 +532,16 @@ ReadbackRect(int scrx, int scry, int winx, int winy, int width, int height)
 		const int scryFlipped = vnc_spu.screen_height - (scry + height);
 
 		/* pack to dest coordinate */
-		vnc_spu.super.PixelStorei(GL_PACK_ALIGNMENT, 1);
-		vnc_spu.super.PixelStorei(GL_PACK_SKIP_PIXELS, scrx);
-		vnc_spu.super.PixelStorei(GL_PACK_SKIP_ROWS, scryFlipped);
-		vnc_spu.super.PixelStorei(GL_PACK_ROW_LENGTH, vnc_spu.screen_width);
+		vnc_spu.child.PixelStorei(GL_PACK_ALIGNMENT, 1);
+		vnc_spu.child.PixelStorei(GL_PACK_SKIP_PIXELS, scrx);
+		vnc_spu.child.PixelStorei(GL_PACK_SKIP_ROWS, scryFlipped);
+		vnc_spu.child.PixelStorei(GL_PACK_ROW_LENGTH, vnc_spu.screen_width);
 		if (vnc_spu.pixel_size == 24) {
-			vnc_spu.super.ReadPixels(winx, winy, width, height,
+			vnc_spu.child.ReadPixels(winx, winy, width, height,
 															 GL_BGR, GL_UNSIGNED_BYTE, sb->buffer);
 		}
 		else {
-			vnc_spu.super.ReadPixels(winx, winy, width, height,
+			vnc_spu.child.ReadPixels(winx, winy, width, height,
 															 GL_BGRA, GL_UNSIGNED_BYTE, sb->buffer);
 		}
 
@@ -566,12 +566,12 @@ ReadbackRect(int scrx, int scry, int winx, int winy, int width, int height)
 
 		if (vnc_spu.pixel_size == 24) {
 			pixelBytes = 3;
-			vnc_spu.super.ReadPixels(winx, winy, width, height,
+			vnc_spu.child.ReadPixels(winx, winy, width, height,
 															 GL_BGR, GL_UNSIGNED_BYTE, sb->buffer);
 		}
 		else {
 			pixelBytes = 4;
-			vnc_spu.super.ReadPixels(winx, winy, width, height,
+			vnc_spu.child.ReadPixels(winx, winy, width, height,
 															 GL_BGRA, GL_UNSIGNED_BYTE, sb->buffer);
 		}
 
@@ -645,12 +645,17 @@ SwapScreenBuffers(void)
 static void
 GetWindowSize(WindowInfo *window)
 {
+	if (!vnc_spu.has_child) {
+		crDebug("VNC SPU: GetWindowSize(): no child!");
+		return;
+	}
+
 	/* get window size and position (in screen coords) */
 	if (window->nativeWindow) {
 		int size[2], pos[2];
-		vnc_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
+		vnc_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
 																					window->id, GL_INT, 2, size);
-		vnc_spu.super.GetChromiumParametervCR(GL_WINDOW_POSITION_CR,
+		vnc_spu.child.GetChromiumParametervCR(GL_WINDOW_POSITION_CR,
 																					window->id, GL_INT, 2, pos);
 		if (window->width != size[0] || window->height != size[1]) {
 			window->newSize = 3;
@@ -714,7 +719,7 @@ GetWindowBounds(WindowInfo *window)
  * Then, update the dirty rectangle info.
  */
 static void
-DoReadback(WindowInfo *window)
+DoReadback(WindowInfo *window, GLboolean skipReadPixels)
 {
 	int i;
 	RegionRec dirtyRegion;
@@ -847,6 +852,7 @@ DoReadback(WindowInfo *window)
 	/*
 	 * Now do actual pixel readback to update the screen buffer.
 	 */
+	if (!skipReadPixels)
 	{
 		const BoxPtr rects = REGION_RECTS(&dirtyRegion);
 		const int n = REGION_NUM_RECTS(&dirtyRegion);
@@ -964,15 +970,15 @@ vncspuUpdateVirtualFramebuffer(WindowInfo *window)
 #endif
 
 	/* Save GL state */
-	vnc_spu.super.GetIntegerv(GL_READ_BUFFER, &readBuf);
-	vnc_spu.super.ReadBuffer(GL_FRONT);
-	vnc_spu.super.GetIntegerv(GL_PACK_ALIGNMENT, &alignment);
-	vnc_spu.super.GetIntegerv(GL_PACK_SKIP_PIXELS, &skipPixels);
-	vnc_spu.super.GetIntegerv(GL_PACK_SKIP_ROWS, &skipRows);
-	vnc_spu.super.GetIntegerv(GL_PACK_ROW_LENGTH, &rowLength);
+	vnc_spu.child.GetIntegerv(GL_READ_BUFFER, &readBuf);
+	vnc_spu.child.ReadBuffer(GL_FRONT);
+	vnc_spu.child.GetIntegerv(GL_PACK_ALIGNMENT, &alignment);
+	vnc_spu.child.GetIntegerv(GL_PACK_SKIP_PIXELS, &skipPixels);
+	vnc_spu.child.GetIntegerv(GL_PACK_SKIP_ROWS, &skipRows);
+	vnc_spu.child.GetIntegerv(GL_PACK_ROW_LENGTH, &rowLength);
 
 	vncspuLog(0, "Begin readpix", 0);
-	DoReadback(window);
+	DoReadback(window, GL_FALSE);
 	vncspuLog(0, "End readpix", 0);
 
 	CRASSERT(vnc_spu.readpixBuffer);
@@ -984,11 +990,11 @@ vncspuUpdateVirtualFramebuffer(WindowInfo *window)
 	vnc_spu.readpixBuffer = NULL;
 
 	/* Restore GL state */
-	vnc_spu.super.ReadBuffer(readBuf);
-	vnc_spu.super.PixelStorei(GL_PACK_ALIGNMENT, alignment);
-	vnc_spu.super.PixelStorei(GL_PACK_SKIP_PIXELS, skipPixels);
-	vnc_spu.super.PixelStorei(GL_PACK_SKIP_ROWS, skipRows);
-	vnc_spu.super.PixelStorei(GL_PACK_ROW_LENGTH, rowLength);
+	vnc_spu.child.ReadBuffer(readBuf);
+	vnc_spu.child.PixelStorei(GL_PACK_ALIGNMENT, alignment);
+	vnc_spu.child.PixelStorei(GL_PACK_SKIP_PIXELS, skipPixels);
+	vnc_spu.child.PixelStorei(GL_PACK_SKIP_ROWS, skipRows);
+	vnc_spu.child.PixelStorei(GL_PACK_ROW_LENGTH, rowLength);
 }
 
 
@@ -1002,10 +1008,12 @@ vncspuSwapBuffers(GLint win, GLint flags)
 	vncspuLog(0, "Enter SwapBuffers %d", counter);
 	vnc_spu.inSwapBuffers = GL_TRUE;
 
-	vnc_spu.super.SwapBuffers(win, flags);
+	if (!vnc_spu.drawpixels_only)
+		vnc_spu.child.SwapBuffers(win, flags);
 
 	if (window) {
-		vncspuUpdateVirtualFramebuffer(window);
+		if (!vnc_spu.drawpixels_only)
+			vncspuUpdateVirtualFramebuffer(window);
 	}
 	else {
 		crWarning("VNC SPU: SwapBuffers called for invalid window id");
@@ -1076,7 +1084,7 @@ vncspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
 	else {
 		vnc_spu.currentWindow = NULL;
 	}
-	vnc_spu.super.MakeCurrent(win, nativeWindow, ctx);
+	vnc_spu.child.MakeCurrent(win, nativeWindow, ctx);
 }
 
 
@@ -1085,7 +1093,7 @@ vncspuClear(GLbitfield mask)
 {
 	WindowInfo *window = vnc_spu.currentWindow;
 
-	vnc_spu.super.Clear(mask);
+	vnc_spu.child.Clear(mask);
 	REGION_EMPTY(&window->currDirtyRegion);
 
 	window->isClear = GL_TRUE; /* window cleared, but no bounding boxes (yet) */
@@ -1108,7 +1116,7 @@ vncspuClearColor(GLclampf r, GLclampf g, GLclampf b, GLclampf a)
 	REGION_INIT(&whole, &box, 1);
 	REGION_UNION(&window->currDirtyRegion, &window->currDirtyRegion, &whole);
 
-	vnc_spu.super.ClearColor(r, g, b, a);
+	vnc_spu.child.ClearColor(r, g, b, a);
 }
 
 
@@ -1118,7 +1126,7 @@ vncspuBoundsInfoCR(const CRrecti *bounds, const GLbyte *payload,
 {
 	const int margin = 2; /* two-pixel margin */
 
-	vnc_spu.super.BoundsInfoCR(bounds, payload, len, num_opcodes);
+	vnc_spu.child.BoundsInfoCR(bounds, payload, len, num_opcodes);
 
 	if (vnc_spu.use_bounding_boxes) {
 		WindowInfo *window = vnc_spu.currentWindow;
@@ -1154,6 +1162,95 @@ vncspuBoundsInfoCR(const CRrecti *bounds, const GLbyte *payload,
 }
 
 
+#define RGBA_TO_BGRA(P)  ( (((P) & 0xff000000) >> 16) |	\
+                           (((P) & 0x00ff0000)      ) |	\
+                           (((P) & 0x0000ff00) << 16) |	\
+                           (((P) & 0x000000ff)      ) )
+
+#define RGB_TO_BGRA(R, G, B)  ( ((B) <<  0) |  \
+                                ((G) <<  8) |  \
+                                ((R) << 16) )
+
+/**
+ * "Draw" the given image into the virtual framebuffer.
+ */
+static void
+vncspuDrawPixelData(WindowInfo *window,
+										GLint winX, GLint winY, GLsizei width, GLsizei height,
+										GLenum format, GLenum type, const GLvoid *pixels)
+{
+  const CARD16 g_fb_width = vnc_spu.screen_width;
+	const CARD16 g_fb_height = vnc_spu.screen_height;
+  CARD32 *g_framebuffer;
+	int scrX = winX + window->xPos, scrY = winY + window->yPos;
+
+	crDebug("Enter %s fmt 0x%x", __FUNCTION__, format);
+
+	if (vnc_spu.frame_drop && vnc_spu.double_buffer) {
+		vnc_spu.readpixBuffer = DequeueBuffer2(&vnc_spu.emptyQueue,
+																					 &vnc_spu.filledQueue);
+	}
+	else {
+		GLboolean wasBlocked;
+		vnc_spu.readpixBuffer = DequeueBuffer(&vnc_spu.emptyQueue, &wasBlocked);
+	}
+  g_framebuffer = (CARD32 *) vnc_spu.readpixBuffer->buffer;
+
+
+	/* get/check pixelstore params */
+	if (format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
+		const GLuint *pixels4 = (GLuint *) pixels;
+		GLint i, j;
+		for (i = 0; i < height; i++) {
+			/* convert RGBA to BGRA, darn */
+			CARD32 *dst = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height,
+															 scrX, scrY + i);
+			const GLuint *src = pixels4 + width * i;
+			for (j = 0; j < width; j++) {
+				GLuint p = src[j];
+				dst[j] = RGBA_TO_BGRA(p);
+			}
+		}
+	}
+	else if (format == GL_RGB && type == GL_UNSIGNED_BYTE) {
+		const GLubyte *pixels1 = (GLubyte *) pixels;
+		GLint i, j;
+		for (i = 0; i < height; i++) {
+			/* convert RGB to BGRA, darn */
+			CARD32 *dst = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height,
+															 scrX, scrY + window->height - i - 1);
+			const GLubyte *src = pixels1 + (width * i) * 3;
+			for (j = 0; j < width; j++) {
+				dst[j] = RGB_TO_BGRA(src[0], src[1], src[2]);
+				src += 3;
+			}
+		}
+	}
+	else if (format == GL_BGRA && type == GL_UNSIGNED_BYTE) {
+		const GLuint *pixels4 = (GLuint *) pixels;
+		GLint i;
+		for (i = 0; i < height; i++) {
+			CARD32 *dst = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height,
+															 scrX, scrY + i);
+			const GLuint *src = pixels4 + width * i;
+			crMemcpy(dst, src, width * 4);
+		}
+	}
+	else {
+		crWarning("VNC SPU: glDrawPixels(format = 0x%x, type = 0x%x) "
+							"not supported", format, type);
+	}
+
+	DoReadback(window, GL_TRUE);
+
+	EnqueueBuffer(vnc_spu.readpixBuffer, &vnc_spu.filledQueue);
+	vnc_spu.readpixBuffer = NULL;
+
+	crDebug("Leave %s", __FUNCTION__);
+}
+
+
+
 /**
  * Need to special-case DrawPixels just to compute bounding box.
  * The tilesort SPU doesn't always pass that info to the crservers.
@@ -1162,16 +1259,17 @@ static void
 vncspuDrawPixels(GLsizei width, GLsizei height, GLenum format,
 								 GLenum type, const GLvoid *pixels)
 {
+	WindowInfo *window = vnc_spu.currentWindow;
+
 	if (vnc_spu.use_bounding_boxes) {
 		/* compute window bounds of drawpixels (y=0=bottom) */
-		WindowInfo *window = vnc_spu.currentWindow;
 		GLfloat pos[4], xzoom, yzoom;
 		BoxRec boundsBox;
 		RegionRec boundsReg;
 
-		vnc_spu.super.GetFloatv(GL_CURRENT_RASTER_POSITION, pos);
-		vnc_spu.super.GetFloatv(GL_ZOOM_X, &xzoom);
-		vnc_spu.super.GetFloatv(GL_ZOOM_Y, &yzoom);
+		vnc_spu.child.GetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+		vnc_spu.child.GetFloatv(GL_ZOOM_X, &xzoom);
+		vnc_spu.child.GetFloatv(GL_ZOOM_Y, &yzoom);
 
 		boundsBox.x1 = (int) pos[0];
 		boundsBox.y1 = (int) pos[1];
@@ -1183,7 +1281,27 @@ vncspuDrawPixels(GLsizei width, GLsizei height, GLenum format,
 								 &window->currDirtyRegion, &boundsReg);
 	}
 
-	vnc_spu.super.DrawPixels(width, height, format, type, pixels);
+	if (vnc_spu.drawpixels_only) {
+		/* just put the image data into our virtual framebuffer */
+		GLint pos[4];
+		vnc_spu.child.GetIntegerv(GL_CURRENT_RASTER_POSITION, pos);
+		vncspuDrawPixelData(window, pos[0], pos[1], width, height,
+												format, type, pixels);
+	}
+	else {
+		/* pass-through to parent/Render SPU */
+		vnc_spu.child.DrawPixels(width, height, format, type, pixels);
+	}
+}
+
+
+static void
+vncspuWindowSize(GLint win, GLint w, GLint h)
+{
+	WindowInfo *window = vnc_spu.currentWindow; /* XXX or win param? */
+	window->width = w;
+	window->height = h;
+	crDebug("%s %d x %d", __FUNCTION__, w, h);
 }
 
 
@@ -1199,5 +1317,6 @@ SPUNamedFunctionTable _cr_vnc_table[] = {
 	{"ClearColor", (SPUGenericFunction) vncspuClearColor},
 	{"BoundsInfoCR", (SPUGenericFunction) vncspuBoundsInfoCR},
 	{"DrawPixels", (SPUGenericFunction) vncspuDrawPixels},
+	{"WindowSize", (SPUGenericFunction) vncspuWindowSize},
 	{ NULL, NULL }
 };

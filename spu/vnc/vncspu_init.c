@@ -22,6 +22,43 @@ static SPUFunctions vnc_functions = {
 	_cr_vnc_table /**< THE ACTUAL FUNCTIONS - pointer to NamedFunction table */
 };
 
+
+static void
+vncspuNetLoggerInit(void)
+{
+#ifdef NETLOGGER
+	if (vnc_spu.netlogger_url) {
+		char *c;
+
+		crDebug("VNC SPU: NetLogger URL: %s", vnc_spu.netlogger_url);
+#if 0
+		if (vnc_spu.netlogger_url) {
+			/* XXX add unlink() wrapper to Cr util package */
+			unlink(vnc_spu.netlogger_url);
+		}
+#endif
+		NL_logger_module("vncspu", /* module name */
+										 vnc_spu.netlogger_url,
+										 NL_LVL_DEBUG, /* logging level */
+										 NL_TYPE_APP, /* target type */
+										 "" /* terminator */
+										 );
+		NL_info("vncspu", "spu.program.begin", "");
+
+		vnc_spu.hostname = crAlloc(101);
+		crGetHostname(vnc_spu.hostname, 100);
+		/* truncate at first dot */
+		if ((c = crStrchr(vnc_spu.hostname, '.')))
+			*c = 0;
+	}
+	else {
+		crDebug("VNC SPU: NetLogger disabled");
+	}
+#endif
+}
+
+
+
 /**
  * Vnc spu init function
  * \param id
@@ -55,35 +92,7 @@ vncSPUInit( int id, SPU *child, SPU *self,
 
 	vnc_spu.windowTable = crAllocHashtable();
 
-#ifdef NETLOGGER
-	if (vnc_spu.netlogger_url) {
-		char *c;
-
-		crDebug("VNC SPU: NetLogger URL: %s", vnc_spu.netlogger_url);
-#if 0
-		if (vnc_spu.netlogger_url) {
-			/* XXX add unlink() wrapper to Cr util package */
-			unlink(vnc_spu.netlogger_url);
-		}
-#endif
-		NL_logger_module("vncspu", /* module name */
-										 vnc_spu.netlogger_url,
-										 NL_LVL_DEBUG, /* logging level */
-										 NL_TYPE_APP, /* target type */
-										 "" /* terminator */
-										 );
-		NL_info("vncspu", "spu.program.begin", "");
-
-		vnc_spu.hostname = crAlloc(101);
-		crGetHostname(vnc_spu.hostname, 100);
-		/* truncate at first dot */
-		if ((c = crStrchr(vnc_spu.hostname, '.')))
-			*c = 0;
-	}
-	else {
-		crDebug("VNC SPU: NetLogger disabled");
-	}
-#endif
+	vncspuNetLoggerInit();
 
 	vncspuInitialize();
 
@@ -120,12 +129,12 @@ SPULoad( char **name, char **super, SPUInitFuncPtr *init,
 				 SPUOptionsPtr *options, int *flags )
 {
 	*name = "vnc";
-	*super = "render";
+	*super = "passthrough";
 	*init = vncSPUInit;
 	*self = vncSPUSelfDispatch;
 	*cleanup = vncSPUCleanup;
 	*options = vncSPUOptions;
-	*flags = (SPU_NO_PACKER|SPU_TERMINAL_MASK|SPU_MAX_SERVERS_ZERO);
+	*flags = (SPU_NO_PACKER | SPU_MAX_SERVERS_ZERO);
 	
 	return 1;
 }

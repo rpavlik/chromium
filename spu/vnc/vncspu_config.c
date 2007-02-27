@@ -63,7 +63,12 @@ static void set_double_buffer(VncSPU *vnc_spu, const char *response)
 
 static void set_force_tight_jpeg(VncSPU *vnc_spu, const char *response)
 {
-  opt_force_tight_jpeg = crStrToInt(response);
+	opt_force_tight_jpeg = crStrToInt(response);
+}
+
+static void set_drawpixels_only(VncSPU *vnc_spu, const char *response)
+{
+	vnc_spu->drawpixels_only = crStrToInt(response);
 }
 
 #ifdef NETLOGGER
@@ -106,6 +111,8 @@ SPUOptions vncSPUOptions[] = {
 		"Double Buffer", (SPUOptionCB) set_double_buffer },
 	{ "force_tight_jpeg", CR_BOOL, 1, "0", NULL, NULL,
 		"Force JPEG tight encoding", (SPUOptionCB) set_force_tight_jpeg },
+	{ "drawpixels_only", CR_BOOL, 1, "0", NULL, NULL,
+		"Process glDrawPixels only (compositing)", (SPUOptionCB) set_drawpixels_only },
 #ifdef NETLOGGER
 	{ "netlogger_url", CR_STRING, 1, NULL, NULL, NULL,
 		"NetLogger log URL", (SPUOptionCB) set_netlogger_url },
