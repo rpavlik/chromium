@@ -80,6 +80,9 @@ vncSPUInit( int id, SPU *child, SPU *self,
 	vnc_spu.id = id;
 	vnc_spu.has_child = 0;
 	vnc_spu.server = NULL;
+	/* We should always have a child (next) SPU since we're derived from
+	 * the Passthrough SPU which requires a child/next SPU.
+	 */
 	if (child)
 	{
 		crSPUInitDispatchTable( &(vnc_spu.child) );

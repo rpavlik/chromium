@@ -518,6 +518,8 @@ ReadbackRect(int scrx, int scry, int winx, int winy, int width, int height)
 {
 	ScreenBuffer *sb = vnc_spu.readpixBuffer;
 
+	CRASSERT(!vnc_spu.drawpixels_only);
+
 	/* clip region against screen buffer size */
 	if (scrx + width > vnc_spu.screen_width)
 		width = vnc_spu.screen_width - scrx;
@@ -645,8 +647,10 @@ SwapScreenBuffers(void)
 static void
 GetWindowSize(WindowInfo *window)
 {
-	if (!vnc_spu.has_child) {
-		crDebug("VNC SPU: GetWindowSize(): no child!");
+	if (vnc_spu.drawpixels_only) {
+		/* we can't do this, rely on calls to vncspuWindowSize/Position() for
+		 * window geometry.
+		 */
 		return;
 	}
 
@@ -680,7 +684,9 @@ GetWindowBounds(WindowInfo *window)
 	REGION_UNINIT(&window->clipRegion);
 
 #if defined(HAVE_XCLIPLIST_EXT)
-	if (vnc_spu.haveXClipListExt && window->nativeWindow) {
+	if (vnc_spu.haveXClipListExt &&
+			window->nativeWindow &&
+			!vnc_spu.drawpixels_only) {
 		int numClipRects, i;
 		BoxPtr clipRects = XGetClipList(vnc_spu.dpy, window->nativeWindow,
 																		&numClipRects);
@@ -1060,14 +1066,16 @@ vncspuSwapBuffers(GLint win, GLint flags)
 static void VNCSPU_APIENTRY
 vncspuFinish(void)
 {
-	GLboolean db;
-	GLint drawBuf;
-	vnc_spu.self.GetBooleanv(GL_DOUBLEBUFFER, &db);
-	vnc_spu.self.GetIntegerv(GL_DRAW_BUFFER, &drawBuf);
-	if (!db || drawBuf != GL_BACK) {
-		WindowInfo *window = vnc_spu.currentWindow;
-		if (window) {
-			vncspuUpdateVirtualFramebuffer(window);
+	if (!vnc_spu.drawpixels_only) {
+		GLboolean db;
+		GLint drawBuf;
+		vnc_spu.self.GetBooleanv(GL_DOUBLEBUFFER, &db);
+		vnc_spu.self.GetIntegerv(GL_DRAW_BUFFER, &drawBuf);
+		if (!db || drawBuf != GL_BACK) {
+			WindowInfo *window = vnc_spu.currentWindow;
+			if (window) {
+				vncspuUpdateVirtualFramebuffer(window);
+			}
 		}
 	}
 }
@@ -1088,12 +1096,40 @@ vncspuMakeCurrent(GLint win, GLint nativeWindow, GLint ctx)
 }
 
 
+static void
+vncspuClearRegion(WindowInfo *window)
+{
+#if 0
+	int i;
+	int scrX = window->xPos, scrY = window->yPos + window->height;
+  const CARD16 g_fb_width = vnc_spu.screen_width;
+	const CARD16 g_fb_height = vnc_spu.screen_height;
+  CARD32 *g_framebuffer;
+
+	CRASSERT(vnc_spu.readpixBuffer);
+  g_framebuffer = (CARD32 *) vnc_spu.readpixBuffer->buffer;
+	CRASSERT(g_framebuffer);
+
+	for (i = 0; i < window->height; i++) {
+		CARD32 *dst = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height,
+														 scrX, scrY - i);
+		crMemZero(dst, window->width * 4);
+	}
+#endif
+}
+
 static void VNCSPU_APIENTRY
 vncspuClear(GLbitfield mask)
 {
 	WindowInfo *window = vnc_spu.currentWindow;
 
-	vnc_spu.child.Clear(mask);
+	if (vnc_spu.drawpixels_only) {
+		vncspuClearRegion(window);
+	}
+	else {
+		vnc_spu.child.Clear(mask);
+	}
+
 	REGION_EMPTY(&window->currDirtyRegion);
 
 	window->isClear = GL_TRUE; /* window cleared, but no bounding boxes (yet) */
@@ -1182,9 +1218,18 @@ vncspuDrawPixelData(WindowInfo *window,
   const CARD16 g_fb_width = vnc_spu.screen_width;
 	const CARD16 g_fb_height = vnc_spu.screen_height;
   CARD32 *g_framebuffer;
-	int scrX = winX + window->xPos, scrY = winY + window->yPos;
+	int scrX, scrY;
 
+	scrX = winX + window->xPos;
+	scrY = window->yPos + window->height - winY;
+
+	/*
 	crDebug("Enter %s fmt 0x%x", __FUNCTION__, format);
+	*/
+	/*
+	crDebug("DrawPixelData %d x %d at %d, %d  scr %d, %d (win pos %d, %d)",
+					width, height, winX, winY, scrX, scrY, window->xPos, window->yPos);
+	*/
 
 	if (vnc_spu.frame_drop && vnc_spu.double_buffer) {
 		vnc_spu.readpixBuffer = DequeueBuffer2(&vnc_spu.emptyQueue,
@@ -1204,7 +1249,7 @@ vncspuDrawPixelData(WindowInfo *window,
 		for (i = 0; i < height; i++) {
 			/* convert RGBA to BGRA, darn */
 			CARD32 *dst = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height,
-															 scrX, scrY + i);
+															 scrX, scrY - i);
 			const GLuint *src = pixels4 + width * i;
 			for (j = 0; j < width; j++) {
 				GLuint p = src[j];
@@ -1218,7 +1263,7 @@ vncspuDrawPixelData(WindowInfo *window,
 		for (i = 0; i < height; i++) {
 			/* convert RGB to BGRA, darn */
 			CARD32 *dst = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height,
-															 scrX, scrY + window->height - i - 1);
+															 scrX, scrY - i);
 			const GLubyte *src = pixels1 + (width * i) * 3;
 			for (j = 0; j < width; j++) {
 				dst[j] = RGB_TO_BGRA(src[0], src[1], src[2]);
@@ -1231,7 +1276,7 @@ vncspuDrawPixelData(WindowInfo *window,
 		GLint i;
 		for (i = 0; i < height; i++) {
 			CARD32 *dst = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height,
-															 scrX, scrY + i);
+															 scrX, scrY - i);
 			const GLuint *src = pixels4 + width * i;
 			crMemcpy(dst, src, width * 4);
 		}
@@ -1246,7 +1291,9 @@ vncspuDrawPixelData(WindowInfo *window,
 	EnqueueBuffer(vnc_spu.readpixBuffer, &vnc_spu.filledQueue);
 	vnc_spu.readpixBuffer = NULL;
 
+	/*
 	crDebug("Leave %s", __FUNCTION__);
+	*/
 }
 
 
@@ -1289,7 +1336,7 @@ vncspuDrawPixels(GLsizei width, GLsizei height, GLenum format,
 												format, type, pixels);
 	}
 	else {
-		/* pass-through to parent/Render SPU */
+		/* pass-through to next SPU */
 		vnc_spu.child.DrawPixels(width, height, format, type, pixels);
 	}
 }
@@ -1301,7 +1348,15 @@ vncspuWindowSize(GLint win, GLint w, GLint h)
 	WindowInfo *window = vnc_spu.currentWindow; /* XXX or win param? */
 	window->width = w;
 	window->height = h;
-	crDebug("%s %d x %d", __FUNCTION__, w, h);
+}
+
+
+static void
+vncspuWindowPosition(GLint win, GLint x, GLint y)
+{
+	WindowInfo *window = vnc_spu.currentWindow; /* XXX or win param? */
+	window->xPos = x;
+	window->yPos = y;
 }
 
 
@@ -1318,5 +1373,6 @@ SPUNamedFunctionTable _cr_vnc_table[] = {
 	{"BoundsInfoCR", (SPUGenericFunction) vncspuBoundsInfoCR},
 	{"DrawPixels", (SPUGenericFunction) vncspuDrawPixels},
 	{"WindowSize", (SPUGenericFunction) vncspuWindowSize},
+	{"WindowPosition", (SPUGenericFunction) vncspuWindowPosition},
 	{ NULL, NULL }
 };
