@@ -53,38 +53,49 @@ crThreadID(void)
 #endif
 }
 
+
 /**
  * Joins the given thread
  */
-void 
-crThreadJoin(CRthread thread) 
+void
+crThreadJoin(CRthread thread)
 {
 #ifdef WINDOWS
-  HANDLE h = OpenThread(SYNCHRONIZE, 1, thread);
-  WaitForSingleObject(h, INFINITE);
-  CloseHandle(h);
+	HANDLE h = OpenThread(SYNCHRONIZE, 1, thread);
+	WaitForSingleObject(h, INFINITE);
+	CloseHandle(h);
 #else
-  pthread_join(thread, NULL);
+	pthread_join(thread, NULL);
 #endif
 }
+
 
 /**
  * Atomical exchange of pointer values
  */
-void* 
-crInterlockedExchangePointer(void** target, void* value) {
+void *
+crInterlockedExchangePointer(void **target, void *value)
+{
 #ifdef WINDOWS
-  return InterlockedExchangePointer(target, value);
+	return InterlockedExchangePointer(target, value);
+#elif defined(__i386__) || defined(__386__)
+	void *ret;
+	asm (
+		 "lock; xchgl %0, (%1)"
+		 : "=r" (ret)
+		 : "r" (target), "0" (value) : "memory"
+		 );
+	return ret;
 #else
-  void* ret;
-  
-  asm ( 
-    "lock; xchgl %0, (%1)"
-    : "=r" (ret)
-    : "r" (target), "0" (value) : "memory" 
-  );
-
-  return ret;
+	/* XXX this should be made thread-safe */
+	static GLboolean warn = GL_TRUE;
+	void *ret = *target;
+	if (warn) {
+		crWarning("The crInterlockedExchangePointer() function is not thread-safe on this system!");
+		warn = GL_FALSE;
+	}
+	*target = value;
+	return ret;
 #endif
 }
 
