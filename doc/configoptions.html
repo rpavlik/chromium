@@ -56,6 +56,7 @@ SPU index
 </li><li><a href="#expando">Expando</a>
 </li><li><a href="#feedback">Feedback</a>
 </li><li><a href="#fps">Fps</a>
+</li><li><a href="#grabber">Grabber</a>
 </li><li><a href="#hiddenline">Hiddenline</a>
 </li><li><a href="#injector">Injector</a>
 </li><li><a href="#matte">Matte</a>
@@ -360,6 +361,32 @@ for determining rendering performance of a Chromium configuration.
     If set, an additional report with the average FPS across the entire
     run of the SPU is issued as the SPU is closing down.  The default
     value is set.
+    </td>
+  </tr>
+</tbody></table>
+
+
+
+<a name="grabber"></a>
+<h2 class="PageSubHeading">Grabber SPU</h2>
+<p>
+The <code>grammer</code> SPU intercepts calls to MakeCurrent to grab window
+IDs.  The window ID is then sent to the mothership to set a "current
+window ID" variable.  The value of that variable can then be queried by other
+SPUs for various purposes.
+</p>
+<table border="1" width="100%">
+<tbody>
+  <tr class="ConfigTableHeader">
+    <td width="19%">Parameter Name</td>
+    <td width="12%">Value Types</td>
+    <td width="100%">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption">current_window_attribute_name</td>
+    <td width="12%" class="ConfigType">String</td>
+    <td width="100%" class="ConfigDesc">
+    Specifies the name of the mothership variable to set to the Window ID.
     </td>
   </tr>
 </tbody></table>
