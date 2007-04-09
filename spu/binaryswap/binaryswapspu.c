@@ -168,6 +168,9 @@ AllocBuffers(WindowInfo * window)
 static void
 binaryswapspu_ResizeWindow(WindowInfo * window, int newWidth, int newHeight)
 {
+	CRASSERT(newWidth > 0);
+	CRASSERT(newHeight > 0);
+
 	window->width = newWidth;
 	window->height = newHeight;
 
@@ -184,13 +187,13 @@ binaryswapspu_ResizeWindow(WindowInfo * window, int newWidth, int newHeight)
 	if (binaryswap_spu.resizable)
 	{
 		/* update super/render SPU window size & viewport */
-		CRASSERT(newWidth > 0);
-		CRASSERT(newHeight > 0);
 		binaryswap_spu.super.WindowSize(window->renderWindow,
 																		newWidth, newHeight);
 		binaryswap_spu.super.Viewport(0, 0, newWidth, newHeight);
 
-		/* set child's viewport too */
+		/* set child SPU's window size and viewport too */
+		binaryswap_spu.child.WindowSize(window->renderWindow,
+																		newWidth, newHeight);
 		binaryswap_spu.child.Viewport(0, 0, newWidth, newHeight);
 
 		/* clear the stencil buffer */
@@ -209,48 +212,50 @@ binaryswapspu_ResizeWindow(WindowInfo * window, int newWidth, int newHeight)
 static void
 CheckWindowSize(WindowInfo * window)
 {
-	GLint newSize[2];
+	GLint superSize[2], childSize[2], *newSize;
 
-	newSize[0] = newSize[1] = 0;
+	superSize[0] = superSize[1] = 0;
+	childSize[0] = childSize[1] = 0;
+
+	/* query parent Render SPU's window size */
+	binaryswap_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
+																							 window->renderWindow,
+																							 GL_INT, 2, superSize);
+	/* query child SPU's window size */
+	binaryswap_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
+																							 window->childWindow,
+																							 GL_INT, 2, childSize);
+
+	/* determine which size to use */
 	if (binaryswap_spu.resizable)
 	{
 		if (binaryswap_spu.renderToAppWindow)
 		{
-			/* query parent Render SPU's window size */
-			binaryswap_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-																									 window->renderWindow,
-																									 GL_INT, 2, newSize);
+			newSize = superSize;
 		}
 		else
 		{
-			/* ask downstream SPU (probably render) for its window size */
-			binaryswap_spu.child.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-																									 window->childWindow,
-																									 GL_INT, 2, newSize);
+			if (childSize[0] > 0 && childSize[1] > 0)
+				newSize = childSize;
+			else
+				newSize = superSize;
 		}
-
-		if (newSize[0] == 0 && newSize[1] == 0)
-		{
-			/* something went wrong - recover - try viewport */
-			GLint geometry[4];
-			binaryswap_spu.child.GetIntegerv(GL_VIEWPORT, geometry);
-			newSize[0] = geometry[2];
-			newSize[1] = geometry[3];
-		}
-		window->childWidth = newSize[0];
-		window->childHeight = newSize[1];
 	}
 	else
 	{
-		/* not resizable - ask render SPU for its window size */
-		binaryswap_spu.super.GetChromiumParametervCR(GL_WINDOW_SIZE_CR,
-																								 window->renderWindow,
-																								 GL_INT, 2, newSize);
+		/* not resizable, use super/render's fixed size */
+		newSize = superSize;
 	}
 
-	if (newSize[0] != window->width || newSize[1] != window->height)
+	/*
+	crDebug("%s %d new %d x %d", __FUNCTION__, __LINE__, newSize[0], newSize[1]);
+	crDebug("%s %d win %d x %d", __FUNCTION__, __LINE__, window->width, window->height);
+	*/
+
+	if ((newSize[0] != window->width || newSize[1] != window->height)
+			&& newSize[0] > 0 && newSize[1] > 0)
 	{
-		/* The window size has changed (or first-time init) */
+		/* The window size has actually changed (or first-time init) */
 		binaryswapspu_ResizeWindow(window, newSize[0], newSize[1]);
 	}
 }
@@ -1181,9 +1186,13 @@ binaryswapspuWindowSize(GLint win, GLint w, GLint h)
 	WindowInfo *window;
 	window = (WindowInfo *) crHashtableSearch(binaryswap_spu.windowTable, win);
 	CRASSERT(window);
-	binaryswap_spu.super.WindowSize(window->renderWindow, w, h);
-	binaryswap_spu.child.WindowSize(window->childWindow, w, h);
-	binaryswapspu_ResizeWindow(window, w, h);
+	CRASSERT(w > 0);
+	CRASSERT(h > 0);
+	if (window->width != w || window->height != h) {
+		binaryswap_spu.super.WindowSize(window->renderWindow, w, h);
+		binaryswap_spu.child.WindowSize(window->childWindow, w, h);
+		binaryswapspu_ResizeWindow(window, w, h);
+	}
 }
 
 

@@ -32,7 +32,6 @@ typedef struct {
 	GLint renderWindow;  /**< the super (render SPU) window */
 	GLint childWindow;   /**< the child SPU's window handle */
 	GLint width, height;
-	GLint childWidth, childHeight;
 	GLubyte *msgBuffer;
 	GLint bytesPerColor, bytesPerDepth;  /**< bytes per pixel */
 	GLenum depthType;  /**< GL_UNSIGNED_SHORT or GL_FLOAT */
