@@ -531,6 +531,7 @@ crServerGetTileInfoFromMothership( CRConnection *conn, CRMuralInfo *mural )
 		if (mural->numExtents <= 0) {
 			crInfo("No tile information was found (when using file: clients).");
 			crInfo("Add a node.AddTile() line in your configuration script.");
+			crInfo("Exiting.");
 			exit(0);
 		}
 
