@@ -73,6 +73,7 @@ SPU index
 </li><li><a href="#tilesort">Tilesort</a>
 </li><li><a href="#tracker">Tracker</a>
 </li><li><a href="#vnc">VNC</a>
+</li><li><a href="#windowtracker">Window Tracker</a>
 </li><li><a href="#wet">Wet</a>
 </li><li><a href="#zpix">ZPix</a>
 </li></ul>
@@ -1760,6 +1761,42 @@ For more information about VNC see
 </tbody>
 </table>
 
+
+<a name="windowtracker">
+</a><h2 class="PageSubHeading">Window Tracker SPU</a></h2>
+<p>
+The Window Tracker SPU tracks the position and size of an arbitrary window
+given its display and title string.
+The position and size information can be obtained by an upstream SPU by
+calling <code>glGetChromiumParametervCR()</code> with target
+GL_WINDOW_POSITION_CR.
+</p>
+
+<table border="1" width="100%" height="149">
+<tbody>
+  <tr class="ConfigTableHeader">
+    <td width="19%" height="19">Parameter Name</td>
+    <td width="12%" height="19">Value Types</td>
+    <td width="100%" height="19">Description</td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">display</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="100%" class="ConfigDesc" height="38">
+       The X display of the window.
+    </td>
+  </tr>
+  <tr>
+    <td width="19%" class="ConfigOption" height="38">window_title</td>
+    <td width="12%" class="ConfigType" height="38">String</td>
+    <td width="100%" class="ConfigDesc" height="38">
+       Title string of window to track.  This option may be prefixed and/or
+       suffixed with the wildcard character <em>*</em> to allow matching a
+       substring.
+    </td>
+  </tr>
+</tbody>
+</table>
 
 
 <a name="wet">
