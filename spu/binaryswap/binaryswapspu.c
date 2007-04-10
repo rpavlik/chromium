@@ -630,6 +630,23 @@ CompositeNode(WindowInfo * window, int startx, int starty, int endx, int endy)
 		/* Begin critical region */
 		binaryswap_spu.child.SemaphorePCR(MUTEX_SEMAPHORE);
 
+		/* Update child window position, in case we're using the windowtracker
+		 * and VNC SPUs.
+		 */
+		{
+			GLint pos[2];
+			binaryswap_spu.child.GetChromiumParametervCR(GL_WINDOW_POSITION_CR,
+																									 window->childWindow,
+																									 GL_INT, 2, pos);
+			if (pos[0] != window->child_xpos ||
+					pos[1] != window->child_ypos) {
+				binaryswap_spu.child.WindowPosition(window->childWindow,
+																						pos[0], pos[1]);
+				window->child_xpos = pos[0];
+				window->child_ypos = pos[1];
+			}
+		}
+
 		binaryswap_spu.child.WindowPos2iARB(draw_x, draw_y);
 		binaryswap_spu.child.DrawPixels(draw_width, draw_height,
 																		GL_RGB, GL_UNSIGNED_BYTE,

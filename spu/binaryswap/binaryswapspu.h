@@ -37,7 +37,9 @@ typedef struct {
 	GLenum depthType;  /**< GL_UNSIGNED_SHORT or GL_FLOAT */
 	GLint superVisBits;
 	GLint childVisBits;
-	
+
+	int  child_xpos, child_ypos; /**< child window's pos */
+	int  destwin_x, destwin_y;
 	int* read_x;
 	int* read_y;
 	int* read_width;

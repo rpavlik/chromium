@@ -99,6 +99,9 @@ readbackspu_ResizeWindow(WindowInfo *window, int newWidth, int newHeight)
 {
 	CRMessage *msg;
 
+	CRASSERT(newWidth > 0);
+	CRASSERT(newHeight > 0);
+
 	/* The window size has changed (or first-time init) */
 	window->width = newWidth;
 	window->height = newHeight;
@@ -107,12 +110,13 @@ readbackspu_ResizeWindow(WindowInfo *window, int newWidth, int newHeight)
 	if (readback_spu.resizable)
 	{
 		/* update super/render SPU window size & viewport */
-		CRASSERT(newWidth > 0);
-		CRASSERT(newHeight > 0);
 		readback_spu.super.WindowSize(window->renderWindow,
 																	newWidth, newHeight);
 		readback_spu.super.Viewport(0, 0, newWidth, newHeight);
-		/* set child's viewport too */
+
+		/* set child SPU's window size and viewport too */
+		readback_spu.child.WindowSize(window->renderWindow,
+																	newWidth, newHeight);
 		readback_spu.child.Viewport(0, 0, newWidth, newHeight);
 	}
 
@@ -192,7 +196,8 @@ CheckWindowSize(WindowInfo * window)
 																							 2, newSize);
 	}
 
-	if (newSize[0] != window->width || newSize[1] != window->height)
+	if ((newSize[0] != window->width || newSize[1] != window->height)
+			&& newSize[0] > 0 && newSize[1] > 0)
 	{
 		/* The window size has changed (or first-time init) */
 		readbackspu_ResizeWindow(window, newSize[0], newSize[1]);
@@ -274,6 +279,23 @@ CompositeTile(WindowInfo * window, int w, int h,
 		readback_spu.super.ReadPixels(readx, ready, w, h,
 																	GL_DEPTH_COMPONENT, window->depthType,
 																	(GLubyte *) window->depthBuffer + shift);
+	}
+
+	/* Update child window position, in case we're using the windowtracker
+	 * and VNC SPUs.
+	 */
+	{
+		GLint pos[2];
+		readback_spu.child.GetChromiumParametervCR(GL_WINDOW_POSITION_CR,
+																							 window->childWindow,
+																							 GL_INT, 2, pos);
+		if (pos[0] != window->childXpos ||
+				pos[1] != window->childYpos) {
+			readback_spu.child.WindowPosition(window->childWindow,
+																				pos[0], pos[1]);
+			window->childXpos = pos[0];
+			window->childYpos = pos[1];
+		}
 	}
 
 	/* Set downstream viewport, in case window size changed */

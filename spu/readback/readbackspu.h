@@ -24,6 +24,7 @@ typedef struct {
 	GLint childWindow;   /**< the child SPU's window handle */
 	GLint width, height;
 	GLint childWidth, childHeight;
+	GLint childXpos, childYpos;
 	GLubyte *colorBuffer;
 	GLvoid *depthBuffer;
 	GLint bytesPerColor, bytesPerDepth;  /**< bytes per pixel */
