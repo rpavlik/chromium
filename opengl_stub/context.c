@@ -698,39 +698,10 @@ stubCheckUseChromium( WindowInfo *window )
 		/* If the user's specified a window title for Chromium, see if this
 		 * window satisfies that criterium.
 		 */
-		GLboolean wildcard = GL_FALSE;
 		char title[1000];
-		char *titlePattern;
-		int len;
-		/* check for leading '*' wildcard */
-		if (stub.matchWindowTitle[0] == '*') {
-			titlePattern = crStrdup( stub.matchWindowTitle + 1 );
-			wildcard = GL_TRUE;
-		}
-		else {
-			titlePattern = crStrdup( stub.matchWindowTitle );
-		}
-		/* check for trailing '*' wildcard */
-		len = crStrlen(titlePattern);
-		if (len > 0 && titlePattern[len - 1] == '*') {
-			titlePattern[len - 1] = '\0'; /* terminate here */
-			wildcard = GL_TRUE;
-		}
-
 		GetWindowTitle( window, title );
-		if (title[0]) {
-			if (wildcard) {
-				if (crStrstr(title, titlePattern)) {
-					crFree(titlePattern);
-					return GL_TRUE;
-				}
-			}
-			else if (crStrcmp(title, titlePattern) == 0) {
-				crFree(titlePattern);
-				return GL_TRUE;
-			}
-		}
-		crFree(titlePattern);
+		if (crStrPatternMatch(title, stub.matchWindowTitle))
+			return GL_TRUE;
 		crDebug("Using native GL, app window title doesn't match match_window_title string (\"%s\" != \"%s\")", title, stub.matchWindowTitle);
 		return GL_FALSE;
 	}
