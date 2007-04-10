@@ -408,3 +408,56 @@ int crIsDigit(char c)
 {
   return c >= '0' && c <= '9';
 }
+
+
+/**
+ * Search str for pattern.  Pattern may include leading and trailing
+ * wildcard (*) characters.
+ * \return  pointer to match in s, or NULL.
+ */
+char *
+crStrPatternMatch(const char *s, const char *pattern)
+{
+	const int patLen = crStrlen(pattern);
+	const int leadingWildcard = pattern[0] == '*';
+	const int trailingWildcard = pattern[patLen-1] == '*';
+
+	if (!leadingWildcard) {
+		if (!trailingWildcard) {
+			/* total match */
+			return crStrstr(s, pattern);
+		}
+		else {
+			/* match at head */
+			char *p = crStrstr(s, pattern);
+			if (p == s)
+				return p;
+			else
+				return NULL;
+		}
+	}
+	else {
+		if (!trailingWildcard) {
+			/* match at tail */
+			const char *pPtr = pattern + patLen - 1;
+			const char *sPtr = s + crStrlen(s) - 1;
+			while (pPtr >= pattern && sPtr >= s) {
+				if (*pPtr == *sPtr) {
+					pPtr--;
+					sPtr--;
+				}
+				else {
+					break;
+				}
+			}
+			if (pPtr == pattern && sPtr >= s)
+				return (char *) sPtr;
+			else
+				return NULL;
+		}
+		else {
+			/* match anywhere */
+			return crStrstr(s, pattern);
+		}
+	}
+}

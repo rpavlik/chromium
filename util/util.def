@@ -41,6 +41,7 @@ crStrToInt
 crStrToFloat
 crStrIntersect
 crIsDigit
+crStrPatternMatch
 crBytesToString
 crWordsToString
 crGetHostname
