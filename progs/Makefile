@@ -20,6 +20,7 @@ SUBDIRS = \
 	fraglight \
 	kirchner \
 	netperf \
+	nullapp \
 	packperf \
 	psubmit \
 	psubmit_crut \
