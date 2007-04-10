@@ -100,13 +100,13 @@ typedef struct {
 #endif
 	int half_rez;
 
-  /** Empty buffers available to the main/app thread */
+	/** Empty buffers available to the main/app thread */
 	ScreenBufferQueue emptyQueue;
 	/** Buffers with pixel data waiting to be sent to client */
 	ScreenBufferQueue filledQueue;
-  /** buffer currently being encoded/sent by VNC server thread */
+	/** buffer currently being encoded/sent by VNC server thread */
 	ScreenBuffer *serverBuffer;
-  /** buffer currently being filled by the main/app thread (glReadPixels) */
+	/** buffer currently being filled by the main/app thread (glReadPixels) */
 	ScreenBuffer *readpixBuffer;																 
 
 	int pixel_size;               /**< 24 or 32 */
@@ -129,6 +129,10 @@ typedef struct {
 	int haveXClipListExt;
 #endif
 	int haveVncExt;
+
+	/** GL state */
+	GLfloat window_pos[2];  /** Current raster pos, in window coords */
+
 } VncSPU;
 
 

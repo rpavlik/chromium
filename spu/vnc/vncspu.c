@@ -1220,8 +1220,15 @@ vncspuDrawPixelData(WindowInfo *window,
   CARD32 *g_framebuffer;
 	int scrX, scrY;
 
+	CRASSERT(window->height > 0);
+
 	scrX = winX + window->xPos;
 	scrY = window->yPos + window->height - winY;
+
+	CRASSERT(scrX >= 0);
+	CRASSERT(scrX < vnc_spu.screen_width);
+	CRASSERT(scrY >= 0);
+	CRASSERT(scrY < vnc_spu.screen_height);
 
 	/*
 	crDebug("Enter %s fmt 0x%x", __FUNCTION__, format);
@@ -1265,6 +1272,7 @@ vncspuDrawPixelData(WindowInfo *window,
 			CARD32 *dst = PIXEL_ADDR(g_framebuffer, g_fb_width, g_fb_height,
 															 scrX, scrY - i);
 			const GLubyte *src = pixels1 + (width * i) * 3;
+			CRASSERT(scrY - i >= 0);
 			for (j = 0; j < width; j++) {
 				dst[j] = RGB_TO_BGRA(src[0], src[1], src[2]);
 				src += 3;
@@ -1307,16 +1315,23 @@ vncspuDrawPixels(GLsizei width, GLsizei height, GLenum format,
 								 GLenum type, const GLvoid *pixels)
 {
 	WindowInfo *window = vnc_spu.currentWindow;
+	GLfloat pos[4], xzoom, yzoom;
 
-	if (vnc_spu.use_bounding_boxes) {
-		/* compute window bounds of drawpixels (y=0=bottom) */
-		GLfloat pos[4], xzoom, yzoom;
-		BoxRec boundsBox;
-		RegionRec boundsReg;
-
+	if (vnc_spu.drawpixels_only) {
+		pos[0] = vnc_spu.window_pos[0];
+		pos[1] = vnc_spu.window_pos[1];
+		xzoom = yzoom = 1.0; /* XXX tmp */
+	}
+	else {
 		vnc_spu.child.GetFloatv(GL_CURRENT_RASTER_POSITION, pos);
 		vnc_spu.child.GetFloatv(GL_ZOOM_X, &xzoom);
 		vnc_spu.child.GetFloatv(GL_ZOOM_Y, &yzoom);
+	}
+
+	if (vnc_spu.use_bounding_boxes) {
+		/* compute window bounds of drawpixels (y=0=bottom) */
+		BoxRec boundsBox;
+		RegionRec boundsReg;
 
 		boundsBox.x1 = (int) pos[0];
 		boundsBox.y1 = (int) pos[1];
@@ -1330,9 +1345,7 @@ vncspuDrawPixels(GLsizei width, GLsizei height, GLenum format,
 
 	if (vnc_spu.drawpixels_only) {
 		/* just put the image data into our virtual framebuffer */
-		GLint pos[4];
-		vnc_spu.child.GetIntegerv(GL_CURRENT_RASTER_POSITION, pos);
-		vncspuDrawPixelData(window, pos[0], pos[1], width, height,
+		vncspuDrawPixelData(window, (int) pos[0], (int) pos[1], width, height,
 												format, type, pixels);
 	}
 	else {
@@ -1343,11 +1356,30 @@ vncspuDrawPixels(GLsizei width, GLsizei height, GLenum format,
 
 
 static void
+vncspuWindowPos2iARB(GLint x, GLint y)
+{
+	vnc_spu.window_pos[0] = x;
+	vnc_spu.window_pos[1] = y;
+	vnc_spu.child.WindowPos2iARB(x, y); /* pass-through */
+}
+
+
+static void
+vncspuWindowPos2fARB(GLfloat x, GLfloat y)
+{
+	vnc_spu.window_pos[0] = x;
+	vnc_spu.window_pos[1] = y;
+	vnc_spu.child.WindowPos2fARB(x, y); /* pass-through */
+}
+
+
+static void
 vncspuWindowSize(GLint win, GLint w, GLint h)
 {
 	WindowInfo *window = vnc_spu.currentWindow; /* XXX or win param? */
 	window->width = w;
 	window->height = h;
+	/* XXX pass-through? */
 }
 
 
@@ -1357,6 +1389,7 @@ vncspuWindowPosition(GLint win, GLint x, GLint y)
 	WindowInfo *window = vnc_spu.currentWindow; /* XXX or win param? */
 	window->xPos = x;
 	window->yPos = y;
+	/* XXX pass-through? */
 }
 
 
@@ -1374,5 +1407,7 @@ SPUNamedFunctionTable _cr_vnc_table[] = {
 	{"DrawPixels", (SPUGenericFunction) vncspuDrawPixels},
 	{"WindowSize", (SPUGenericFunction) vncspuWindowSize},
 	{"WindowPosition", (SPUGenericFunction) vncspuWindowPosition},
+	{"WindowPos2iARB", (SPUGenericFunction) vncspuWindowPos2iARB},
+	{"WindowPos2fARB", (SPUGenericFunction) vncspuWindowPos2fARB},
 	{ NULL, NULL }
 };
