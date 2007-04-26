@@ -16,8 +16,10 @@ static void setDefaults( void )
 {
 	windowtracker_spu.display = NULL;
 	windowtracker_spu.window_title = NULL;
+#if defined(GLX)
 	windowtracker_spu.dpy = NULL;
 	windowtracker_spu.win = 0;
+#endif
 }
 
 

@@ -145,6 +145,7 @@ getWindowGeometry(GLint *x, GLint *y, GLint *w, GLint *h)
 {
 	crWarning("Window Tracker SPU: Not supported on this system.");
 	*x = *y = *w = *h = -1;
+	return 0;
 }
 
 #endif /*GLX */

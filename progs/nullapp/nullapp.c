@@ -32,7 +32,9 @@ static void
 display(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
+#if defined(GLX)
 	glWindowPos2iARB(10, 10);
+#endif /*GLX*/
 	printstring(GLUT_BITMAP_8_BY_13, "Chromium nullapp");
 	glutSwapBuffers();
 }
