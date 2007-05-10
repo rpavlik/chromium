@@ -57,28 +57,19 @@
       the DMX documentation for instructions.
     </p>
     <p>
-      Furthermore, you'll need to copy the <span class="File">dmxext.h</span>
-      header file from <span class=
-      "File">dmx/xc/include/extensions/dmxext.h</span> into your usual X header
-      file directory, such as <span class=
-      "File">/usr/X11R6/include/X11/extensions</span>. Then, the DMX client
-      library, <span class="File">libdmx.a</span> should be copied from
-      <span class="File">dmx/build/xc/exports/lib/libdmx.a</span> to your usual
-      X library directory, such as <span class=
-      "Directory">/usr/X11R6/lib/</span>.
-    </p>
-    <p>
       You'll need to compile Chromium with DMX support. To do this, edit
       <span class="File">cr/options.mk</span> and set <code class=
       "BuildOption">USE_DMX=1</code>.
     </p>
     <p>
-      Then, rebuild Chromium by doing <span class="Command">make clean</span>
-      followed by <span class="Command">make</span>.
+      If the DMX header file <span class="File">dmxext.h</span> or DMX
+      library <span class="File">libdmx.so</span> are in non-standard
+      locations you'll also need to set the <b>DMX_INCDIR</b> and
+      <b>DMX_LIB</b> variables as well.
     </p>
     <p>
-      If compilation fails, be sure the <span class="File">dmxext.h</span>
-      header is in the right place (see above).
+      Then, rebuild Chromium by doing <span class="Command">make clean</span>
+      followed by <span class="Command">make</span>.
     </p>
     <h2 class="PageSubHeading">
       Running Manually
