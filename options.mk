@@ -23,7 +23,7 @@ FORCE_32BIT_ABI=0
 # usual X directories.  If you don't, set DMX_INCDIR and DMX_LIB here.
 USE_DMX=0
 #DMX_INCDIR=/usr/X11R6/include
-#DMX_LIB=-l/usr/X11R6/lib/libdmx.so
+#DMX_LIB=/usr/X11R6/lib/libdmx.so
 
 # Set USE_REPLICATE to 1 if you want to enable the "replicate" SPU build,
 # which can be used with a specially-constructed VNC viewer to use local
