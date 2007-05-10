@@ -11,8 +11,8 @@ include ${TOP}/cr.mk
 
 LDFLAGS += -lXmu -lX11
 ifeq ($(USE_DMX), 1)
-    ifdef DMX_LIBDIR
-        LDFLAGS += -L${DMX_LIBDIR}
+    ifdef DMX_LIB
+        LDFLAGS += ${DMX_LIB}
     endif
     LDFLAGS += -ldmx
     ifdef DMX_INCDIR
