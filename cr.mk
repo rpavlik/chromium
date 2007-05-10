@@ -389,6 +389,7 @@ ifdef PERSONAL_LIBRARIES
 	@$(PERL) $(TOP)/scripts/trans_undef_symbols.pl $(SHORT_TARGET_NAME) $(TOP)/built/$(SHORT_TARGET_NAME)/$(ARCH) $(P_LIB_FILES)
 endif
 endif
+	# Linux link here
 	@$(LD) $(SHARED_LDFLAGS) -o $(LIBNAME) $(OBJS) $(LDFLAGS) $(LIBRARIES)
 endif #aixsharedlib
 else #shared
