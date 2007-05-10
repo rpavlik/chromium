@@ -19,12 +19,11 @@ THREADSAFE=1
 FORCE_32BIT_ABI=0
 
 # Set USE_DMX to 1 if you want to enable DMX support.
-# You'll need the libdmx.a library and dmxext.h header in the usual X
-# directories.  If you don't, set DMX_INCDIR and DMX_LIBDIR here.
+# You'll need the libdmx.so (or libdmx.a) library and dmxext.h header in the
+# usual X directories.  If you don't, set DMX_INCDIR and DMX_LIB here.
 USE_DMX=0
-#DMX_DIR=/wherever/DMX/is/installed
-#DMX_INCDIR=${DMX_DIR}/dmx/xc/exports/include/
-#DMX_LIBDIR=${DMX_DIR}/dmx/xc/exports/lib/
+#DMX_INCDIR=/usr/X11R6/include
+#DMX_LIB=-l/usr/X11R6/lib/libdmx.so
 
 # Set USE_REPLICATE to 1 if you want to enable the "replicate" SPU build,
 # which can be used with a specially-constructed VNC viewer to use local
