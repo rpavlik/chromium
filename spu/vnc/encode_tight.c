@@ -11,7 +11,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: encode_tight.c,v 1.10 2007-01-30 15:54:46 brianp Exp $
+ * $Id: encode_tight.c,v 1.11 2007-05-14 16:36:16 brianp Exp $
  * Tight encoder.
  */
 
@@ -683,6 +683,9 @@ SendRectSimple(CL_SLOT *cl, FB_RECT *r)
 static int SendSubrect(CL_SLOT *cl, FB_RECT *r)
 {
   int success = 0;
+
+  if (r->w == 0 || r->h == 0)
+    return 1;
 
   assert(r->w <= tightConf[compressLevel].maxRectWidth);
   assert(r->w * r->h <= tightConf[compressLevel].maxRectSize);
