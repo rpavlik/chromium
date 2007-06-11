@@ -20,3 +20,16 @@ void crUnpackExtendChromiumParametervCR( void  )
 	INCR_VAR_PTR();
 	*/
 }
+
+
+/**
+ * This is just an accessor wrapping the cr_unpackData variable.
+ * Fixes a crserver linker/loader problem involving shared library global vars.
+ * The unpacker lib and crserver lib seemed to find the variable at different
+ * addresses (!?!)
+ */
+const unsigned char *crUnpackGetDataPointer(void)
+{
+	return cr_unpackData;
+}
+

@@ -19,6 +19,8 @@ void SERVER_DISPATCH_APIENTRY
 crServerDispatchReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
 														GLenum format, GLenum type, GLvoid *pixels)
 {
+	/* Note: this local var overrides the global var in cr_unpack.h */
+	const unsigned char *cr_unpackData = crUnpackGetDataPointer();
 	CRMessageReadPixels *rp;
 	const GLint stride = READ_DATA( 24, GLint );
 	const GLint alignment = READ_DATA( 28, GLint );

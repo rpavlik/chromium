@@ -24,6 +24,7 @@ void crUnpackSetWritebackPointer( CRNetworkPointer *ptr );
 void crUnpack( const void *data, const void *opcodes, unsigned int num_opcodes, SPUDispatchTable *table );
 void crUnpackPush(void);
 void crUnpackPop(void);
+const unsigned char *crUnpackGetDataPointer(void);
 
 extern CRNetworkPointer *return_ptr, *writeback_ptr;
 
