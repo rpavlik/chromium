@@ -40,26 +40,26 @@ vncspuLog(int threadNum, const char *msg, int i)
 {
 #if SIMPLE_LOGGING
 	static FILE *logFile = NULL;
-  char tb[32];
-  int k;
-  struct timeval tv;
+	char tb[32];
+	int k;
+	struct timeval tv;
 
-  if (!logFile) {
+	if (!logFile) {
 		/* one time init */
 		logFile = fopen("/tmp/vncspu.log", "w");
 		crInitMutex(&vnc_spu.logLock);
 	}
 
 	crLockMutex(&vnc_spu.logLock);
-  gettimeofday(&tv, NULL);
-  tv.tv_sec = tv.tv_sec % 10;
-  sprintf(tb, "%2u.%06u  ", (unsigned) tv.tv_sec, (unsigned) tv.tv_usec);
+	gettimeofday(&tv, NULL);
+	tv.tv_sec = tv.tv_sec % 10;
+	sprintf(tb, "%2u.%06u  ", (unsigned) tv.tv_sec, (unsigned) tv.tv_usec);
 
-  fputs(tb, logFile);
-  for (k = 0; k < threadNum; k++)
-     fputs("                            ", logFile);
-  fprintf(logFile, msg, i);
-  fputs("\n", logFile);
+	fputs(tb, logFile);
+	for (k = 0; k < threadNum; k++)
+		fputs("                            ", logFile);
+	fprintf(logFile, msg, i);
+	fputs("\n", logFile);
 	crUnlockMutex(&vnc_spu.logLock);
 #endif
 }
