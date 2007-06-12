@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.36 2007-01-29 22:16:07 brianp Exp $
+ * $Id: client_io.c,v 1.37 2007-06-12 20:50:03 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -916,7 +916,7 @@ static void fn_new_clip(AIO_SLOT *s)
 static int NewClip = 0;
 void signal_new_clipping(const BoxPtr bounds)
 {
-	NewClip = 1;
+   NewClip = 1;
    NewClipBounds = *bounds;
    aio_walk_slots(fn_new_clip, TYPE_CL_SLOT);
 }
@@ -997,6 +997,16 @@ static void send_update(void)
      vncspuGetScreenRects(&cl->pending_region);
      num_pending_rects = REGION_NUM_RECTS(&cl->pending_region);
      /*crDebug("Now, %d rects", num_pending_rects);*/
+     if (num_pending_rects == 0 && cl->enable_frame_sync) {
+        /* always need to send _something_ for framesync to work */
+        BoxRec b;
+        b.x1 = 0;
+        b.y1 = 0;
+        b.x2 = 1;
+        b.y2 = 1;
+        REGION_UNINIT(&cl->pending_region);
+        REGION_INIT(&cl->pending_region, &b, 1);
+     }
      NewClip = 0;
   }
   /*PrintRegion("Sending", &cl->pending_region);*/
