@@ -714,6 +714,7 @@ GetWindowBounds(WindowInfo *window)
 		windowRect.y1 = 0;
 		windowRect.x2 = window->width;
 		windowRect.y2 = window->height;
+		/* XXX REGION_UNINIT() here? */
 		miRegionInit(&window->clipRegion, &windowRect, 1);
 	}
 }
