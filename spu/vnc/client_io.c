@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.37 2007-06-12 20:50:03 brianp Exp $
+ * $Id: client_io.c,v 1.38 2007-06-12 22:47:38 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -1085,6 +1085,13 @@ static void send_update(void)
 
   log_write(LL_DEBUG, "Sending framebuffer update (min %d rects) to %s",
             num_all_rects, cur_slot->name);
+
+  crDebug("VNC SPU: Sending RFB update to %s (bounds: %d, %d .. %d, %d)",
+          cur_slot->name,
+          cl->pending_region.extents.x1,
+          cl->pending_region.extents.y1,
+          cl->pending_region.extents.x2,
+          cl->pending_region.extents.y2);
 
   /* Prepare and send FramebufferUpdate message header. */
   /* FIXME: Enable Tight encoding even if LastRect is not supported. */
