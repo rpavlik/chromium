@@ -93,6 +93,9 @@ glChromiumParametervCRProc glChromiumParametervCR_ptr;
 
 static GLboolean Fog = GL_FALSE;
 
+static long runTime = -1;
+static long totalFrames=0;
+
 static GLfloat
 _Random(GLfloat min, GLfloat max)
 {
@@ -552,6 +555,7 @@ Draw(void)
 		static GLint Frames = 0;
 		GLint t = glutGet(GLUT_ELAPSED_TIME);
 		Frames++;
+		totalFrames++;
 		if (t - T0 >= 5000)
 		{
 			GLfloat seconds = (t - T0) / 1000.0;
@@ -560,6 +564,15 @@ Draw(void)
 						 fps);
 			T0 = t;
 			Frames = 0;
+		}
+
+		if ((runTime != -1) && ((t - StartTime) >= runTime))
+		{
+		    double totalSec, avgFPS;
+		    totalSec = (double)t / 1000.0;
+		    avgFPS = (double)(totalFrames)/totalSec;
+		    printf("Total of %ld frames after %g seconds, %g FPS (avg). \n", totalFrames, totalSec, avgFPS);
+		    exit(0);
 		}
 	}
 }
@@ -903,6 +916,12 @@ main(int argc, char *argv[])
 				break;
 			}
 		}
+		else if (strcmp(argv[i], "-d") == 0)
+		{
+		    i++;
+		    runTime = atoi(argv[i]);
+		    runTime *= 1000; /* glutGet reports ms, not seconds */
+		}
 		else
 		{
 			printf("Bad option: %s\n", argv[i]);
@@ -920,6 +939,7 @@ main(int argc, char *argv[])
 		printf("  -v N  specify number of views for CAVE mode\n");
 		printf("  -t N  specify number of tiles per view for CAVE mode\n");
 		printf("  -fs   create a full-screen window\n");
+		printf("  -d N  exit application after N seconds of runtime. Default is to run forever.\n");
 		exit(0);
 	}
 
