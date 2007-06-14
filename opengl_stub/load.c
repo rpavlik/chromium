@@ -390,6 +390,7 @@ StartMothership(void)
 	char *argv[1000];
 	int i, arg;
 	char procName[1000], currentDir[1000], **args;
+	char portString[10];
 
 	crGetProcName(procName, 999);
 	crGetCurrentDir(currentDir, 999);
@@ -418,7 +419,6 @@ StartMothership(void)
 			argv[arg++] = currentDir;
 		else if (crStrcmp(args[i], "%m") == 0) {
 			/* generate random port for mothership */
-			char portString[10];
 			mothershipPort = GenerateMothershipPort();
 			if (mothershipPort < 0) {
 				crError("Unable to allocate a port for mothership");
