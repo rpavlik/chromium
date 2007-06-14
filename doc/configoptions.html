@@ -1714,12 +1714,14 @@ bird driver</a> (bird.h and bird.dll).
 </a><h2 class="PageSubHeading"><a name="vnc">VNC SPU</a></h2>
 <p>
 The <code>vnc</code> SPU allows one to view Chromium rendering remotely with a VNC viewer.
-The VNC SPU is derived from the Render SPU.
-It renders the incoming OpenGL command stream into a window.
-Upon SwapBuffers, the window contents are read back and saved into a buffer.
+The VNC SPU is derived from the Passthrough SPU.
+It should normally be followed by a Render SPU in the SPU chain.
+The basic idea is the VNC SPU maintains a simulated framebuffer which
+contains images rendered by the Render SPU.
+The framebuffer is updated upon SwapBuffers() and glFinish/Flush().
 In another thread, a VNC server is running.
-It accepts connections from VNC viewers and returns the window image that
-was saved in the buffer.
+It accepts connections from VNC viewers and returns an image of the
+VNC SPU's framebuffer.
 </p>
 <p>
 For more information about VNC see
@@ -1747,15 +1749,6 @@ For more information about VNC see
     <td width="100%" class="ConfigDesc" height="38">
        Width and height of the screen buffer.
        Default is [1024, 768].
-    </td>
-  </tr>
-  <tr>
-    <td width="19%" class="ConfigOption" height="38">max_update_rate</td>
-    <td width="12%" class="ConfigType" height="38">Integer</td>
-    <td width="100%" class="ConfigDesc" height="38">
-       Maximum frame rate at which to send updates to VNC clients/viewers.
-       Useful for load balancing.
-       Default is 10 frames per second.
     </td>
   </tr>
 </tbody>
