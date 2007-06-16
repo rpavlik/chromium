@@ -281,6 +281,15 @@ void SERVER_DISPATCH_APIENTRY crServerDispatchViewport( GLint x, GLint y, GLsize
 		 mural->viewportValidated = GL_FALSE;
 	}
 
-	/* always dispatch to be safe */
-	cr_server.head_spu->dispatch_table.Viewport( x, y, width, height );
+	if (mural->numExtents == 0) {
+		/* non-tiling arrangment */
+		cr_server.head_spu->dispatch_table.Viewport(x, y, width, height);
+	}
+	else {
+		if (!mural->viewportValidated) {
+			CRViewportState *vp = &(cr_server.curClient->currentCtx->viewport);
+			crServerComputeViewportBounds(vp, mural);
+			crServerSetOutputBounds(mural, 0);
+		}
+	}
 }
