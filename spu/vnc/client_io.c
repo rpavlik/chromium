@@ -10,7 +10,7 @@
  * This software was authored by Constantin Kaplinsky <const@ce.cctpu.edu.ru>
  * and sponsored by HorizonLive.com, Inc.
  *
- * $Id: client_io.c,v 1.39 2007-06-14 13:52:34 brianp Exp $
+ * $Id: client_io.c,v 1.40 2007-06-21 20:32:59 brianp Exp $
  * Asynchronous interaction with VNC clients.
  */
 
@@ -446,6 +446,9 @@ static void rf_client_encodings_data(void)
     REGION_UNION(&cl->pending_region, &cl->pending_region, &cl->copy_region);
     REGION_EMPTY(&cl->copy_region);
   }
+
+  crDebug("In rf_client_encodings_data(), cl->enc_prefer=0x%x pixel_size=%d",
+          cl->enc_prefer, vnc_spu.pixel_size);
 
   if (cl->enc_prefer == RFB_ENCODING_RAW24) {
     if (vnc_spu.pixel_size == 0 || vnc_spu.pixel_size == 24) {
