@@ -627,7 +627,8 @@ SwapScreenBuffers(void)
 	vncspuGetScreenRects(&sb->dirtyRegion);
 
 	/* If we can't drop frames, we always have to send _something_ */
-	if (REGION_NIL(&sb->dirtyRegion)) {
+	if (REGION_NIL(&sb->dirtyRegion) ||
+		miRegionArea(&sb->dirtyRegion) == 0) {
 		/* make dummy 1x1 region */
 		BoxRec b;
 		b.x1 = b.y1 = 0;
@@ -636,7 +637,6 @@ SwapScreenBuffers(void)
 		CRASSERT(miRegionArea(&sb->dirtyRegion) > 0);
 	}
 
-	CRASSERT(miRegionArea(&sb->dirtyRegion) > 0);
 	return GL_TRUE;
 }
 
