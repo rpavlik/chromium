@@ -76,7 +76,7 @@ void packspuGatherConfiguration( const SPU *child_spu )
 	}
 	else
 	{
-		crError( "Bad server specification for Pack SPU %d", pack_spu.id );
+		crError( "Invalid number of crservers specified for pack SPU (%d) only 1 is allowed", num_servers);
 	}
 
 	pack_spu.buffer_size = crMothershipGetMTU( conn );
