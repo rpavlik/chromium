@@ -55,6 +55,65 @@ for func_name in keys:
 	if apiutil.Category(func_name) == "Chromium":
 		print '\t{ "cr%s", (CR_PROC) cr%s },' % (func_name, func_name)
 
+print """
+\t/* GLX functions */
+#ifdef CR_GLX_VERSION_1_0
+\t/* GLX 1.0 */
+\t{ "glXChooseVisual", (CR_PROC) glXChooseVisual },
+\t{ "glXCopyContext", (CR_PROC) glXCopyContext },
+\t{ "glXCreateContext", (CR_PROC) glXCreateContext },
+\t{ "glXCreateGLXPixmap", (CR_PROC) glXCreateGLXPixmap },
+\t{ "glXDestroyContext", (CR_PROC) glXDestroyContext },
+\t{ "glXDestroyGLXPixmap", (CR_PROC) glXDestroyGLXPixmap },
+\t{ "glXGetConfig", (CR_PROC) glXGetConfig },
+\t{ "glXGetCurrentContext", (CR_PROC) glXGetCurrentContext },
+\t{ "glXGetCurrentDrawable", (CR_PROC) glXGetCurrentDrawable },
+\t{ "glXIsDirect", (CR_PROC) glXIsDirect },
+\t{ "glXMakeCurrent", (CR_PROC) glXMakeCurrent },
+\t{ "glXQueryExtension", (CR_PROC) glXQueryExtension },
+\t{ "glXQueryVersion", (CR_PROC) glXQueryVersion },
+\t{ "glXSwapBuffers", (CR_PROC) glXSwapBuffers },
+\t{ "glXUseXFont", (CR_PROC) glXUseXFont },
+\t{ "glXWaitGL", (CR_PROC) glXWaitGL },
+\t{ "glXWaitX", (CR_PROC) glXWaitX },
+#endif
+#ifdef CR_GLX_VERSION_1_1
+\t/* GLX 1.1 */
+\t{ "glXGetClientString", (CR_PROC) glXGetClientString },
+\t{ "glXQueryServerString", (CR_PROC) glXQueryServerString },
+\t{ "glXQueryExtensionsString", (CR_PROC) glXQueryExtensionsString },
+#endif
+#ifdef CR_GLX_VERSION_1_2
+\t/* GLX 1.2 */
+\t{ "glXGetCurrentDisplay", (CR_PROC) glXGetCurrentDisplay },
+#endif
+#ifdef CR_GLX_VERSION_1_3
+\t/* GLX 1.3 */
+\t{ "glXChooseFBConfig", (CR_PROC) glXChooseFBConfig },
+\t{ "glXCreateNewContext", (CR_PROC) glXCreateNewContext },
+\t{ "glXCreatePbuffer", (CR_PROC) glXCreatePbuffer },
+\t{ "glXCreatePixmap", (CR_PROC) glXCreatePixmap },
+\t{ "glXCreateWindow", (CR_PROC) glXCreateWindow },
+\t{ "glXDestroyPbuffer", (CR_PROC) glXDestroyPbuffer },
+\t{ "glXDestroyPixmap", (CR_PROC) glXDestroyPixmap },
+\t{ "glXDestroyWindow", (CR_PROC) glXDestroyWindow },
+\t{ "glXGetCurrentReadDrawable", (CR_PROC) glXGetCurrentReadDrawable },
+\t{ "glXGetFBConfigAttrib", (CR_PROC) glXGetFBConfigAttrib },
+\t{ "glXGetFBConfigs", (CR_PROC) glXGetFBConfigs },
+\t{ "glXGetSelectedEvent", (CR_PROC) glXGetSelectedEvent },
+\t{ "glXGetVisualFromFBConfig", (CR_PROC) glXGetVisualFromFBConfig },
+\t{ "glXMakeContextCurrent", (CR_PROC) glXMakeContextCurrent },
+\t{ "glXQueryContext", (CR_PROC) glXQueryContext },
+\t{ "glXQueryDrawable", (CR_PROC) glXQueryDrawable },
+\t{ "glXSelectEvent", (CR_PROC) glXSelectEvent },
+#endif
+#ifdef CR_GLX_VERSION_1_4
+\t/* GLX 1.4 */
+\t/* nothing */
+#endif
+"""
+
+
 
 print """
 	{ NULL, NULL }

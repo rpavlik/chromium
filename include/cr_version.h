@@ -104,4 +104,12 @@
 #define CR_SGIS_texture_edge_clamp 1
 #define CR_SGIS_generate_mipmap 1
 
+#ifdef GLX
+# define CR_GLX_VERSION_1_0 1
+# define CR_GLX_VERSION_1_1 1
+# define CR_GLX_VERSION_1_2 1
+# define CR_GLX_VERSION_1_3 1
+# define CR_GLX_VERSION_1_4 1
+#endif /* GLX */
+
 #endif /* CR_VERSION_H */
