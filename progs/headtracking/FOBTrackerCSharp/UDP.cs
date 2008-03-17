@@ -61,6 +61,7 @@ namespace FlockOfBirds {
         s.AppendFormat("{0} ", pos[i]);
       }
 
+			s.Replace(',', '.');
       s.Append("0 0 0 1 ");
       s.Append("c");
 
