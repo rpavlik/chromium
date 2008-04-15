@@ -37,7 +37,6 @@ void crUnpackExtendBufferDataARB( void )
 	GLvoid *data = DATA_POINTER( sizeof(int) + 16, GLvoid );
 
 	CRASSERT(sizeof(GLsizeiptrARB) == 4);
-	CRASSERT(usage == GL_STATIC_DRAW_ARB);
 
 	cr_unpackDispatch.BufferDataARB( target, size, data, usage );
 }
