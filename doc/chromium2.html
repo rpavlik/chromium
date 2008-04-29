@@ -985,6 +985,55 @@
     </p><code class="Command">tilesort = SPU("tilesort")<br>
     tilesort.Conf("bucket_mode", "broadcast")<br></code>
     <p>
+	<!-- Section below added by DLP on 29 Apr 2008 -->
+	<p>
+	  If you're having trouble with the first demo 
+	  <span class="CrProg">atlantis</span> and you're on Windows, check if you 
+	  are using the compiler associated with Microsoft Visual Studio 2005 (or 
+	  higher). If so, then a possible issue concerns the 
+	  <span class="File">atlantis.exe.manifest</span> file. Check to see if 
+	  this file exists (after a <SPAN class="App">make</SPAN>) in the 
+	  <span class="Directory">bin\WIN_NT</span> directory just under the main 
+	  Chromium directory.
+	</p>
+
+	<p>
+	  Manifest files are a bit tricky and you may see runtime (dynamic) 
+	  linking problems if the manifests are not handled properly. In 
+	  particular, you may see an error with regard to linking with 
+	  <span class="File">MSVCR80D.dll</span> or a similar file name. 
+	</p>
+
+	<p>
+	  A kludge to work around this problem is to embed the manifest files 
+	  in the executables. So, try the following command line as described 
+	  in an <a href="http://msdn2.microsoft.com/en-us/library/ms235591(VS.80).aspx">
+	  MSDN note</a>.
+	</a>
+
+	<p class="Command">
+	  1: % cd bin/WIN_NT<br>
+	  2: % mt.exe -manifest atlantis.exe.manifest -outputresource:atlantis.exe;1 
+	</p>
+
+	<p>
+	  This kludge is necessary since Chromium in Windows copies the 
+	  <span class="File">atlantis.exe</span> file to a temporary directory 
+	  before it spawns the executable as a new process. This copy procedure, 
+	  unfortunately, does not include the 
+	  <span class="File">altantis.exe.manifest</span> file. Thus, with the 
+	  embedding above, the manifest information becomes inherent to the 
+	  executable file and is correctly copied when Chromium spanws 
+	  <span class="File">atlantis.exe</span>.
+	</p>
+
+	<p>
+	  So, if this solution solves your problem with executing the 
+	  <span class="CrProg">atlantis</span> demo, then you will also need to 
+	  embed manifest files (if they exist) in all the OpenGL executables that 
+	  you want to run with Chromium on Windows. 
+	</p>
+	<!-- Section above added by DLP on 29 Apr 2008 -->
       For other problems try the <a href="FAQ.html">FAQ.</a>
     </p>
     <p>
