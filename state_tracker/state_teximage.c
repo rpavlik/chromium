@@ -593,8 +593,8 @@ crStateTexImage1D(GLenum target, GLint level, GLint internalFormat,
 
 void STATE_APIENTRY
 crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
-									GLsizei width, GLsizei height, GLint border,
-									GLenum format, GLenum type, const GLvoid * pixels)
+                  GLsizei width, GLsizei height, GLint border,
+                  GLenum format, GLenum type, const GLvoid * pixels)
 {
 	CRContext *g = GetCurrentContext();
 	CRTextureState *t = &(g->texture);
@@ -629,7 +629,8 @@ crStateTexImage2D(GLenum target, GLint level, GLint internalFormat,
 	/* compute size of image buffer */
 	if (is_distrib) {
 		tl->bytes = crStrlen((char *) pixels) + 1;
-		tl->bytes += crImageSize(format, GL_UNSIGNED_BYTE, width, height);
+                if (type == GL_TRUE)  /* write mode */
+		    tl->bytes += crImageSize(format, GL_UNSIGNED_BYTE, width, height);
 	}
 	else if (IsProxyTarget(target)) {
 		tl->bytes = 0;
