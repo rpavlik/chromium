@@ -55,6 +55,7 @@ showWin( void )
 }
 
 
+#ifdef USE_CRUT_MENUS
 static void
 handleMenu( int value )
 {
@@ -64,7 +65,6 @@ handleMenu( int value )
     crutSendMenuEvent( &crut_api, menuID, retValue );
 }
 
-#ifdef USE_CRUT_MENUS
 static void
 pushMenu( apiMenu* newMenu )
 {
@@ -191,8 +191,6 @@ end_hndl(void *data, const char *el)
 	}
     }
 }
-#endif /* USE_CRUT_MENUS */
-
 
 static int 
 addToValueList( int menuID, int value )
@@ -217,7 +215,6 @@ addToValueList( int menuID, int value )
     return crut_server.endValue->index;
 }
 
-#ifdef USE_CRUT_MENUS
 static void
 buildValueArray(void)
 {
@@ -238,7 +235,6 @@ buildValueArray(void)
 	crFree(temp);
     } 
 }
-#endif /* USE_CRUT_MENUS */
 
 static int
 buildGLUTMenu( apiMenu* node)
@@ -267,7 +263,6 @@ buildGLUTMenu( apiMenu* node)
     return menu;
 }
 
-#ifdef USE_CRUT_MENUS
 static void
 buildMenu(void)
 {
@@ -297,7 +292,7 @@ buildMenu(void)
 
     buildValueArray();
 }
-#endif
+#endif /* USE_CRUT_MENUS */
 
 static void 
 crutInitServer(char *mothership, int argc, char *argv[])
