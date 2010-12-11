@@ -32,8 +32,7 @@ void perfspuDump( char *str )
 	if ( perf_spu.mothership_log )
 		crMothershipSendString ( perf_spu.conn, NULL, "logperf %s", str );
 	else {
-		fprintf( perf_spu.log_file, str );
-		fprintf( perf_spu.log_file, "\n" );
+		fprintf( perf_spu.log_file, "%s\n", str );
 	}
 }
 
