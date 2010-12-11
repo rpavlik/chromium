@@ -1,4 +1,3 @@
-.cvsignore
 tilesortspu.c
 tilesortspu_proto.h
 tilesortspu_diffapi.c

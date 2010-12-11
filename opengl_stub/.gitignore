@@ -1,4 +1,3 @@
-.cvsignore
 stub_common.pyc
 Linux_exports.s
 getprocaddress.c

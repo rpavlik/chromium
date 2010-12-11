@@ -1,5 +1,4 @@
-.cvsignore
+*.pyc
 bin
 lib
 built
-

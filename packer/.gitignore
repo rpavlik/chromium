@@ -1,4 +1,3 @@
-.cvsignore
 packer.def
 pack_currenttypes.pyc
 pack_bbox.c

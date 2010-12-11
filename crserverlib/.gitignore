@@ -1,4 +1,3 @@
-.cvsignore
 get_sizes.pyc
 get_components.pyc
 server_dispatch.h
