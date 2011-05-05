@@ -25,4 +25,10 @@ set(SOURCES
 	url.c
 	warp.c
 )
+set(GENERATED
+	debug_opcodes.c
+)
+# TODO: generate these files!
+
+
 add_library(crutil SHARED ${SOURCES})

@@ -14,5 +14,15 @@ set(SOURCES
 	packspu_swapbuf.c
 	packspu_pixel.c
 )
+set(GENERATED
+	packspu.c
+	packspu_get.c
+	packspu_flush.c
+	packspu_beginend.c
+	packspu_proto.h
+)
+# TODO: generate these files!
+
+
 add_library(packspu SHARED ${SOURCES})
 target_link_libraries(packspu crutil spuload crmothership crstate packspu_crpacker_copy)

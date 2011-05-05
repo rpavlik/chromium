@@ -48,5 +48,46 @@ set(SOURCES
 	packertestQueriesARB.c
 	packertestglobal.c
 )
+set(GENERATED
+	packertest0.c
+	packertest100.c
+	packertest125.c
+	packertest150.c
+	packertest175.c
+	packertest200.c
+	packertest225.c
+	packertest250.c
+	packertest25.c
+	packertest275.c
+	packertest300.c
+	packertest325.c
+	packertest350.c
+	packertest375.c
+	packertest400.c
+	packertest425.c
+	packertest450.c
+	packertest475.c
+	packertest500.c
+	packertest50.c
+	packertest525.c
+	packertest550.c
+	packertest575.c
+	packertest75.c
+	packertestBlendFuncSeparateEXT.c
+	packertest.c
+	packertestColorTable.c
+	packertestColorTableEXT.c
+	packertestCombinerInputNV.c
+	packertest.h
+	packertestTexImage1D.c
+	packertestTexImage2D.c
+	packertestTexImage3D.c
+	packertestTexSubImage1D.c
+	packertestTexSubImage2D.c
+	packertestTexSubImage3D.c
+)
+# TODO: generate these files!
+
+
 add_executable(packertest ${SOURCES})
 target_link_libraries(packertest crutil crfaker crmothership spuload)

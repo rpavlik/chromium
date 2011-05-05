@@ -49,5 +49,32 @@ set(SOURCES
 	pack_texture.c
 	pack_swap_texture.c
 )
+set(GENERATED
+	packer.def
+	../include/cr_packfunctions.h
+	../include/cr_opcodes.h
+	../include/state/cr_currentpointers.h
+	pack_bbox.c
+	pack_current.c
+	packer.c
+	pack_arrays_swap.c
+	pack_bounds_swap.c
+	pack_bufferobject_swap.c
+	pack_client_swap.c
+	pack_clipplane_swap.c
+	pack_fog_swap.c
+	pack_lights_swap.c
+	pack_materials_swap.c
+	pack_matrices_swap.c
+	pack_misc_swap.c
+	pack_pixels_swap.c
+	pack_point_swap.c
+	pack_program_swap.c
+	pack_regcombiner_swap.c
+	pack_stipple_swap.c
+)
+# TODO: generate these files!
+
+
 add_library(crpacker SHARED ${SOURCES})
 target_link_libraries(crpacker crutil)

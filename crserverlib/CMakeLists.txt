@@ -29,4 +29,14 @@ set(SOURCES
 	server_winpos.c
 	server_writeback.c
 )
+set(GENERATED
+	server_dispatch.h
+	server_dispatch.c
+	server_get.c
+	server_retval.c
+	server_simpleget.c
+)
+# TODO: generate these files!
+
+
 add_library(crserverlib STATIC ${SOURCES})

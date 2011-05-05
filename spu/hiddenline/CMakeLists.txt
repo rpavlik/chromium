@@ -11,5 +11,13 @@ set(SOURCES
 	hiddenlinespu_pixel.c
 	hiddenlinespu_swap.c
 )
+set(GENERATED
+	hiddenlinespu.c
+	hiddenlinespu_pixel.c
+	hiddenlinespu_proto.h
+)
+# TODO: generate these files!
+
+
 add_library(hiddenlinespu SHARED ${SOURCES})
 target_link_libraries(hiddenlinespu spuload crutil crmothership crpacker crstate hiddenlinespu_crpacker_copy hiddenlinespu_crunpacker_copy)

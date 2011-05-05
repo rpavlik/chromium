@@ -7,5 +7,15 @@ set(SOURCES
 	glloader.c
 	choosevisual.c
 )
+set(GENERATED
+	..//include/spu_dispatch_table.h
+	dispatch.c
+	spucopy.c
+	spuchange.c
+	glloader.c
+)
+# TODO: generate these files!
+
+
 add_library(spuload SHARED ${SOURCES})
 target_link_libraries(spuload crutil crmothership)

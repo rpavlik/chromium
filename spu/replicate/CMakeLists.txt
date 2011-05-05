@@ -17,5 +17,16 @@ set(SOURCES
 	replicatespu_swapbuf.c
 	replicatespu_pixel.c
 )
+set(GENERATED
+	replicatespu.c
+	replicatespu_beginend.c
+	replicatespu_proto.h
+	replicatespu_diffapi.c
+	replicatespu_generate.c
+	replicatespu_stateapi.c
+)
+# TODO: generate these files!
+
+
 add_library(replicatespu SHARED ${SOURCES})
 target_link_libraries(replicatespu crutil spuload crmothership crstate crdlm replicatespu_crpacker_copy)

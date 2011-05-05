@@ -10,5 +10,11 @@ set(SOURCES
 	printspu_misc.c
 	printspu_tex.c
 )
+set(GENERATED
+	printspu.c
+)
+# TODO: generate these files!
+
+
 add_library(printspu SHARED ${SOURCES})
 target_link_libraries(printspu crutil crmothership spuload)

@@ -23,5 +23,12 @@ set(SOURCES
 	unpack_texture.c
 	unpack_writeback.c
 )
+set(GENERATED
+	unpack.c
+	unpack_extend.h
+)
+# TODO: generate these files!
+
+
 add_library(crunpacker SHARED ${SOURCES})
 target_link_libraries(crunpacker crutil spuload crpacker)

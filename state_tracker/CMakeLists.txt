@@ -48,5 +48,26 @@ set(SOURCES
 	state_stencil_gen.c
 	state_viewport_gen.c
 )
+set(GENERATED
+	state_get.c
+	state_isenabled.c
+	state.def
+	../include/state/cr_statefuncs.h
+	state_buffer_gen.c
+	state_current_gen.c
+	state_fog_gen.c
+	state_hint_gen.c
+	state_lighting_gen.c
+	state_line_gen.c
+	state_multisample_gen.c
+	state_point_gen.c
+	state_polygon_gen.c
+	state_regcombiner_gen.c
+	state_stencil_gen.c
+	state_viewport_gen.c
+)
+# TODO: generate these files!
+
+
 add_library(crstate STATIC ${SOURCES})
 target_link_libraries(crstate spuload crutil crmothership)
