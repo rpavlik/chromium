@@ -47,4 +47,4 @@ set(GENERATED
 
 
 add_library(tilesortspu SHARED ${SOURCES})
-target_link_libraries(tilesortspu crutil crmothership crdlm spuload crstate tilesortspu_crpacker_copy)
+target_link_libraries(tilesortspu crutil crmothership crdlm spuload crstate)

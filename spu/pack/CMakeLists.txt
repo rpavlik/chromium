@@ -25,4 +25,4 @@ set(GENERATED
 
 
 add_library(packspu SHARED ${SOURCES})
-target_link_libraries(packspu crutil spuload crmothership crstate packspu_crpacker_copy)
+target_link_libraries(packspu crutil spuload crmothership crstate)
