@@ -1,3 +1,4 @@
+include_directories(.)
 set(SOURCES
 	bbox.c
 	bufpool.c
@@ -32,3 +33,5 @@ set(GENERATED
 
 
 add_library(crutil SHARED ${SOURCES})
+
+target_link_libraries(crutil ${EXTRA_LIBS})

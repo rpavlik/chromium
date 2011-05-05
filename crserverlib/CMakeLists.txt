@@ -72,3 +72,4 @@ add_custom_command(OUTPUT server_simpleget.c
 	DEPENDS ${GENERATION_DEPS} ${CMAKE_CURRENT_SOURCE_DIR}/server_simpleget.py ${CMAKE_CURRENT_SOURCE_DIR}/get_sizes.py)
 
 add_library(crserverlib STATIC ${SOURCES})
+target_link_libraries(crserverlib ${EXTRA_LIBS})

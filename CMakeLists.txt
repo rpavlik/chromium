@@ -2,13 +2,26 @@ cmake_minimum_required(VERSION 2.8)
 project(cr)
 
 find_package(PythonInterp REQUIRED)
+find_package(Threads)
 
-add_definitions(-DLINUX -DLinux -DCHROMIUM_THREADSAFE=1)
+set(EXTRA_LIBS)
+if(CMAKE_THREAD_LIBS_INIT)
+	set(CHROMIUM_THREADSAFE ON)
+	list(APPEND EXTRA_LIBS ${CMAKE_THREAD_LIBS_INIT})
+	add_definitions(-DCHROMIUM_THREADSAFE=1)
+else()
+	set(CHROMIUM_THREADSAFE OFF)
+endif()
+
+
+add_definitions(-DLINUX -DLinux)
+
+	list(APPEND EXTRA_LIBS dl m)
 
 include_directories(include)
 
 add_subdirectory(util)
-#add_subdirectory(mothership)
+add_subdirectory(mothership)
 #add_subdirectory(spu_loader)
 #add_subdirectory(packer)
 #add_subdirectory(state_tracker)
