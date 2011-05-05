@@ -14,7 +14,7 @@ else()
 endif()
 
 
-add_definitions(-DLINUX -DLinux)
+add_definitions(-DLINUX -DLinux -fPIC)
 
 	list(APPEND EXTRA_LIBS dl m)
 
