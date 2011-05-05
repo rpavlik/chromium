@@ -12,27 +12,32 @@ def getVariableList(var):
 #print getTargetOutput("PROGRAM")
 
 def getSources():
-	#return ["%s.c" % fn.strip() for fn in getTargetOutput("FILES").split()]
 	return ["%s.c" % fn.strip() for fn in getVariableList("FILES")]
 
 def getTarget():
 	ret = {}
-	prog = getTargetOutput("PROGRAM").strip()
-	lib = getTargetOutput("LIBRARY").strip()
+	prog = getVariable("PROGRAM")
+	lib = getVariable("LIBRARY")
 	if len(prog) > 0:
 		return prog, "add_executable(%s ${SOURCES})\n" % prog
 	elif len(lib) > 0:
-		if getTargetOutput("SHARED") == "1":
+		if getVariable("SHARED") == "1":
 			return lib, "add_library(%s SHARED ${SOURCES})\n" % lib
 		else:
 			return lib, "add_library(%s STATIC ${SOURCES})\n" % lib
 	else:
 		raise Exception("Not a lib or a program!")
+
+
 with open("CMakeLists.txt","w") as cmake:
 	cmake.write("set(SOURCES\n")
 	cmake.writelines(["\t%s\n" % fn for fn in getSources()])
 	cmake.write(")\n")
-	
+
 	target, targetline = getTarget()
 	cmake.write(targetline)
+
+	libs = getVariableList("LIBRARIES")
+	if len(libs) > 0:
+		cmake.write("target_link_libraries(%s %s)" % (target, " ".join(libs)))
 
