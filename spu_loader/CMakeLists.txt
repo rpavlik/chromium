@@ -19,3 +19,7 @@ set(GENERATED
 
 add_library(spuload SHARED ${SOURCES})
 target_link_libraries(spuload crutil crmothership)
+
+#TODOLINUXSPECIFIC
+find_package(X11 REQUIRED)
+target_link_libraries(spuload ${X11_LIBRARIES})
