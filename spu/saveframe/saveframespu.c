@@ -14,6 +14,8 @@
 #include "saveframespu.h"
 
 #define MAX_FILENAME_LENGTH 511
+#define FALSE 0
+#define TRUE 1
 
 SaveFrameSPU saveframe_spu;
 
