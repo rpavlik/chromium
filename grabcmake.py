@@ -38,6 +38,15 @@ def doDirectory(sourcedir):
 			cmake.writelines(["\t%s\n" % fn for fn in getSources()])
 			cmake.write(")\n")
 
+			generated = getVariableList("PRECOMP")
+			if len(generated) > 0:
+
+				cmake.write("set(GENERATED\n")
+				cmake.writelines(["\t%s\n" % fn for fn in generated])
+				cmake.write(")\n")
+				cmake.write("# TODO: generate these files!\n\n\n")
+
+
 			cmake.write(targetline)
 
 			libs = [ lib.replace("-l", "") for lib in getVariableList("LIBRARIES") ]
