@@ -1,0 +1,5 @@
+add_subdirectory(client)
+add_subdirectory(reset)
+add_subdirectory(quit)
+add_subdirectory(server)
+add_subdirectory(status)
