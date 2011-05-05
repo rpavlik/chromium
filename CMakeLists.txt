@@ -13,23 +13,22 @@ else()
 	set(CHROMIUM_THREADSAFE OFF)
 endif()
 
-
+#TODOLINUXSPECIFIC
 add_definitions(-DLINUX -DLinux -fPIC)
-
-	list(APPEND EXTRA_LIBS dl m)
+list(APPEND EXTRA_LIBS dl m)
 
 include_directories(include)
 
 add_subdirectory(util)
 add_subdirectory(mothership)
-#add_subdirectory(spu_loader)
-#add_subdirectory(packer)
-#add_subdirectory(state_tracker)
-#add_subdirectory(unpacker)
-#add_subdirectory(dlm)
-#add_subdirectory(spu)
-#add_subdirectory(app_faker)
-#add_subdirectory(opengl_stub)
+add_subdirectory(spu_loader)
+add_subdirectory(packer)
+add_subdirectory(state_tracker)
+add_subdirectory(unpacker)
+add_subdirectory(dlm)
+add_subdirectory(spu)
+add_subdirectory(app_faker)
+add_subdirectory(opengl_stub)
 add_subdirectory(crserverlib)
 #add_subdirectory(crserver)
 #add_subdirectory(crutapi)
