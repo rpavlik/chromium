@@ -32,6 +32,9 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/unpack.c
 	${CMAKE_CURRENT_BINARY_DIR}/unpack_extend.h
 )
+generate_with_python(unpack_extend.py unpack_extend.h unpacker_special ${APIFILES})
+generate_with_python(unpack.py unpack.c unpacker_special unpack_extend.h ${APIFILES})
+
 add_library(crunpacker SHARED ${SOURCES})
 target_link_libraries(crunpacker crutil spuload crpacker)
 target_link_libraries(crunpacker ${EXTRA_LIBS})
