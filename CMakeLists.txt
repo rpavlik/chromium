@@ -13,9 +13,7 @@ else()
 	set(CHROMIUM_THREADSAFE OFF)
 endif()
 
-#TODOLINUXSPECIFIC
-add_definitions(-DLINUX -DLinux -fPIC)
-list(APPEND EXTRA_LIBS dl m)
+include(arch.cmake)
 
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/include ${PROJECT_BINARY_DIR}/include/state)
 include_directories(include ${PROJECT_BINARY_DIR}/include)
