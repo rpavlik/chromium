@@ -39,3 +39,8 @@ add_subdirectory(crutclientapi)
 add_subdirectory(crutproxy)
 add_subdirectory(crutserver)
 add_subdirectory(progs)
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ ${PROJECT_BINARY_DIR}/include/
+	DESTINATION include
+	COMPONENT dev
+	PATTERN .gitignore EXCLUDE)
