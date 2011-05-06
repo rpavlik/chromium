@@ -13,12 +13,19 @@ set(SOURCES
 	spuinit.c
 	spuload.c
 	choosevisual.c
-	${CMAKE_CURRENT_BINARY_DIR}/..//include/spu_dispatch_table.h
+	${PROJECT_BINARY_DIR}/include/spu_dispatch_table.h
 	${CMAKE_CURRENT_BINARY_DIR}/dispatch.c
 	${CMAKE_CURRENT_BINARY_DIR}/spucopy.c
 	${CMAKE_CURRENT_BINARY_DIR}/spuchange.c
 	${CMAKE_CURRENT_BINARY_DIR}/glloader.c
 )
+
+generate_with_python(dispatchheader.py ${PROJECT_BINARY_DIR}/include/spu_dispatch_table.h ${APIFILES})
+generate_with_python(dispatch.py dispatch.c ${APIFILES})
+generate_with_python(spucopy.py spucopy.c ${APIFILES})
+generate_with_python(spuchange.py spuchange.c ${APIFILES})
+generate_with_python(glloader.py glloader.c ${APIFILES})
+
 add_library(spuload SHARED ${SOURCES})
 target_link_libraries(spuload crutil crmothership)
 

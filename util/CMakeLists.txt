@@ -1,11 +1,5 @@
 include_directories(.)
 
-set(GENERATED
-	debug_opcodes.c
-)
-# TODO: generate these files!
-
-
 set(SOURCES
 	bbox.c
 	bufpool.c
@@ -34,5 +28,7 @@ set(SOURCES
 	warp.c
 	${CMAKE_CURRENT_BINARY_DIR}/debug_opcodes.c
 )
+generate_with_python(debug_opcodes.py debug_opcodes.c ${APIFILES})
+
 add_library(crutil SHARED ${SOURCES})
 target_link_libraries(crutil ${EXTRA_LIBS})

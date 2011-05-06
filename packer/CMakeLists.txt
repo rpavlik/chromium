@@ -59,9 +59,9 @@ set(SOURCES
 	pack_texture.c
 	pack_swap_texture.c
 	${CMAKE_CURRENT_BINARY_DIR}/packer.def
-	${CMAKE_CURRENT_BINARY_DIR}/../include/cr_packfunctions.h
-	${CMAKE_CURRENT_BINARY_DIR}/../include/cr_opcodes.h
-	${CMAKE_CURRENT_BINARY_DIR}/../include/state/cr_currentpointers.h
+	${PROJECT_BINARY_DIR}/include/cr_packfunctions.h
+	${PROJECT_BINARY_DIR}/include/cr_opcodes.h
+	${PROJECT_BINARY_DIR}/include/state/cr_currentpointers.h
 	${CMAKE_CURRENT_BINARY_DIR}/pack_bbox.c
 	${CMAKE_CURRENT_BINARY_DIR}/pack_current.c
 	${CMAKE_CURRENT_BINARY_DIR}/packer.c
@@ -81,6 +81,44 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/pack_regcombiner_swap.c
 	${CMAKE_CURRENT_BINARY_DIR}/pack_stipple_swap.c
 )
+
+generate_with_python(packer_defs.py packer.def ${APIFILES})
+generate_with_python(pack_header.py ${PROJECT_BINARY_DIR}/include/cr_packfunctions.h packer_special ${APIFILES})
+generate_with_python(opcodes.py ${PROJECT_BINARY_DIR}/include/cr_opcodes.h ${APIFILES})
+generate_with_python(pack_currentheader.py ${PROJECT_BINARY_DIR}/include/state/cr_currentpointers.h pack_currenttypes.py)
+generate_with_python(packer_bbox.py pack_bbox.c)
+generate_with_python(pack_current.py pack_current.c pack_currenttypes.py)
+generate_with_python(packer.py packer.c packer_special ${APIFILES})
+
+set(SWAP
+	pack_arrays_swap.c
+	pack_bounds_swap.c
+	pack_bufferobject_swap.c
+	pack_client_swap.c
+	pack_clipplane_swap.c
+	pack_fog_swap.c
+	pack_lights_swap.c
+	pack_materials_swap.c
+	pack_matrices_swap.c
+	pack_misc_swap.c
+	pack_pixels_swap.c
+	pack_point_swap.c
+	pack_program_swap.c
+	pack_regcombiner_swap.c
+	pack_stipple_swap.c)
+
+foreach(SWAPSOURCE ${SWAP})
+	string(REPLACE "_swap" "" ORIGSOURCE ${SWAPSOURCE})
+	add_custom_command(OUTPUT ${SWAPSOURCE}
+		COMMAND
+		${PYTHON_EXECUTABLE} pack_swap.py ${ORIGSOURCE} > ${CMAKE_CURRENT_BINARY_DIR}/${SWAPSOURCE}
+		WORKING_DIRECTORY
+		${CMAKE_CURRENT_SOURCE_DIR}
+		DEPENDS
+		${CMAKE_CURRENT_SOURCE_DIR}/pack_swap.py
+		${CMAKE_CURRENT_SOURCE_DIR}/${ORIGSOURCE})
+endforeach()
+
 add_library(crpacker SHARED ${SOURCES})
 target_link_libraries(crpacker crutil)
 target_link_libraries(crpacker ${EXTRA_LIBS})
