@@ -7,3 +7,7 @@ set(SOURCES
 add_library(perfspu SHARED ${SOURCES})
 target_link_libraries(perfspu spuload crutil crmothership)
 target_link_libraries(perfspu ${EXTRA_LIBS})
+install(TARGETS perfspu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

@@ -17,3 +17,7 @@ generate_with_python(histogram.py
 add_library(apihistogramspu SHARED ${SOURCES})
 target_link_libraries(apihistogramspu spuload crutil crmothership)
 target_link_libraries(apihistogramspu ${EXTRA_LIBS})
+install(TARGETS apihistogramspu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

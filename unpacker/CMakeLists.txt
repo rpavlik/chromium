@@ -34,15 +34,35 @@ generate_with_python(unpack.py unpack.c unpacker_special unpack_extend.h ${APIFI
 add_library(crunpacker SHARED ${SOURCES})
 target_link_libraries(crunpacker crutil spuload crpacker)
 target_link_libraries(crunpacker ${EXTRA_LIBS})
+install(TARGETS crunpacker
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)
 add_library(crserver_crunpacker_copy SHARED ${SOURCES})
 target_link_libraries(crserver_crunpacker_copy crutil spuload crpacker)
 target_link_libraries(crserver_crunpacker_copy ${EXTRA_LIBS})
+install(TARGETS crserver_crunpacker_copy
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)
 add_library(hiddenlinespu_crunpacker_copy SHARED ${SOURCES})
 target_link_libraries(hiddenlinespu_crunpacker_copy crutil spuload crpacker)
 target_link_libraries(hiddenlinespu_crunpacker_copy ${EXTRA_LIBS})
+install(TARGETS hiddenlinespu_crunpacker_copy
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)
 add_library(injectorspu_crunpacker_copy SHARED ${SOURCES})
 target_link_libraries(injectorspu_crunpacker_copy crutil spuload crpacker)
 target_link_libraries(injectorspu_crunpacker_copy ${EXTRA_LIBS})
+install(TARGETS injectorspu_crunpacker_copy
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)
 add_library(archsplitspu_crunpacker_copy SHARED ${SOURCES})
 target_link_libraries(archsplitspu_crunpacker_copy crutil spuload crpacker)
 target_link_libraries(archsplitspu_crunpacker_copy ${EXTRA_LIBS})
+install(TARGETS archsplitspu_crunpacker_copy
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

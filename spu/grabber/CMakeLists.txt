@@ -7,3 +7,7 @@ set(SOURCES
 add_library(grabberspu SHARED ${SOURCES})
 target_link_libraries(grabberspu crutil crmothership spuload)
 target_link_libraries(grabberspu ${EXTRA_LIBS})
+install(TARGETS grabberspu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

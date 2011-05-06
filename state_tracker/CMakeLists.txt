@@ -108,3 +108,7 @@ generate_with_python(state_funcs.py ${PROJECT_BINARY_DIR}/include/state/cr_state
 add_library(crstate STATIC ${SOURCES})
 target_link_libraries(crstate spuload crutil crmothership)
 target_link_libraries(crstate ${EXTRA_LIBS})
+install(TARGETS crstate
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

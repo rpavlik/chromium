@@ -33,3 +33,7 @@ set(SOURCES
 add_library(replicatespu SHARED ${SOURCES})
 target_link_libraries(replicatespu crutil spuload crmothership crstate crdlm replicatespu_crpacker_copy)
 target_link_libraries(replicatespu ${EXTRA_LIBS})
+install(TARGETS replicatespu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)
