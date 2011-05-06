@@ -91,6 +91,16 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/packertestTexSubImage2D.c
 	${CMAKE_CURRENT_BINARY_DIR}/packertestTexSubImage3D.c
 )
+
+create_local_apifiles()
+add_custom_command(OUTPUT
+		${GENERATED}
+		COMMAND
+		${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/packertest.py
+		DEPENDS
+		${CMAKE_CURRENT_SOURCE_DIR}/packertest.py
+		${LOCAL_APIFILES})
+
 add_executable(packertest  ${SOURCES})
 target_link_libraries(packertest crutil crfaker crmothership spuload)
 target_link_libraries(packertest ${EXTRA_LIBS})
