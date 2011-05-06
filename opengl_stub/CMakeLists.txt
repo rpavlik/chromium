@@ -24,3 +24,7 @@ set(SOURCES
 add_library(crfaker SHARED ${SOURCES})
 target_link_libraries(crfaker crmothership crutil spuload)
 target_link_libraries(crfaker ${EXTRA_LIBS})
+install(TARGETS crfaker
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

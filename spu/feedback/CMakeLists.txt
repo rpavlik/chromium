@@ -17,3 +17,7 @@ set(SOURCES
 add_library(feedbackspu SHARED ${SOURCES})
 target_link_libraries(feedbackspu spuload crutil crmothership crstate)
 target_link_libraries(feedbackspu ${EXTRA_LIBS})
+install(TARGETS feedbackspu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

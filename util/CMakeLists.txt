@@ -35,3 +35,7 @@ set(SOURCES
 )
 add_library(crutil SHARED ${SOURCES})
 target_link_libraries(crutil ${EXTRA_LIBS})
+install(TARGETS crutil
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

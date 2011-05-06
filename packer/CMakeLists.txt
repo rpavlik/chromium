@@ -84,18 +84,42 @@ set(SOURCES
 add_library(crpacker SHARED ${SOURCES})
 target_link_libraries(crpacker crutil)
 target_link_libraries(crpacker ${EXTRA_LIBS})
+install(TARGETS crpacker
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)
 add_library(packspu_crpacker_copy SHARED ${SOURCES})
 target_link_libraries(packspu_crpacker_copy crutil)
 target_link_libraries(packspu_crpacker_copy ${EXTRA_LIBS})
+install(TARGETS packspu_crpacker_copy
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)
 add_library(tilesortspu_crpacker_copy SHARED ${SOURCES})
 target_link_libraries(tilesortspu_crpacker_copy crutil)
 target_link_libraries(tilesortspu_crpacker_copy ${EXTRA_LIBS})
+install(TARGETS tilesortspu_crpacker_copy
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)
 add_library(hiddenlinespu_crpacker_copy SHARED ${SOURCES})
 target_link_libraries(hiddenlinespu_crpacker_copy crutil)
 target_link_libraries(hiddenlinespu_crpacker_copy ${EXTRA_LIBS})
+install(TARGETS hiddenlinespu_crpacker_copy
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)
 add_library(archsplitspu_crpacker_copy SHARED ${SOURCES})
 target_link_libraries(archsplitspu_crpacker_copy crutil)
 target_link_libraries(archsplitspu_crpacker_copy ${EXTRA_LIBS})
+install(TARGETS archsplitspu_crpacker_copy
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)
 add_library(replicatespu_crpacker_copy SHARED ${SOURCES})
 target_link_libraries(replicatespu_crpacker_copy crutil)
 target_link_libraries(replicatespu_crpacker_copy ${EXTRA_LIBS})
+install(TARGETS replicatespu_crpacker_copy
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

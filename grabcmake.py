@@ -58,13 +58,20 @@ def doDirectory(sourcedir):
 				cmake.write("target_link_libraries(%s %s)\n" % (target, " ".join(libs)))
 
 			cmake.write("target_link_libraries(%s ${EXTRA_LIBS})\n" % target)
-
+			cmake.write("""install(TARGETS %s
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)\n""" % target)
 			for copy in getVariableList("LIB_COPIES"):
 				copytarget = "%s_%s_copy" % (copy, target)
 				cmake.write("%s(%s %s ${SOURCES})\n" % (targetcommand, copytarget, targettype))
 				if len(libs) > 0:
 					cmake.write("target_link_libraries(%s %s)\n" % (copytarget, " ".join(libs)))
 				cmake.write("target_link_libraries(%s ${EXTRA_LIBS})\n" % copytarget)
+				cmake.write("""install(TARGETS %s
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)\n""" % copytarget)
 		dirs = getVariableList("SUBDIRS")
 		if len(dirs) > 0:
 			cmake.writelines(["add_subdirectory(%s)\n" % dirname for dirname in dirs])

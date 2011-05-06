@@ -25,3 +25,7 @@ set(SOURCES
 add_library(crdlm SHARED ${SOURCES})
 target_link_libraries(crdlm spuload crutil crmothership crstate)
 target_link_libraries(crdlm ${EXTRA_LIBS})
+install(TARGETS crdlm
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

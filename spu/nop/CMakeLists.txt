@@ -13,3 +13,7 @@ set(SOURCES
 add_library(nopspu SHARED ${SOURCES})
 target_link_libraries(nopspu crmothership crutil spuload crstate)
 target_link_libraries(nopspu ${EXTRA_LIBS})
+install(TARGETS nopspu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

@@ -7,3 +7,7 @@ set(SOURCES
 )
 add_executable(dlistperf1  ${SOURCES})
 target_link_libraries(dlistperf1 ${EXTRA_LIBS})
+install(TARGETS dlistperf1
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

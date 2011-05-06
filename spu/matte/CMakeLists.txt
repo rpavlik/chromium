@@ -7,3 +7,7 @@ set(SOURCES
 add_library(mattespu SHARED ${SOURCES})
 target_link_libraries(mattespu spuload crutil crmothership)
 target_link_libraries(mattespu ${EXTRA_LIBS})
+install(TARGETS mattespu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

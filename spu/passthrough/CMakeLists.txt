@@ -12,3 +12,7 @@ set(SOURCES
 add_library(passthroughspu SHARED ${SOURCES})
 target_link_libraries(passthroughspu crutil)
 target_link_libraries(passthroughspu ${EXTRA_LIBS})
+install(TARGETS passthroughspu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

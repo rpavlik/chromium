@@ -43,3 +43,7 @@ set(SOURCES
 )
 add_library(crserverlib STATIC ${SOURCES})
 target_link_libraries(crserverlib ${EXTRA_LIBS})
+install(TARGETS crserverlib
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

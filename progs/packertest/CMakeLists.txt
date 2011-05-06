@@ -94,3 +94,7 @@ set(SOURCES
 add_executable(packertest  ${SOURCES})
 target_link_libraries(packertest crutil crfaker crmothership spuload)
 target_link_libraries(packertest ${EXTRA_LIBS})
+install(TARGETS packertest
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

@@ -12,3 +12,7 @@ set(SOURCES
 add_library(errorspu SHARED ${SOURCES})
 target_link_libraries(errorspu crutil)
 target_link_libraries(errorspu ${EXTRA_LIBS})
+install(TARGETS errorspu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

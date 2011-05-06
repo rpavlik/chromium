@@ -29,3 +29,7 @@ set(SOURCES
 add_library(packspu SHARED ${SOURCES})
 target_link_libraries(packspu crutil spuload crmothership crstate packspu_crpacker_copy)
 target_link_libraries(packspu ${EXTRA_LIBS})
+install(TARGETS packspu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

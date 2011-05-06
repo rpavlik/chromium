@@ -27,3 +27,7 @@ set(SOURCES
 add_library(vncspu SHARED ${SOURCES})
 target_link_libraries(vncspu spuload crutil crmothership)
 target_link_libraries(vncspu ${EXTRA_LIBS})
+install(TARGETS vncspu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

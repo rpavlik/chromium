@@ -22,3 +22,7 @@ set(SOURCES
 add_library(spuload SHARED ${SOURCES})
 target_link_libraries(spuload crutil crmothership)
 target_link_libraries(spuload ${EXTRA_LIBS})
+install(TARGETS spuload
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

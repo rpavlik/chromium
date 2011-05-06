@@ -7,3 +7,7 @@ set(SOURCES
 add_library(arrayspu SHARED ${SOURCES})
 target_link_libraries(arrayspu spuload crutil crmothership crstate)
 target_link_libraries(arrayspu ${EXTRA_LIBS})
+install(TARGETS arrayspu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

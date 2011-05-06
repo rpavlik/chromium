@@ -24,3 +24,7 @@ set(SOURCES
 add_library(hiddenlinespu SHARED ${SOURCES})
 target_link_libraries(hiddenlinespu spuload crutil crmothership crpacker crstate hiddenlinespu_crpacker_copy hiddenlinespu_crunpacker_copy)
 target_link_libraries(hiddenlinespu ${EXTRA_LIBS})
+install(TARGETS hiddenlinespu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)

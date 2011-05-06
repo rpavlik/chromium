@@ -20,3 +20,7 @@ set(SOURCES
 add_library(printspu SHARED ${SOURCES})
 target_link_libraries(printspu crutil crmothership spuload)
 target_link_libraries(printspu ${EXTRA_LIBS})
+install(TARGETS printspu
+	LIBRARY DESTINATION lib COMPONENT runtime
+	ARCHIVE DESTINATION lib COMPONENT dev
+	RUNTIME DESTINATION bin COMPONENT runtime)
