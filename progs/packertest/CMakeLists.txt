@@ -1,4 +1,5 @@
 include_directories(.)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(GENERATED
 	packertest0.c
 	packertest100.c
@@ -94,12 +95,20 @@ set(SOURCES
 
 create_local_apifiles()
 add_custom_command(OUTPUT
-		${GENERATED}
-		COMMAND
-		${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/packertest.py
-		DEPENDS
-		${CMAKE_CURRENT_SOURCE_DIR}/packertest.py
-		${LOCAL_APIFILES})
+	${CMAKE_CURRENT_BINARY_DIR}/packertest_special
+	COMMAND
+	${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/packertest_special ${CMAKE_CURRENT_BINARY_DIR}/packertest_special
+	DEPENDS
+	packertest_special)
+
+add_custom_command(OUTPUT
+	${GENERATED}
+	COMMAND
+	${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/packertest.py -v -d
+	DEPENDS
+	${CMAKE_CURRENT_SOURCE_DIR}/packertest.py
+	${CMAKE_CURRENT_BINARY_DIR}/packertest_special
+	${LOCAL_APIFILES})
 
 include_directories(${OPENGL_INCLUDE_DIR})
 include_directories(${GLUT_INCLUDE_DIR})

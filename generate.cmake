@@ -38,13 +38,13 @@ function(create_local_apifiles)
 	file(MAKE_DIRECTORY ${LOCAL_APIDIR})
 
 	add_custom_command(OUTPUT
-		${PROJECT_SOURCE_DIR}/glapi_parser/APIspec.txt
+		${LOCAL_APIDIR}/APIspec.txt
 		COMMAND
 		${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/glapi_parser/APIspec.txt ${LOCAL_APIDIR}/APIspec.txt
 		DEPENDS
 		${PROJECT_SOURCE_DIR}/glapi_parser/APIspec.txt)
 	add_custom_command(OUTPUT
-		${PROJECT_SOURCE_DIR}/glapi_parser/apiutil.py
+		${LOCAL_APIDIR}/apiutil.py
 		COMMAND
 		${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/glapi_parser/apiutil.py ${LOCAL_APIDIR}/apiutil.py
 		DEPENDS
