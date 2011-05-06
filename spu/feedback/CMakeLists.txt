@@ -1,11 +1,4 @@
 include_directories(.)
-set(GENERATED
-	feedbackspu.c
-	feedbackspu_state.c
-	feedbackspu_proto.h
-)
-# TODO: generate these files!
-
 
 set(SOURCES
 	feedbackspu_config.c
@@ -14,6 +7,25 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/feedbackspu_state.c
 	${CMAKE_CURRENT_BINARY_DIR}/feedbackspu_proto.h
 )
+
+generate_with_python(feedback.py
+	feedbackspu.c
+	feedback_special
+	feedback_state_special
+	select_special
+	${CMAKE_CURRENT_BINARY_DIR}/feedbackspu_proto.h
+	${APIFILES})
+generate_with_python(feedback_state.py
+	feedbackspu_state.c
+	feedback_state_special
+	${APIFILES})
+generate_with_python(feedbackspu_proto.py
+	feedbackspu_proto.h
+	feedback_special
+	feedback_state_special
+	select_special
+	${APIFILES})
+
 add_library(feedbackspu SHARED ${SOURCES})
 target_link_libraries(feedbackspu spuload crutil crmothership crstate)
 target_link_libraries(feedbackspu ${EXTRA_LIBS})

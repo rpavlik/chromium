@@ -1,13 +1,4 @@
 include_directories(.)
-set(GENERATED
-	packspu.c
-	packspu_get.c
-	packspu_flush.c
-	packspu_beginend.c
-	packspu_proto.h
-)
-# TODO: generate these files!
-
 
 set(SOURCES
 	packspu_bufferobject.c

@@ -10,6 +10,10 @@ set(SOURCES
 	apihistogramspu_init.c
 	${CMAKE_CURRENT_BINARY_DIR}/apihistogramspu.c
 )
+
+generate_with_python(histogram.py
+	apihistogramspu.c
+	${APIFILES})
 add_library(apihistogramspu SHARED ${SOURCES})
 target_link_libraries(apihistogramspu spuload crutil crmothership)
 target_link_libraries(apihistogramspu ${EXTRA_LIBS})

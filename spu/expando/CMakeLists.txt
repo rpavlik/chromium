@@ -1,9 +1,4 @@
 include_directories(.)
-set(GENERATED
-	expando.c
-)
-# TODO: generate these files!
-
 
 set(SOURCES
 	expandospu.c
@@ -11,6 +6,12 @@ set(SOURCES
 	expandospu_init.c
 	${CMAKE_CURRENT_BINARY_DIR}/expando.c
 )
+
+generate_with_python(expando.py
+	expando.c
+	expando_special
+	${APIFILES})
+
 add_library(expandospu SHARED ${SOURCES})
 target_link_libraries(expandospu spuload crutil crmothership crdlm crstate)
 target_link_libraries(expandospu ${EXTRA_LIBS})
