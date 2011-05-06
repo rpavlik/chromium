@@ -1,5 +1,12 @@
-set(SOURCES
+include_directories(.)
+set(GENERATED
 	unpack.c
+	unpack_extend.h
+)
+# TODO: generate these files!
+
+
+set(SOURCES
 	unpack_arrays.c
 	unpack_bounds.c
 	unpack_bufferobject.c
@@ -22,13 +29,21 @@ set(SOURCES
 	unpack_stipple.c
 	unpack_texture.c
 	unpack_writeback.c
+	${CMAKE_CURRENT_BINARY_DIR}/unpack.c
+	${CMAKE_CURRENT_BINARY_DIR}/unpack_extend.h
 )
-set(GENERATED
-	unpack.c
-	unpack_extend.h
-)
-# TODO: generate these files!
-
-
 add_library(crunpacker SHARED ${SOURCES})
 target_link_libraries(crunpacker crutil spuload crpacker)
+target_link_libraries(crunpacker ${EXTRA_LIBS})
+add_library(crserver_crunpacker_copy SHARED ${SOURCES})
+target_link_libraries(crserver_crunpacker_copy crutil spuload crpacker)
+target_link_libraries(crserver_crunpacker_copy ${EXTRA_LIBS})
+add_library(hiddenlinespu_crunpacker_copy SHARED ${SOURCES})
+target_link_libraries(hiddenlinespu_crunpacker_copy crutil spuload crpacker)
+target_link_libraries(hiddenlinespu_crunpacker_copy ${EXTRA_LIBS})
+add_library(injectorspu_crunpacker_copy SHARED ${SOURCES})
+target_link_libraries(injectorspu_crunpacker_copy crutil spuload crpacker)
+target_link_libraries(injectorspu_crunpacker_copy ${EXTRA_LIBS})
+add_library(archsplitspu_crunpacker_copy SHARED ${SOURCES})
+target_link_libraries(archsplitspu_crunpacker_copy crutil spuload crpacker)
+target_link_libraries(archsplitspu_crunpacker_copy ${EXTRA_LIBS})

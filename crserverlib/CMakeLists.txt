@@ -1,5 +1,14 @@
-
 include_directories(.)
+set(GENERATED
+	server_dispatch.h
+	server_dispatch.c
+	server_get.c
+	server_retval.c
+	server_simpleget.c
+)
+# TODO: generate these files!
+
+
 set(SOURCES
 	server_main.c
 	server_boundsinfo.c
@@ -8,10 +17,7 @@ set(SOURCES
 	server_clip.c
 	server_config.c
 	server_context.c
-	${CMAKE_CURRENT_BINARY_DIR}/server_dispatch.c
-	${CMAKE_CURRENT_BINARY_DIR}/server_dispatch.h
 	server_gentextures.c
-	${CMAKE_CURRENT_BINARY_DIR}/server_get.c
 	server_getmap.c
 	server_getstring.c
 	server_getpointer.c
@@ -23,21 +29,17 @@ set(SOURCES
 	server_papi.c
 	server_projmatrix.c
 	server_readpixels.c
-	${CMAKE_CURRENT_BINARY_DIR}/server_retval.c
-	${CMAKE_CURRENT_BINARY_DIR}/server_simpleget.c
 	server_stream.c
 	server_tiles.c
 	server_viewport.c
 	server_window.c
 	server_winpos.c
 	server_writeback.c
-)
-set(GENERATED
-	server_dispatch.h
-	server_dispatch.c
-	server_get.c
-	server_retval.c
-	server_simpleget.c
+	${CMAKE_CURRENT_BINARY_DIR}/server_dispatch.h
+	${CMAKE_CURRENT_BINARY_DIR}/server_dispatch.c
+	${CMAKE_CURRENT_BINARY_DIR}/server_get.c
+	${CMAKE_CURRENT_BINARY_DIR}/server_retval.c
+	${CMAKE_CURRENT_BINARY_DIR}/server_simpleget.c
 )
 # TODO: generate these files!
 set(GENERATION_DEPS

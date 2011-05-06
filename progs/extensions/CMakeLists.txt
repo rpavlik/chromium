@@ -1,3 +1,4 @@
+include_directories(.)
 add_subdirectory(common)
 add_subdirectory(ARB_multitexture2)
 add_subdirectory(ARB_texture_cube_map)

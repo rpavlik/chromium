@@ -1,3 +1,4 @@
+include_directories(.)
 set(SOURCES
 	trackerspu.c
 	trackerspu_config.c
@@ -6,3 +7,4 @@ set(SOURCES
 )
 add_library(trackerspu SHARED ${SOURCES})
 target_link_libraries(trackerspu spuload crutil crmothership)
+target_link_libraries(trackerspu ${EXTRA_LIBS})

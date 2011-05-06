@@ -1,3 +1,4 @@
+include_directories(.)
 set(SOURCES
 	perfspu.c
 	perfspu_config.c
@@ -5,3 +6,4 @@ set(SOURCES
 )
 add_library(perfspu SHARED ${SOURCES})
 target_link_libraries(perfspu spuload crutil crmothership)
+target_link_libraries(perfspu ${EXTRA_LIBS})

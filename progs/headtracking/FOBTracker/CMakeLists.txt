@@ -1,3 +1,4 @@
+include_directories(.)
 set(SOURCES
 	moc_fobtracker.c
 	FlockOfBird.c
@@ -6,4 +7,5 @@ set(SOURCES
 	RotationPreview.c
 	udp.c
 )
-add_executable(FOBTracker ${SOURCES})
+add_executable(FOBTracker  ${SOURCES})
+target_link_libraries(FOBTracker ${EXTRA_LIBS})

@@ -1,3 +1,4 @@
+include_directories(.)
 set(SOURCES
 	mattespu.c
 	mattespu_config.c
@@ -5,3 +6,4 @@ set(SOURCES
 )
 add_library(mattespu SHARED ${SOURCES})
 target_link_libraries(mattespu spuload crutil crmothership)
+target_link_libraries(mattespu ${EXTRA_LIBS})

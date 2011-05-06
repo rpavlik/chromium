@@ -1,3 +1,4 @@
+include_directories(.)
 add_subdirectory(client)
 add_subdirectory(reset)
 add_subdirectory(quit)

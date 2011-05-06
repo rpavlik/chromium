@@ -1,3 +1,4 @@
+include_directories(.)
 set(SOURCES
 	wetspu.c
 	wetspu_config.c
@@ -5,3 +6,4 @@ set(SOURCES
 )
 add_library(wetspu SHARED ${SOURCES})
 target_link_libraries(wetspu spuload crutil crmothership)
+target_link_libraries(wetspu ${EXTRA_LIBS})

@@ -1,3 +1,4 @@
+include_directories(.)
 set(SOURCES
 	renderspu.c
 	renderspu_config.c
@@ -6,3 +7,4 @@ set(SOURCES
 )
 add_library(renderspu SHARED ${SOURCES})
 target_link_libraries(renderspu crutil crmothership spuload)
+target_link_libraries(renderspu ${EXTRA_LIBS})

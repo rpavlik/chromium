@@ -1,3 +1,4 @@
+include_directories(.)
 set(SOURCES
 	dist_texturespu.c
 	dist_texturespu_config.c
@@ -6,3 +7,4 @@ set(SOURCES
 )
 add_library(dist_texturespu SHARED ${SOURCES})
 target_link_libraries(dist_texturespu spuload crutil crmothership)
+target_link_libraries(dist_texturespu ${EXTRA_LIBS})

@@ -1,8 +1,10 @@
+include_directories(.)
 set(SOURCES
 	ball.c
 	plyfile.c
 	pmodel.c
 	readply.c
 )
-add_executable(pmodel ${SOURCES})
+add_executable(pmodel  ${SOURCES})
 target_link_libraries(pmodel crutil crfaker)
+target_link_libraries(pmodel ${EXTRA_LIBS})

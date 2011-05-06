@@ -1,3 +1,4 @@
+include_directories(.)
 add_subdirectory(tester)
 add_subdirectory(options)
 add_subdirectory(error)

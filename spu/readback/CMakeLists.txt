@@ -1,3 +1,4 @@
+include_directories(.)
 set(SOURCES
 	readbackspu.c
 	readbackspu_config.c
@@ -5,3 +6,4 @@ set(SOURCES
 )
 add_library(readbackspu SHARED ${SOURCES})
 target_link_libraries(readbackspu spuload crutil crmothership)
+target_link_libraries(readbackspu ${EXTRA_LIBS})

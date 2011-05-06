@@ -1,5 +1,7 @@
+include_directories(.)
 set(SOURCES
 	main.c
 )
-add_executable(EXT_texture_filter_anisotropic ${SOURCES})
+add_executable(EXT_texture_filter_anisotropic  ${SOURCES})
 target_link_libraries(EXT_texture_filter_anisotropic crutil crextensionscommon)
+target_link_libraries(EXT_texture_filter_anisotropic ${EXTRA_LIBS})

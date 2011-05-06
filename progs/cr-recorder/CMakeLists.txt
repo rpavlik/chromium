@@ -1,3 +1,4 @@
+include_directories(.)
 set(SOURCES
 	cr-recorder.c
 	recorderdialog.c
@@ -6,5 +7,6 @@ set(SOURCES
 	moc_recorderdialogimpl.c
 	moc_cr-recorder.c
 )
-add_executable(cr-recorder ${SOURCES})
+add_executable(cr-recorder  ${SOURCES})
 target_link_libraries(cr-recorder crutil crpacker)
+target_link_libraries(cr-recorder ${EXTRA_LIBS})

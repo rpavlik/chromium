@@ -1,5 +1,7 @@
+include_directories(.)
 set(SOURCES
 	main.c
 )
-add_executable(NV_fog_distance ${SOURCES})
+add_executable(NV_fog_distance  ${SOURCES})
 target_link_libraries(NV_fog_distance crutil crextensionscommon)
+target_link_libraries(NV_fog_distance ${EXTRA_LIBS})

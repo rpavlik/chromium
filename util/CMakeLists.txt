@@ -1,4 +1,11 @@
 include_directories(.)
+
+set(GENERATED
+	debug_opcodes.c
+)
+# TODO: generate these files!
+
+
 set(SOURCES
 	bbox.c
 	bufpool.c
@@ -25,13 +32,7 @@ set(SOURCES
 	timer.c
 	url.c
 	warp.c
+	${CMAKE_CURRENT_BINARY_DIR}/debug_opcodes.c
 )
-set(GENERATED
-	debug_opcodes.c
-)
-# TODO: generate these files!
-
-
 add_library(crutil SHARED ${SOURCES})
-
 target_link_libraries(crutil ${EXTRA_LIBS})
