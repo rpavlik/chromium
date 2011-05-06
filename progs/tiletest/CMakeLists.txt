@@ -2,7 +2,10 @@ include_directories(.)
 set(SOURCES
 	tiletest.c
 )
+include_directories(${OPENGL_INCLUDE_DIR})
+include_directories(${GLUT_INCLUDE_DIR})
 add_executable(tiletest  ${SOURCES})
+target_link_libraries(tiletest ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 target_link_libraries(tiletest ${EXTRA_LIBS})
 install(TARGETS tiletest
 	LIBRARY DESTINATION lib COMPONENT runtime

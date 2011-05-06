@@ -50,10 +50,18 @@ def doDirectory(sourcedir):
 			cmake.write(")\n")
 
 
+			libs = [ lib.replace("-l", "") for lib in getVariableList("LIBRARIES") ]
+			if getVariable("OPENGL"):
+				libs.append("${OPENGL_LIBRARIES}")
+				cmake.write("include_directories(${OPENGL_INCLUDE_DIR})\n")
 
+
+			if getVariable("GLUT"):
+				libs.append("${GLUT_LIBRARIES}")
+				cmake.write("include_directories(${GLUT_INCLUDE_DIR})\n")
 			cmake.write("%s(%s %s ${SOURCES})\n" % (targetcommand, target, targettype))
 
-			libs = [ lib.replace("-l", "") for lib in getVariableList("LIBRARIES") ]
+
 			if len(libs) > 0:
 				cmake.write("target_link_libraries(%s %s)\n" % (target, " ".join(libs)))
 

@@ -101,8 +101,10 @@ add_custom_command(OUTPUT
 		${CMAKE_CURRENT_SOURCE_DIR}/packertest.py
 		${LOCAL_APIFILES})
 
+include_directories(${OPENGL_INCLUDE_DIR})
+include_directories(${GLUT_INCLUDE_DIR})
 add_executable(packertest  ${SOURCES})
-target_link_libraries(packertest crutil crfaker crmothership spuload)
+target_link_libraries(packertest crutil crfaker crmothership spuload ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 target_link_libraries(packertest ${EXTRA_LIBS})
 install(TARGETS packertest
 	LIBRARY DESTINATION lib COMPONENT runtime

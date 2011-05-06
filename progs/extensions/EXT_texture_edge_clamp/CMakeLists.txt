@@ -2,8 +2,10 @@ include_directories(.)
 set(SOURCES
 	main.c
 )
+include_directories(${OPENGL_INCLUDE_DIR})
+include_directories(${GLUT_INCLUDE_DIR})
 add_executable(EXT_texture_edge_clamp  ${SOURCES})
-target_link_libraries(EXT_texture_edge_clamp crutil crextensionscommon)
+target_link_libraries(EXT_texture_edge_clamp crutil crextensionscommon ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 target_link_libraries(EXT_texture_edge_clamp ${EXTRA_LIBS})
 install(TARGETS EXT_texture_edge_clamp
 	LIBRARY DESTINATION lib COMPONENT runtime
