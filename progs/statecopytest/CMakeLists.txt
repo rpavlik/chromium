@@ -1,5 +1,7 @@
+include_directories(.)
 set(SOURCES
 	statecopytest.c
 )
-add_executable(statecopytest ${SOURCES})
+add_executable(statecopytest  ${SOURCES})
 target_link_libraries(statecopytest crutil spuload crmothership crstate)
+target_link_libraries(statecopytest ${EXTRA_LIBS})

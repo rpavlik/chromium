@@ -1,3 +1,4 @@
+include_directories(.)
 set(SOURCES
 	motionblurspu.c
 	motionblurspu_config.c
@@ -5,3 +6,4 @@ set(SOURCES
 )
 add_library(motionblurspu SHARED ${SOURCES})
 target_link_libraries(motionblurspu spuload crutil crmothership)
+target_link_libraries(motionblurspu ${EXTRA_LIBS})

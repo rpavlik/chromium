@@ -1,3 +1,4 @@
+include_directories(.)
 set(SOURCES
 	templatespu.c
 	templatespu_config.c
@@ -5,3 +6,4 @@ set(SOURCES
 )
 add_library(templatespu SHARED ${SOURCES})
 target_link_libraries(templatespu spuload crutil crmothership)
+target_link_libraries(templatespu ${EXTRA_LIBS})

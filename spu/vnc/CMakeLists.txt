@@ -1,3 +1,4 @@
+include_directories(.)
 set(SOURCES
 	vncspu.c
 	vncspu_config.c
@@ -25,3 +26,4 @@ set(SOURCES
 )
 add_library(vncspu SHARED ${SOURCES})
 target_link_libraries(vncspu spuload crutil crmothership)
+target_link_libraries(vncspu ${EXTRA_LIBS})

@@ -1,3 +1,4 @@
+include_directories(.)
 add_subdirectory(arbfraglight)
 add_subdirectory(atlantis)
 add_subdirectory(bboxtest)
