@@ -1,4 +1,5 @@
 include_directories(.)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(SOURCES
 	hiddenlinespu_buffer.c

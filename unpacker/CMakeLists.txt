@@ -1,9 +1,5 @@
 include_directories(.)
-set(GENERATED
-	unpack.c
-	unpack_extend.h
-)
-# TODO: generate these files!
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 
 set(SOURCES
