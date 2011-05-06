@@ -2,8 +2,10 @@ include_directories(.)
 set(SOURCES
 	arbfraglight.c
 )
+include_directories(${OPENGL_INCLUDE_DIR})
+include_directories(${GLUT_INCLUDE_DIR})
 add_executable(arbfraglight  ${SOURCES})
-target_link_libraries(arbfraglight crutil crfaker crmothership spuload)
+target_link_libraries(arbfraglight crutil crfaker crmothership spuload ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 target_link_libraries(arbfraglight ${EXTRA_LIBS})
 install(TARGETS arbfraglight
 	LIBRARY DESTINATION lib COMPONENT runtime

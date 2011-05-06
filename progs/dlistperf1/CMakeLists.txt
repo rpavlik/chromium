@@ -5,7 +5,10 @@ set(SOURCES
 	Timer.c
 	global.c
 )
+include_directories(${OPENGL_INCLUDE_DIR})
+include_directories(${GLUT_INCLUDE_DIR})
 add_executable(dlistperf1  ${SOURCES})
+target_link_libraries(dlistperf1 ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 target_link_libraries(dlistperf1 ${EXTRA_LIBS})
 install(TARGETS dlistperf1
 	LIBRARY DESTINATION lib COMPONENT runtime

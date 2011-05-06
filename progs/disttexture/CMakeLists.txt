@@ -2,7 +2,10 @@ include_directories(.)
 set(SOURCES
 	disttexture.c
 )
+include_directories(${OPENGL_INCLUDE_DIR})
+include_directories(${GLUT_INCLUDE_DIR})
 add_executable(disttexture  ${SOURCES})
+target_link_libraries(disttexture ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 target_link_libraries(disttexture ${EXTRA_LIBS})
 install(TARGETS disttexture
 	LIBRARY DESTINATION lib COMPONENT runtime

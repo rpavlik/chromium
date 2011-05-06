@@ -2,7 +2,10 @@ include_directories(.)
 set(SOURCES
 	retile.c
 )
+include_directories(${OPENGL_INCLUDE_DIR})
+include_directories(${GLUT_INCLUDE_DIR})
 add_executable(retile  ${SOURCES})
+target_link_libraries(retile ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 target_link_libraries(retile ${EXTRA_LIBS})
 install(TARGETS retile
 	LIBRARY DESTINATION lib COMPONENT runtime
