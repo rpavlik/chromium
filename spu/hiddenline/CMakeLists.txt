@@ -37,3 +37,6 @@ install(TARGETS hiddenlinespu
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev
 	RUNTIME DESTINATION bin COMPONENT runtime)
+if(WIN32)
+	target_link_libraries(hiddenlinespu user32)
+endif()
