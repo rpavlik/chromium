@@ -8,13 +8,13 @@ function(generate_with_python script output)
 		get_filename_component(output "${CMAKE_CURRENT_BINARY_DIR}/${output}" ABSOLUTE)
 	endif()
 	add_custom_command(OUTPUT
-		${output}
+		"${output}"
 		COMMAND
-		${PYTHON_EXECUTABLE} ${script} > ${output}
+		${PYTHON_EXECUTABLE} ${script} > "${output}"
 		WORKING_DIRECTORY
-		${CMAKE_CURRENT_SOURCE_DIR}
+		"${CMAKE_CURRENT_SOURCE_DIR}"
 		DEPENDS
-		${CMAKE_CURRENT_SOURCE_DIR}/${script}
+		"${CMAKE_CURRENT_SOURCE_DIR}/${script}"
 		${ARGN})
 endfunction()
 function(generate_with_python_arg script arg output)
@@ -22,13 +22,13 @@ function(generate_with_python_arg script arg output)
 		get_filename_component(output "${CMAKE_CURRENT_BINARY_DIR}/${output}" ABSOLUTE)
 	endif()
 	add_custom_command(OUTPUT
-		${output}
+		"${output}"
 		COMMAND
-		${PYTHON_EXECUTABLE} ${script} ${arg} > ${output}
+		${PYTHON_EXECUTABLE} ${script} ${arg} > "${output}"
 		WORKING_DIRECTORY
-		${CMAKE_CURRENT_SOURCE_DIR}
+		"${CMAKE_CURRENT_SOURCE_DIR}"
 		DEPENDS
-		${CMAKE_CURRENT_SOURCE_DIR}/${script}
+		"${CMAKE_CURRENT_SOURCE_DIR}/${script}"
 		${ARGN})
 endfunction()
 
