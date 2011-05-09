@@ -4,7 +4,7 @@ set(SOURCES
 )
 include_directories(${OPENGL_INCLUDE_DIR})
 include_directories(${GLUT_INCLUDE_DIR})
-add_executable(multicontext  ${SOURCES})
+add_executable(multicontext WIN32 ${SOURCES})
 target_link_libraries(multicontext crextensionscommon ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 target_link_libraries(multicontext ${EXTRA_LIBS})
 install(TARGETS multicontext
