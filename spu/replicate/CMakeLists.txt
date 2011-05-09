@@ -1,4 +1,5 @@
 include_directories(.)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(GENERATED
 	replicatespu.c
 	replicatespu_beginend.c

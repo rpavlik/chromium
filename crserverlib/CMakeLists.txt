@@ -1,4 +1,5 @@
 include_directories(.)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(GENERATED
 	server_dispatch.h
 	server_dispatch.c
