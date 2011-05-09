@@ -19,7 +19,7 @@ print """
 #ifndef CR_CURRENT_H
 #define CR_CURRENT_H
 
-#include "cr_limits.h"
+#include "state/cr_limits.h"
 """
 
 for k in current_fns.keys():
