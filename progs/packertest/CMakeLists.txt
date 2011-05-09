@@ -96,6 +96,9 @@ include_directories(${GLUT_INCLUDE_DIR})
 add_executable(packertest  ${SOURCES})
 target_link_libraries(packertest crutil crfaker crmothership spuload ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 target_link_libraries(packertest ${EXTRA_LIBS})
+if(X11_PLATFORM)
+	target_link_libraries(packertest ${X11_LIBRARIES})
+endif()
 install(TARGETS packertest
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev

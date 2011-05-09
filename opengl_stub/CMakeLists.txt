@@ -24,6 +24,9 @@ set(SOURCES
 add_library(crfaker SHARED ${SOURCES})
 target_link_libraries(crfaker crmothership crutil spuload)
 target_link_libraries(crfaker ${EXTRA_LIBS})
+if(X11_PLATFORM)
+	target_link_libraries(crfaker ${X11_LIBRARIES})
+endif()
 install(TARGETS crfaker
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev

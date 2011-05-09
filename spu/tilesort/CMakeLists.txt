@@ -54,6 +54,9 @@ set(SOURCES
 add_library(tilesortspu SHARED ${SOURCES})
 target_link_libraries(tilesortspu crutil crmothership crdlm spuload crstate tilesortspu_crpacker_copy)
 target_link_libraries(tilesortspu ${EXTRA_LIBS})
+if(X11_PLATFORM)
+	target_link_libraries(tilesortspu ${X11_LIBRARIES})
+endif()
 install(TARGETS tilesortspu
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev

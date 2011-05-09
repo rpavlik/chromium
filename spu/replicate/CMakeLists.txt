@@ -34,6 +34,9 @@ set(SOURCES
 add_library(replicatespu SHARED ${SOURCES})
 target_link_libraries(replicatespu crutil spuload crmothership crstate crdlm replicatespu_crpacker_copy)
 target_link_libraries(replicatespu ${EXTRA_LIBS})
+if(X11_PLATFORM)
+	target_link_libraries(replicatespu ${X11_LIBRARIES})
+endif()
 install(TARGETS replicatespu
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev
