@@ -36,3 +36,4 @@ install(TARGETS crutil
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev
 	RUNTIME DESTINATION bin COMPONENT runtime)
+add_dependencies(crutil common_includes)

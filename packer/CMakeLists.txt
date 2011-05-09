@@ -89,6 +89,11 @@ generate_with_python(pack_currentheader.py ${PROJECT_BINARY_DIR}/include/state/c
 generate_with_python(packer_bbox.py pack_bbox.c)
 generate_with_python(pack_current.py pack_current.c pack_currenttypes.py)
 generate_with_python(packer.py packer.c packer_special ${APIFILES})
+add_custom_target(common_includes ALL
+	DEPENDS
+	${PROJECT_BINARY_DIR}/include/cr_packfunctions.h
+	${PROJECT_BINARY_DIR}/include/cr_opcodes.h
+	${PROJECT_BINARY_DIR}/include/state/cr_currentpointers.h)
 
 set(SWAP
 	pack_arrays_swap.c
