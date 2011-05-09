@@ -23,6 +23,7 @@ set(SOURCES
 	region_more.c
 	rfblib.c
 	translate.c
+	vncspu.def
 )
 add_library(vncspu SHARED ${SOURCES})
 target_link_libraries(vncspu spuload crutil crmothership)

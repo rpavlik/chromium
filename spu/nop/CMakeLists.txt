@@ -4,6 +4,7 @@ set(SOURCES
 	nopspu_init.c
 	nopspu_config.c
 	${CMAKE_CURRENT_BINARY_DIR}/nopspu.c
+	nop.def
 )
 
 generate_with_python(nop.py nopspu.c nop_special ${APIFILES})

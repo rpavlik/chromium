@@ -18,6 +18,7 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/spucopy.c
 	${CMAKE_CURRENT_BINARY_DIR}/spuchange.c
 	${CMAKE_CURRENT_BINARY_DIR}/glloader.c
+	loader.def
 )
 
 generate_with_python(dispatchheader.py ${PROJECT_BINARY_DIR}/include/spu_dispatch_table.h ${APIFILES})

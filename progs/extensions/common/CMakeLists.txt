@@ -2,6 +2,7 @@ include_directories(.)
 set(SOURCES
 	logo.c
 	util.c
+	common.def
 )
 include_directories(${OPENGL_INCLUDE_DIR})
 include_directories(${GLUT_INCLUDE_DIR})

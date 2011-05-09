@@ -3,6 +3,7 @@ include_directories(.)
 set(SOURCES
 	passthroughspu_init.c
 	${CMAKE_CURRENT_BINARY_DIR}/passthroughspu.c
+	passthrough.def
 )
 generate_with_python(passthrough.py passthroughspu.c ${APIFILES})
 

@@ -14,6 +14,7 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/hiddenlinespu.c
 	${CMAKE_CURRENT_BINARY_DIR}/hiddenlinespu_pixel.c
 	${CMAKE_CURRENT_BINARY_DIR}/hiddenlinespu_proto.h
+	hiddenlinespu.def
 )
 generate_with_python(hiddenline.py
 	hiddenlinespu.c

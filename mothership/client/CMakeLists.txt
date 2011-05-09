@@ -1,6 +1,7 @@
 include_directories(.)
 set(SOURCES
 	client.c
+	client.def
 )
 add_library(crmothership SHARED ${SOURCES})
 target_link_libraries(crmothership crutil)

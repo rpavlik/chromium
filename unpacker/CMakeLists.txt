@@ -27,6 +27,7 @@ set(SOURCES
 	unpack_writeback.c
 	${CMAKE_CURRENT_BINARY_DIR}/unpack.c
 	${CMAKE_CURRENT_BINARY_DIR}/unpack_extend.h
+	unpack.def
 )
 generate_with_python(unpack_extend.py unpack_extend.h unpacker_special ${APIFILES})
 generate_with_python(unpack.py unpack.c unpacker_special unpack_extend.h ${APIFILES})

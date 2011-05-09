@@ -41,6 +41,7 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/server_get.c
 	${CMAKE_CURRENT_BINARY_DIR}/server_retval.c
 	${CMAKE_CURRENT_BINARY_DIR}/server_simpleget.c
+	crserverlib.def
 )
 # TODO: generate these files!
 set(GENERATION_DEPS

@@ -3,6 +3,7 @@ set(SOURCES
 	renderspu.c
 	renderspu_config.c
 	renderspu_init.c
+	render.def
 )
 if(WIN32)
 	list(APPEND SOURCES renderspu_wgl.c)

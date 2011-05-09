@@ -11,6 +11,7 @@ set(SOURCES
 	printspu_misc.c
 	printspu_tex.c
 	${CMAKE_CURRENT_BINARY_DIR}/printspu.c
+	print.def
 )
 generate_with_python(print.py printspu.c printspu_unimplemented_special printspu_special ${APIFILES})
 

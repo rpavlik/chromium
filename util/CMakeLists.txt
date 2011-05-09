@@ -27,6 +27,7 @@ set(SOURCES
 	url.c
 	warp.c
 	${CMAKE_CURRENT_BINARY_DIR}/debug_opcodes.c
+	util.def
 )
 generate_with_python(debug_opcodes.py debug_opcodes.c ${APIFILES})
 

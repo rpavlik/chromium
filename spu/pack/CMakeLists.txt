@@ -17,6 +17,7 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/packspu_flush.c
 	${CMAKE_CURRENT_BINARY_DIR}/packspu_beginend.c
 	${CMAKE_CURRENT_BINARY_DIR}/packspu_proto.h
+	pack.def
 )
 
 generate_with_python(packspu_proto.py

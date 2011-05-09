@@ -36,6 +36,7 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/tilesortspu_dlstate_gen.c
 	${CMAKE_CURRENT_BINARY_DIR}/tilesortspu_dlstate_gen.h
 	${CMAKE_CURRENT_BINARY_DIR}/tilesortspu_dlpacker_gen.c
+	tilesort.def
 )
 generate_with_python_arg(generator.py table tilesortspu.c tilesort_special tilesort_unimplemented_special $(APIFILES) tilesortspu_gen.h)
 generate_with_python_arg(generator.py header tilesortspu_gen.h tilesort_special tilesort_unimplemented_special $(APIFILES))

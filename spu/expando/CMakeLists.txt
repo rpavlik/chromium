@@ -5,6 +5,7 @@ set(SOURCES
 	expandospu_config.c
 	expandospu_init.c
 	${CMAKE_CURRENT_BINARY_DIR}/expando.c
+	expandospu.def
 )
 
 generate_with_python(expando.py

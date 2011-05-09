@@ -3,6 +3,7 @@ include_directories(.)
 set(SOURCES
 	errorspu_init.c
 	${CMAKE_CURRENT_BINARY_DIR}/errorspu.c
+	error.def
 )
 
 generate_with_python(error.py errorspu.c ${APIFILES})

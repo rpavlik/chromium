@@ -4,6 +4,7 @@ set(SOURCES
 	simplequeryspu_config.c
 	simplequeryspu_init.c
 	${CMAKE_CURRENT_BINARY_DIR}/simplequeryspu.c
+	simplequeryspu.def
 )
 
 generate_with_python(simplequery.py

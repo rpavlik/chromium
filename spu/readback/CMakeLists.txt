@@ -3,6 +3,7 @@ set(SOURCES
 	readbackspu.c
 	readbackspu_config.c
 	readbackspu_init.c
+	readbackspu.def
 )
 add_library(readbackspu SHARED ${SOURCES})
 target_link_libraries(readbackspu spuload crutil crmothership)
