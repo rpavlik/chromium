@@ -978,7 +978,7 @@ class CR:
 			if PORT == -1:
 				PORT = self.get_mothership_port()
 
-			for res in socket.getaddrinfo(None, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
+			for res in socket.getaddrinfo(None, PORT, socket.AF_INET, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
 				(af, socktype, proto, canonname, sa) = res
 
 				try:
