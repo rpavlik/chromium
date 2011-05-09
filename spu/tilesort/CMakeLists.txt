@@ -60,8 +60,6 @@ add_custom_command(OUTPUT
 		COMMAND
 		${PYTHON_EXECUTABLE} pinch_convert.py >> ${output}
 		COMMAND
-		${PYTHON_EXECUTABLE} pinch_convert.py >> ${output}
-		COMMAND
 		${PYTHON_EXECUTABLE} length_table.py >> ${output}
 		COMMAND
 		cat tilesortspu_pinch.c >> ${output}
