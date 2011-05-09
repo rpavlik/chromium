@@ -29,10 +29,6 @@ generate_with_python(glloader.py glloader.c ${APIFILES})
 
 add_library(spuload SHARED ${SOURCES})
 target_link_libraries(spuload crutil crmothership)
-
-#TODOLINUXSPECIFIC
-find_package(X11 REQUIRED)
-target_link_libraries(spuload ${X11_LIBRARIES})
 target_link_libraries(spuload ${EXTRA_LIBS})
 if(X11_PLATFORM)
 	target_link_libraries(spuload ${X11_LIBRARIES})
@@ -41,3 +37,6 @@ install(TARGETS spuload
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev
 	RUNTIME DESTINATION bin COMPONENT runtime)
+
+add_custom_target(spu_dispatch_table_header ALL
+	DEPENDS ${PROJECT_BINARY_DIR}/include/spu_dispatch_table.h)

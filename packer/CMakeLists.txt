@@ -127,6 +127,7 @@ endforeach()
 add_library(crpacker SHARED ${SOURCES})
 target_link_libraries(crpacker crutil)
 target_link_libraries(crpacker ${EXTRA_LIBS})
+add_dependencies(crpacker spu_dispatch_table_header)
 install(TARGETS crpacker
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev
@@ -134,6 +135,7 @@ install(TARGETS crpacker
 add_library(packspu_crpacker_copy SHARED ${SOURCES})
 target_link_libraries(packspu_crpacker_copy crutil)
 target_link_libraries(packspu_crpacker_copy ${EXTRA_LIBS})
+add_dependencies(packspu_crpacker_copy spu_dispatch_table_header)
 install(TARGETS packspu_crpacker_copy
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev
@@ -141,6 +143,7 @@ install(TARGETS packspu_crpacker_copy
 add_library(tilesortspu_crpacker_copy SHARED ${SOURCES})
 target_link_libraries(tilesortspu_crpacker_copy crutil)
 target_link_libraries(tilesortspu_crpacker_copy ${EXTRA_LIBS})
+add_dependencies(tilesortspu_crpacker_copy spu_dispatch_table_header)
 install(TARGETS tilesortspu_crpacker_copy
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev
@@ -148,6 +151,7 @@ install(TARGETS tilesortspu_crpacker_copy
 add_library(hiddenlinespu_crpacker_copy SHARED ${SOURCES})
 target_link_libraries(hiddenlinespu_crpacker_copy crutil)
 target_link_libraries(hiddenlinespu_crpacker_copy ${EXTRA_LIBS})
+add_dependencies(hiddenlinespu_crpacker_copy spu_dispatch_table_header)
 install(TARGETS hiddenlinespu_crpacker_copy
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev
@@ -155,6 +159,7 @@ install(TARGETS hiddenlinespu_crpacker_copy
 add_library(archsplitspu_crpacker_copy SHARED ${SOURCES})
 target_link_libraries(archsplitspu_crpacker_copy crutil)
 target_link_libraries(archsplitspu_crpacker_copy ${EXTRA_LIBS})
+add_dependencies(archsplitspu_crpacker_copy spu_dispatch_table_header)
 install(TARGETS archsplitspu_crpacker_copy
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev
@@ -162,6 +167,7 @@ install(TARGETS archsplitspu_crpacker_copy
 add_library(replicatespu_crpacker_copy SHARED ${SOURCES})
 target_link_libraries(replicatespu_crpacker_copy crutil)
 target_link_libraries(replicatespu_crpacker_copy ${EXTRA_LIBS})
+add_dependencies(replicatespu_crpacker_copy spu_dispatch_table_header)
 install(TARGETS replicatespu_crpacker_copy
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev
