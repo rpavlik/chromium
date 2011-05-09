@@ -81,3 +81,6 @@ install(TARGETS crserverlib
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev
 	RUNTIME DESTINATION bin COMPONENT runtime)
+
+# Requires headers
+add_dependencies(crserverlib spuload)
