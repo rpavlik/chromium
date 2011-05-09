@@ -7,6 +7,9 @@ include_directories(${GLUT_INCLUDE_DIR})
 add_executable(EXT_blend_subtract  ${SOURCES})
 target_link_libraries(EXT_blend_subtract crutil crextensionscommon ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 target_link_libraries(EXT_blend_subtract ${EXTRA_LIBS})
+if(X11_PLATFORM)
+	target_link_libraries(EXT_blend_subtract ${X11_LIBRARIES})
+endif()
 install(TARGETS EXT_blend_subtract
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev

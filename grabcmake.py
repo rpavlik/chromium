@@ -62,11 +62,15 @@ def doDirectory(sourcedir):
 				cmake.write("include_directories(${GLUT_INCLUDE_DIR})\n")
 			cmake.write("%s(%s %s ${SOURCES})\n" % (targetcommand, target, targettype))
 
-
 			if len(libs) > 0:
 				cmake.write("target_link_libraries(%s %s)\n" % (target, " ".join(libs)))
 
 			cmake.write("target_link_libraries(%s ${EXTRA_LIBS})\n" % target)
+			if "-lX11" in getVariableList("LDFLAGS"):
+				cmake.write("if(X11_PLATFORM)\n")
+				cmake.write("\ttarget_link_libraries(%s ${X11_LIBRARIES})\n" % target)
+				cmake.write("endif()\n")
+
 			cmake.write("""install(TARGETS %s
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev

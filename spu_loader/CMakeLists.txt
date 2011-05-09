@@ -34,6 +34,9 @@ target_link_libraries(spuload crutil crmothership)
 find_package(X11 REQUIRED)
 target_link_libraries(spuload ${X11_LIBRARIES})
 target_link_libraries(spuload ${EXTRA_LIBS})
+if(X11_PLATFORM)
+	target_link_libraries(spuload ${X11_LIBRARIES})
+endif()
 install(TARGETS spuload
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev

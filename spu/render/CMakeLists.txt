@@ -15,6 +15,9 @@ endif()
 add_library(renderspu SHARED ${SOURCES})
 target_link_libraries(renderspu crutil crmothership spuload)
 target_link_libraries(renderspu ${EXTRA_LIBS})
+if(X11_PLATFORM)
+	target_link_libraries(renderspu ${X11_LIBRARIES})
+endif()
 install(TARGETS renderspu
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev

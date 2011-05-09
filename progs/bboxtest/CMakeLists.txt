@@ -7,6 +7,9 @@ include_directories(${GLUT_INCLUDE_DIR})
 add_executable(bboxtest  ${SOURCES})
 target_link_libraries(bboxtest ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 target_link_libraries(bboxtest ${EXTRA_LIBS})
+if(X11_PLATFORM)
+	target_link_libraries(bboxtest ${X11_LIBRARIES})
+endif()
 install(TARGETS bboxtest
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev

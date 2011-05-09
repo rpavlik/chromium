@@ -7,6 +7,9 @@ include_directories(${GLUT_INCLUDE_DIR})
 add_executable(fonttest  ${SOURCES})
 target_link_libraries(fonttest ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 target_link_libraries(fonttest ${EXTRA_LIBS})
+if(X11_PLATFORM)
+	target_link_libraries(fonttest ${X11_LIBRARIES})
+endif()
 install(TARGETS fonttest
 	LIBRARY DESTINATION lib COMPONENT runtime
 	ARCHIVE DESTINATION lib COMPONENT dev
