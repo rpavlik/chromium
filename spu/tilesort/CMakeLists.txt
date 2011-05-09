@@ -38,22 +38,54 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/tilesortspu_dlpacker_gen.c
 	tilesort.def
 )
-generate_with_python_arg(generator.py table tilesortspu.c tilesort_special tilesort_unimplemented_special $(APIFILES) tilesortspu_gen.h)
-generate_with_python_arg(generator.py header tilesortspu_gen.h tilesort_special tilesort_unimplemented_special $(APIFILES))
-generate_with_python_arg(generator.py source tilesortspu_gen.c tilesort_special tilesort_unimplemented_special $(APIFILES) tilesortspu_gen.h)
 
-generate_with_python_arg(dlpack_generator.py table tilesortspu_dlpacker_gen.c tilesort_dlpack_ignore_special tilesortspu_dlpack_gen.h $(APIFILES))
-generate_with_python_arg(dlpack_generator.py header tilesortspu_dlpack_gen.h tilesort_dlpack_ignore_special $(APIFILES))
-generate_with_python_arg(dlpack_generator.py source tilesortspu_dlpack_gen.c tilesort_dlpack_ignore_special tilesortspu_dlpack_gen.h $(APIFILES))
+generate_with_python_arg(generator.py
+	header
+	tilesortspu_gen.h
+	tilesort_special tilesort_unimplemented_special ${APIFILES})
+generate_with_python_arg(generator.py
+	table
+	tilesortspu.c
+	tilesort_special tilesort_unimplemented_special ${APIFILES} ${CMAKE_CURRENT_BINARY_DIR}/tilesortspu_gen.h)
+generate_with_python_arg(generator.py
+	source
+	tilesortspu_gen.c
+	tilesort_special tilesort_unimplemented_special ${APIFILES} ${CMAKE_CURRENT_BINARY_DIR}/tilesortspu_gen.h)
 
-generate_with_python_arg(dlstate_generator.py table tilesortspu_dlstate_gen.c tilesortspu_dlstate_gen.h $(APIFILES))
-generate_with_python_arg(dlstate_generator.py header tilesortspu_dlstate_gen.h $(APIFILES))
+
+generate_with_python_arg(dlpack_generator.py
+	header
+	tilesortspu_dlpack_gen.h
+	tilesort_dlpack_ignore_special ${APIFILES})
+generate_with_python_arg(dlpack_generator.py
+	table
+	tilesortspu_dlpacker_gen.c
+	tilesort_dlpack_ignore_special ${CMAKE_CURRENT_BINARY_DIR}/tilesortspu_dlpack_gen.h ${APIFILES})
+generate_with_python_arg(dlpack_generator.py
+	source
+	tilesortspu_dlpack_gen.c
+	tilesort_dlpack_ignore_special ${CMAKE_CURRENT_BINARY_DIR}/tilesortspu_dlpack_gen.h ${APIFILES})
+
+generate_with_python_arg(dlstate_generator.py
+	table
+	tilesortspu_dlstate_gen.c
+	${CMAKE_CURRENT_BINARY_DIR}/tilesortspu_dlstate_gen.h
+	${APIFILES})
+generate_with_python_arg(dlstate_generator.py
+	header
+	tilesortspu_dlstate_gen.h
+	${APIFILES})
 
 generate_with_python(diffapi.py
 	tilesortspu_diffapi.c
 	${APIFILES})
 
 #TODO don't just use cat here
+if(WIN32 AND NOT UNIX)
+	set(CAT type)
+else()
+	set(CAT cat)
+endif()
 set(output ${CMAKE_CURRENT_BINARY_DIR}/tilesortspu_pinch_gen.c)
 add_custom_command(OUTPUT
 		${output}
@@ -64,7 +96,7 @@ add_custom_command(OUTPUT
 		COMMAND
 		${PYTHON_EXECUTABLE} length_table.py >> ${output}
 		COMMAND
-		cat tilesortspu_pinch.c >> ${output}
+		${CAT} tilesortspu_pinch.c >> ${output}
 		WORKING_DIRECTORY
 		${CMAKE_CURRENT_SOURCE_DIR}
 		DEPENDS
