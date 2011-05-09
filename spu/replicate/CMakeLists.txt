@@ -29,6 +29,7 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/replicatespu_diffapi.c
 	${CMAKE_CURRENT_BINARY_DIR}/replicatespu_generate.c
 	${CMAKE_CURRENT_BINARY_DIR}/replicatespu_stateapi.c
+	replicate.def
 )
 add_library(replicatespu SHARED ${SOURCES})
 target_link_libraries(replicatespu crutil spuload crmothership crstate crdlm replicatespu_crpacker_copy)

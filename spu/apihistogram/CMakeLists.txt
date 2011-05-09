@@ -9,6 +9,7 @@ set(SOURCES
 	apihistogramspu_config.c
 	apihistogramspu_init.c
 	${CMAKE_CURRENT_BINARY_DIR}/apihistogramspu.c
+	apihistogramspu.def
 )
 add_library(apihistogramspu SHARED ${SOURCES})
 target_link_libraries(apihistogramspu spuload crutil crmothership)

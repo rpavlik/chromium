@@ -32,6 +32,7 @@ set(SOURCES
 	url.c
 	warp.c
 	${CMAKE_CURRENT_BINARY_DIR}/debug_opcodes.c
+	util.def
 )
 add_library(crutil SHARED ${SOURCES})
 target_link_libraries(crutil ${EXTRA_LIBS})

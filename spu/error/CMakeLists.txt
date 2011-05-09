@@ -8,6 +8,7 @@ set(GENERATED
 set(SOURCES
 	errorspu_init.c
 	${CMAKE_CURRENT_BINARY_DIR}/errorspu.c
+	error.def
 )
 add_library(errorspu SHARED ${SOURCES})
 target_link_libraries(errorspu crutil)

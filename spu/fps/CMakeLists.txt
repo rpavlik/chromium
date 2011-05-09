@@ -3,6 +3,7 @@ set(SOURCES
 	fpsspu.c
 	fpsspu_config.c
 	fpsspu_init.c
+	fpsspu.def
 )
 add_library(fpsspu SHARED ${SOURCES})
 target_link_libraries(fpsspu spuload crutil crmothership)

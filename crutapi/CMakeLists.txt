@@ -1,6 +1,7 @@
 include_directories(.)
 set(SOURCES
 	crutapi.c
+	crutapi.def
 )
 add_library(crutapi SHARED ${SOURCES})
 target_link_libraries(crutapi crmothership crutil)

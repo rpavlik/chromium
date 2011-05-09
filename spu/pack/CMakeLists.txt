@@ -25,6 +25,7 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/packspu_flush.c
 	${CMAKE_CURRENT_BINARY_DIR}/packspu_beginend.c
 	${CMAKE_CURRENT_BINARY_DIR}/packspu_proto.h
+	pack.def
 )
 add_library(packspu SHARED ${SOURCES})
 target_link_libraries(packspu crutil spuload crmothership crstate packspu_crpacker_copy)

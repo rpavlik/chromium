@@ -13,6 +13,7 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/feedbackspu.c
 	${CMAKE_CURRENT_BINARY_DIR}/feedbackspu_state.c
 	${CMAKE_CURRENT_BINARY_DIR}/feedbackspu_proto.h
+	feedback.def
 )
 add_library(feedbackspu SHARED ${SOURCES})
 target_link_libraries(feedbackspu spuload crutil crmothership crstate)

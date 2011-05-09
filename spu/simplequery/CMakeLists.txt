@@ -9,6 +9,7 @@ set(SOURCES
 	simplequeryspu_config.c
 	simplequeryspu_init.c
 	${CMAKE_CURRENT_BINARY_DIR}/simplequeryspu.c
+	simplequeryspu.def
 )
 add_library(simplequeryspu SHARED ${SOURCES})
 target_link_libraries(simplequeryspu spuload crutil crmothership crstate)

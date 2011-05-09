@@ -49,6 +49,7 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/tilesortspu_dlstate_gen.c
 	${CMAKE_CURRENT_BINARY_DIR}/tilesortspu_dlstate_gen.h
 	${CMAKE_CURRENT_BINARY_DIR}/tilesortspu_dlpacker_gen.c
+	tilesort.def
 )
 add_library(tilesortspu SHARED ${SOURCES})
 target_link_libraries(tilesortspu crutil crmothership crdlm spuload crstate tilesortspu_crpacker_copy)

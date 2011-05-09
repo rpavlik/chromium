@@ -18,6 +18,7 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/spucopy.c
 	${CMAKE_CURRENT_BINARY_DIR}/spuchange.c
 	${CMAKE_CURRENT_BINARY_DIR}/glloader.c
+	loader.def
 )
 add_library(spuload SHARED ${SOURCES})
 target_link_libraries(spuload crutil crmothership)

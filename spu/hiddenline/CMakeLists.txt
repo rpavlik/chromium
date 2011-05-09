@@ -20,6 +20,7 @@ set(SOURCES
 	${CMAKE_CURRENT_BINARY_DIR}/hiddenlinespu.c
 	${CMAKE_CURRENT_BINARY_DIR}/hiddenlinespu_pixel.c
 	${CMAKE_CURRENT_BINARY_DIR}/hiddenlinespu_proto.h
+	hiddenlinespu.def
 )
 add_library(hiddenlinespu SHARED ${SOURCES})
 target_link_libraries(hiddenlinespu spuload crutil crmothership crpacker crstate hiddenlinespu_crpacker_copy hiddenlinespu_crunpacker_copy)

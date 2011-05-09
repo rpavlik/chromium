@@ -9,6 +9,7 @@ set(SOURCES
 	nopspu_init.c
 	nopspu_config.c
 	${CMAKE_CURRENT_BINARY_DIR}/nopspu.c
+	nop.def
 )
 add_library(nopspu SHARED ${SOURCES})
 target_link_libraries(nopspu crmothership crutil spuload crstate)

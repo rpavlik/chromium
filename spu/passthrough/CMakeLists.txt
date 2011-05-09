@@ -8,6 +8,7 @@ set(GENERATED
 set(SOURCES
 	passthroughspu_init.c
 	${CMAKE_CURRENT_BINARY_DIR}/passthroughspu.c
+	passthrough.def
 )
 add_library(passthroughspu SHARED ${SOURCES})
 target_link_libraries(passthroughspu crutil)

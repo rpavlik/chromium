@@ -10,6 +10,7 @@ set(SOURCES
 	expandospu_config.c
 	expandospu_init.c
 	${CMAKE_CURRENT_BINARY_DIR}/expando.c
+	expandospu.def
 )
 add_library(expandospu SHARED ${SOURCES})
 target_link_libraries(expandospu spuload crutil crmothership crdlm crstate)

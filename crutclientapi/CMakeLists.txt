@@ -1,6 +1,7 @@
 include_directories(.)
 set(SOURCES
 	crutclientapi.c
+	crutclientapi.def
 )
 add_library(crutclientapi SHARED ${SOURCES})
 target_link_libraries(crutclientapi crutapi crfaker crmothership crutil)

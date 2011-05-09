@@ -31,6 +31,7 @@ set(SOURCES
 	unpack_writeback.c
 	${CMAKE_CURRENT_BINARY_DIR}/unpack.c
 	${CMAKE_CURRENT_BINARY_DIR}/unpack_extend.h
+	unpack.def
 )
 add_library(crunpacker SHARED ${SOURCES})
 target_link_libraries(crunpacker crutil spuload crpacker)

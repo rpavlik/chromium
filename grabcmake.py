@@ -44,11 +44,12 @@ def doDirectory(sourcedir):
 				cmake.write(")\n")
 				cmake.write("# TODO: generate these files!\n\n\n")
 
+			sources = getSources()
 			cmake.write("set(SOURCES\n")
-			cmake.writelines(["\t%s\n" % fn for fn in getSources() if fn not in generated])
+			cmake.writelines(["\t%s\n" % fn for fn in sources if fn not in generated])
 			cmake.writelines(["\t${CMAKE_CURRENT_BINARY_DIR}/%s\n" % fn for fn in generated])
+			cmake.writelines(["\t%s\n" % fn for fn in getVariableList("LIB_DEFS") if fn not in generated and fn not in sources])
 			cmake.write(")\n")
-
 
 			libs = [ lib.replace("-l", "") for lib in getVariableList("LIBRARIES") ]
 			if getVariable("OPENGL"):

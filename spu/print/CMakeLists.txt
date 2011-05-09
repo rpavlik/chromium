@@ -16,6 +16,7 @@ set(SOURCES
 	printspu_misc.c
 	printspu_tex.c
 	${CMAKE_CURRENT_BINARY_DIR}/printspu.c
+	print.def
 )
 add_library(printspu SHARED ${SOURCES})
 target_link_libraries(printspu crutil crmothership spuload)
